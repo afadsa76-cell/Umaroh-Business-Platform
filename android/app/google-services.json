@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "946501391782",
+    "project_id": "gen-lang-client-0546120404",
+    "storage_bucket": "gen-lang-client-0546120404.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:946501391782:android:f0e04afd98525395a7eb67",
+        "android_client_info": {
+          "package_name": "com.amanah.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "946501391782-6jl5dp7mng28813tkpuc5airaqtadrs2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDN8Z2EZ8oc7xnjgIBCGQ7MgyL84oOEC7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "946501391782-6jl5dp7mng28813tkpuc5airaqtadrs2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

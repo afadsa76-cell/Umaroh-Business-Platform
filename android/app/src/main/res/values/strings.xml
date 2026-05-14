@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Umaroh Business Platform</string>
+    <string name="title_activity_main">Umaroh Business Platform</string>
+    <string name="package_name">com.amanah.app</string>
+    <string name="custom_url_scheme">com.amanah.app</string>
+    <string name="server_client_id">946501391782-6jl5dp7mng28813tkpuc5airaqtadrs2.apps.googleusercontent.com</string>
+</resources>

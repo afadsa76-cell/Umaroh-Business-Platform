@@ -1,0 +1,23 @@
+{
+	"appId": "com.amanah.app",
+	"appName": "Umaroh Business Platform",
+	"webDir": "dist",
+	"server": {
+		"url": "https://ais-dev-4m77dmjb4ey5b7yl6gaogc-77249463513.asia-southeast1.run.app",
+		"allowNavigation": [
+			"*"
+		],
+		"cleartext": true,
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"GoogleAuth": {
+			"scopes": [
+				"profile",
+				"email"
+			],
+			"serverClientId": "946501391782-6jl5dp7mng28813tkpuc5airaqtadrs2.apps.googleusercontent.com",
+			"forceCodeForRefreshToken": true
+		}
+	}
+}

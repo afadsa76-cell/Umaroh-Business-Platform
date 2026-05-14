@@ -1,0 +1,255 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // HELPERS (PILLAR 3: Path Variable Hardening)
+    // ===============================================================
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { 
+      return request.auth != null && request.auth.token.email_verified == true; 
+    }
+    
+    // Auth tokens NEVER contain custom claims. explicitly lookup roles on a trusted document.
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData(request.auth.uid).role == 'admin') ||
+        (request.auth.token.email in ["operationalumaroh@gmail.com", "afadsa76@gmail.com"] && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isOperasional() {
+      return isSignedIn() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData(request.auth.uid).role == 'operasional')
+      );
+    }
+
+    function isFinance() {
+      return isSignedIn() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserData(request.auth.uid).role == 'operasional' && 
+         getUserData(request.auth.uid).subRole == 'finance')
+      );
+    }
+
+    function isMitra() {
+      return isSignedIn() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData(request.auth.uid).role == 'mitra')
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ===============================================================
+    // VALIDATION BLUEPRINTS (PILLAR 2: Anti-Update-Gap)
+    // ===============================================================
+    
+    function isValidUserProfile(data) {
+      return data.uid is string && data.uid.size() <= 128 &&
+             data.name is string && data.name.size() <= 255 &&
+             data.email is string && data.email.size() <= 255 &&
+             data.role in ['operasional', 'mitra', 'jamaah', 'admin'];
+    }
+
+    function isValidWallet(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.balance is number &&
+             data.updatedAt is timestamp;
+    }
+
+    function isValidTransaction(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.type in ['komisi', 'withdraw', 'pembayaran', 'bonus_rekrut'] &&
+             data.amount is number &&
+             data.status in ['pending', 'approved', 'rejected', 'success'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidPaketMaster(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.nama is string && data.nama.size() <= 255 &&
+             data.hargaDasar is number && data.hargaDasar >= 0 &&
+             data.kuota is number && data.kuota >= 0 &&
+             data.status in ['draft', 'published', 'closed'];
+    }
+
+    function isValidBooking(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.jamaahId is string && data.jamaahId.size() <= 128 &&
+             data.statusPembayaran in ['pending', 'dp', 'lunas'] &&
+             data.totalHarga is number && data.totalHarga >= 0;
+    }
+
+    function isValidPendaftaranMitra(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.namaLengkap is string && data.namaLengkap.size() <= 255 &&
+             data.email is string && data.email.size() <= 255 &&
+             data.status in ['pending_validation', 'approved', 'rejected'];
+    }
+
+    // ===============================================================
+    // COLLECTIONS
+    // ===============================================================
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isOperasional();
+      allow list: if isOperasional();
+      allow create: if isSignedIn() && isOwner(userId) && isValidUserProfile(incoming()) && 
+                    incoming().role in ['mitra', 'jamaah'] &&
+                    incoming().uid == request.auth.uid;
+      allow create: if isAdmin() && isValidUserProfile(incoming());
+      allow update: if (isAdmin() || isOwner(userId)) && 
+                    isValidUserProfile(incoming()) && (
+                      isAdmin() ||
+                      incoming().diff(existing()).affectedKeys().hasOnly(['name', 'subRole', 'uplineId', 'createdAt'])
+                    );
+    }
+
+    match /wallets/{walletId} {
+      allow get: if isOwner(walletId) || isFinance();
+      allow list: if isFinance();
+      allow update: if isFinance() && 
+                    isValidWallet(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt']);
+    }
+
+    match /transactions/{transactionId} {
+      allow get: if isOwner(resource.data.userId) || isFinance();
+      allow list: if isFinance() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && 
+                    incoming().userId == request.auth.uid && 
+                    incoming().type == 'withdraw' && 
+                    incoming().status == 'pending' &&
+                    isValidTransaction(incoming());
+      allow write: if isFinance() && isValidTransaction(incoming());
+    }
+
+    match /paket_master/{paketId} {
+      allow read: if isSignedIn();
+      allow create: if isOperasional() && isValidId(paketId) && isValidPaketMaster(incoming());
+      allow update: if isOperasional() && isValidId(paketId) && isValidPaketMaster(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /paket_mitra/{paketId} {
+      allow read: if isSignedIn();
+      allow create: if isMitra() && incoming().mitraId == request.auth.uid && isValidId(paketId);
+      allow update: if (isMitra() && existing().mitraId == request.auth.uid) || isOperasional();
+      allow delete: if (isMitra() && existing().mitraId == request.auth.uid) || isOperasional();
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && (
+                    resource.data.jamaahId == request.auth.uid || 
+                    resource.data.mitraId == request.auth.uid || 
+                    isOperasional()
+                  );
+      allow list: if isSignedIn() && (
+                    resource.data.jamaahId == request.auth.uid || 
+                    resource.data.mitraId == request.auth.uid || 
+                    isOperasional()
+                  );
+      allow create: if isSignedIn() && 
+                    (incoming().jamaahId == request.auth.uid || (isMitra() && incoming().mitraId == request.auth.uid)) &&
+                    isValidBooking(incoming());
+      allow update: if isOperasional() || 
+                    (isOwner(existing().jamaahId) && 
+                     incoming().diff(existing()).affectedKeys().hasOnly(['statusPembayaran']) &&
+                     isValidBooking(incoming()));
+    }
+
+    match /maskapai/{maskapaiId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(maskapaiId);
+    }
+
+    match /vendor_services/{serviceId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(serviceId);
+    }
+
+    match /master_hotels/{hotelId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(hotelId);
+    }
+
+    match /master_layanan/{layananId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(layananId);
+    }
+
+    match /master_merchandise/{merchId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(merchId);
+    }
+
+    match /master_bandara/{bandaraId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(bandaraId);
+    }
+
+    match /master_paket_wisata/{paketWisataId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(paketWisataId);
+    }
+
+    match /hotel_metadata/{mediaId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(mediaId);
+    }
+
+    match /paket_kemitraan/{paketId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(paketId);
+    }
+
+    match /pendaftaran_mitra/{pendaftaranId} {
+      allow get: if isOperasional() || (isSignedIn() && resource.data.email == request.auth.token.email);
+      allow list: if isOperasional();
+      allow create: if isValidPendaftaranMitra(incoming()); 
+      allow update: if isOperasional() && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
+                    isValidPendaftaranMitra(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /tracker_paket/{paketId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(paketId);
+    }
+
+    match /tracker_jamaah/{jamaahId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(jamaahId);
+    }
+
+    match /tracker_keberangkatan/{keberangkatanId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() && isValidId(keberangkatanId);
+    }
+
+    match /tracking_group/{groupId} {
+      allow read: if isSignedIn();
+      allow write: if isOperasional() || (isMitra() && incoming().leader_id == request.auth.uid);
+    }
+  }
+}

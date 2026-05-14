@@ -1,0 +1,338 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Data pengguna termasuk role dan hierarki MLM",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["operasional", "mitra", "jamaah", "admin"] },
+        "subRole": { "type": "string", "enum": ["development", "operasional", "finance", "marketing", ""] },
+        "uplineId": { "type": "string", "description": "UID mitra yang merekrut (jika ada)" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "Dompet saldo pengguna (terutama Mitra)",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "balance": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "balance"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Riwayat transaksi dompet (komisi, withdraw, dll)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["komisi", "withdraw", "pembayaran", "bonus_rekrut"] },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "success"] },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "type", "amount", "status"]
+    },
+    "PaketMaster": {
+      "title": "PaketMaster",
+      "description": "Paket umroh utama yang dibuat oleh Operasional",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "deskripsi": { "type": "string" },
+        "hargaDasar": { "type": "number" },
+        "maskapaiId": { "type": "string" },
+        "kuota": { "type": "number" },
+        "sisaKuota": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "published", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "nama", "hargaDasar", "kuota", "sisaKuota", "status"]
+    },
+    "PaketMitra": {
+      "title": "PaketMitra",
+      "description": "Paket umroh yang di-markup/dicustom oleh Mitra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "mitraId": { "type": "string" },
+        "paketMasterId": { "type": "string" },
+        "namaCustom": { "type": "string" },
+        "hargaJual": { "type": "number" },
+        "komisiSponsor": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "inactive"] }
+      },
+      "required": ["id", "mitraId", "paketMasterId", "namaCustom", "hargaJual", "status"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Data pemesanan paket oleh Jamaah",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "jamaahId": { "type": "string" },
+        "paketId": { "type": "string" },
+        "jenisPaket": { "type": "string", "enum": ["master", "mitra"] },
+        "mitraId": { "type": "string", "description": "ID Mitra jika booking lewat paket mitra" },
+        "statusPembayaran": { "type": "string", "enum": ["pending", "dp", "lunas"] },
+        "statusKeberangkatan": { "type": "string", "enum": ["menunggu", "proses_visa", "siap_berangkat", "selesai"] },
+        "totalHarga": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "jamaahId", "paketId", "jenisPaket", "statusPembayaran", "totalHarga"]
+    },
+    "Maskapai": {
+      "title": "Maskapai",
+      "description": "Informasi tiket pesawat dan ketersediaan kursi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "hargaJual": { "type": "number" },
+        "hargaBeli": { "type": "number" },
+        "margin": { "type": "number" },
+        "persen": { "type": "number" },
+        "programDays": { "type": "number" },
+        "tanggalKeberangkatan": { "type": "string", "format": "date" },
+        "tanggalKepulangan": { "type": "string", "format": "date" },
+        "originCityName": { "type": "string" },
+        "destinationCityName": { "type": "string" },
+        "namaVendor": { "type": "string" },
+        "totalSeats": { "type": "number" },
+        "availableSeats": { "type": "number" }
+      },
+      "required": ["id", "name", "tanggalKeberangkatan", "tanggalKepulangan", "totalSeats", "availableSeats"]
+    },
+    "VendorService": {
+      "title": "VendorService",
+      "description": "Informasi mapping pembayaran dan booking layanan vendor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "paketId": { "type": "string" },
+        "namaPaket": { "type": "string" },
+        "namaLayanan": { "type": "string" },
+        "vendor": { "type": "string" },
+        "tanggalKeberangkatan": { "type": "string", "format": "date" },
+        "tanggalKepulangan": { "type": "string", "format": "date" },
+        "reminderDPHMinus": { "type": "number" },
+        "reminderPelunasanHMinus": { "type": "number" },
+        "estimasiBiaya": { "type": "number" },
+        "statusPembayaran": { "type": "string", "enum": ["Belum Bayar", "DP", "Lunas"] },
+        "pic": { "type": "string" },
+        "catatan": { "type": "string" },
+        "isManualDate": { "type": "boolean" },
+        "manualPelunasanDate": { "type": "string", "format": "date" }
+      },
+      "required": ["id", "paketId", "namaPaket", "namaLayanan", "vendor", "tanggalKeberangkatan", "tanggalKepulangan", "statusPembayaran", "pic"]
+    },
+    "MasterHotel": {
+      "title": "MasterHotel",
+      "description": "Katalog master hotel untuk Makkah, Madinah, dll",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "kota": { "type": "string", "enum": ["Makkah", "Madinah", "Lainnya"] },
+        "bintang": { "type": "number" },
+        "priceQuad": { "type": "number" },
+        "priceTriple": { "type": "number" },
+        "priceDouble": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "nama", "kota", "bintang", "priceQuad", "isActive"]
+    },
+    "MasterLayanan": {
+      "title": "MasterLayanan",
+      "description": "Katalog master layanan tambahan (Mutawwif, Kereta, dll)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "deskripsi": { "type": "string" },
+        "harga": { "type": "number" },
+        "kategori": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "nama", "harga", "isActive"]
+    },
+    "MasterMerchandise": {
+      "title": "MasterMerchandise",
+      "description": "Katalog master merchandise (Koper, Tas, dll)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "deskripsi": { "type": "string" },
+        "harga": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "nama", "harga", "isActive"]
+    },
+    "MasterBandara": {
+      "title": "MasterBandara",
+      "description": "Katalog data bandara dan kota",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "kode": { "type": "string" },
+        "nama": { "type": "string" },
+        "kota": { "type": "string" },
+        "negara": { "type": "string" }
+      },
+      "required": ["id", "kode", "nama", "kota", "negara"]
+    },
+    "MasterPaketWisata": {
+      "title": "MasterPaketWisata",
+      "description": "Katalog wisata halal",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "deskripsi": { "type": "string" },
+        "durasiHari": { "type": "number" },
+        "lokasi": { "type": "string" },
+        "img": { "type": "string" },
+        "hargaStart": { "type": "number" }
+      },
+      "required": ["id", "nama", "deskripsi", "durasiHari", "lokasi", "img", "hargaStart"]
+    },
+    "HotelMetadata": {
+      "title": "HotelMetadata",
+      "description": "Additional hotel information such as distance and photo",
+      "type": "object",
+      "properties": {
+        "hotelId": { "type": "string" },
+        "hotelName": { "type": "string" },
+        "city": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "distance": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hotelId", "hotelName"]
+    },
+    "PaketKemitraan": {
+      "title": "PaketKemitraan",
+      "description": "Paket pendaftaran kemitraan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "harga": { "type": "number" },
+        "level": { "type": "number" },
+        "deskripsi": { "type": "string" }
+      },
+      "required": ["id", "nama", "harga", "level"]
+    },
+    "PendaftaranMitra": {
+      "title": "PendaftaranMitra",
+      "description": "Formulir pendaftaran calon mitra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "paketId": { "type": "string" },
+        "paketNama": { "type": "string" },
+        "namaLengkap": { "type": "string" },
+        "noWA": { "type": "string" },
+        "email": { "type": "string" },
+        "namaBrand": { "type": "string" },
+        "nikKtp": { "type": "string" },
+        "lokasi": { "type": "string" },
+        "uplineId": { "type": "string" },
+        "uplineNama": { "type": "string" },
+        "metodePembayaran": { "type": "string" },
+        "buktiTransferUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending_validation", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "paketId", "namaLengkap", "noWA", "email", "status", "createdAt"]
+    },
+    "PaketTracker": {
+      "title": "PaketTracker",
+      "description": "Tracking operasional paket terdaftar",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "namaPaket": { "type": "string" },
+        "tanggalBerangkat": { "type": "string" },
+        "status": { "type": "string", "enum": ["Persiapan", "Booking Seat", "Proses Visa", "Siap Berangkat", "Selesai"] },
+        "targetJamaah": { "type": "number" },
+        "terdaftar": { "type": "number" }
+      },
+      "required": ["id", "namaPaket", "status"]
+    },
+    "JamaahTracker": {
+      "title": "JamaahTracker",
+      "description": "Tracking kesiapan dokumen dan perlengkapan jamaah",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "namaLengkap": { "type": "string" },
+        "nik": { "type": "string" },
+        "paketId": { "type": "string" },
+        "statusPembayaran": { "type": "string", "enum": ["Belum Bayar", "DP", "Lunas"] },
+        "statusPaspor": { "type": "string", "enum": ["Belum Ada", "Dalam Proses", "Sudah Ada"] },
+        "statusVaksin": { "type": "string", "enum": ["Belum", "Sudah"] }
+      },
+      "required": ["id", "namaLengkap", "paketId", "statusPembayaran"]
+    },
+    "KeberangkatanTracker": {
+      "title": "KeberangkatanTracker",
+      "description": "Tracking logistik keberangkatan (tiket, visa, hotel)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "paketId": { "type": "string" },
+        "maskapai": { "type": "string" },
+        "nomorPenerbangan": { "type": "string" },
+        "statusVisa": { "type": "string", "enum": ["Proses", "Selesai"] },
+        "statusTiket": { "type": "string", "enum": ["Booked", "Issued"] }
+      },
+      "required": ["id", "paketId", "maskapai", "nomorPenerbangan"]
+    },
+    "TrackingGroup": {
+      "title": "TrackingGroup",
+      "description": "Live tracking lokasi group saat di Saudi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "paket_id": { "type": "string" },
+        "nama_group": { "type": "string" },
+        "leader_id": { "type": "string" },
+        "status": { "type": "string", "enum": ["persiapan", "berangkat", "di_madinah", "di_mekkah", "pulang", "selesai"] }
+      },
+      "required": ["id", "paket_id", "nama_group", "leader_id", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "UserProfile", "description": "Koleksi data pengguna" },
+    "/wallets/{walletId}": { "schema": "Wallet", "description": "Koleksi dompet pengguna" },
+    "/transactions/{transactionId}": { "schema": "Transaction", "description": "Koleksi riwayat transaksi" },
+    "/paket_master/{paketId}": { "schema": "PaketMaster", "description": "Koleksi paket utama" },
+    "/paket_mitra/{paketId}": { "schema": "PaketMitra", "description": "Koleksi paket custom mitra" },
+    "/bookings/{bookingId}": { "schema": "Booking", "description": "Koleksi pemesanan jamaah" },
+    "/maskapai/{maskapaiId}": { "schema": "Maskapai", "description": "Koleksi data maskapai penerbangan" },
+    "/vendor_services/{serviceId}": { "schema": "VendorService", "description": "Koleksi data mapping pembayaran vendor" },
+    "/master_hotels/{hotelId}": { "schema": "MasterHotel", "description": "Koleksi katalog hotel" },
+    "/master_layanan/{layananId}": { "schema": "MasterLayanan", "description": "Koleksi katalog layanan tambahan" },
+    "/master_merchandise/{merchId}": { "schema": "MasterMerchandise", "description": "Koleksi katalog merchandise" },
+    "/master_bandara/{bandaraId}": { "schema": "MasterBandara", "description": "Koleksi katalog bandara" },
+    "/master_paket_wisata/{paketWisataId}": { "schema": "MasterPaketWisata", "description": "Koleksi katalog paket wisata" },
+    "/hotel_metadata/{mediaId}": { "schema": "HotelMetadata", "description": "Koleksi media dan jarak hotel" },
+    "/paket_kemitraan/{paketId}": { "schema": "PaketKemitraan", "description": "Koleksi paket kemitraan" },
+    "/pendaftaran_mitra/{pendaftaranId}": { "schema": "PendaftaranMitra", "description": "Koleksi pendaftaran mitra" },
+    "/tracker_paket/{paketId}": { "schema": "PaketTracker", "description": "Koleksi tracking paket" },
+    "/tracker_jamaah/{jamaahId}": { "schema": "JamaahTracker", "description": "Koleksi tracking jamaah" },
+    "/tracker_keberangkatan/{keberangkatanId}": { "schema": "KeberangkatanTracker", "description": "Koleksi tracking keberangkatan" },
+    "/tracking_group/{groupId}": { "schema": "TrackingGroup", "description": "Koleksi live tracking group" }
+  }
+}
