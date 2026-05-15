@@ -512,18 +512,39 @@ export const QuotationView: React.FC = () => {
     setIsGeneratingImage(true);
 
     try {
-      const { toJpeg } = await import('html-to-image');
-      
-      const image = await toJpeg(printRef.current, {
-        quality: 0.95,
+      const canvas = await html2canvas(printRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
         backgroundColor: '#ffffff',
-        pixelRatio: 2,
-        skipFonts: false,
-        cacheBust: true,
+        onclone: (clonedDoc: Document) => {
+          // Critical: Sanitize modern colors that html2canvas cannot parse
+          sanitizeForHtml2Canvas(clonedDoc);
+        }
       });
       
+      const image = canvas.toDataURL('image/jpeg', 0.9);
       const filename = `Quotation_${selectedDate || 'Draft'}.jpg`;
-      await import('../utils/fileUtils').then(m => m.downloadFile(image, filename));
+
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+        
+        const base64Data = image.split(',')[1];
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+
+        await Share.share({
+          title: filename,
+          url: result.uri
+        });
+      } else {
+        await import('../utils/fileUtils').then(m => m.downloadFile(image, filename));
+      }
     } catch (error) {
       console.error('Image generation failed:', error);
       alert('Failed to generate image. Please try again.');

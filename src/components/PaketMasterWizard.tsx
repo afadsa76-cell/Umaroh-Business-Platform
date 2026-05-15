@@ -66,6 +66,7 @@ import { transportData } from "../data/transport";
 import { AIResultModal } from "./AIResultModal";
 import { generateItinerary, generateMarketingCopy } from "../services/aiService";
 import { sanitizeForHtml2Canvas } from "../utils/exportUtils";
+import { Capacitor } from '@capacitor/core';
 // @ts-expect-error
 import html2pdf from 'html2pdf.js';
 
@@ -1086,37 +1087,70 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         alert("Gagal mengunduh PDF. Silakan coba lagi.");
       }
     } else {
-      // JPG Export using html-to-image
+      // JPG Export using html2canvas with proper sanitation
       try {
-        const { toJpeg } = await import('html-to-image');
+        const html2canvas = (await import('html2canvas')).default;
         
-        // Prepare the element (similar to onclone logic)
-        const originalDisplay = pdfElement.style.display;
-        const originalVisibility = pdfElement.style.visibility;
-        const originalPosition = pdfElement.style.position;
-        
+        // Temporarily prepare element for capture to prevent blank results
+        const originalStyle = pdfElement.style.cssText;
         pdfElement.style.display = 'block';
-        pdfElement.style.visibility = 'visible';
-        pdfElement.style.position = 'relative';
+        pdfElement.style.position = 'fixed';
+        pdfElement.style.left = '-9999px';
+        pdfElement.style.top = '0';
         pdfElement.style.width = '210mm';
         pdfElement.style.backgroundColor = '#ffffff';
+        pdfElement.style.visibility = 'visible';
 
-        const dataUrl = await toJpeg(pdfElement, { 
-          quality: 0.95,
+        const canvas = await html2canvas(pdfElement, {
+          scale: 3,
+          useCORS: true,
+          logging: false,
           backgroundColor: '#ffffff',
-          pixelRatio: 2,
-          skipFonts: false
+          onclone: (clonedDoc: Document) => {
+            const el = clonedDoc.getElementById('pdf-export-content');
+            if (el) {
+              el.style.display = 'block';
+              el.style.position = 'relative';
+              el.style.visibility = 'visible';
+              el.style.width = '210mm';
+              el.style.backgroundColor = '#ffffff';
+              el.style.color = '#111827';
+            }
+            
+            // Critical: Sanitize modern colors that html2canvas cannot parse
+            sanitizeForHtml2Canvas(clonedDoc);
+          }
         });
 
-        // Restore original styles
-        pdfElement.style.display = originalDisplay;
-        pdfElement.style.visibility = originalVisibility;
-        pdfElement.style.position = originalPosition;
-        pdfElement.style.width = '';
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
         
-        await import('../utils/fileUtils').then(m => m.downloadFile(dataUrl, `${filename}.jpg`));
+        // Restore style
+        pdfElement.style.cssText = originalStyle;
+
+        const isNative = Capacitor.isNativePlatform();
+        if (isNative) {
+          const { Filesystem, Directory } = await import('@capacitor/filesystem');
+          const { Share } = await import('@capacitor/share');
+          
+          const fileContent = dataUrl.split(',')[1];
+          const fileName = `${filename}.jpg`;
+          
+          const result = await Filesystem.writeFile({
+            path: fileName,
+            data: fileContent,
+            directory: Directory.Cache,
+          });
+
+          await Share.share({
+            title: fileName,
+            url: result.uri,
+          });
+        } else {
+          await import('../utils/fileUtils').then(m => m.downloadFile(dataUrl, `${filename}.jpg`));
+        }
       } catch (error) {
         console.error('JPG generation failed:', error);
+        pdfElement.style.cssText = "display: none;"; // Fallback restore
         alert("Gagal mengunduh JPG. Silakan coba lagi.");
       }
     }

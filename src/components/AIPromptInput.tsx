@@ -132,7 +132,33 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
               )}
               <div className="flex gap-2">
                 <button 
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={async () => {
+                    const { Capacitor } = await import('@capacitor/core');
+                    if (Capacitor.isNativePlatform()) {
+                       try {
+                         const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+                         const image = await Camera.getPhoto({
+                           quality: 90,
+                           allowEditing: false,
+                           resultType: CameraResultType.Base64,
+                           source: CameraSource.Prompt
+                         });
+                         
+                         if (image.base64String) {
+                           setSelectedFile({
+                             name: `camera_capture_${Date.now()}.jpg`,
+                             base64: image.base64String,
+                             mimeType: 'image/jpeg'
+                           });
+                         }
+                       } catch (e) {
+                         console.error("Camera fail", e);
+                         fileInputRef.current?.click();
+                       }
+                    } else {
+                      fileInputRef.current?.click();
+                    }
+                  }}
                   className="bg-white border border-indigo-200 text-indigo-600 p-2 rounded-lg hover:bg-indigo-50 transition-colors flex-shrink-0 h-10 flex items-center justify-center"
                   title="Upload File Dokumen/Gambar"
                 >

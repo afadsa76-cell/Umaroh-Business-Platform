@@ -813,7 +813,29 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) 
                                 <>
                                   <Upload className="mx-auto h-12 w-12 text-gray-400" />
                                   <div className="flex text-sm text-gray-600 justify-center">
-                                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500">
+                                    <label 
+                                      className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500"
+                                      onClick={async (e) => {
+                                        const { Capacitor } = await import('@capacitor/core');
+                                        if (Capacitor.isNativePlatform()) {
+                                          e.preventDefault();
+                                          try {
+                                            const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+                                            const image = await Camera.getPhoto({
+                                              quality: 90,
+                                              allowEditing: false,
+                                              resultType: CameraResultType.Base64,
+                                              source: CameraSource.Prompt
+                                            });
+                                            if (image.base64String) {
+                                              setFormData(prev => ({ ...prev, buktiTransfer: `data:image/jpeg;base64,${image.base64String}` }));
+                                            }
+                                          } catch (err) {
+                                            console.error("Camera fail", err);
+                                          }
+                                        }
+                                      }}
+                                    >
                                       <span>Upload file</span>
                                       <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileUpload} />
                                     </label>

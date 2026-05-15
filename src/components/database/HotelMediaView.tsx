@@ -349,7 +349,29 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                                   }}
                                 />
                               )}
-                              <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors">
+                              <label 
+                                onClick={async (e) => {
+                                  const { Capacitor } = await import('@capacitor/core');
+                                  if (Capacitor.isNativePlatform()) {
+                                    e.preventDefault();
+                                    try {
+                                      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+                                      const image = await Camera.getPhoto({
+                                        quality: 90,
+                                        allowEditing: false,
+                                        resultType: CameraResultType.Base64,
+                                        source: CameraSource.Prompt
+                                      });
+                                      if (image.base64String) {
+                                        setEditData(prev => ({ ...prev, photoUrl: `data:image/jpeg;base64,${image.base64String}` }));
+                                      }
+                                    } catch (err) {
+                                      console.error("Camera fail", err);
+                                    }
+                                  }
+                                }}
+                                className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+                              >
                                 <Upload className="w-4 h-4" />
                                 Upload
                                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />

@@ -23,6 +23,9 @@ import { Transaction } from '../types/transaction';
 import { OfferingTemplate } from './OfferingTemplate';
 import { db, collection, addDoc, handleFirestoreError, OperationType } from '../firebase';
 import { generateTimelineEstimasi } from './tracker/utils';
+import { Capacitor } from '@capacitor/core';
+import { sanitizeForHtml2Canvas } from '../utils/exportUtils';
+import html2canvas from 'html2canvas';
 
 import { isDateInRange } from '../utils/dateUtils';
 
@@ -634,15 +637,34 @@ export const SalesOrderView: React.FC = () => {
   const handleGenerateJPG = async () => {
     if (offeringRef.current) {
       try {
-        const canvas = await htmlToImage.toCanvas(offeringRef.current, { 
-          pixelRatio: 2,
+        const canvas = await html2canvas(offeringRef.current, { 
+          scale: 2,
+          useCORS: true,
+          logging: false,
           backgroundColor: '#FFC000',
+          onclone: (clonedDoc: Document) => {
+            sanitizeForHtml2Canvas(clonedDoc);
+          }
         });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const link = document.createElement('a');
-        link.download = `Offering_${namaPaket || 'Draft'}.jpg`;
-        link.href = imgData;
-        link.click();
+        
+        if (Capacitor.isNativePlatform()) {
+          const { Filesystem, Directory } = await import('@capacitor/filesystem');
+          const { Share } = await import('@capacitor/share');
+          const fileName = `Offering_${namaPaket || 'Draft'}.jpg`;
+          const base64Data = imgData.split(',')[1];
+          const result = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache
+          });
+          await Share.share({ title: fileName, url: result.uri });
+        } else {
+          const link = document.createElement('a');
+          link.download = `Offering_${namaPaket || 'Draft'}.jpg`;
+          link.href = imgData;
+          link.click();
+        }
       } catch (error) {
         console.error("Error generating JPG:", error);
         alert("Gagal membuat JPG. Pastikan semua data terisi.");
@@ -656,26 +678,40 @@ export const SalesOrderView: React.FC = () => {
         const tableElement = tableRef.current.querySelector('table');
         if (!tableElement) return;
 
-        const scrollWidth = tableElement.scrollWidth;
-        const scrollHeight = tableElement.scrollHeight;
-        
-        const canvas = await htmlToImage.toCanvas(tableElement, { 
-          pixelRatio: 2,
+        const canvas = await html2canvas(tableElement, { 
+          scale: 2,
+          useCORS: true,
+          logging: false,
           backgroundColor: '#ffffff',
-          width: scrollWidth,
-          height: scrollHeight
+          onclone: (clonedDoc: Document) => {
+            sanitizeForHtml2Canvas(clonedDoc);
+          }
         });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         
-        // Calculate PDF dimensions to fit the image
         const pdf = new jsPDF({
-          orientation: scrollWidth > scrollHeight ? 'landscape' : 'portrait',
+          orientation: tableElement.scrollWidth > tableElement.scrollHeight ? 'landscape' : 'portrait',
           unit: 'px',
           format: [canvas.width, canvas.height]
         });
         
         pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`SO_${namaPaket || 'Draft'}.pdf`);
+        
+        if (Capacitor.isNativePlatform()) {
+          const { Filesystem, Directory } = await import('@capacitor/filesystem');
+          const { Share } = await import('@capacitor/share');
+          const pdfOutput = pdf.output('datauristring');
+          const base64Data = pdfOutput.split(',')[1];
+          const fileName = `SO_${namaPaket || 'Draft'}.pdf`;
+          const result = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache
+          });
+          await Share.share({ title: fileName, url: result.uri });
+        } else {
+          pdf.save(`SO_${namaPaket || 'Draft'}.pdf`);
+        }
       } catch (error) {
         console.error("Error generating SO PDF:", error);
         alert("Gagal membuat PDF SO. Pastikan semua data terisi.");
@@ -686,9 +722,14 @@ export const SalesOrderView: React.FC = () => {
   const handleGeneratePDF = async () => {
     if (offeringRef.current) {
       try {
-        const canvas = await htmlToImage.toCanvas(offeringRef.current, { 
-          pixelRatio: 2,
+        const canvas = await html2canvas(offeringRef.current, { 
+          scale: 2,
+          useCORS: true,
+          logging: false,
           backgroundColor: '#FFC000',
+          onclone: (clonedDoc: Document) => {
+            sanitizeForHtml2Canvas(clonedDoc);
+          }
         });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const pdf = new jsPDF({
@@ -697,7 +738,22 @@ export const SalesOrderView: React.FC = () => {
           format: [canvas.width, canvas.height]
         });
         pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`Offering_${namaPaket || 'Draft'}.pdf`);
+        
+        if (Capacitor.isNativePlatform()) {
+          const { Filesystem, Directory } = await import('@capacitor/filesystem');
+          const { Share } = await import('@capacitor/share');
+          const pdfOutput = pdf.output('datauristring');
+          const base64Data = pdfOutput.split(',')[1];
+          const fileName = `Offering_${namaPaket || 'Draft'}.pdf`;
+          const result = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache
+          });
+          await Share.share({ title: fileName, url: result.uri });
+        } else {
+          pdf.save(`Offering_${namaPaket || 'Draft'}.pdf`);
+        }
       } catch (error) {
         console.error("Error generating PDF:", error);
         alert("Gagal membuat PDF. Pastikan semua data terisi.");
