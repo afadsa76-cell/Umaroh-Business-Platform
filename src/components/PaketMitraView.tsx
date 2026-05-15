@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit2, Trash2, Search, ArrowRight, Star, Building2, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp } from '../firebase';
+import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMasterWizard } from './PaketMasterWizard';
 
 interface PaketMaster {
@@ -67,6 +67,8 @@ export const PaketMitraView: React.FC = () => {
       if (doc.exists()) {
         setUserRole(doc.data().role);
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, `users/${userId}`);
     });
 
     // Fetch published Paket Master (Admin ones + Mine)
@@ -76,21 +78,29 @@ export const PaketMitraView: React.FC = () => {
       // Show only published ones OR drafts/packages created by the current mitra OR if user is admin
       const filtered = data.filter(m => m.status === 'published' || m.mitraId === userId || userRole === 'admin' || userRole === 'operasional');
       setPaketMasters(filtered);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'paket_master');
     });
 
     // Fetch Hotels
     const unsubHotels = onSnapshot(collection(db, 'master_hotels'), (snapshot) => {
       setHotels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'master_hotels');
     });
 
     // Fetch Maskapai
     const unsubMaskapai = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
       setMaskapai(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'maskapai');
     });
 
     // Fetch Tracker Paket
     const unsubTracker = onSnapshot(collection(db, 'tracker_paket'), (snapshot) => {
       setTrackerPakets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'tracker_paket');
     });
 
     // Fetch Paket Mitra for this user
@@ -98,6 +108,8 @@ export const PaketMitraView: React.FC = () => {
     const unsubMitra = onSnapshot(qMitra, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaketMitra));
       setPaketMitras(data);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'paket_mitra');
     });
 
     return () => {
@@ -120,6 +132,7 @@ export const PaketMitraView: React.FC = () => {
       showNotification('success', 'Paket berhasil divalidasi!');
     } catch (error) {
       console.error("Error validating paket:", error);
+      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${id}`);
       showNotification('error', 'Gagal memvalidasi paket');
     }
   };
@@ -141,6 +154,7 @@ export const PaketMitraView: React.FC = () => {
       showNotification('success', 'Paket Mitra berhasil dihapus');
     } catch (error) {
       console.error("Error deleting paket mitra:", error);
+      handleFirestoreError(error, OperationType.DELETE, `paket_mitra/${id}`);
       showNotification('error', 'Gagal menghapus data paket mitra.');
     }
   };

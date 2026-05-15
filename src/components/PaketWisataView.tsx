@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { db, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, handleFirestoreError, OperationType } from '../firebase';
 import { Search, Plus, Edit2, Trash2, Map, X } from 'lucide-react';
-import { db, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from '../firebase';
-import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 
 interface PaketWisata {
   id: string;
@@ -87,6 +86,7 @@ export const PaketWisataView: React.FC = () => {
       handleCloseForm();
     } catch (error) {
       console.error("Error saving paket wisata:", error);
+      handleFirestoreError(error, OperationType.WRITE, 'master_paket_wisata');
       alert('Gagal menyimpan data paket wisata.');
     }
   };
@@ -108,6 +108,7 @@ export const PaketWisataView: React.FC = () => {
       alert('Data seed paket wisata berhasil ditambahkan!');
     } catch (e) {
       console.error(e);
+      handleFirestoreError(e, OperationType.WRITE, 'master_paket_wisata');
       alert('Gagal menambah seed data');
     }
   };
@@ -194,7 +195,11 @@ export const PaketWisataView: React.FC = () => {
                          <button className="p-1 text-red-600 hover:bg-red-50 rounded" onClick={async () => {
                            const confirmed = window.confirm ? window.confirm('Yakin ingin menghapus ini?') : true;
                            if(confirmed) {
-                             await deleteDoc(doc(db, 'master_paket_wisata', item.id));
+                             try {
+                               await deleteDoc(doc(db, 'master_paket_wisata', item.id));
+                             } catch (err) {
+                               handleFirestoreError(err, OperationType.DELETE, `master_paket_wisata/${item.id}`);
+                             }
                            }
                          }}>
                            <Trash2 className="w-4 h-4" />

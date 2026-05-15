@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, collection, onSnapshot, doc, updateDoc, setDoc } from '../firebase';
+import { db, auth, collection, onSnapshot, doc, updateDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { CheckCircle2, XCircle, Eye, Search, Filter, AlertCircle, MapPin, Phone, Mail, Building2, User, Users } from 'lucide-react';
 import { openWhatsApp } from '../utils/whatsapp';
@@ -47,6 +47,8 @@ export const ValidasiMitraView: React.FC = () => {
       // Sort by newest first
       data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setPendaftaranList(data);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'pendaftaran_mitra');
     });
 
     return () => unsub();
@@ -99,6 +101,7 @@ export const ValidasiMitraView: React.FC = () => {
       setIsModalOpen(false);
     } catch (error) {
       console.error("Error approving registration:", error);
+      handleFirestoreError(error, OperationType.WRITE, 'approval_process');
       alert('Gagal menyetujui pendaftaran.');
     } finally {
       setIsProcessing(false);
@@ -124,6 +127,7 @@ export const ValidasiMitraView: React.FC = () => {
       setRejectReason('');
     } catch (error) {
       console.error("Error rejecting registration:", error);
+      handleFirestoreError(error, OperationType.UPDATE, `pendaftaran_mitra/${pendaftaran.id}`);
       alert('Gagal menolak pendaftaran.');
     } finally {
       setIsProcessing(false);

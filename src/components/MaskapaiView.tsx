@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download } from 'lucide-react';
 import { Maskapai, maskapaiData as initialData } from '../data/maskapai';
 import * as XLSX from 'xlsx';
-import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc } from '../firebase';
+import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from '../firebase';
 
 export const MaskapaiView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +47,7 @@ export const MaskapaiView: React.FC = () => {
     }, (error) => {
       console.error("Error fetching maskapai:", error);
       setLoading(false);
+      handleFirestoreError(error, OperationType.GET, 'maskapai');
     });
 
     return () => unsubscribe();
@@ -101,6 +102,7 @@ export const MaskapaiView: React.FC = () => {
       handleCloseForm();
     } catch (error) {
       console.error("Error saving maskapai:", error);
+      handleFirestoreError(error, OperationType.WRITE, 'maskapai');
       alert('Gagal menyimpan data maskapai.');
     }
   };
@@ -127,6 +129,7 @@ export const MaskapaiView: React.FC = () => {
       console.error('Error syncing data:', error);
       setMigrationStatus('error');
       setTimeout(() => setMigrationStatus('idle'), 3000);
+      handleFirestoreError(error, OperationType.WRITE, 'maskapai');
     }
   };
 
@@ -333,7 +336,11 @@ export const MaskapaiView: React.FC = () => {
                           <button className="p-1 text-red-600 hover:bg-red-50 rounded" onClick={async () => {
                             const confirmed = window.confirm ? window.confirm('Yakin ingin menghapus data ini?') : true;
                             if(confirmed) {
-                              await deleteDoc(doc(db, 'maskapai', item.id));
+                              try {
+                                await deleteDoc(doc(db, 'maskapai', item.id));
+                              } catch (err) {
+                                handleFirestoreError(err, OperationType.DELETE, `maskapai/${item.id}`);
+                              }
                             }
                           }}>
                             <Trash2 className="w-4 h-4" />
@@ -413,7 +420,11 @@ export const MaskapaiView: React.FC = () => {
                     <button className="flex items-center gap-1 text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" onClick={async () => {
                       const confirmed = window.confirm ? window.confirm('Yakin ingin menghapus data ini?') : true;
                       if(confirmed) {
-                        await deleteDoc(doc(db, 'maskapai', item.id));
+                        try {
+                          await deleteDoc(doc(db, 'maskapai', item.id));
+                        } catch (err) {
+                          handleFirestoreError(err, OperationType.DELETE, `maskapai/${item.id}`);
+                        }
                       }
                     }}>
                       <Trash2 className="w-4 h-4" />

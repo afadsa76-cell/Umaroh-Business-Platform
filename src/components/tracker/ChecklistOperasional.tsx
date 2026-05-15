@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PaketTracker } from './types';
-import { updateDoc, doc, db } from '../../firebase';
-import { CheckCircle2, Circle, Clock, Save, FileText, DollarSign, Plane, Package } from 'lucide-react';
-import { handleFirestoreError, OperationType } from '../../utils/firestoreErrorHandler';
+import { updateDoc, doc, db, handleFirestoreError, OperationType } from '../../firebase';
 
 interface Props {
   paket: PaketTracker;

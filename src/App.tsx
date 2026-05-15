@@ -27,9 +27,8 @@ import { ValidasiMitraView } from './components/ValidasiMitraView';
 import { UserDatabaseView } from './components/UserDatabaseView';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users } from 'lucide-react';
-import { auth, db, doc, getDoc } from './firebase';
+import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { handleFirestoreError, OperationType } from './utils/firestoreErrorHandler';
 
 function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);

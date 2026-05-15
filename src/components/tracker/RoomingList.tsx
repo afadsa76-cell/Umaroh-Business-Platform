@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { JamaahTracker } from './types';
-import { updateDoc, doc, db } from '../../firebase';
-import { Users, BedDouble, Bed, Save, User, Plus, X, AlertCircle } from 'lucide-react';
-import { handleFirestoreError, OperationType } from '../../utils/firestoreErrorHandler';
+import { updateDoc, doc, db, handleFirestoreError, OperationType } from '../../firebase';
 
 interface Props {
   paketId: string;

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, TrendingUp, Users, Package, AlertCircle, Hotel, ArrowRight, MessageCircle, Clock, Plane, Calendar, Users2 } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Users, Package, AlertCircle, ArrowRight, MessageCircle, Clock, Plane, Calendar, Users2 } from 'lucide-react';
 import { TabType } from './Navbar';
-import { format, subDays, differenceInDays, parseISO, startOfDay } from 'date-fns';
+import { format, differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import { db, collection, onSnapshot, createUserWithEmailAndPassword } from '../firebase';
+import { db, collection, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
 import { getTransactions } from '../data/transactions';
 import { PaketTracker, JamaahTracker } from './tracker/types';
-import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 import { openWhatsApp } from '../utils/whatsapp';
 
 interface DashboardViewProps {

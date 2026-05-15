@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, db } from '../../firebase';
-import { Plus, Edit2, Trash2, Save, X, FileText, FolderOpen, Package, MessageCircle } from 'lucide-react';
-import { PaketTracker, JamaahTracker } from './types';
-import { handleFirestoreError, OperationType } from '../../utils/firestoreErrorHandler';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, db, handleFirestoreError, OperationType } from '../../firebase';
 import { generateWALink, getWATemplate, openWhatsApp } from '../../utils/whatsapp';
 
 import { GoogleGenAI, Type } from "@google/genai";
@@ -94,7 +91,11 @@ export const TrackerJamaah: React.FC = () => {
       }
 
       if (Object.keys(updateData).length > 0) {
-        await updateDoc(doc(db, 'tracker_jamaah', id), updateData);
+        try {
+          await updateDoc(doc(db, 'tracker_jamaah', id), updateData);
+        } catch (err) {
+          handleFirestoreError(err, OperationType.UPDATE, `tracker_jamaah/${id}`);
+        }
       }
       
       setIsScanning(null);

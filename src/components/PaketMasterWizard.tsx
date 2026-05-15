@@ -41,7 +41,6 @@ import {
   ShoppingBag,
   Shirt,
 } from "lucide-react";
-import { db } from "../firebase";
 import {
   addDoc,
   collection,
@@ -49,11 +48,10 @@ import {
   updateDoc,
   doc,
   onSnapshot,
-} from "firebase/firestore";
-import {
+  db,
   handleFirestoreError,
   OperationType,
-} from "../utils/firestoreErrorHandler";
+} from "../firebase";
 import { generateWALink, openWhatsApp } from "../utils/whatsapp";
 import { hotels } from "../data/hotels";
 import { equipmentData } from "../data/equipment";

@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, db } from '../../firebase';
-import { Plus, Edit2, Trash2, Save, X, ArrowLeft } from 'lucide-react';
-import { PaketTracker, JamaahTracker, KeberangkatanTracker, Timeline } from './types';
-import { generateTimelineEstimasi, getStatusColor } from './utils';
-import { TrackerTimeline } from './TrackerTimeline';
-import { ProgressSummary } from './ProgressSummary';
-import { AlertBox } from './AlertBox';
-import { MapTracking } from './MapTracking';
-import { ChecklistOperasional } from './ChecklistOperasional';
-import { RoomingList } from './RoomingList';
-import { ManifestGenerator } from './ManifestGenerator';
-import { handleFirestoreError, OperationType } from '../../utils/firestoreErrorHandler';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, db, handleFirestoreError, OperationType } from '../../firebase';
 
 export const TrackerPaket: React.FC = () => {
   const [pakets, setPakets] = useState<PaketTracker[]>([]);

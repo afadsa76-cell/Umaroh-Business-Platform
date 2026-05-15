@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle2, Building2, User, Mail, Phone, Lock, CreditCard, ArrowRight, MapPin, Network, Landmark, QrCode, Upload } from 'lucide-react';
-import { db, collection, getDocs, addDoc, query, where } from '../firebase';
-import { 
-  handleFirestoreError,
-  OperationType,
-} from "../utils/firestoreErrorHandler";
+import { db, collection, getDocs, addDoc, query, where, handleFirestoreError, OperationType } from '../firebase';
 import { logoBase64 } from '../utils/logoBase64';
 
 interface PaketKemitraan {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, doc, deleteDoc } from '../firebase';
+import { db, collection, onSnapshot, doc, deleteDoc, handleFirestoreError, OperationType } from '../firebase';
 import { Users, Shield, User, Search, Edit2, Trash2, Mail, Phone, MapPin } from 'lucide-react';
-import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 
 type UserRole = 'admin' | 'mitra' | 'jamaah';
 
@@ -55,6 +54,7 @@ export const UserDatabaseView: React.FC = () => {
         await deleteDoc(doc(db, 'users', id));
       } catch (error) {
         console.error("Error deleting user:", error);
+        handleFirestoreError(error, OperationType.DELETE, `users/${id}`);
         alert("Gagal menghapus user.");
       }
     }

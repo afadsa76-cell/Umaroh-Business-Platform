@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Building2, Code2, ArrowRight, User as UserIcon } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
-import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword } from '../firebase';
+import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, handleFirestoreError, OperationType } from '../firebase';
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
-import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 import { Mail, Lock, LogIn } from 'lucide-react';

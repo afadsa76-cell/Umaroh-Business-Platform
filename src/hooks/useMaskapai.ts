@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, where, doc, updateDoc, getDocs, writeBatch, db } from '../firebase';
+import { collection, onSnapshot, query, where, doc, updateDoc, getDocs, writeBatch, db, handleFirestoreError, OperationType } from '../firebase';
 import { Maskapai, maskapaiData as initialData } from '../data/maskapai';
-import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
 
 export const useMaskapai = () => {
   const [maskapai, setMaskapai] = useState<Maskapai[]>([]);

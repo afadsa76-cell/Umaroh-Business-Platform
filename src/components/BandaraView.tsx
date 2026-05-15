@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, MapPin, X } from 'lucide-react';
-import { db, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from '../firebase';
-import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
+import { db, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, handleFirestoreError, OperationType } from '../firebase';
 
 interface Bandara {
   id: string;
@@ -74,6 +73,7 @@ export const BandaraView: React.FC = () => {
       handleCloseForm();
     } catch (error) {
       console.error("Error saving bandara:", error);
+      handleFirestoreError(error, OperationType.WRITE, 'master_bandara');
       alert('Gagal menyimpan data bandara.');
     }
   };
@@ -95,6 +95,7 @@ export const BandaraView: React.FC = () => {
       alert('Data seed bandara berhasil ditambahkan!');
     } catch (e) {
       console.error(e);
+      handleFirestoreError(e, OperationType.WRITE, 'master_bandara');
       alert('Gagal menambah seed data');
     }
   };
@@ -174,7 +175,11 @@ export const BandaraView: React.FC = () => {
                          <button className="p-1 text-red-600 hover:bg-red-50 rounded" onClick={async () => {
                            const confirmed = window.confirm ? window.confirm('Yakin ingin menghapus ini?') : true;
                            if(confirmed) {
-                             await deleteDoc(doc(db, 'master_bandara', item.id));
+                             try {
+                               await deleteDoc(doc(db, 'master_bandara', item.id));
+                             } catch (err) {
+                               handleFirestoreError(err, OperationType.DELETE, `master_bandara/${item.id}`);
+                             }
                            }
                          }}>
                            <Trash2 className="w-4 h-4" />

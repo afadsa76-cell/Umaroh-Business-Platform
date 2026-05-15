@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, query, where, updateDoc, doc, setDoc } from '../firebase';
-import { KeberangkatanTracker, PaketTracker, JamaahTracker } from './tracker/types';
-import { MapPin, Users, CheckCircle, Clock, Calendar, Phone, AlertTriangle, MessageSquare, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
+import { db, collection, onSnapshot, updateDoc, doc, setDoc, handleFirestoreError, OperationType } from '../firebase';
 
 type TLTab = 'jadwal' | 'jamaah' | 'info';
 

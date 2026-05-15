@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity } from 'lucide-react';
-import { db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs } from '../firebase';
+import { db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, handleFirestoreError, OperationType } from '../firebase';
 import { Maskapai } from '../data/maskapai';
 
 import { PaketMasterWizard } from './PaketMasterWizard';
@@ -48,11 +48,14 @@ export const PaketMasterView: React.FC = () => {
     }, (error) => {
       console.error("Error fetching paket_master:", error);
       setLoading(false);
+      handleFirestoreError(error, OperationType.GET, 'paket_master');
     });
 
     const unsubMaskapai = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Maskapai));
       setMaskapaiList(data);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'maskapai');
     });
 
     const unsubTracker = onSnapshot(collection(db, 'tracker_paket'), (snapshot) => {
@@ -62,6 +65,8 @@ export const PaketMasterView: React.FC = () => {
         const updated = trackers.find(t => t.id === viewingTrackerPaket.id) as PaketTracker;
         if (updated) setViewingTrackerPaket(updated);
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'tracker_paket');
     });
 
     return () => {
@@ -78,6 +83,7 @@ export const PaketMasterView: React.FC = () => {
       showNotification('success', 'Paket berhasil dihapus');
     } catch (error) {
       console.error("Error deleting paket master:", error);
+      handleFirestoreError(error, OperationType.DELETE, `paket_master/${id}`);
       showNotification('error', 'Gagal menghapus data paket master.');
     }
   };
@@ -99,23 +105,35 @@ export const PaketMasterView: React.FC = () => {
 
       // 2. Ensure tracker_paket entry exists
       const trackerQuery = query(collection(db, 'tracker_paket'), where('namaPaket', '==', name));
-      const trackerSnap = await getDocs(trackerQuery);
+      let trackerSnap;
+      try {
+        trackerSnap = await getDocs(trackerQuery);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, 'tracker_paket');
+        throw err;
+      }
       
       if (trackerSnap.empty) {
         const maskapai = maskapaiList.find(m => m.id === maskapaiId);
-        await addDoc(collection(db, 'tracker_paket'), {
-          namaPaket: name,
-          tanggalBerangkat: maskapai?.tanggalKeberangkatan || '',
-          status: 'Persiapan',
-          targetJamaah: 45,
-          terdaftar: 0,
-          createdAt: serverTimestamp()
-        });
+        try {
+          await addDoc(collection(db, 'tracker_paket'), {
+            namaPaket: name,
+            tanggalBerangkat: maskapai?.tanggalKeberangkatan || '',
+            status: 'Persiapan',
+            targetJamaah: 45,
+            terdaftar: 0,
+            createdAt: serverTimestamp()
+          });
+        } catch (err) {
+          handleFirestoreError(err, OperationType.WRITE, 'tracker_paket');
+          throw err;
+        }
       }
 
       showNotification('success', 'Paket berhasil divalidasi dan tracker diaktifkan');
     } catch (error) {
       console.error("Error validating paket:", error);
+      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${id}`);
       showNotification('error', 'Gagal memvalidasi paket');
     }
   };
@@ -130,6 +148,7 @@ export const PaketMasterView: React.FC = () => {
       showNotification('success', 'Paket ditolak dan dikembalikan ke draft');
     } catch (error) {
       console.error("Error rejecting paket:", error);
+      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${id}`);
       showNotification('error', 'Gagal menolak paket');
     }
   };

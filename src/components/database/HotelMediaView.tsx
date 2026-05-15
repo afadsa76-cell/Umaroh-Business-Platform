@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, doc, setDoc, getDocs } from '../../firebase';
+import { db, collection, onSnapshot, doc, setDoc, getDocs, handleFirestoreError, OperationType } from '../../firebase';
 import { Hotel, hotels as staticHotelsList } from '../../data/hotels';
-import { handleFirestoreError, OperationType } from '../../utils/firestoreErrorHandler';
 import { Image, MapPin, Search, Edit3, X, Save, Upload, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleGenAI, Type } from '@google/genai';
 
@@ -92,6 +91,7 @@ export const HotelMediaView: React.FC = () => {
       setIsEditing(null);
     } catch (error) {
       console.error("Error saving media", error);
+      handleFirestoreError(error, OperationType.WRITE, 'hotel_metadata');
       try {
         alert("Gagal menyimpan data.");
       } catch (e) {
@@ -264,14 +264,18 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
           
           const existingMedia = getMediaForHotel(hotel.id, hotel.name);
           
-          await setDoc(docRef, {
-            hotelId: hotel.id,
-            hotelName: hotel.name,
-            city: hotel.city,
-            photoUrl: parsed.photoUrl || existingMedia?.photoUrl || '',
-            distance: parsed.distance || existingMedia?.distance || '',
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
+          try {
+            await setDoc(docRef, {
+              hotelId: hotel.id,
+              hotelName: hotel.name,
+              city: hotel.city,
+              photoUrl: parsed.photoUrl || existingMedia?.photoUrl || '',
+              distance: parsed.distance || existingMedia?.distance || '',
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, 'hotel_metadata');
+          }
         }
       } catch (error) {
         console.error("AI Error for", hotel.name, error);

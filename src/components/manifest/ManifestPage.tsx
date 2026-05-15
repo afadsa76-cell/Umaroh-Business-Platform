@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, query, where } from '../../firebase';
-import { PaketTracker, JamaahTracker } from '../tracker/types';
-import { ManifestTable } from './ManifestTable';
-import { ValidationAlert } from './ValidationAlert';
-import { ExportButton } from './ExportButton';
-import { FileText } from 'lucide-react';
-import { handleFirestoreError, OperationType } from '../../utils/firestoreErrorHandler';
+import { db, collection, onSnapshot, query, where, handleFirestoreError, OperationType } from '../../firebase';
 
 export const ManifestPage: React.FC = () => {
   const [pakets, setPakets] = useState<PaketTracker[]>([]);

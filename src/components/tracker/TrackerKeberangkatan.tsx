@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from '../../firebase';
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
-import { PaketTracker, KeberangkatanTracker } from './types';
-import { handleFirestoreError, OperationType } from '../../utils/firestoreErrorHandler';
+import { db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, handleFirestoreError, OperationType } from '../../firebase';
 
 export const TrackerKeberangkatan: React.FC = () => {
   const [keberangkatans, setKeberangkatans] = useState<KeberangkatanTracker[]>([]);
