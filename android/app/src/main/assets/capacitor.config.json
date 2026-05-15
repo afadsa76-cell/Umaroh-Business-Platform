@@ -3,7 +3,7 @@
 	"appName": "Umaroh Business Platform",
 	"webDir": "dist",
 	"server": {
-		"url": "https://ais-dev-4m77dmjb4ey5b7yl6gaogc-77249463513.asia-southeast1.run.app",
+		"url": "https://umaroh-business-platform.vercel.app/",
 		"allowNavigation": [
 			"*"
 		],
