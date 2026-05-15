@@ -58,15 +58,6 @@ export const HandlingDomestikTemplateView: React.FC = () => {
     setIsGeneratingImage(true);
     
     try {
-      // Ensure input values are captured by temporarily putting them in value attributes
-      const inputs = printRef.current.querySelectorAll('input, textarea');
-      inputs.forEach((input: any) => {
-        input.setAttribute('value', input.value);
-        if (input.tagName === 'TEXTAREA') {
-          input.textContent = input.value;
-        }
-      });
-
       const dataUrl = await captureToDataUrl(printRef.current, {
         pixelRatio: 2,
         backgroundColor: '#ffffff'

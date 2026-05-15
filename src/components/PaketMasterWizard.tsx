@@ -5337,8 +5337,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <FileText className="w-10 h-10" />
                 </div>
              </div>
-             <h1 className="text-4xl font-black text-blue-900 uppercase tracking-tighter italic">DESKRIPSI PAKET</h1>
-             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">SISTEM INTEGRASI PAKET MASTER</p>
+             <h1 className="text-3xl font-black text-blue-900 uppercase">DESKRIPSI PAKET</h1>
+             <p className="text-xs font-bold text-gray-400 uppercase mt-1">SISTEM INTEGRASI PAKET MASTER</p>
            </div>
         </div>
 
@@ -5348,17 +5348,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
               <FileText className="w-5 h-5" />
             </div>
-            <h3 className="font-black text-gray-900 text-sm uppercase tracking-widest">
+            <h3 className="font-black text-gray-900 text-sm uppercase tracking-wide">
               INFORMASI DASAR PAKET
             </h3>
           </div>
 
           <div className="space-y-10">
             <div className="text-center">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
                 NAMA PAKET IBADAH
               </p>
-              <h4 className="text-3xl font-black text-blue-900 italic uppercase tracking-tighter">
+              <h4 className="text-2xl font-black text-blue-900 uppercase">
                 {formData.nama || "UNTITLED PACKAGE"}
               </h4>
             </div>
@@ -5369,7 +5369,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     <Home className="w-6 h-6" />
                  </div>
                  <div>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">KATEGORI & PROGRAM</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">KATEGORI & PROGRAM</p>
                     <p className="text-sm font-black text-gray-700 uppercase">
                       {formData.kategori || "UMRAH REGULER"} {formData.kategori === "UMRAH PLUS" && `(+ ${formData.negaraWisata || "TURKEY"})`}
                     </p>
@@ -5381,7 +5381,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     <Calendar className="w-6 h-6" />
                  </div>
                  <div>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">DURASI & JAMAAH</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">DURASI & JAMAAH</p>
                     <p className="text-sm font-black text-gray-700 uppercase">
                       {formData.durasiHari || 9} HARI - {formData.targetJamaah || 45} PAX
                     </p>
@@ -5393,7 +5393,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     <Plane className="w-6 h-6" />
                  </div>
                  <div>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">KEBERANGKATAN</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">KEBERANGKATAN</p>
                     <p className="text-sm font-black text-gray-700 uppercase flex items-center gap-2">
                        {formData.kotaKeberangkatan || "JAKARTA"} <ArrowRight className="w-3 h-3 text-gray-400" /> SAUDI
                     </p>
@@ -5405,9 +5405,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     <Globe className="w-6 h-6" />
                  </div>
                  <div>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">TANGGAL & URUTAN</p>
-                    <p className="text-sm font-black text-gray-700 uppercase">
-                       {formData.tglBerangkat || "-"} • {formData.urutanKunjungan || "MADINAH-MAKKAH"}
+                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">TANGGAL & URUTAN</p>
+                    <p className="text-[11px] font-black text-gray-700 uppercase">
+                       {formData.tglBerangkat || "-"} | {formData.urutanKunjungan || "MADINAH-MAKKAH"}
                     </p>
                  </div>
               </div>
