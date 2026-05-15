@@ -4,7 +4,7 @@ import { hotels, Hotel } from '../data/hotels';
 import { isDateInRange, parseDateRange } from '../utils/dateUtils';
 import { HANDLING_TIERS } from '../data/handlingSaudi';
 import { visaData } from '../data/visa';
-import html2canvas from 'html2canvas';
+import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
@@ -19,8 +19,6 @@ interface QuotationRow {
   priceTriple?: number | string;
   priceQuad?: number | string;
 }
-
-import { sanitizeForHtml2Canvas } from '../utils/exportUtils';
 
 export const QuotationView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -512,18 +510,11 @@ export const QuotationView: React.FC = () => {
     setIsGeneratingImage(true);
 
     try {
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        onclone: (clonedDoc: Document) => {
-          // Critical: Sanitize modern colors that html2canvas cannot parse
-          sanitizeForHtml2Canvas(clonedDoc);
-        }
+      const image = await captureToDataUrl(printRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
       });
       
-      const image = canvas.toDataURL('image/jpeg', 0.9);
       const filename = `Quotation_${selectedDate || 'Draft'}.jpg`;
 
       const { Capacitor } = await import('@capacitor/core');

@@ -1,105 +1,165 @@
+import html2canvas from 'html2canvas';
 
 /**
- * Sanitizes a cloned document for html2canvas compatibility.
- * Specifically handles modern CSS color functions (oklch, oklab, color-mix) 
- * that Tailwind 4 emits and html2canvas cannot parse.
+ * Converts any color string (oklch, rgb, etc.) to a hex string using the browser's 
+ * native color resolution by drawing to a canvas.
  */
-export const sanitizeForHtml2Canvas = (clonedDoc: Document) => {
-  // 1. Regex to catch modern color functions that html2canvas/SVG renderers often fail at
-  // Handles nesting up to 3 levels: colorFn(arg1, colorFn(arg2, colorFn(arg3)))
-  const inner = '(?:[^()]|\\([^()]*\\))*';
-  const level2 = `(?:[^()]|\\(${inner}\\))*`;
-  const level3 = `(?:[^()]|\\(${level2}\\))*`;
-  const colorFnRegex = new RegExp(`(?:oklch|oklab|color-mix|device-cmyk|light-dark|p3|display-p3|a98-rgb|prophoto-rgb|rec2020|lab|lch)\\s*\\(${level3}\\)`, 'gi');
+/**
+ * Efficiently converts any color value to a standard hex or rgb string.
+ * This acts as a circuit breaker for modern CSS functions that crash html2canvas.
+ */
+const forceStandardColor = (color: string): string => {
+  if (!color || color === 'transparent' || color === 'inherit' || color === 'initial' || color === 'none') {
+    return color;
+  }
 
-  const replaceColor = (match: string) => {
-    const lowerMatch = match.toLowerCase();
-    if (lowerMatch.includes('blue')) return '#2563eb';
-    if (lowerMatch.includes('indigo')) return '#4f46e5';
-    if (lowerMatch.includes('amber')) return '#d97706';
-    if (lowerMatch.includes('red')) return '#dc2626';
-    if (lowerMatch.includes('slate') || lowerMatch.includes('gray')) return '#4b5563';
-    return '#059669'; // Default to emerald for the umaroh theme
-  };
-
-  // 2. Fix all <style> tags (internal styles)
-  const styleTags = Array.from(clonedDoc.querySelectorAll('style'));
-  styleTags.forEach(tag => {
-    if (tag.textContent && colorFnRegex.test(tag.textContent)) {
-      tag.textContent = tag.textContent.replace(colorFnRegex, replaceColor);
+  // If it's already a simple color, return it
+  if (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl')) {
+    // But check for nested functions like color-mix inside rgb (Tailwind 4 sometimes does this)
+    if (!color.includes('(') || color.startsWith('rgb(') || color.startsWith('rgba(')) {
+      if (!color.includes('okl') && !color.includes('color-mix')) {
+        return color;
+      }
     }
-  });
+  }
 
-  // 3. IMPORTANT: Fix external stylesheets (<link rel="stylesheet">)
-  // html2canvas will try to parse these. We need to convert them to <style> tags
-  // with sanitized content or it will crash trying to parse the modern colors.
-  const linkTags = Array.from(clonedDoc.querySelectorAll('link[rel="stylesheet"]'));
-  linkTags.forEach(link => {
+  // Use a reliable fallback mapping for our specific emerald/blue/amber theme
+  const lower = color.toLowerCase();
+  
+  // High-fidelity overrides for the Umaroh theme palette
+  if (lower.includes('blue')) return '#2563eb';
+  if (lower.includes('indigo')) return '#4f46e5';
+  if (lower.includes('amber') || lower.includes('yellow')) return '#d97706';
+  if (lower.includes('red')) return '#dc2626';
+  if (lower.includes('emerald') || lower.includes('green')) return '#059669';
+  if (lower.includes('slate') || lower.includes('gray')) return '#4b5563';
+  if (lower.includes('white')) return '#ffffff';
+  if (lower.includes('black')) return '#000000';
+
+  // If we can't guess the color, try to let the browser resolve it to RGB
+  try {
+    const div = document.createElement('div');
+    div.style.color = color;
+    document.body.appendChild(div);
+    const resolved = window.getComputedStyle(div).color;
+    document.body.removeChild(div);
+    
+    // If it's still oklch/color-mix, the browser failed to resolve to RGB
+    if (resolved.includes('okl') || resolved.includes('color-mix')) {
+      return '#000000'; // Safety first
+    }
+    return resolved;
+  } catch (e) {
+    return '#000000';
+  }
+};
+
+/**
+ * Aggressively sanitizes a document clone by converting all computed styles 
+ * to inline HEX/RGB styles and stripping out problematic modern CSS.
+ */
+export const sanitizeForHtml2Canvas = (clonedDoc: Document, originalElement: HTMLElement) => {
+  // Regex to find ANY modern color function
+  const colorFnRegex = /(?:oklch|oklab|color-mix|device-cmyk|light-dark|p3|display-p3|a98-rgb|prophoto-rgb|rec2020|lab|lch)\s*\((?:[^()]+|\((?:[^()]+|\([^()]*\))*\))*\)/gi;
+
+  // 1. Completely nuke ALL styles in the clone to stop the parser from ever seeing them
+  const styleElements = Array.from(clonedDoc.querySelectorAll('style, link[rel="stylesheet"]'));
+  styleElements.forEach(tag => tag.remove());
+
+  // 2. Mirror styles from the original elements to the clones as absolute values
+  const originalNodes = Array.from(originalElement.querySelectorAll('*'));
+  const clonedNodes = Array.from(clonedDoc.querySelectorAll('*'));
+  
+  // Check if root element itself needs sanitization
+  const rootOriginal = originalElement;
+  const rootCloned = clonedDoc.getElementById(originalElement.id) || clonedDoc.body.querySelector(`#${originalElement.id}`) || clonedNodes[0];
+
+  const sanitizeElement = (orig: HTMLElement, copy: HTMLElement) => {
+    if (!orig || !copy || !copy.style) return;
+    
     try {
-      // In production/Vercel, these are usually same-origin
-      // But we can only do this if they are accessible
-      const href = link.getAttribute('href');
-      if (href && (href.startsWith('/') || href.includes(window.location.host))) {
-        // We can't really "fetch" sync here easily without async, 
-        // but we can try to find the stylesheet in document.styleSheets
-        for (let i = 0; i < document.styleSheets.length; i++) {
-          const sheet = document.styleSheets[i];
-          if (sheet.href && sheet.href.includes(href)) {
-            try {
-              let cssText = '';
-              const rules = sheet.cssRules;
-              for (let j = 0; j < rules.length; j++) {
-                cssText += rules[j].cssText + '\n';
-              }
-              
-              if (colorFnRegex.test(cssText)) {
-                const newStyle = clonedDoc.createElement('style');
-                newStyle.textContent = cssText.replace(colorFnRegex, replaceColor);
-                if (link.parentNode) {
-                  link.parentNode.replaceChild(newStyle, link);
-                }
-              }
-            } catch (e) {
-              console.warn('Could not access cross-origin stylesheet for sanitization:', href);
-            }
-            break;
+      const computed = window.getComputedStyle(orig);
+      
+      // Critical visual properties
+      const props = [
+        'color', 'backgroundColor', 'borderColor', 'fill', 'stroke', 
+        'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
+        'stopColor', 'fontSize', 'fontWeight', 'fontFamily', 'textAlign',
+        'display', 'flexDirection', 'justifyContent', 'alignItems', 'gap',
+        'padding', 'margin', 'position', 'top', 'left', 'right', 'bottom',
+        'width', 'height', 'opacity', 'borderRadius', 'boxShadow', 'overflow',
+        'visibility', 'zIndex', 'lineHeight', 'letterSpacing'
+      ];
+
+      props.forEach(prop => {
+        const val = (computed as any)[prop];
+        if (val) {
+          if (val.includes('okl') || val.includes('color-mix') || val.includes('var(')) {
+            copy.style.setProperty(prop, forceStandardColor(val), 'important');
+          } else {
+            copy.style.setProperty(prop, val, 'important');
           }
         }
-      }
-    } catch (e) {
-      console.error('Error sanitizing link tag:', e);
-    }
-  });
+      });
 
-  // 4. Fix all inline styles and attributes on all elements
+      // Special handling for SVG attributes which html2canvas parses separately
+      if (orig instanceof SVGElement || copy instanceof SVGElement) {
+        ['fill', 'stroke', 'stop-color'].forEach(attr => {
+          const val = orig.getAttribute(attr);
+          if (val && (val.includes('okl') || val.includes('color-mix'))) {
+            copy.setAttribute(attr, forceStandardColor(val));
+          }
+        });
+      }
+    } catch (e) { /* ignore */ }
+  };
+
+  // Sanitize root if possible
+  if (rootOriginal && rootCloned) {
+    sanitizeElement(rootOriginal as HTMLElement, rootCloned as HTMLElement);
+  }
+
+  // Sanitize all descendants
+  for (let i = 0; i < originalNodes.length; i++) {
+    const original = originalNodes[i] as HTMLElement;
+    const cloned = clonedNodes[i] as HTMLElement;
+    if (original && cloned) {
+       sanitizeElement(original, cloned);
+    }
+  }
+
+  // 3. Final safety check: regex replace any remaining strings in inline style attributes
   clonedDoc.querySelectorAll('*').forEach(node => {
-    const element = node as HTMLElement;
-    
-    // Fix inline styles via cssText
-    if (element.style && element.style.cssText) {
-      if (colorFnRegex.test(element.style.cssText)) {
-        element.style.cssText = element.style.cssText.replace(colorFnRegex, replaceColor);
-      }
+    const el = node as HTMLElement;
+    if (el.style && el.style.cssText && colorFnRegex.test(el.style.cssText)) {
+      el.style.cssText = el.style.cssText.replace(colorFnRegex, (m) => forceStandardColor(m));
     }
-    
-    // Fix common color attributes
-    ['fill', 'stroke', 'color', 'background-color', 'stop-color'].forEach(attr => {
-      if (element.hasAttribute(attr)) {
-        const val = element.getAttribute(attr);
-        if (val && colorFnRegex.test(val)) {
-          element.setAttribute(attr, val.replace(colorFnRegex, replaceColor));
-        }
-      }
-    });
+  });
+};
 
-    // Special case for SVGs
-    if (element.tagName.toLowerCase() === 'svg') {
-      element.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      // Ensure stroke-width is numeric for html2canvas
-      const strokeWidth = element.getAttribute('stroke-width');
-      if (strokeWidth && strokeWidth.includes('okl')) {
-        element.setAttribute('stroke-width', '2');
+/**
+ * Robust capture utility using html2canvas with heavy-duty sanitization.
+ */
+export const captureToDataUrl = async (element: HTMLElement, options: any = {}) => {
+  const canvas = await html2canvas(element, {
+    scale: options.pixelRatio || 2,
+    useCORS: true,
+    logging: false,
+    backgroundColor: options.backgroundColor || '#ffffff',
+    onclone: (clonedDoc) => {
+      sanitizeForHtml2Canvas(clonedDoc, element);
+      
+      // If there's a specific container that was originally hidden
+      const content = clonedDoc.getElementById(element.id);
+      if (content) {
+        content.style.display = 'block';
+        content.style.position = 'relative';
+        content.style.left = '0';
+        content.style.top = '0';
+        content.style.visibility = 'visible';
       }
     }
   });
+  
+  return canvas.toDataURL('image/jpeg', options.quality || 0.95);
 };

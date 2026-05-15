@@ -24,8 +24,7 @@ import { OfferingTemplate } from './OfferingTemplate';
 import { db, collection, addDoc, handleFirestoreError, OperationType } from '../firebase';
 import { generateTimelineEstimasi } from './tracker/utils';
 import { Capacitor } from '@capacitor/core';
-import { sanitizeForHtml2Canvas } from '../utils/exportUtils';
-import html2canvas from 'html2canvas';
+import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
 
 import { isDateInRange } from '../utils/dateUtils';
 
@@ -637,16 +636,10 @@ export const SalesOrderView: React.FC = () => {
   const handleGenerateJPG = async () => {
     if (offeringRef.current) {
       try {
-        const canvas = await html2canvas(offeringRef.current, { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#FFC000',
-          onclone: (clonedDoc: Document) => {
-            sanitizeForHtml2Canvas(clonedDoc);
-          }
+        const imgData = await captureToDataUrl(offeringRef.current, {
+          pixelRatio: 2,
+          backgroundColor: '#FFC000'
         });
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         
         if (Capacitor.isNativePlatform()) {
           const { Filesystem, Directory } = await import('@capacitor/filesystem');
@@ -678,24 +671,26 @@ export const SalesOrderView: React.FC = () => {
         const tableElement = tableRef.current.querySelector('table');
         if (!tableElement) return;
 
-        const canvas = await html2canvas(tableElement, { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            sanitizeForHtml2Canvas(clonedDoc);
-          }
+        const imgData = await captureToDataUrl(tableElement, {
+          pixelRatio: 2,
+          backgroundColor: '#ffffff'
         });
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         
+        // We still need a canvas to get dimensions for the PDF easily, 
+        // but we can create it from the image data
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.src = imgData;
+        });
+
         const pdf = new jsPDF({
           orientation: tableElement.scrollWidth > tableElement.scrollHeight ? 'landscape' : 'portrait',
           unit: 'px',
-          format: [canvas.width, canvas.height]
+          format: [img.width, img.height]
         });
         
-        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+        pdf.addImage(imgData, 'JPEG', 0, 0, img.width, img.height);
         
         if (Capacitor.isNativePlatform()) {
           const { Filesystem, Directory } = await import('@capacitor/filesystem');
@@ -722,22 +717,23 @@ export const SalesOrderView: React.FC = () => {
   const handleGeneratePDF = async () => {
     if (offeringRef.current) {
       try {
-        const canvas = await html2canvas(offeringRef.current, { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#FFC000',
-          onclone: (clonedDoc: Document) => {
-            sanitizeForHtml2Canvas(clonedDoc);
-          }
+        const imgData = await captureToDataUrl(offeringRef.current, {
+          pixelRatio: 2,
+          backgroundColor: '#FFC000'
         });
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.src = imgData;
+        });
+
         const pdf = new jsPDF({
-          orientation: 'portrait',
+          orientation: img.width > img.height ? 'landscape' : 'portrait',
           unit: 'px',
-          format: [canvas.width, canvas.height]
+          format: [img.width, img.height]
         });
-        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+        pdf.addImage(imgData, 'JPEG', 0, 0, img.width, img.height);
         
         if (Capacitor.isNativePlatform()) {
           const { Filesystem, Directory } = await import('@capacitor/filesystem');

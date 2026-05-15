@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Download, RefreshCw, MapPin, Search } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { sanitizeForHtml2Canvas } from '../utils/exportUtils';
+import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
 import { maskapaiData } from '../data/maskapai';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
@@ -74,43 +73,42 @@ export const MaskapaiTemplateView: React.FC = () => {
 
   const handleDownloadImage = async () => {
     if (!printRef.current) return;
-    
     setIsGeneratingImage(true);
     
-    const originalElement = printRef.current;
-    const clone = originalElement.cloneNode(true) as HTMLElement;
-    
-    clone.style.position = 'fixed';
-    clone.style.left = '-9999px';
-    clone.style.top = '0';
-    clone.style.width = `${originalElement.offsetWidth}px`;
-    document.body.appendChild(clone);
-    
-    // Sanitize colors for html2canvas compatibility
-    sanitizeForHtml2Canvas(clone.ownerDocument);
-    
     try {
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#FDB913',
-        onclone: (clonedDoc: Document) => {
-          sanitizeForHtml2Canvas(clonedDoc);
-        }
-      } as Parameters<typeof html2canvas>[1]);
+      const dataUrl = await captureToDataUrl(printRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#FDB913'
+      });
+      
+      const filename = `PriceList_Maskapai_${new Date().toISOString().split('T')[0]}.jpg`;
+      
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+        
+        const base64Data = dataUrl.split(',')[1];
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Cache
+        });
 
-      const image = canvas.toDataURL('image/jpeg', 0.9);
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `PriceList_Maskapai_${new Date().toISOString().split('T')[0]}.jpg`;
-      link.click();
-
+        await Share.share({
+          title: filename,
+          url: result.uri
+        });
+      } else {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename;
+        link.click();
+      }
     } catch (_error) {
       console.error('Image generation failed:', _error);
       alert('Failed to generate image. Please try again.');
     } finally {
-      document.body.removeChild(clone);
       setIsGeneratingImage(false);
     }
   };

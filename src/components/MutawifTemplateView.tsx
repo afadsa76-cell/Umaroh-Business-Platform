@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, RefreshCw, Download, Users, DollarSign, MapPin } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { sanitizeForHtml2Canvas } from '../utils/exportUtils';
+import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
@@ -97,77 +96,51 @@ export const MutawifTemplateView: React.FC = () => {
 
   const handleDownloadImage = async () => {
     if (!printRef.current) return;
-    
     setIsGeneratingImage(true);
     
-    const originalElement = printRef.current;
-    const originalInputs = originalElement.querySelectorAll('input, textarea, select');
-    originalInputs.forEach((el: any) => {
-      if (el.tagName === 'INPUT') {
-        el.setAttribute('value', el.value);
-      } else if (el.tagName === 'TEXTAREA') {
-        el.innerHTML = el.value;
-      }
-    });
-
-    const clone = originalElement.cloneNode(true) as HTMLElement;
-    
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    clone.style.top = '0';
-    clone.style.width = `${originalElement.offsetWidth}px`;
-    document.body.appendChild(clone);
-    
-    // Sanitize colors for html2canvas compatibility
-    sanitizeForHtml2Canvas(clone.ownerDocument);
-    
     try {
-      const cloneInputs = clone.querySelectorAll('input, textarea, select');
-      cloneInputs.forEach((el: any) => {
-        const div = document.createElement('div');
-        div.className = el.className;
-        div.style.cssText = el.style.cssText;
-        
-        const computedStyle = window.getComputedStyle(el);
-        div.style.textAlign = computedStyle.textAlign;
-        div.style.display = 'flex';
-        div.style.alignItems = 'center';
-        if (computedStyle.textAlign === 'center') {
-            div.style.justifyContent = 'center';
-        } else if (computedStyle.textAlign === 'right') {
-            div.style.justifyContent = 'flex-end';
-        } else {
-            div.style.justifyContent = 'flex-start';
-        }
-        
-        div.innerText = el.value || el.getAttribute('value') || '';
-        
-        if (el.parentNode) {
-          el.parentNode.replaceChild(div, el);
+      // Ensure input values are captured by temporarily putting them in value attributes
+      const inputs = printRef.current.querySelectorAll('input, textarea');
+      inputs.forEach((input: any) => {
+        input.setAttribute('value', input.value);
+        if (input.tagName === 'TEXTAREA') {
+          input.textContent = input.value;
         }
       });
 
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        onclone: (clonedDoc: Document) => {
-          sanitizeForHtml2Canvas(clonedDoc);
-        }
-      } as any);
+      const dataUrl = await captureToDataUrl(printRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
+      });
+      
+      const filename = `PriceList_Mutawif_${selectedDate || 'Draft'}.jpg`;
+      
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+        
+        const base64Data = dataUrl.split(',')[1];
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Cache
+        });
 
-      const image = canvas.toDataURL('image/jpeg', 0.9);
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `PriceList_Mutawif_${selectedDate || 'Draft'}.jpg`;
-      link.click();
-
+        await Share.share({
+          title: filename,
+          url: result.uri
+        });
+      } else {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename;
+        link.click();
+      }
     } catch (error) {
       console.error('Image generation failed:', error);
       alert('Failed to generate image. Please try again.');
     } finally {
-      document.body.removeChild(clone);
       setIsGeneratingImage(false);
     }
   };
