@@ -3,9 +3,15 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, db, handleFi
 import { generateWALink, getWATemplate, openWhatsApp } from '../../utils/whatsapp';
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Camera, RefreshCw } from 'lucide-react';
+import { Camera, RefreshCw, Plus, MessageCircle, Package, FolderOpen, FileText, Edit2, Trash2, Save, X } from 'lucide-react';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getAi = () => {
+  const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY);
+  if (!apiKey) {
+    throw new Error("API Key Gemini tidak ditemukan. Silakan atur GEMINI_API_KEY atau VITE_GEMINI_API_KEY.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export const TrackerJamaah: React.FC = () => {
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
@@ -29,7 +35,7 @@ export const TrackerJamaah: React.FC = () => {
         reader.readAsDataURL(file);
       });
 
-      const response = await ai.models.generateContent({
+      const response = await getAi().models.generateContent({
         model: "gemini-3-flash-preview",
         contents: [
           {
@@ -378,7 +384,7 @@ export const TrackerJamaah: React.FC = () => {
                                 reader.readAsDataURL(file);
                               });
 
-                              const response = await ai.models.generateContent({
+                              const response = await getAi().models.generateContent({
                                 model: "gemini-3-flash-preview",
                                 contents: [{
                                   parts: [

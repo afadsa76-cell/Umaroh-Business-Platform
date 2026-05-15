@@ -126,16 +126,7 @@ export const HotelMediaView: React.FC = () => {
   const handleAiAssist = async (hotel: any) => {
     setIsGenerating(hotel.id);
     try {
-      let apiKey = '';
-      try {
-        // @ts-ignore
-        apiKey = process.env.GEMINI_API_KEY;
-      } catch (e) {}
-
-      if (!apiKey) {
-        // @ts-ignore
-        apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-      }
+      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || '';
 
       if (!apiKey) {
         throw new Error('API Key Gemini tidak ditemukan.');
@@ -182,22 +173,13 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
   };
 
   const handleAiAssistBulk = async () => {
-    let apiKey = '';
-    try {
-      // @ts-ignore
-      apiKey = process.env.GEMINI_API_KEY;
-    } catch (e) {}
-
-    if (!apiKey) {
-      // @ts-ignore
-      apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-    }
+    const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || '';
 
     if (!apiKey) {
       try {
         alert('API Key Gemini tidak ditemukan.');
-      } catch (e) {
-        console.log('API Key Gemini tidak ditemukan.');
+      } catch (err) {
+        console.log('API Key Gemini tidak ditemukan.', err);
       }
       return;
     }

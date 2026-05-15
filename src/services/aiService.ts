@@ -1,9 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+let aiInstance: GoogleGenAI | null = null;
+
+export const getAi = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined in the environment.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 export const generateItinerary = async (packageData: any) => {
+  const ai = getAi();
   const prompt = `Generate a detailed day-by-day itinerary for an Umrah package with the following details:
   Package Name: ${packageData.nama}
   Duration: ${packageData.durasiHari} days
@@ -28,6 +40,7 @@ export const generateItinerary = async (packageData: any) => {
 };
 
 export const generateMarketingCopy = async (packageData: any) => {
+  const ai = getAi();
   const prompt = `Create a marketing social media post and a persuasive description for this Umrah package:
   Package Name: ${packageData.nama}
   Duration: ${packageData.durasiHari} days
