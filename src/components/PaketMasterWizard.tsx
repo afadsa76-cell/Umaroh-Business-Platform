@@ -1086,35 +1086,35 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         alert("Gagal mengunduh PDF. Silakan coba lagi.");
       }
     } else {
-      // JPG Export using html2canvas directly
+      // JPG Export using html-to-image
       try {
-        // @ts-ignore
-        const html2canvas = (await import('html2canvas')).default;
+        const { toJpeg } = await import('html-to-image');
         
-        const canvas = await html2canvas(pdfElement, {
-          scale: 3,
-          useCORS: true,
+        // Prepare the element (similar to onclone logic)
+        const originalDisplay = pdfElement.style.display;
+        const originalVisibility = pdfElement.style.visibility;
+        const originalPosition = pdfElement.style.position;
+        
+        pdfElement.style.display = 'block';
+        pdfElement.style.visibility = 'visible';
+        pdfElement.style.position = 'relative';
+        pdfElement.style.width = '210mm';
+        pdfElement.style.backgroundColor = '#ffffff';
+
+        const dataUrl = await toJpeg(pdfElement, { 
+          quality: 0.95,
           backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            const el = clonedDoc.getElementById('pdf-export-content');
-            if (el) {
-              el.style.display = 'block';
-              el.style.position = 'relative';
-              el.style.left = '0';
-              el.style.top = '0';
-              el.style.visibility = 'visible';
-              el.style.width = '210mm';
-              el.style.backgroundColor = '#ffffff';
-              el.style.color = '#111827';
-            }
-            
-            // Sanitize colors for html2canvas compatibility
-            sanitizeForHtml2Canvas(clonedDoc);
-          }
+          pixelRatio: 2,
+          skipFonts: false
         });
+
+        // Restore original styles
+        pdfElement.style.display = originalDisplay;
+        pdfElement.style.visibility = originalVisibility;
+        pdfElement.style.position = originalPosition;
+        pdfElement.style.width = '';
         
-        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        await import('../utils/fileUtils').then(m => m.downloadFile(jpgDataUrl, `${filename}.jpg`));
+        await import('../utils/fileUtils').then(m => m.downloadFile(dataUrl, `${filename}.jpg`));
       } catch (error) {
         console.error('JPG generation failed:', error);
         alert("Gagal mengunduh JPG. Silakan coba lagi.");

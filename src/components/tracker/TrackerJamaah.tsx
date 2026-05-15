@@ -15,6 +15,7 @@ const getAi = () => {
 
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Toast } from '@capacitor/toast';
 
 export const TrackerJamaah: React.FC = () => {
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
@@ -127,18 +128,37 @@ export const TrackerJamaah: React.FC = () => {
   const handlePhotoAction = async (id: string, e?: React.ChangeEvent<HTMLInputElement>) => {
     if (Capacitor.isNativePlatform()) {
       try {
+        await Toast.show({
+          text: 'Membuka Kamera/Galeri...',
+          duration: 'short'
+        });
+
         const image = await CapCamera.getPhoto({
           quality: 90,
           allowEditing: false,
           resultType: CameraResultType.Base64,
-          source: CameraSource.Prompt
+          source: CameraSource.Prompt,
+          promptLabelHeader: 'Scan Dokumen',
+          promptLabelPhoto: 'Ambil dari Galeri',
+          promptLabelPicture: 'Ambil Foto Baru'
         });
         
         if (image.base64String) {
+          await Toast.show({
+            text: 'Memproses Gambar AI...',
+            duration: 'short'
+          });
           scanDocument(id, image.base64String, image.format === 'png' ? 'image/png' : 'image/jpeg');
         }
       } catch (err) {
         console.error('Camera error:', err);
+        // Error when user cancels is expected
+        if (err instanceof Error && !err.message.includes('User cancelled')) {
+          await Toast.show({
+            text: 'Gagal membuka kamera: ' + (err.message || 'Unknown error'),
+            duration: 'long'
+          });
+        }
       }
     } else if (e) {
       const file = e.target.files?.[0];

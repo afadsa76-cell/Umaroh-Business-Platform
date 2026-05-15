@@ -509,108 +509,25 @@ export const QuotationView: React.FC = () => {
 
   const handleDownloadImage = async () => {
     if (!printRef.current) return;
-    
     setIsGeneratingImage(true);
-    
-    // Sync input values to attributes so cloneNode copies them correctly
-    const originalElement = printRef.current;
-    const originalInputs = originalElement.querySelectorAll('input, textarea, select');
-    originalInputs.forEach((el: any) => {
-      if (el.tagName === 'INPUT') {
-        if (el.type === 'checkbox' || el.type === 'radio') {
-          if (el.checked) el.setAttribute('checked', 'checked');
-          else el.removeAttribute('checked');
-        } else {
-          el.setAttribute('value', el.value);
-        }
-      } else if (el.tagName === 'TEXTAREA') {
-        el.innerHTML = el.value;
-      } else if (el.tagName === 'SELECT') {
-        const options = el.querySelectorAll('option');
-        options.forEach((opt: any) => {
-          if (opt.selected) opt.setAttribute('selected', 'selected');
-          else opt.removeAttribute('selected');
-        });
-      }
-    });
-
-    // Create a clone to sanitize
-    const clone = originalElement.cloneNode(true) as HTMLElement;
-    
-    // Position it off-screen
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    clone.style.top = '0';
-    clone.style.width = `${originalElement.offsetWidth}px`;
-    document.body.appendChild(clone);
-
-    // Sanitize colors in the clone before capturing
-    sanitizeForHtml2Canvas(clone.ownerDocument);
 
     try {
-      // Remove excluded elements from clone
-      const excludedElements = clone.querySelectorAll('[data-pdf-exclude]');
-      excludedElements.forEach(el => el.remove());
-
-      // Replace inputs with divs in the clone so html2canvas renders them perfectly
-      const cloneInputs = clone.querySelectorAll('input, textarea, select');
-      cloneInputs.forEach((el: any) => {
-        const div = document.createElement('div');
-        div.className = el.className;
-        div.style.cssText = el.style.cssText;
-        
-        // Ensure text alignment matches
-        const computedStyle = window.getComputedStyle(el);
-        div.style.textAlign = computedStyle.textAlign;
-        div.style.display = 'flex';
-        div.style.alignItems = 'center';
-        if (computedStyle.textAlign === 'center') {
-            div.style.justifyContent = 'center';
-        } else if (computedStyle.textAlign === 'right') {
-            div.style.justifyContent = 'flex-end';
-        } else {
-            div.style.justifyContent = 'flex-start';
-        }
-        
-        if (el.tagName === 'SELECT') {
-          const selected = el.querySelector('option[selected]');
-          div.innerText = selected ? selected.text : (el.options && el.options[0] ? el.options[0].text : '');
-        } else {
-          div.innerText = el.value || el.getAttribute('value') || '';
-        }
-        
-        if (el.tagName === 'TEXTAREA') {
-          div.style.whiteSpace = 'pre-wrap';
-          div.style.alignItems = 'flex-start';
-        }
-
-        if (el.parentNode) {
-          el.parentNode.replaceChild(div, el);
-        }
+      const { toJpeg } = await import('html-to-image');
+      
+      const image = await toJpeg(printRef.current, {
+        quality: 0.95,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        skipFonts: false,
+        cacheBust: true,
       });
-
-      // Sanitize colors in the clone
-      sanitizeForHtml2Canvas(clone.ownerDocument);
-
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff', // Ensure white background
-        onclone: (clonedDoc: Document) => {
-          sanitizeForHtml2Canvas(clonedDoc);
-        }
-      } as any);
-
-      const image = canvas.toDataURL('image/jpeg', 0.9);
+      
       const filename = `Quotation_${selectedDate || 'Draft'}.jpg`;
       await import('../utils/fileUtils').then(m => m.downloadFile(image, filename));
     } catch (error) {
       console.error('Image generation failed:', error);
       alert('Failed to generate image. Please try again.');
     } finally {
-      // Cleanup
-      document.body.removeChild(clone);
       setIsGeneratingImage(false);
     }
   };
