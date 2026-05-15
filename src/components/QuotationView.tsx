@@ -603,11 +603,8 @@ export const QuotationView: React.FC = () => {
       } as any);
 
       const image = canvas.toDataURL('image/jpeg', 0.9);
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `Quotation_${selectedDate || 'Draft'}.jpg`;
-      link.click();
-
+      const filename = `Quotation_${selectedDate || 'Draft'}.jpg`;
+      await import('../utils/fileUtils').then(m => m.downloadFile(image, filename));
     } catch (error) {
       console.error('Image generation failed:', error);
       alert('Failed to generate image. Please try again.');

@@ -1072,7 +1072,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       };
 
       try {
-        await html2pdf().from(pdfElement).set(opt).save();
+        const h2p = html2pdf().from(pdfElement).set(opt);
+        const { Capacitor } = await import('@capacitor/core');
+        
+        if (Capacitor.isNativePlatform()) {
+          const pdfDataUri = await h2p.output('datauristring');
+          await import('../utils/fileUtils').then(m => m.downloadFile(pdfDataUri, `${filename}.pdf`));
+        } else {
+          await h2p.save();
+        }
       } catch (error) {
         console.error('PDF generation failed:', error);
         alert("Gagal mengunduh PDF. Silakan coba lagi.");
@@ -1105,10 +1113,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           }
         });
         
-        const link = document.createElement('a');
-        link.download = `${filename}.jpg`;
-        link.href = canvas.toDataURL('image/jpeg', 0.9);
-        link.click();
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        await import('../utils/fileUtils').then(m => m.downloadFile(jpgDataUrl, `${filename}.jpg`));
       } catch (error) {
         console.error('JPG generation failed:', error);
         alert("Gagal mengunduh JPG. Silakan coba lagi.");

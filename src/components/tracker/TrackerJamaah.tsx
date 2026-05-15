@@ -13,6 +13,9 @@ const getAi = () => {
   return new GoogleGenAI({ apiKey });
 };
 
+import { Capacitor } from '@capacitor/core';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+
 export const TrackerJamaah: React.FC = () => {
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
   const [pakets, setPakets] = useState<PaketTracker[]>([]);
@@ -22,18 +25,27 @@ export const TrackerJamaah: React.FC = () => {
   const [viewMode, setViewMode] = useState<'tracker' | 'manifest'>('tracker');
   const [isScanning, setIsScanning] = useState<string | null>(null);
 
-  const scanDocument = async (id: string, file: File) => {
+  const scanDocument = async (id: string, fileOrBase64: File | string, mimeType?: string) => {
     try {
       setIsScanning(id);
       
-      const reader = new FileReader();
-      const base64Data = await new Promise<string>((resolve) => {
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          resolve(base64);
-        };
-        reader.readAsDataURL(file);
-      });
+      let base64Data = '';
+      let type = '';
+
+      if (typeof fileOrBase64 === 'string') {
+        base64Data = fileOrBase64;
+        type = mimeType || 'image/jpeg';
+      } else {
+        const reader = new FileReader();
+        base64Data = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+          reader.readAsDataURL(fileOrBase64);
+        });
+        type = fileOrBase64.type;
+      }
 
       const response = await getAi().models.generateContent({
         model: "gemini-3-flash-preview",
@@ -41,7 +53,7 @@ export const TrackerJamaah: React.FC = () => {
           {
             parts: [
               { text: "Ekstrak data dari gambar Paspor atau KTP ini. Berikan hasil dalam format JSON dengan field: title (LAKI-LAKI/PEREMPUAN/MR/MRS/MS), nik (hanya untuk KTP), no_paspor (hanya untuk Paspor), nama_paspor, tgl_issue_paspor (YYYY-MM-DD), tgl_exp_paspor (YYYY-MM-DD), kota_paspor, tempat_lahir, tanggal_lahir (YYYY-MM-DD), kewarganegaraan. Jika field tidak ditemukan gunakan null." },
-              { inlineData: { data: base64Data, mimeType: file.type } }
+              { inlineData: { data: base64Data, mimeType: type } }
             ]
           }
         ],
@@ -109,6 +121,28 @@ export const TrackerJamaah: React.FC = () => {
       console.error("Scanning error:", error);
       setIsScanning(null);
       alert("Gagal melakukan scan dokumen. Pastikan gambar jelas dan merupakan KTP atau Paspor.");
+    }
+  };
+
+  const handlePhotoAction = async (id: string, e?: React.ChangeEvent<HTMLInputElement>) => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const image = await CapCamera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Prompt
+        });
+        
+        if (image.base64String) {
+          scanDocument(id, image.base64String, image.format === 'png' ? 'image/png' : 'image/jpeg');
+        }
+      } catch (err) {
+        console.error('Camera error:', err);
+      }
+    } else if (e) {
+      const file = e.target.files?.[0];
+      if (file) scanDocument(id, file);
     }
   };
 
@@ -508,7 +542,14 @@ export const TrackerJamaah: React.FC = () => {
                     <td className="p-2 border border-gray-100 text-center text-xs text-gray-500">{index + 1}</td>
                     <td className="p-1 border border-gray-100 text-center">
                       <div className="flex justify-center">
-                        <label className={`cursor-pointer p-1.5 rounded-full transition-colors ${isScanning === jamaah.id ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-600'}`}>
+                        <label 
+                          onClick={(e) => {
+                            if (Capacitor.isNativePlatform()) {
+                              e.preventDefault();
+                              handlePhotoAction(jamaah.id);
+                            }
+                          }}
+                          className={`cursor-pointer p-1.5 rounded-full transition-colors ${isScanning === jamaah.id ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-600'}`}>
                           {isScanning === jamaah.id ? (
                             <RefreshCw className="w-4 h-4 animate-spin" />
                           ) : (
@@ -519,10 +560,7 @@ export const TrackerJamaah: React.FC = () => {
                             className="hidden" 
                             accept="image/*"
                             capture="environment"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) scanDocument(jamaah.id, file);
-                            }}
+                            onChange={(e) => handlePhotoAction(jamaah.id, e)}
                             disabled={isScanning !== null}
                           />
                         </label>
@@ -629,6 +667,12 @@ export const TrackerJamaah: React.FC = () => {
                   <td className="p-2 text-center">
                     <div className="flex justify-center">
                       <label 
+                        onClick={(e) => {
+                          if (Capacitor.isNativePlatform()) {
+                            e.preventDefault();
+                            handlePhotoAction(jamaah.id);
+                          }
+                        }}
                         title="Scan Paspor/KTP"
                         className={`cursor-pointer p-1.5 rounded-full transition-colors ${isScanning === jamaah.id ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-600'}`}
                       >
@@ -642,17 +686,7 @@ export const TrackerJamaah: React.FC = () => {
                           className="hidden" 
                           accept="image/*"
                           capture="environment"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              // For editing, we use the same scanDocument but we want it to update formData too
-                              // Actually scanDocument updates Firestore directly. 
-                              // For consistency with the edit form, maybe it should update formData first?
-                              // But Firestore update is fine too as it will trigger a re-render.
-                              // Let's stick to scanDocument which updates Firestore directly for existing IDs.
-                              scanDocument(jamaah.id, file);
-                            }
-                          }}
+                          onChange={(e) => handlePhotoAction(jamaah.id, e)}
                           disabled={isScanning !== null}
                         />
                       </label>
@@ -711,6 +745,12 @@ export const TrackerJamaah: React.FC = () => {
                   <td className="p-3 border-gray-100 text-center">
                     <div className="flex justify-center">
                       <label 
+                        onClick={(e) => {
+                          if (Capacitor.isNativePlatform()) {
+                            e.preventDefault();
+                            handlePhotoAction(jamaah.id);
+                          }
+                        }}
                         title="Scan Paspor/KTP"
                         className={`cursor-pointer p-1.5 rounded-full transition-colors ${isScanning === jamaah.id ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-600'}`}
                       >
@@ -724,10 +764,7 @@ export const TrackerJamaah: React.FC = () => {
                           className="hidden" 
                           accept="image/*"
                           capture="environment"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) scanDocument(jamaah.id, file);
-                          }}
+                          onChange={(e) => handlePhotoAction(jamaah.id, e)}
                           disabled={isScanning !== null}
                         />
                       </label>
