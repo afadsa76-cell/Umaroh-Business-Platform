@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Calendar, Clock, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Package, Clock, ArrowRight } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where } from '../firebase';
 
 interface Booking {
@@ -9,7 +9,6 @@ interface Booking {
   statusPembayaran: string;
   statusKeberangkatan: string;
   totalHarga: number;
-  createdAt: any;
 }
 
 interface PaketInfo {

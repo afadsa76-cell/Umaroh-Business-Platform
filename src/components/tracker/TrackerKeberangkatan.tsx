@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, handleFirestoreError, OperationType } from '../../firebase';
+import { KeberangkatanTracker, PaketTracker } from './types';
+import { Plus, Save, X, Edit2, Trash2 } from 'lucide-react';
 
 export const TrackerKeberangkatan: React.FC = () => {
   const [keberangkatans, setKeberangkatans] = useState<KeberangkatanTracker[]>([]);
@@ -28,8 +30,8 @@ export const TrackerKeberangkatan: React.FC = () => {
     
     try {
       const dataToSave = { ...formData };
-      delete (dataToSave as any).id;
-      Object.keys(dataToSave).forEach(key => (dataToSave as any)[key] === undefined && delete (dataToSave as any)[key]);
+      delete (dataToSave as { id?: string }).id;
+      Object.keys(dataToSave).forEach(key => (dataToSave as Record<string, unknown>)[key] === undefined && delete (dataToSave as Record<string, unknown>)[key]);
 
       if (isEditing) {
         await updateDoc(doc(db, 'tracker_keberangkatan', isEditing), dataToSave);
@@ -126,19 +128,19 @@ export const TrackerKeberangkatan: React.FC = () => {
                   <input type="text" placeholder="Mutawwif" className="w-full p-1.5 border rounded text-xs" value={formData.mutawwif || ''} onChange={e => setFormData({...formData, mutawwif: e.target.value})} />
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVisa || 'Proses'} onChange={e => setFormData({...formData, statusVisa: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVisa || 'Proses'} onChange={e => setFormData({...formData, statusVisa: e.target.value as 'Proses' | 'Selesai'})}>
                     <option value="Proses">Proses</option>
                     <option value="Selesai">Selesai</option>
                   </select>
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusTiket || 'Booked'} onChange={e => setFormData({...formData, statusTiket: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusTiket || 'Booked'} onChange={e => setFormData({...formData, statusTiket: e.target.value as 'Booked' | 'Issued'})}>
                     <option value="Booked">Booked</option>
                     <option value="Issued">Issued</option>
                   </select>
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusHotel || 'Pending'} onChange={e => setFormData({...formData, statusHotel: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusHotel || 'Pending'} onChange={e => setFormData({...formData, statusHotel: e.target.value as 'Pending' | 'Confirmed'})}>
                     <option value="Pending">Pending</option>
                     <option value="Confirmed">Confirmed</option>
                   </select>
@@ -179,19 +181,19 @@ export const TrackerKeberangkatan: React.FC = () => {
                   <input type="text" placeholder="Mutawwif" className="w-full p-1.5 border rounded text-xs" value={formData.mutawwif || ''} onChange={e => setFormData({...formData, mutawwif: e.target.value})} />
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVisa || 'Proses'} onChange={e => setFormData({...formData, statusVisa: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVisa || 'Proses'} onChange={e => setFormData({...formData, statusVisa: e.target.value as 'Proses' | 'Selesai'})}>
                     <option value="Proses">Proses</option>
                     <option value="Selesai">Selesai</option>
                   </select>
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusTiket || 'Booked'} onChange={e => setFormData({...formData, statusTiket: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusTiket || 'Booked'} onChange={e => setFormData({...formData, statusTiket: e.target.value as 'Booked' | 'Issued'})}>
                     <option value="Booked">Booked</option>
                     <option value="Issued">Issued</option>
                   </select>
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusHotel || 'Pending'} onChange={e => setFormData({...formData, statusHotel: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusHotel || 'Pending'} onChange={e => setFormData({...formData, statusHotel: e.target.value as 'Pending' | 'Confirmed'})}>
                     <option value="Pending">Pending</option>
                     <option value="Confirmed">Confirmed</option>
                   </select>

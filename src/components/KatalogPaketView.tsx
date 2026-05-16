@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, MapPin, ArrowRight, Package, Users, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Search, CheckCircle2 } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp } from '../firebase';
 
 interface PaketMaster {
@@ -23,11 +23,24 @@ interface PaketMitra {
   status: string;
 }
 
+interface DisplayPaket {
+  id: string;
+  type: string;
+  displayName: string;
+  displayPrice: number;
+  deskripsi: string;
+  sisaKuota: number;
+  paketMasterId?: string;
+  mitraId?: string;
+  hargaDasar?: number;
+  hargaJual?: number;
+}
+
 export const KatalogPaketView: React.FC = () => {
   const [paketMasters, setPaketMasters] = useState<PaketMaster[]>([]);
   const [paketMitras, setPaketMitras] = useState<PaketMitra[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPaket, setSelectedPaket] = useState<any | null>(null);
+  const [selectedPaket, setSelectedPaket] = useState<DisplayPaket | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   const userId = auth.currentUser?.uid;

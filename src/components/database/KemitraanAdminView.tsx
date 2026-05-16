@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, doc, updateDoc, setDoc, getDocs } from '../../firebase';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc } from '../../firebase';
 import { Edit2, CheckCircle, XCircle, Users, Package, Save, X } from 'lucide-react';
 
 type AdminTab = 'paket' | 'pendaftaran';
@@ -199,7 +199,7 @@ export const KemitraanAdminView: React.FC = () => {
                     try {
                       const d = new Date(p.createdAt);
                       return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID');
-                    } catch (e) {
+                    } catch {
                       return '-';
                     }
                   })()}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, where, doc, updateDoc, getDocs, writeBatch, db, handleFirestoreError, OperationType } from '../firebase';
+import { collection, onSnapshot, doc, updateDoc, getDocs, writeBatch, db, handleFirestoreError, OperationType } from '../firebase';
 import { Maskapai, maskapaiData as initialData } from '../data/maskapai';
 
 export const useMaskapai = () => {

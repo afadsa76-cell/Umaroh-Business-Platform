@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Mail, MapPin, Globe } from 'lucide-react';
+import { Phone, Mail, Globe } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
 import { openWhatsApp } from '../utils/whatsapp';
 

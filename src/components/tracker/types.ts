@@ -99,4 +99,5 @@ export interface KeberangkatanTracker {
   statusVisa: 'Proses' | 'Selesai';
   statusTiket: 'Booked' | 'Issued';
   statusHotel: 'Pending' | 'Confirmed';
+  status?: string;
 }

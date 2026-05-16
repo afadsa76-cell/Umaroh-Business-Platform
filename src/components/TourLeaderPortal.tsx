@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, onSnapshot, updateDoc, doc, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { KeberangkatanTracker, PaketTracker, JamaahTracker } from './tracker/types';
+import { 
+  ChevronRight, 
+  Calendar, 
+  Users, 
+  MapPin, 
+  Clock, 
+  CheckCircle2, 
+  Phone, 
+  AlertTriangle, 
+  MessageSquare 
+} from 'lucide-react';
 
 type TLTab = 'jadwal' | 'jamaah' | 'info';
 
@@ -83,7 +95,7 @@ export const TourLeaderPortal: React.FC = () => {
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
-                  {(k as any).status || 'Menunggu'}
+                  {k.status || 'Menunggu'}
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors" />
               </div>
@@ -94,7 +106,7 @@ export const TourLeaderPortal: React.FC = () => {
                   try {
                     const d = new Date(k.waktuBerangkat);
                     return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                  } catch (e) {
+                  } catch {
                     return '-';
                   }
                 })()}
@@ -269,7 +281,7 @@ export const TourLeaderPortal: React.FC = () => {
             try {
               const d = new Date(selectedKeberangkatan.waktuBerangkat);
               return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            } catch (e) {
+            } catch {
               return '-';
             }
           })()}

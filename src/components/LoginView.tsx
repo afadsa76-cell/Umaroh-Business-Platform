@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Building2, Code2, ArrowRight, User as UserIcon } from 'lucide-react';
+import { Code2, ArrowRight, User as UserIcon } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
 import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, handleFirestoreError, OperationType } from '../firebase';
-import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithCredential, GoogleAuthProvider, User } from 'firebase/auth';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 import { Mail, Lock, LogIn } from 'lucide-react';
@@ -18,11 +18,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
-  const [tempUser, setTempUser] = useState<any>(null);
+  const [tempUser, setTempUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState<'mitra' | 'jamaah'>('jamaah');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loginMethod, setLoginMethod] = useState<'google' | 'manual'>('google');
   const [isSignUp, setIsSignUp] = useState(false);
 
   const handleForgotPassword = async () => {
@@ -36,8 +35,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       const { sendPasswordResetEmail } = await import('firebase/auth');
       await sendPasswordResetEmail(auth, email);
       alert('Email pengaturan ulang password telah dikirim ke ' + email + '. Silakan cek inbox/spam Anda.');
-    } catch (err: any) {
-      setError('Gagal mengirim email: ' + err.message);
+    } catch (err: unknown) {
+      setError('Gagal mengirim email: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +69,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       let userDocSnap;
       try {
         userDocSnap = await getDoc(userDocRef);
-      } catch (err: any) {
+      } catch (err: unknown) {
         handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
       }
 
@@ -88,23 +87,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
           setNeedsRegistration(true);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      const authError = err as { code?: string, message?: string };
+      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
         const isTargetEmail = email === 'afadsa76@gmail.com';
         setError(isTargetEmail 
           ? 'Credential tidak valid. Karena email ini terdaftar lewat Google, Anda HARUS klik "Lupa Password" di bawah untuk mengatur password "D@rkman31" pertama kali agar bisa login manual.'
           : 'Email atau Password salah. Jika Anda biasanya login dengan Google, silakan klik "Lupa Password" di bawah untuk mengatur password pertama kali.');
-      } else if (err.code === 'auth/email-already-in-use') {
+      } else if (authError.code === 'auth/email-already-in-use') {
         setError('Email ini sudah terdaftar via Google. Silakan klik "Lupa Password" untuk mengatur password manual Anda.');
-      } else if (err.code === 'auth/operation-not-allowed') {
+      } else if (authError.code === 'auth/operation-not-allowed') {
         setError('Login Email & Password belum diaktifkan di Firebase Console. Silakan aktifkan di Authentication > Sign-in method.');
-      } else if (err.code === 'auth/weak-password') {
+      } else if (authError.code === 'auth/weak-password') {
         setError('Password terlalu lemah. Minimal 6 karakter.');
-      } else if (err.code === 'auth/too-many-requests') {
+      } else if (authError.code === 'auth/too-many-requests') {
         setError('Terlalu banyak percobaan login. Silakan tunggu beberapa saat atau reset password.');
       } else {
-        setError('Terjadi kesalahan: ' + err.message);
+        setError('Terjadi kesalahan: ' + (authError.message || 'Unknown error'));
       }
     } finally {
       setIsLoading(false);
@@ -142,7 +142,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       let userDocSnap;
       try {
         userDocSnap = await getDoc(userDocRef);
-      } catch (err: any) {
+      } catch (err: unknown) {
         handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
       }
 
@@ -154,9 +154,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         setTempUser(user);
         setNeedsRegistration(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError('Gagal login dengan Google: ' + err.message);
+      setError('Gagal login dengan Google: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsLoading(false);
     }
@@ -179,7 +179,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       
       try {
         await setDoc(userDocRef, newUserData);
-      } catch (err: any) {
+      } catch (err: unknown) {
         handleFirestoreError(err, OperationType.WRITE, `users/${tempUser.uid}`);
       }
       
@@ -192,15 +192,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
             balance: 0,
             updatedAt: new Date().toISOString()
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
           handleFirestoreError(err, OperationType.WRITE, `wallets/${tempUser.uid}`);
         }
       }
 
       onLogin(selectedRole);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError('Gagal mendaftar: ' + err.message);
+      setError('Gagal mendaftar: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsLoading(false);
     }

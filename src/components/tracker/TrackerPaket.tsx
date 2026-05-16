@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where, db, handleFirestoreError, OperationType } from '../../firebase';
+import { Plus, Save, X, Edit2, Trash2, ArrowLeft } from 'lucide-react';
+import { PaketTracker, JamaahTracker, KeberangkatanTracker, Timeline } from './types';
+import { generateTimelineEstimasi } from './utils';
+import { AlertBox } from './AlertBox';
+import { ChecklistOperasional } from './ChecklistOperasional';
+import { RoomingList } from './RoomingList';
+import { ManifestGenerator } from './ManifestGenerator';
+import { TrackerTimeline } from './TrackerTimeline';
+import { ProgressSummary } from './ProgressSummary';
+import { MapTracking } from './MapTracking';
 
 export const TrackerPaket: React.FC = () => {
   const [pakets, setPakets] = useState<PaketTracker[]>([]);
@@ -53,8 +63,8 @@ export const TrackerPaket: React.FC = () => {
     
     try {
       const dataToSave = { ...formData };
-      delete (dataToSave as any).id;
-      Object.keys(dataToSave).forEach(key => (dataToSave as any)[key] === undefined && delete (dataToSave as any)[key]);
+      delete (dataToSave as { id?: string }).id;
+      Object.keys(dataToSave).forEach(key => (dataToSave as Record<string, unknown>)[key] === undefined && delete (dataToSave as Record<string, unknown>)[key]);
 
       if (isEditing) {
         await updateDoc(doc(db, 'tracker_paket', isEditing), dataToSave);
@@ -168,7 +178,7 @@ export const TrackerPaket: React.FC = () => {
 
         <ChecklistOperasional paket={selectedPaket} />
 
-        <RoomingList paketId={selectedPaket.id} jamaahs={jamaahs} />
+        <RoomingList jamaahs={jamaahs} />
 
         <ManifestGenerator 
           paket={selectedPaket} 
@@ -225,7 +235,7 @@ export const TrackerPaket: React.FC = () => {
                   <input type="number" placeholder="Daftar" className="w-16 p-1.5 border rounded" value={formData.terdaftar || ''} onChange={e => setFormData({...formData, terdaftar: Number(e.target.value)})} />
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded" value={formData.status || 'Persiapan'} onChange={e => setFormData({...formData, status: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded" value={formData.status || 'Persiapan'} onChange={e => setFormData({...formData, status: e.target.value as 'Persiapan' | 'Booking Seat' | 'Proses Visa' | 'Siap Berangkat' | 'Selesai'})}>
                     <option value="Persiapan">Persiapan</option>
                     <option value="Booking Seat">Booking Seat</option>
                     <option value="Proses Visa">Proses Visa</option>
@@ -250,7 +260,7 @@ export const TrackerPaket: React.FC = () => {
                   <input type="number" className="w-16 p-1.5 border rounded" value={formData.terdaftar || ''} onChange={e => setFormData({...formData, terdaftar: Number(e.target.value)})} />
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded" value={formData.status || 'Persiapan'} onChange={e => setFormData({...formData, status: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded" value={formData.status || 'Persiapan'} onChange={e => setFormData({...formData, status: e.target.value as 'Persiapan' | 'Booking Seat' | 'Proses Visa' | 'Siap Berangkat' | 'Selesai'})}>
                     <option value="Persiapan">Persiapan</option>
                     <option value="Booking Seat">Booking Seat</option>
                     <option value="Proses Visa">Proses Visa</option>

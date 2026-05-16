@@ -13,7 +13,6 @@ import {
   Minus,
   Plus,
   User,
-  Smartphone,
   FileText,
   Bus,
   Shield,
@@ -24,6 +23,7 @@ import {
   Users,
   UserCheck,
   Receipt,
+  Banknote,
   Download,
   Sparkles,
   Layers,
@@ -40,6 +40,7 @@ import {
   Briefcase,
   ShoppingBag,
   Shirt,
+  AlertCircle,
 } from "lucide-react";
 import {
   addDoc,
@@ -67,11 +68,22 @@ import { AIResultModal } from "./AIResultModal";
 import { generateItinerary, generateMarketingCopy } from "../services/aiService";
 import { sanitizeForHtml2Canvas, captureToDataUrl } from "../utils/exportUtils";
 import { Capacitor } from '@capacitor/core';
-// @ts-expect-error
+// @ts-expect-error - html2pdf.js doesn't have official types
 import html2pdf from 'html2pdf.js';
 
+import {
+  Maskapai,
+  Hotel,
+  WizardHotel,
+  Layanan,
+  LayananOption,
+  Bandara,
+  PaketWisata,
+  WizardFormData
+} from "../types";
+
 interface PaketMasterWizardProps {
-  initialData?: any;
+  initialData?: Partial<WizardFormData> & { id?: string; paketMasterId?: string; namaPaketMitra?: string };
   isMitraContext?: boolean;
   onCancel: () => void;
   onSuccess: () => void;
@@ -248,22 +260,23 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [hotelStep, setHotelStep] = useState<"madinah" | "makkah">("madinah");
-  const [maskapaiList, setMaskapaiList] = useState<any[]>([]);
-  const [hotelsList, setHotelsList] = useState<any[]>([]);
-  const [dbLayananList, setDbLayananList] = useState<any[]>([]);
-  const [bandaraList, setBandaraList] = useState<any[]>([]);
-  const [paketWisataList, setPaketWisataList] = useState<any[]>([]);
+  const [maskapaiList, setMaskapaiList] = useState<Maskapai[]>([]);
+  const [hotelsList, setHotelsList] = useState<WizardHotel[]>([]);
+  const [dbLayananList, setDbLayananList] = useState<Layanan[]>([]);
+  const [bandaraList, setBandaraList] = useState<Bandara[]>([]);
+  const [paketWisataList, setPaketWisataList] = useState<PaketWisata[]>([]);
 
   const [aiResult, setAiResult] = useState<{ title: string; content: string } | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
   const pdfExportRef = React.useRef<HTMLDivElement>(null);
 
-  const parseNum = (val: any, def = 0) => {
+  const parseNum = (val: string | number | undefined, def = 0): number => {
     const n = Number(val);
     return isNaN(n) ? def : n;
   };
 
-  const defaultData = {
+  const defaultData: WizardFormData = {
     kategori: "UMRAH REGULAR",
     nama: "",
     periode: "",
@@ -302,9 +315,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     markup: 1000000,
   };
 
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useState<WizardFormData>({
     ...defaultData,
-    ...(initialData || {}),
+    ...(initialData as WizardFormData || {}),
   });
 
   // Filter maskapai
@@ -365,7 +378,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           chkOutMakkah: outMakkah,
         }));
       }
-    } catch (e) {}
+    } catch {
+      // Ignore parsing errors
+    }
   }, [formData.tglBerangkat, formData.durasiMadinah, formData.durasiMakkah]);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -391,23 +406,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const tourLeaderPrice =
     targetJamaah > 0 ? Math.round(baseBelanja / targetJamaah) : 0;
 
-  let visaPrice = 0;
-  let visaName = "Visa Umrah";
-  if (targetJamaah <= 34) {
-    const v =
-      visaData.find((v) => v.paxRange === "1-34 PAX") ||
-      visaData[0] ||
-      ({} as any);
-    visaPrice = v.sellingPrice || 0;
-    visaName = `Visa Umrah (${v.paxRange || "1-34 PAX"})`;
-  } else {
-    const v =
-      visaData.find((v) => v.paxRange === "35-55 PAX") ||
-      visaData[1] ||
-      ({} as any);
-    visaPrice = v.sellingPrice || 0;
-    visaName = `Visa Umrah (${v.paxRange || "35-55 PAX"})`;
-  }
+  const vData = targetJamaah <= 34 
+    ? (visaData.find((v) => v.paxRange === "1-34 PAX") || visaData[0] || ({} as any))
+    : (visaData.find((v) => v.paxRange === "35-55 PAX") || visaData[1] || ({} as any));
+    
+  const visaPrice = vData.sellingPrice || 0;
+  const visaName = `Visa Umrah (${vData.paxRange || (targetJamaah <= 34 ? "1-34 PAX" : "35-55 PAX")})`;
 
   const saudiTier = HANDLING_TIERS.find(
     (t) => targetJamaah >= t.minPax && targetJamaah <= t.maxPax,
@@ -420,12 +424,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       (1 + HANDLING_CONSTANTS.defaultMarginPercent / 100),
   );
 
-  const kangAsep = transportData.find((t) => t.id === "kang-asep");
-  const busPriceSar =
-    kangAsep && kangAsep.routes.length > 0 ? kangAsep.routes[0].price : 2500;
-  const transportBeli =
-    targetJamaah > 0 ? (busPriceSar * 4700) / targetJamaah : 0;
-  const transportPrice = Math.round(transportBeli * 1.4);
+  const isGroupPax = targetJamaah >= 35;
+  const transportOptions = [
+    { id: "trans_satria", label: "Satria", sar: 3900 },
+    { id: "trans_hiace", label: "Hiace", sar: 3750 },
+    { id: "trans_gmc", label: "GMC", sar: 4250 },
+    { id: "trans_bus", label: "BUS", sar: 2600 },
+  ].map((opt) => ({
+    id: opt.id,
+    label: `${opt.label} Full Trip`,
+    price: targetJamaah > 0 ? Math.round(((opt.sar * 4700) / targetJamaah) * 1.4) : 0,
+  }));
 
   const mutawwifDays = Math.max(1, durasiHari - 1);
   const mutawwifPrice =
@@ -512,11 +521,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       deskripsi: `Kedatangan & Keberangkatan`,
       harga: saudiSell,
     },
-    {
+    isGroupPax ? {
       id: "transportasi_auto",
       nama: `Transportasi Bus`,
-      deskripsi: `Rekomendasi Bus Full Trip Kang Asep`,
-      harga: transportPrice,
+      deskripsi: `Biaya Transportasi (Gratis/Included for 35-55 Pax)`,
+      harga: 0,
+    } : {
+      id: "group_transport",
+      nama: "Transportasi",
+      deskripsi: `Pilihan Kendaraan Full Trip (${targetJamaah} Pax)`,
+      isGroup: true,
+      options: transportOptions,
     },
     {
       id: "mutawwif_auto",
@@ -561,17 +576,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     },
   ];
 
-  const getHotelPriceDynamic = (hotel: any, dateStr: string, roomType: 'Quad' | 'Triple' | 'Double') => {
+  const getHotelPriceDynamic = (hotel: WizardHotel | undefined, dateStr: string, roomType: 'Quad' | 'Triple' | 'Double') => {
     if (!hotel || !dateStr) return 0;
     if (!hotel.seasons || hotel.seasons.length === 0) return 0;
     
     const dateObj = new Date(dateStr);
     if (isNaN(dateObj.getTime())) return 0;
     
-    const season = hotel.seasons.find((s: any) => isDateInRange(dateObj, s.range));
+    const season = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
     if (!season) return 0;
     
-    const priceEntry = season.prices.find((p: any) => p.roomType === roomType);
+    const priceEntry = season.prices.find((p) => p.roomType === roomType);
     if (!priceEntry) return 0;
     
     const kurs = 4700; // Use a standard kurs or from state if available
@@ -608,14 +623,20 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const hDoubleMadinah = priceDoubleMadinah * parseNum(formData.durasiMadinah, 3);
     const hDoubleMakkah = priceDoubleMakkah * parseNum(formData.durasiMakkah, 4);
 
-    const hWisataTotal = formData.kategori === "UMRAH PLUS"
+    const hWisataTotalQuad = formData.kategori === "UMRAH PLUS"
       ? (getHotelPriceDynamic(hWisata, formData.tglBerangkat, 'Quad') || 0) * parseNum(formData.durasiWisata, 0)
       : 0;
+    const hWisataTotalTriple = formData.kategori === "UMRAH PLUS"
+      ? (getHotelPriceDynamic(hWisata, formData.tglBerangkat, 'Triple') || 0) * parseNum(formData.durasiWisata, 0)
+      : 0;
+    const hWisataTotalDouble = formData.kategori === "UMRAH PLUS"
+      ? (getHotelPriceDynamic(hWisata, formData.tglBerangkat, 'Double') || 0) * parseNum(formData.durasiWisata, 0)
+      : 0;
 
-    const selectedLayananItems = layananList.reduce((acc: any[], item: any) => {
+    const selectedLayananItems = layananList.reduce((acc: {id: string, nama: string, harga: number}[], item: Layanan) => {
       if (item.isGroup) {
         if (formData.selectedLayanan?.includes(item.id)) {
-          const selectedOpt = item.options.find((opt: any) =>
+          const selectedOpt = item.options?.find((opt) =>
             formData.selectedLayanan?.includes(opt.id)
           );
           if (selectedOpt) {
@@ -628,7 +649,11 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         }
       } else {
         if (formData.selectedLayanan?.includes(item.id)) {
-          acc.push(item);
+          acc.push({
+            id: item.id,
+            nama: item.nama,
+            harga: item.harga || 0
+          });
         }
       }
       return acc;
@@ -636,15 +661,22 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
     const layananTotal = selectedLayananItems.reduce((sum, item) => sum + (Number(item.harga) || 0), 0);
 
-    const baseQuad = maskapaiPrice + hWisataTotal + hQuadMadinah + hQuadMakkah + layananTotal;
-    const baseTriple = maskapaiPrice + hWisataTotal + hTripleMadinah + hTripleMakkah + layananTotal;
-    const baseDouble = maskapaiPrice + hWisataTotal + hDoubleMadinah + hDoubleMakkah + layananTotal;
+    const baseQuad = maskapaiPrice + hWisataTotalQuad + hQuadMadinah + hQuadMakkah + layananTotal;
+    const baseTriple = maskapaiPrice + hWisataTotalTriple + hTripleMadinah + hTripleMakkah + layananTotal;
+    const baseDouble = maskapaiPrice + hWisataTotalDouble + hDoubleMadinah + hDoubleMakkah + layananTotal;
 
     const margin = Number(formData.marginBersih) || 0;
     const adminFee = margin * 0.1;
-    const totalMarkupAdmin = margin + adminFee;
     const mitraMarkup = isMitraContext ? (Number(formData.markup) || 0) : 0;
-    const totalMarkup = totalMarkupAdmin + mitraMarkup;
+    const mitraAdminFee = mitraMarkup * 0.1;
+    
+    // In Partner context, the Admin's profit (margin + fee) is part of the cost base
+    const adminServiceFee = isMitraContext ? (margin + adminFee) : 0;
+    
+    const displayKomisiMitra = isMitraContext ? mitraMarkup : margin;
+    const displayKomisiUmaroh = isMitraContext ? mitraAdminFee : adminFee;
+    
+    const totalMarkupCount = isMitraContext ? (mitraMarkup + mitraAdminFee) : (margin + adminFee);
 
     // Wisata Halal specific
     const baseIDR = (formData.hargaDasar || 1350) * 16000;
@@ -674,20 +706,28 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       hTripleMakkah,
       hDoubleMadinah,
       hDoubleMakkah,
-      hWisataTotal,
+      hWisataTotal: Math.round(hWisataTotalQuad), // Using Quad as baseline for summary view
       selectedLayananItems,
       layananTotal,
-      finalQuad: Math.round(baseQuad + totalMarkup),
-      finalTriple: Math.round(baseTriple + totalMarkup),
-      finalDouble: Math.round(baseDouble + totalMarkup),
+      baseQuad: Math.round(baseQuad),
+      baseTriple: Math.round(baseTriple),
+      baseDouble: Math.round(baseDouble),
+      finalQuad: Math.round(baseQuad + totalMarkupCount),
+      finalTriple: Math.round(baseTriple + totalMarkupCount),
+      finalDouble: Math.round(baseDouble + totalMarkupCount),
       adminFee: Math.round(adminFee),
-      totalMarkup: Math.round(totalMarkup),
+      totalKomisiMitra: Math.round(displayKomisiMitra),
+      ujrohAnda: Math.round(margin - (Number(formData.ujrohPartner) || 0)),
+      ujrohPartner: Math.round(Number(formData.ujrohPartner) || 0),
+      totalKomisiUmaroh: Math.round(displayKomisiUmaroh),
+      adminServiceFee: Math.round(adminServiceFee),
+      totalMarkup: isMitraContext ? Math.round(mitraMarkup + mitraAdminFee) : Math.round(margin + adminFee),
       finalWisataPrice,
       baseIDR,
       wisataAddonsTotal,
       wisataAdminFee: Math.round(wisataAdminFee)
     };
-  }, [formData, hotelsList, maskapaiList, dbLayananList, visaData, transportData, ziarahData]);
+  }, [formData, hotelsList, maskapaiList, dbLayananList, visaData, transportData, ziarahData, isMitraContext]);
 
   useEffect(() => {
     setHotelPage(1);
@@ -700,21 +740,21 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        } as Maskapai));
         setMaskapaiList(data);
       },
       (error) => handleFirestoreError(error, OperationType.GET, "maskapai"),
     );
 
-    const staticHotels = hotels.map((h) => {
+    const staticHotels: WizardHotel[] = hotels.map((h) => {
       const quad =
-        h.seasons[0]?.prices.find((p: any) => p.roomType === "Quad")?.price ||
+        h.seasons[0]?.prices.find((p) => p.roomType === "Quad")?.price ||
         0;
       const triple =
-        h.seasons[0]?.prices.find((p: any) => p.roomType === "Triple")?.price ||
+        h.seasons[0]?.prices.find((p) => p.roomType === "Triple")?.price ||
         0;
       const double =
-        h.seasons[0]?.prices.find((p: any) => p.roomType === "Double")?.price ||
+        h.seasons[0]?.prices.find((p) => p.roomType === "Double")?.price ||
         0;
 
       const kurs = 4700;
@@ -739,7 +779,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        } as WizardHotel));
         setHotelsList([...staticHotels, ...data]);
       },
       (error) =>
@@ -752,7 +792,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         const dbData = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        } as Layanan));
         setDbLayananList(dbData);
       },
       (error) =>
@@ -765,7 +805,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        } as Bandara));
         setBandaraList(data);
       },
       (error) =>
@@ -778,7 +818,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
+        } as PaketWisata));
         setPaketWisataList(data);
       },
       (error) =>
@@ -800,19 +840,90 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
   useEffect(() => {
     if (bandaraList.length > 0) {
-      setFormData((prev: any) => ({
+      setFormData((prev) => ({
         ...prev,
         kotaKeberangkatan:
-          prev.kotaKeberangkatan || bandaraList[0]?.kota.toUpperCase() || "",
+          prev.kotaKeberangkatan || bandaraList[0]?.city.toUpperCase() || "",
         kotaTujuan:
           prev.kotaTujuan ||
           bandaraList
-            .find((b) => b.negara?.toUpperCase() === "ARAB SAUDI")
-            ?.kota.toUpperCase() ||
+            .find((b) => b.name?.toUpperCase() === "JEDDAH" || b.code === "JED")
+            ?.city.toUpperCase() ||
           "",
       }));
     }
   }, [bandaraList]);
+
+  const handleExitClick = () => {
+    setShowExitConfirmation(true);
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSaving(true);
+    try {
+      const isNew = !initialData?.id;
+      const dataToSave: Partial<WizardFormData> & Record<string, any> = {
+        nama: formData.nama || "Paket Draft",
+        deskripsi: formData.deskripsi || "",
+        tipePublikasi: formData.tipePublikasi || "B2C",
+        tipePenjualan: formData.tipePenjualan || "INDIVIDUAL",
+        hargaDasar: Number(formData.hargaDasar || 0),
+        maskapaiId: formData.maskapaiId || "",
+        hotelMadinahId: formData.hotelMadinahId || "",
+        hotelMakkahId: formData.hotelMakkahId || "",
+        hotelWisataId: formData.hotelWisataId || "",
+        selectedLayanan: formData.selectedLayanan || [],
+        selectedWisata: formData.selectedWisata || [],
+        kuota: Number(formData.targetJamaah || 0),
+        sisaKuota: Number(formData.targetJamaah || 0),
+        status: "draft",
+        validationStatus: isMitraContext ? 'pending' : 'approved',
+        kategori: formData.kategori,
+        periode: formData.periode,
+        durasiHari: formData.durasiHari,
+        kotaKeberangkatan: formData.kotaKeberangkatan,
+        kotaTujuan: formData.kotaTujuan,
+        urutanKunjungan: formData.urutanKunjungan,
+        tglBerangkat: formData.tglBerangkat,
+        tglKepulangan: formData.tglKepulangan,
+        tipePenerbangan: formData.tipePenerbangan,
+        kelasPenerbangan: formData.kelasPenerbangan,
+        estimasiHargaMaskapai: Number(formData.estimasiHargaMaskapai || 0),
+        marginBersih: Number(formData.marginBersih || 0),
+        ujrohPartner: Number(formData.ujrohPartner || 0),
+        durasiMadinah: Number(formData.durasiMadinah || 3),
+        durasiMakkah: Number(formData.durasiMakkah || 4),
+        durasiWisata: Number(formData.durasiWisata || 0),
+        paketWisataId: formData.paketWisataId || "",
+        negaraWisata: formData.negaraWisata || "",
+        mitraId: (formData as any).mitraId || null,
+        hargaJualQuad: Math.round(pricingSummary.finalQuad),
+        hargaJualTriple: Math.round(pricingSummary.finalTriple),
+        hargaJualDouble: Math.round(pricingSummary.finalDouble),
+      };
+
+      if (isNew) {
+        await addDoc(collection(db, "paket_master"), {
+          ...dataToSave,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        await updateDoc(doc(db, "paket_master", initialData.id), {
+          ...dataToSave,
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      onSuccess();
+    } catch (e) {
+      console.error(e);
+      alert("Gagal menyimpan draft");
+    } finally {
+      setIsSaving(false);
+      setShowExitConfirmation(false);
+    }
+  };
 
   const handleNext = () => {
     if (currentStepName === "HOTEL" || currentStepName === "HOTEL UMRAH") {
@@ -843,7 +954,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     setIsSaving(true);
     try {
       const isNew = !initialData?.id;
-      const dataToSave: any = {
+      const dataToSave: Partial<WizardFormData> & Record<string, any> = {
         nama: formData.nama || "Paket Umroh Tanpa Nama",
         deskripsi: formData.deskripsi || "",
         tipePublikasi: formData.tipePublikasi || "B2C",
@@ -878,7 +989,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         durasiWisata: Number(formData.durasiWisata || 0),
         paketWisataId: formData.paketWisataId || "",
         negaraWisata: formData.negaraWisata || "",
-        mitraId: formData.mitraId || null,
+        mitraId: (formData as any).mitraId || null,
         hargaJualQuad: Math.round(pricingSummary.finalQuad),
         hargaJualTriple: Math.round(pricingSummary.finalTriple),
         hargaJualDouble: Math.round(pricingSummary.finalDouble),
@@ -930,11 +1041,6 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             } catch (e) {
               handleFirestoreError(e, OperationType.CREATE, 'paket_master');
             }
-            
-            // Send WhatsApp to Admin
-            const adminPhone = "6285172280031"; // Official Admin Operasional
-            const waMessage = `Assalamu'alaikum Admin Operasional,\n\nAda paket baru dari Mitra yang membutuhkan validasi:\n\n*Nama Paket:* ${dataToSave.nama}\n*Kategori:* ${dataToSave.kategori}\n*Harga Jual:* Rp ${dataToSave.hargaJualQuad.toLocaleString('id-ID')}\n\nMohon segera ditinjau di Dashboard Admin.\n\nTerima kasih.`;
-            openWhatsApp(generateWALink(adminPhone, waMessage));
           } else {
             try {
               await updateDoc(doc(db, "paket_master", initialData.id), {
@@ -943,12 +1049,6 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               });
             } catch (e) {
               handleFirestoreError(e, OperationType.WRITE, `paket_master/${initialData.id}`);
-            }
-            
-            if (dataToSave.status === 'pending_validation') {
-              const adminPhone = "6285172280031";
-              const waMessage = `Assalamu'alaikum Admin Operasional,\n\nAda UPDATE paket dari Mitra yang membutuhkan validasi ulang:\n\n*Nama Paket:* ${dataToSave.nama}\n*Kategori:* ${dataToSave.kategori}\n\nMohon segera ditinjau.\n\nTerima kasih.`;
-              openWhatsApp(generateWALink(adminPhone, waMessage));
             }
           }
         }
@@ -977,6 +1077,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       }
 
       onSuccess();
+      
+      // Trigger WhatsApp if finishing from VALIDASI AKHIR step
+      if (currentStepName === "VALIDASI AKHIR") {
+        const adminPhone = "6283844974952";
+        const isUpdate = !isNew;
+        const msgHeader = isUpdate 
+          ? "Ada UPDATE paket yang membutuhkan validasi ulang:" 
+          : "Ada paket baru yang membutuhkan validasi:";
+        const waMessage = `Assalamu'alaikum Admin Operasional,\n\n${msgHeader}\n\n*Nama Paket:* ${dataToSave.nama}\n*Kategori:* ${dataToSave.kategori || formData.kategori}\n\nMohon segera ditinjau.\n\nTerima kasih.`;
+        openWhatsApp(generateWALink(adminPhone, waMessage));
+      }
     } catch (e) {
       console.error(e);
       alert("Gagal menyimpan data");
@@ -1001,7 +1112,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
       const result = await generateItinerary(data);
       setAiResult({ title: "Itinerary AI", content: result || "" });
-    } catch (error) {
+    } catch {
       alert("Gagal generate itinerary");
     } finally {
       setIsAiLoading(false);
@@ -1025,7 +1136,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         maskapaiNama: maskapai?.nama || "TBA",
       });
       setAiResult({ title: "Marketing Content AI", content: result || "" });
-    } catch (error) {
+    } catch {
       alert("Gagal generate marketing content");
     } finally {
       setIsAiLoading(false);
@@ -1130,7 +1241,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       {/* Header & Back Button */}
       <div className="flex items-center gap-4 mb-8 px-4 sm:px-0 pt-4 sm:pt-0">
         <button
-          onClick={onCancel}
+          onClick={handleExitClick}
           className="p-2 bg-gray-50 text-gray-600 hover:text-emerald-600 rounded-full transition-colors font-bold"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -1475,6 +1586,41 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     </select>
                   </div>
 
+                  {/* Kota Tujuan Utama */}
+                  <div>
+                    <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+                      KOTA TUJUAN UTAMA *
+                    </label>
+                    {formData.kategori === "UMRAH PLUS" ||
+                    formData.kategori === "WISATA HALAL" ? (
+                      <div className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl text-gray-800 font-bold uppercase">
+                        {formData.negaraWisata || "-"}
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.kotaTujuan || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            kotaTujuan: e.target.value,
+                          })
+                        }
+                        className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 font-bold appearance-none"
+                      >
+                        <option value="">-- Pilih Kota Tujuan --</option>
+                        {bandaraList
+                          .filter(
+                            (b) => b.negara?.toUpperCase() === "ARAB SAUDI",
+                          )
+                          .map((b) => (
+                            <option key={b.id} value={b.kota.toUpperCase()}>
+                              {b.kota.toUpperCase()} ({b.kode})
+                            </option>
+                          ))}
+                      </select>
+                    )}
+                  </div>
+
                   {/* Alur Perjalanan & Urutan Kunjungan */}
                   {formData.kategori === "UMRAH PLUS" ? (
                     <div>
@@ -1527,41 +1673,6 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       </select>
                     </div>
                   )}
-
-                  {/* Kota Tujuan Utama */}
-                  <div>
-                    <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
-                      KOTA TUJUAN UTAMA *
-                    </label>
-                    {formData.kategori === "UMRAH PLUS" ||
-                    formData.kategori === "WISATA HALAL" ? (
-                      <div className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl text-gray-800 font-bold uppercase">
-                        {formData.negaraWisata || "-"}
-                      </div>
-                    ) : (
-                      <select
-                        value={formData.kotaTujuan || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            kotaTujuan: e.target.value,
-                          })
-                        }
-                        className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 font-bold appearance-none"
-                      >
-                        <option value="">-- Pilih Kota Tujuan --</option>
-                        {bandaraList
-                          .filter(
-                            (b) => b.negara?.toUpperCase() === "ARAB SAUDI",
-                          )
-                          .map((b) => (
-                            <option key={b.id} value={b.kota.toUpperCase()}>
-                              {b.kota.toUpperCase()} ({b.kode})
-                            </option>
-                          ))}
-                      </select>
-                    )}
-                  </div>
 
                   {/* Tanggal Berangkat */}
                   <div>
@@ -1677,7 +1788,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
                   {
                     paketWisataList.filter(
-                      (p: any) =>
+                      (p) =>
                         p.lokasi.toUpperCase() ===
                         (formData.negaraWisata || "TURKEY"),
                     ).length
@@ -1689,7 +1800,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {paketWisataList
                   .filter(
-                    (p: any) =>
+                    (p) =>
                       p.lokasi.toUpperCase() ===
                       (formData.negaraWisata || "TURKEY"),
                   )
@@ -3279,7 +3390,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   if (!h.seasons || h.seasons.length === 0) return true;
                   const dateObj = new Date(checkDate);
                   if (isNaN(dateObj.getTime())) return true;
-                  return h.seasons.some((season: any) => isDateInRange(dateObj, season.range));
+                  return h.seasons.some((season) => isDateInRange(dateObj, season.range));
                 })
                 .filter((h) =>
                   h.nama?.toLowerCase().includes(hotelSearchTerm.toLowerCase()),
@@ -3314,7 +3425,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       if (checkDate && hotel.seasons && hotel.seasons.length > 0) {
                         const dateObj = new Date(checkDate);
                         if (!isNaN(dateObj.getTime())) {
-                          const activeSeason = hotel.seasons.find((s: any) => isDateInRange(dateObj, s.range));
+                          const activeSeason = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
                           if (activeSeason) {
                             seasonText = activeSeason.range;
                           }
@@ -3616,7 +3727,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 const isGroupSelected =
                   isSelected ||
                   (isGroup &&
-                    item.options.some((opt: any) =>
+                    item.options?.some((opt) =>
                       formData.selectedLayanan?.includes(opt.id),
                     ));
 
@@ -3628,14 +3739,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 // For grouped items, if selected, find the active option's price. Otherwise show minimum price.
                 let displayPrice = item.harga || 0;
                 if (isGroup) {
-                  const activeOpt = item.options.find((opt: any) =>
+                  const activeOpt = item.options?.find((opt) =>
                     formData.selectedLayanan?.includes(opt.id),
                   );
                   if (activeOpt) {
                     displayPrice = activeOpt.price;
                   } else {
                     // Defaults to first price, or 0 if empty
-                    displayPrice = item.options[0]?.price || 0;
+                    displayPrice = item.options?.[0]?.price || 0;
                   }
                 }
 
@@ -3949,258 +4060,182 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 LANGKAH 5: PERHITUNGAN HARGA & REVIEW PAKET
               </h3>
             </div>
+            {(() => {
+              const {
+                baseQuad,
+                baseTriple,
+                baseDouble,
+                finalQuad,
+                finalTriple,
+                finalDouble,
+              } = pricingSummary;
 
-              {(() => {
-                // Calculators
-                const hMadinah = hotelsList.find(
-                  (h) => h.id === formData.hotelMadinahId,
-                );
-                const hMakkah = hotelsList.find(
-                  (h) => h.id === formData.hotelMakkahId,
-                );
-                const hWisata = hotelsList.find(
-                  (h) => h.id === formData.hotelWisataId,
-                );
+                  // Values for UI Controls (The profit settings section)
+                  const marginAdmin = Number(formData.marginBersih) || 0;
+                  const adminFeeAdmin = marginAdmin * 0.1;
+                  const totalMarkupAdmin = marginAdmin + adminFeeAdmin;
 
-                const dMadinah = parseNum(formData.durasiMadinah, 3);
-                const dMakkah = parseNum(formData.durasiMakkah, 4);
-                const dWisata = parseNum(formData.durasiWisata, 0);
+                  const marginMitra = isMitraContext ? (Number(formData.markup) || 0) : 0;
+                  const adminFeeMitra = marginMitra * 0.1;
+                  const totalMarkupMitra = marginMitra + adminFeeMitra;
 
-                const hQuadMadinah =
-                  (hMadinah?.priceQuad || 0) * dMadinah;
-                const hQuadMakkah =
-                  (hMakkah?.priceQuad || 0) * dMakkah;
-                const hTripleMadinah =
-                  (hMadinah?.priceTriple || 0) * dMadinah;
-                const hTripleMakkah =
-                  (hMakkah?.priceTriple || 0) * dMakkah;
-                const hDoubleMadinah =
-                  (hMadinah?.priceDouble || 0) * dMadinah;
-                const hDoubleMakkah =
-                  (hMakkah?.priceDouble || 0) * dMakkah;
+                  const currentMarkup = isMitraContext ? marginMitra : marginAdmin;
+                  const adminFeeDisplay = isMitraContext ? adminFeeMitra : adminFeeAdmin;
+                  const totalMarkupDisplay = isMitraContext ? totalMarkupMitra : totalMarkupAdmin;
 
-                const hWisataTotalQuad =
-                  formData.kategori === "UMRAH PLUS"
-                    ? (hWisata?.priceQuad || hWisata?.pricePerNight || 0) *
-                      dWisata
-                    : 0;
-                const hWisataTotalTriple =
-                  formData.kategori === "UMRAH PLUS"
-                    ? (hWisata?.priceTriple || hWisata?.pricePerNight || 0) *
-                      dWisata
-                    : 0;
-                const hWisataTotalDouble =
-                  formData.kategori === "UMRAH PLUS"
-                    ? (hWisata?.priceDouble || hWisata?.pricePerNight || 0) *
-                      dWisata
-                    : 0;
-
-              const maskapai = Number(formData.estimasiHargaMaskapai) || 0;
-              const layananTotal = layananList.reduce((sum, item) => {
-                let itemCost = 0;
-                if (item.isGroup) {
-                  if (formData.selectedLayanan?.includes(item.id)) {
-                    const selectedOpt = item.options.find((opt: any) =>
-                      formData.selectedLayanan?.includes(opt.id),
-                    );
-                    if (selectedOpt) itemCost = selectedOpt.price;
-                  }
-                } else {
-                  if (formData.selectedLayanan?.includes(item.id)) {
-                    itemCost = Number(item.harga) || 0;
-                  }
-                }
-                return sum + itemCost;
-              }, 0);
-
-              const baseQuad =
-                maskapai +
-                hQuadMadinah +
-                hQuadMakkah +
-                hWisataTotalQuad +
-                layananTotal;
-              const baseTriple =
-                maskapai +
-                hTripleMadinah +
-                hTripleMakkah +
-                hWisataTotalTriple +
-                layananTotal;
-              const baseDouble =
-                maskapai +
-                hDoubleMadinah +
-                hDoubleMakkah +
-                hWisataTotalDouble +
-                layananTotal;
-
-              const marginAdmin = Number(formData.marginBersih) || 0;
-              const adminFeeAdmin = marginAdmin * 0.1;
-              const totalMarkupAdmin = marginAdmin + adminFeeAdmin;
-
-              const marginMitra = isMitraContext ? (Number(formData.markup) || 0) : 0;
-              const adminFeeMitra = marginMitra * 0.1;
-              const totalMarkupMitra = marginMitra + adminFeeMitra;
-
-              // Display values based on context
-              const currentMarkup = isMitraContext ? marginMitra : marginAdmin;
-              const adminFeeDisplay = isMitraContext ? adminFeeMitra : adminFeeAdmin;
-              const totalMarkupDisplay = isMitraContext ? totalMarkupMitra : totalMarkupAdmin;
-              
-              // Final markup added to base price
-              const totalMarkupFinal = isMitraContext ? (totalMarkupAdmin + totalMarkupMitra) : totalMarkupAdmin;
-
-              return (
-                <div className="space-y-8">
-                  {/* Bagian 1: HPP Dasar */}
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">
-                        1. HPP DASAR PER TIPE KAMAR
-                      </h4>
-                      <div className="px-2 py-1 bg-gray-100 rounded text-[9px] font-bold text-gray-500">
-                        BIAYA MODAL
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        { title: "HPP QUAD", val: baseQuad },
-                        { title: "HPP TRIPLE", val: baseTriple },
-                        { title: "HPP DOUBLE", val: baseDouble },
-                      ].map((item) => (
-                        <div
-                          key={item.title}
-                          className="bg-white border border-gray-100 p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]"
-                        >
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                            {item.title}
-                          </span>
-                          <span className="text-xl sm:text-2xl font-black text-gray-800 tracking-tighter">
-                            Rp {Math.round(item.val || 0).toLocaleString("id-ID")}
-                          </span>
-                          <span className="text-[9px] font-bold text-gray-300 mt-1">
-                            PER PAX
-                          </span>
+                  return (
+                    <div className="space-y-8">
+                      {/* Bagian 1: HPP Dasar */}
+                      <div>
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">
+                            1. HPP DASAR PER TIPE KAMAR
+                          </h4>
+                          <div className="px-2 py-1 bg-gray-100 rounded text-[9px] font-bold text-gray-500">
+                            BIAYA MODAL
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Bagian 2: Pengaturan Profit */}
-                  <div>
-                    <h4 className="text-[10px] sm:text-xs font-black text-blue-600 border-l-4 border-blue-600 pl-2 uppercase tracking-widest mb-4">
-                      2. PENGATURAN PROFIT (UJROH MITRA)
-                    </h4>
-
-                    <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 text-center relative overflow-hidden">
-                      <div className="inline-block relative z-10 w-full max-w-sm mx-auto">
-                        <div className="flex items-center justify-between mb-2">
-                          <button
-                            onClick={() =>
-                              setFormData({
-                                ...formData,
-                                [isMitraContext ? 'markup' : 'marginBersih']: Math.max(0, currentMarkup - 50000),
-                              })
-                            }
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-colors bg-white shadow-sm shrink-0"
-                          >
-                            <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
-                          </button>
-
-                          <div className="flex-1 flex flex-col items-center px-2 sm:px-4 min-w-0">
-                            <div className="flex items-start text-blue-600">
-                              <span className="text-sm sm:text-2xl font-black mt-1 sm:mt-2 italic mr-0.5 sm:mr-1">
-                                Rp
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {[
+                            { title: "HPP QUAD", val: baseQuad },
+                            { title: "HPP TRIPLE", val: baseTriple },
+                            { title: "HPP DOUBLE", val: baseDouble },
+                          ].map((item) => (
+                            <div
+                              key={item.title}
+                              className="bg-white border border-gray-100 p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]"
+                            >
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                                {item.title}
                               </span>
-                              <span
-                                className="text-2xl sm:text-6xl font-black italic tracking-tighter truncate"
-                                style={{ fontFamily: "Impact, sans-serif" }}
-                              >
-                                {Math.round(currentMarkup || 0).toLocaleString("id-ID")}
+                              <span className="text-xl sm:text-2xl font-black text-gray-800 tracking-tighter">
+                                Rp {Math.round(item.val || 0).toLocaleString("id-ID")}
+                              </span>
+                              <span className="text-[9px] font-bold text-gray-300 mt-1">
+                                PER PAX
                               </span>
                             </div>
-                            <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-50 text-blue-600 rounded-full text-[8px] sm:text-[9px] font-bold uppercase tracking-widest mt-1 sm:mt-2 whitespace-nowrap">
-                              MARGIN BERSIH
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() =>
-                              setFormData({
-                                ...formData,
-                                [isMitraContext ? 'markup' : 'marginBersih']: currentMarkup + 50000,
-                              })
-                            }
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition-colors shrink-0"
-                          >
-                            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                          </button>
+                          ))}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-10 relative z-10 w-full max-w-lg mx-auto">
-                        <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 relative overflow-hidden flex flex-col items-start text-left">
-                          <span className="text-[60px] sm:text-[80px] font-black text-gray-100 absolute -right-2 sm:-right-4 -bottom-4 sm:-bottom-6 italic leading-none select-none pointer-events-none">
-                            %
-                          </span>
-                          <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 relative z-10">
-                            ADMIN FEE (10%)
-                          </span>
-                          <span className="text-lg sm:text-xl font-black text-gray-800 italic relative z-10">
-                            Rp {Math.round(adminFeeDisplay || 0).toLocaleString("id-ID")}
-                          </span>
-                        </div>
-                        <div className="bg-blue-50 rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-blue-100 relative flex items-center justify-between text-left overflow-hidden">
-                          <div className="flex flex-col items-start min-w-0 pr-6 sm:pr-8">
-                             <span className="text-[8px] sm:text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-0.5 sm:mb-1">
-                               TOTAL MARKUP
-                             </span>
-                             <span className="text-base sm:text-xl font-black text-blue-600 italic truncate">
-                               Rp {Math.round(totalMarkupDisplay || 0).toLocaleString("id-ID")}
-                             </span>
+                      {/* Bagian 2: Pengaturan Profit */}
+                      <div>
+                        <h4 className="text-[10px] sm:text-xs font-black text-blue-600 border-l-4 border-blue-600 pl-2 uppercase tracking-widest mb-4">
+                          2. PENGATURAN PROFIT (UJROH MITRA)
+                        </h4>
+
+                        <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 text-center relative overflow-hidden">
+                          <div className="inline-block relative z-10 w-full max-w-sm mx-auto">
+                            <div className="flex items-center justify-between mb-2">
+                              <button
+                                onClick={() =>
+                                  setFormData({
+                                    ...formData,
+                                    [isMitraContext ? "markup" : "marginBersih"]: Math.max(0, currentMarkup - 50000),
+                                  })
+                                }
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-colors bg-white shadow-sm shrink-0"
+                              >
+                                <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </button>
+
+                              <div className="flex-1 flex flex-col items-center px-2 sm:px-4 min-w-0">
+                                <div className="flex items-start text-blue-600">
+                                  <span className="text-sm sm:text-2xl font-black mt-1 sm:mt-2 italic mr-0.5 sm:mr-1">
+                                    Rp
+                                  </span>
+                                  <span
+                                    className="text-2xl sm:text-6xl font-black italic tracking-tighter truncate"
+                                    style={{ fontFamily: "Impact, sans-serif" }}
+                                  >
+                                    {Math.round(currentMarkup || 0).toLocaleString("id-ID")}
+                                  </span>
+                                </div>
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-50 text-blue-600 rounded-full text-[8px] sm:text-[9px] font-bold uppercase tracking-widest mt-1 sm:mt-2 whitespace-nowrap">
+                                  MARGIN BERSIH
+                                </span>
+                              </div>
+
+                              <button
+                                onClick={() =>
+                                  setFormData({
+                                    ...formData,
+                                    [isMitraContext ? "markup" : "marginBersih"]: currentMarkup + 50000,
+                                  })
+                                }
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition-colors shrink-0"
+                              >
+                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 border border-blue-200/50">
-                            <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-10 relative z-10 w-full max-w-lg mx-auto">
+                            <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 relative overflow-hidden flex flex-col items-start text-left">
+                              <span className="text-[60px] sm:text-[80px] font-black text-gray-100 absolute -right-2 sm:-right-4 -bottom-4 sm:-bottom-6 italic leading-none select-none pointer-events-none">
+                                %
+                              </span>
+                              <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 relative z-10">
+                                ADMIN FEE (10%)
+                              </span>
+                              <span className="text-lg sm:text-xl font-black text-gray-800 italic relative z-10">
+                                Rp {Math.round(adminFeeDisplay || 0).toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                            <div className="bg-blue-50 rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-blue-100 relative flex items-center justify-between text-left overflow-hidden">
+                              <div className="flex flex-col items-start min-w-0 pr-6 sm:pr-8">
+                                <span className="text-[8px] sm:text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-0.5 sm:mb-1">
+                                  TOTAL MARKUP
+                                </span>
+                                <span className="text-base sm:text-xl font-black text-blue-600 italic truncate">
+                                  Rp {Math.round(totalMarkupDisplay || 0).toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 border border-blue-200/50">
+                                <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="text-[9px] font-bold text-gray-300 mt-6 uppercase tracking-widest">
+                            DATA ADMIN DIGUNAKAN UNTUK PENGELOLAAN APLIKASI AMANAH.
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-[9px] font-bold text-gray-300 mt-6 uppercase tracking-widest">
-                        DATA ADMIN DIGUNAKAN UNTUK PENGELOLAAN APLIKASI AMANAH.
-                      </div>
-                    </div>
-                  </div>
+                      {/* Bagian 3: Harga Final */}
+                      <div className="pt-4">
+                        <h4 className="text-[10px] sm:text-xs font-black text-[#009B66] border-l-4 border-[#009B66] pl-2 uppercase tracking-widest mb-4">
+                          3. HARGA JUAL MARKETPLACE (FINAL)
+                        </h4>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-4 pl-3 -mt-2">
+                          HARGA AKHIR PER PAX YANG AKAN TAYANG DI APLIKASI JAMAAH
+                        </p>
 
-                  {/* Bagian 3: Harga Final */}
-                  <div className="pt-4">
-                    <h4 className="text-[10px] sm:text-xs font-black text-[#009B66] border-l-4 border-[#009B66] pl-2 uppercase tracking-widest mb-4">
-                      3. HARGA JUAL MARKETPLACE (FINAL)
-                    </h4>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-4 pl-3 -mt-2">
-                      HARGA AKHIR PER PAX YANG AKAN TAYANG DI APLIKASI JAMAAH
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 items-center">
-                      {[
-                        {
-                          title: "QUAD PACKAGE",
-                          val: baseQuad + totalMarkupFinal,
-                          type: "light",
-                          tagColor: "text-[#009B66]",
-                        },
-                        {
-                          title: "TRIPLE PACKAGE",
-                          val: baseTriple + totalMarkupFinal,
-                          type: "dark",
-                          tagColor: "text-blue-400",
-                        },
-                        {
-                          title: "DOUBLE PACKAGE",
-                          val: baseDouble + totalMarkupFinal,
-                          type: "light",
-                          tagColor: "text-[#009B66]",
-                        },
-                      ].map((item) => (
-                        <div
-                          key={item.title}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 items-center">
+                          {[
+                            {
+                              title: "QUAD PACKAGE",
+                              val: finalQuad,
+                              type: "light",
+                              tagColor: "text-[#009B66]",
+                            },
+                            {
+                              title: "TRIPLE PACKAGE",
+                              val: finalTriple,
+                              type: "dark",
+                              tagColor: "text-blue-400",
+                            },
+                            {
+                              title: "DOUBLE PACKAGE",
+                              val: finalDouble,
+                              type: "light",
+                              tagColor: "text-[#009B66]",
+                            },
+                          ].map((item) => (
+                            <div
+                              key={item.title}
                           className={
                             item.type === "dark"
                               ? "bg-[#111424] border border-gray-800 p-6 sm:p-8 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-2xl relative z-10 md:scale-110"
@@ -4498,6 +4533,38 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 </span>
                               </div>
                             ))}
+
+
+                          {(pricingSummary.totalKomisiMitra > 0) && (
+                            <>
+                              <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">
+                                    <Banknote className="w-4 h-4" />
+                                  </div>
+                                  <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
+                                    KOMISI MITRA
+                                  </span>
+                                </div>
+                                <span className="font-black text-xs sm:text-sm text-blue-600 italic">
+                                  Rp {pricingSummary.totalKomisiMitra.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">
+                                    <Banknote className="w-4 h-4" />
+                                  </div>
+                                  <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
+                                    KOMISI UMAROH
+                                  </span>
+                                </div>
+                                <span className="font-black text-xs sm:text-sm text-blue-600 italic">
+                                  Rp {pricingSummary.totalKomisiUmaroh.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -5072,7 +5139,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest">
                         UJROH ANDA (OWNER)
                       </span>
-                      <span className="font-black text-sm sm:text-base italic text-white">
+                      <span className="font-black text-sm sm:text-base italic text-white flex items-baseline gap-1">
                         Rp{" "}
                         {Math.round(
                           (Number(formData.marginBersih) || 0) -
@@ -5097,7 +5164,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       </span>
                       <span className="font-black text-base sm:text-lg italic text-blue-400">
                         Rp{" "}
-                        {Math.round(Number(formData.marginBersih) || 0).toLocaleString(
+                        {Math.round(pricingSummary.totalKomisiMitra).toLocaleString(
                           "id-ID",
                         )}
                       </span>
@@ -5110,79 +5177,40 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         )}
 
         {currentStepName === "VALIDASI AKHIR" && (
-          <div className="flex flex-col items-center justify-center py-16 text-center animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-6 relative">
-              <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <Check className="w-6 h-6 text-white" strokeWidth={3} />
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-95 duration-500">
+            {/* Design Icon Matched to Mockup */}
+            <div className="relative mb-12">
+              <div className="w-32 h-32 bg-[#F2FBF8] rounded-[2.5rem] flex items-center justify-center shadow-sm">
+                 <div className="w-16 h-16 bg-[#009B66] rounded-full flex items-center justify-center ring-8 ring-[#D9F2E9]">
+                    <Check className="w-10 h-10 text-white" strokeWidth={4} />
+                 </div>
               </div>
-              {isMitraContext && (
-                <div className="absolute -top-1 -right-1 bg-blue-600 text-white p-1.5 rounded-lg shadow-md animate-bounce">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-              )}
             </div>
 
-            <h3 className="text-2xl font-black text-[#1A1C29] mb-3 uppercase tracking-wide">
-              {isMitraContext ? "PENGAJUAN VALIDASI" : "PAKET SIAP DIVALIDASI!"}
+            <h3 className="text-4xl font-black text-[#1A1C29] mb-4 italic uppercase tracking-tighter">
+              LUAR BIASA!
             </h3>
-            <p className="text-[11px] font-bold text-gray-500 max-w-md mx-auto leading-relaxed mb-10">
-              {isMitraContext 
-                ? "Paket Anda akan dikirim ke Tim Operasional untuk divalidasi. Anda akan menerima notifikasi WhatsApp setelah paket disetujui untuk dipublikasikan ke Marketplace."
-                : "Paket Anda telah berhasil dikonfigurasi. Silakan ajukan validasi ke tim Operasional untuk peninjauan akhir sebelum dipublikasikan atau dijual ke Mitra."
-              }
+            <p className="text-xs font-black text-[#94A3B8] max-w-md mx-auto leading-relaxed mb-16 uppercase tracking-[0.2em]">
+              PAKET {formData.kategori?.toUpperCase()} SIAP DIAJUKAN UNTUK VALIDASI OPERASIONAL.
             </p>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center bg-[#F8F9FB] border border-gray-200 rounded-[2rem] p-6 mb-10 shadow-inner">
-              <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center border border-gray-100 shadow-sm text-emerald-500">
-                  <Check className="w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                    STATUS
-                  </p>
-                  <p className="text-sm font-black text-emerald-600 uppercase">
-                    MENUNGGU VALIDASI
-                  </p>
-                </div>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                  NAMA PAKET
-                </p>
-                <p className="text-sm font-black text-gray-900 uppercase max-w-[200px] truncate">
-                  {formData.nama || "BELUM DIISI"}
-                </p>
-              </div>
-            </div>
-
-            {isMitraContext && (
-              <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-10 flex items-center gap-4 max-w-md">
-                <div className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <p className="text-[10px] font-black text-blue-700 uppercase tracking-wider mb-1">PEMBERITAHUAN WHATSAPP</p>
-                  <p className="text-[9px] font-bold text-blue-600/70 leading-relaxed uppercase">SISTEM AKAN OTOMATIS MENGHUBUNGI ADMIN OPERASIONAL SAAT ANDA MENEKAN TOMBOL SELESAI.</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-              <button
-                onClick={handlePrev}
-                className="w-full sm:w-auto px-8 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 flex items-center justify-center text-[10px] uppercase tracking-widest shadow-sm transition-colors"
-                disabled={isSaving}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" /> KEMBALI
-              </button>
+            <div className="flex flex-col items-center gap-6 w-full max-w-sm">
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-full sm:w-auto px-8 py-3.5 flex items-center justify-center gap-2 font-bold rounded-xl shadow-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 text-[10px] sm:text-xs uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-4 py-6 bg-[#26D971] hover:bg-[#1EBE5F] text-white font-black rounded-[2.5rem] shadow-[0_20px_40px_-10px_rgba(38,217,113,0.3)] text-sm uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
               >
-                {isSaving ? "MENYIMPAN..." : isMitraContext ? "AJUKAN VALIDASI & SELESAI" : "SIMPAN & SELESAI"}
-                {!isSaving && <ChevronRight className="w-4 h-4 ml-1" />}
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <MessageCircle className="w-6 h-6 fill-white" />
+                </div>
+                {isSaving ? "MEMPROSES..." : "AJUKAN VALIDASI VIA WA"}
+              </button>
+              
+              <button
+                onClick={onCancel}
+                className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[0.3em] hover:text-emerald-600 transition-colors py-2"
+              >
+                KEMBALI KE DASHBOARD
               </button>
             </div>
           </div>
@@ -5297,22 +5325,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
             <button
               onClick={
-                currentStepName === "PUBLIKASI & DESKRIPSI"
-                  ? handleSave
-                  : handleNext
+                currentStep < currentStepsList.length
+                  ? handleNext
+                  : handleSave
               }
               disabled={isSaving}
-              className={`flex items-center gap-2 px-8 py-3 font-bold rounded-xl transition-colors shadow-lg disabled:opacity-50 ${
-                currentStepName === "PUBLIKASI & DESKRIPSI"
-                  ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20 uppercase text-xs tracking-wider"
-                  : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20"
-              }`}
+              className={`flex items-center gap-2 px-8 py-3 font-bold rounded-xl transition-colors shadow-lg disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20`}
             >
               {isSaving
                 ? "MENYIMPAN..."
-                : currentStepName === "PUBLIKASI & DESKRIPSI"
-                  ? "SIMPAN & SELESAI"
-                  : "Lanjutkan"}
+                : currentStep < currentStepsList.length
+                  ? "Lanjutkan"
+                  : "SIMPAN & SELESAI"}
               {isSaving ? null : <ChevronRight className="w-5 h-5" />}
             </button>
           </div>
@@ -5325,6 +5349,49 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           onClose={() => setAiResult(null)}
           onSave={aiResult.title === "Marketing Content AI" ? (content) => setFormData({ ...formData, deskripsi: content }) : undefined}
         />
+      )}
+
+      {/* Exit Confirmation Modal */}
+      {showExitConfirmation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[40px] p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col items-center">
+            <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-6">
+              <AlertCircle className="w-10 h-10 text-orange-500" />
+            </div>
+            
+            <h3 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight text-center">
+              BELUM SELESAI!
+            </h3>
+            
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center leading-relaxed mb-8 px-4">
+              ANDA SEDANG DALAM PROSES PEMBUATAN PAKET. APAKAH ANDA INGIN MENYIMPAN PROGRESS INI SEBAGAI DRAFT?
+            </p>
+            
+            <div className="space-y-3 w-full">
+              <button
+                onClick={handleSaveDraft}
+                disabled={isSaving}
+                className="w-full py-4 bg-[#009B66] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-[#009B66]/20 hover:bg-[#008A5A] transition-all disabled:opacity-50"
+              >
+                {isSaving ? "MENYIMPAN..." : "SIMPAN SEBAGAI DRAFT & KELUAR"}
+              </button>
+              
+              <button
+                onClick={onCancel}
+                className="w-full py-4 bg-white border border-red-100 text-gray-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-red-50 transition-all"
+              >
+                KELUAR TANPA SIMPAN
+              </button>
+              
+              <button
+                onClick={() => setShowExitConfirmation(false)}
+                className="w-full py-4 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-gray-600 transition-all mt-2"
+              >
+                LANJUTKAN EDIT
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* HIDDEN PDF TEMPLATE */}
@@ -5389,27 +5456,27 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </div>
 
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                    <Plane className="w-6 h-6" />
-                 </div>
-                 <div>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">KEBERANGKATAN</p>
-                    <p className="text-sm font-black text-gray-700 uppercase flex items-center gap-2">
-                       {formData.kotaKeberangkatan || "JAKARTA"} <ArrowRight className="w-3 h-3 text-gray-400" /> SAUDI
-                    </p>
-                 </div>
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Plane className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">KEBERANGKATAN</p>
+                  <div className="text-[11px] font-black text-gray-700 uppercase flex items-center">
+                    {formData.kotaKeberangkatan || "JAKARTA"} <span className="mx-1">→</span> SAUDI
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                    <Globe className="w-6 h-6" />
-                 </div>
-                 <div>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">TANGGAL & URUTAN</p>
-                    <p className="text-[11px] font-black text-gray-700 uppercase">
-                       {formData.tglBerangkat || "-"} | {formData.urutanKunjungan || "MADINAH-MAKKAH"}
-                    </p>
-                 </div>
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Globe className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">TANGGAL & URUTAN</p>
+                  <p className="text-[10px] font-black text-gray-700 uppercase leading-none">
+                    {formData.tglBerangkat || "-"} | {formData.urutanKunjungan || "MADINAH-MAKKAH"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -5478,6 +5545,32 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 <span className="font-black text-blue-700 italic">Rp {(item.harga || 0).toLocaleString('id-ID')}</span>
               </div>
             ))}
+
+
+            {(pricingSummary.totalKomisiMitra > 0) && (
+              <>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                       <Banknote className="w-5 h-5" />
+                    </div>
+                    <span className="font-bold text-sm text-gray-800 uppercase">
+                      {isMitraContext ? 'KOMISI MITRA' : 'TOTAL UJROH PAKET'}
+                    </span>
+                  </div>
+                  <span className="font-black text-blue-700 italic">Rp {pricingSummary.totalKomisiMitra.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                       <Banknote className="w-5 h-5" />
+                    </div>
+                    <span className="font-bold text-sm text-gray-800 uppercase">KOMISI UMAROH</span>
+                  </div>
+                  <span className="font-black text-blue-700 italic">Rp {pricingSummary.totalKomisiUmaroh.toLocaleString('id-ID')}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

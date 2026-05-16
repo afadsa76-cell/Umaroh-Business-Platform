@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Users, Package, PlaneTakeoff } from 'lucide-react';
+import { Users, Package, PlaneTakeoff } from 'lucide-react';
 import { TrackerPaket } from './tracker/TrackerPaket';
 import { TrackerJamaah } from './tracker/TrackerJamaah';
 import { TrackerKeberangkatan } from './tracker/TrackerKeberangkatan';

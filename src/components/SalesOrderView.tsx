@@ -15,7 +15,6 @@ import { FileSpreadsheet, Image as ImageIcon, FileText, Save } from 'lucide-reac
 import * as XLSX from 'xlsx';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
-import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { saveTransaction } from '../data/transactions';
@@ -24,7 +23,7 @@ import { OfferingTemplate } from './OfferingTemplate';
 import { db, collection, addDoc, handleFirestoreError, OperationType } from '../firebase';
 import { generateTimelineEstimasi } from './tracker/utils';
 import { Capacitor } from '@capacitor/core';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
+import { captureToDataUrl } from '../utils/exportUtils';
 
 import { isDateInRange } from '../utils/dateUtils';
 
@@ -117,8 +116,34 @@ export const SalesOrderView: React.FC = () => {
   };
 
   const salesOrderSystemInstruction = "Anda adalah asisten AI untuk mengisi form Sales Order Umrah. Ekstrak informasi dari teks yang diberikan pengguna dan kembalikan dalam format JSON sesuai schema. Jika pengguna tidak menyebutkan hotel spesifik, pilihkan secara otomatis hotel Madinah dan Makkah yang tersedia dari contextData. Jika ada informasi yang tidak disebutkan, biarkan kosong atau gunakan nilai default yang masuk akal.";
+  
+  interface SalesOrderParsedData {
+    namaPaket?: string;
+    namaTravel?: string;
+    namaMitra?: string;
+    emberkasi?: string;
+    tglKeberangkatan?: string;
+    programHari?: string;
+    jumlahPax?: number;
+    tl?: number;
+    room?: string;
+    pic?: string;
+    malamMadinah?: number;
+    malamMakkah?: number;
+    selectedHotelMadinah?: string;
+    selectedHotelMakkah?: string;
+    selectedMaskapai?: string;
+    selectedTransport?: string;
+    selectedHandling?: string;
+    selectedEquipment?: string;
+    selectedVisa?: string;
+    selectedHandlingDomestik?: string;
+    selectedManasik?: string;
+    selectedZiarah?: string;
+    selectedKeretaCepat?: string;
+  }
 
-  const handleDataParsed = (data: any) => {
+  const handleDataParsed = (data: SalesOrderParsedData) => {
     if (data.namaPaket) setNamaPaket(data.namaPaket);
     if (data.namaTravel) setNamaTravel(data.namaTravel);
     if (data.namaMitra) setNamaMitra(data.namaMitra);
@@ -277,7 +302,7 @@ export const SalesOrderView: React.FC = () => {
   ]);
 
   const customSelectStyles = {
-    control: (provided: any) => ({
+    control: (provided: Record<string, unknown>) => ({
       ...provided,
       backgroundColor: 'transparent',
       border: 'none',
@@ -288,11 +313,11 @@ export const SalesOrderView: React.FC = () => {
       padding: 0,
       cursor: 'text',
     }),
-    valueContainer: (provided: any) => ({
+    valueContainer: (provided: Record<string, unknown>) => ({
       ...provided,
       padding: 0,
     }),
-    input: (provided: any) => ({
+    input: (provided: Record<string, unknown>) => ({
       ...provided,
       margin: 0,
       padding: 0,
@@ -300,11 +325,11 @@ export const SalesOrderView: React.FC = () => {
     indicatorSeparator: () => ({
       display: 'none',
     }),
-    dropdownIndicator: (provided: any) => ({
+    dropdownIndicator: (provided: Record<string, unknown>) => ({
       ...provided,
       padding: '0 4px',
     }),
-    menu: (provided: any) => ({
+    menu: (provided: Record<string, unknown>) => ({
       ...provided,
       fontStyle: 'normal',
       fontWeight: 'normal',
@@ -312,7 +337,7 @@ export const SalesOrderView: React.FC = () => {
       width: 'max-content',
       minWidth: '100%',
     }),
-    option: (provided: any, state: any) => ({
+    option: (provided: Record<string, unknown>, state: { isSelected: boolean; isFocused: boolean }) => ({
       ...provided,
       fontSize: '0.875rem',
       backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#eff6ff' : 'white',
@@ -1027,7 +1052,7 @@ export const SalesOrderView: React.FC = () => {
                               }
                             : null
                         }
-                        onChange={(selected: any) => setSelectedHotelMadinah(selected ? selected.value : '')}
+                        onChange={(selected: { value: string; label: string } | null) => setSelectedHotelMadinah(selected ? selected.value : '')}
                         options={availableMadinahHotels.map(h => ({
                           value: h.id,
                           label: `HOTEL MADINAH: ${h.name} ${h.mealPlan} ${h.stars ? `- ${h.stars} Bintang ` : ''}(${getHotelSeasonRange(h, tglKeberangkatan)}) (SAR ${getQuadPrice(h, tglKeberangkatan)})`
@@ -1071,7 +1096,7 @@ export const SalesOrderView: React.FC = () => {
                               }
                             : null
                         }
-                        onChange={(selected: any) => setSelectedHotelMakkah(selected ? selected.value : '')}
+                        onChange={(selected: { value: string; label: string } | null) => setSelectedHotelMakkah(selected ? selected.value : '')}
                         options={availableMakkahHotels.map(h => ({
                           value: h.id,
                           label: `HOTEL MAKKAH: ${h.name} ${h.mealPlan} ${h.stars ? `- ${h.stars} Bintang ` : ''}(${getHotelSeasonRange(h, tglKeberangkatan)}) (SAR ${getQuadPrice(h, tglKeberangkatan)})`

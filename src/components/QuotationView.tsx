@@ -1,16 +1,15 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Star, MapPin, Calendar, Printer, Users, Briefcase, RefreshCw, Download } from 'lucide-react';
+import { Star, MapPin, Calendar, Users, Briefcase, RefreshCw, Download } from 'lucide-react';
 import { hotels, Hotel } from '../data/hotels';
 import { isDateInRange, parseDateRange } from '../utils/dateUtils';
 import { HANDLING_TIERS } from '../data/handlingSaudi';
 import { visaData } from '../data/visa';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
+import { captureToDataUrl } from '../utils/exportUtils';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { FileText } from 'lucide-react';
 
 interface QuotationRow {
   madinah?: Partial<Hotel>;
@@ -59,7 +58,7 @@ export const QuotationView: React.FC = () => {
 
   const quotationSystemInstruction = "Anda adalah asisten AI untuk mengisi form Quotation Umrah. Ekstrak informasi dari teks yang diberikan pengguna dan kembalikan dalam format JSON sesuai schema. Jika pengguna tidak menyebutkan hotel spesifik, pilihkan secara otomatis 3-4 kombinasi hotel Madinah dan Makkah yang tersedia dari contextData (misalnya kombinasi bintang 3, bintang 4, dan bintang 5) dan masukkan ke dalam array 'rows'. Jika ada informasi yang tidak disebutkan, biarkan kosong atau gunakan nilai default yang masuk akal.";
 
-  const handleDataParsed = (data: any) => {
+  const handleDataParsed = (data: { selectedDate?: string; paxCount?: number; includeHandling?: boolean; includeMutawif?: boolean; includeVisa?: boolean; currency?: string; rows?: { madinahHotelId?: string; makkahHotelId?: string }[] }) => {
     const newDate = data.selectedDate || selectedDate;
     const newPax = data.paxCount || paxCount;
     const newHandling = data.includeHandling !== undefined ? data.includeHandling : includeHandling;
@@ -84,7 +83,7 @@ export const QuotationView: React.FC = () => {
         handlingSAR = Math.round((tier ? tier.hpp : 0) * 3.75);
       }
       
-      let mutawwifSAR = newMutawif ? 250 : 0;
+      const mutawwifSAR = newMutawif ? 250 : 0;
       
       let visaIDR = 0;
       if (newVisa) {
@@ -94,11 +93,11 @@ export const QuotationView: React.FC = () => {
         visaIDR = visa?.sellingPrice || 0;
       }
 
-      data.rows.forEach((r: any, index: number) => {
+      data.rows.forEach((r: { madinahHotelId?: string; makkahHotelId?: string }, index: number) => {
         const madinah = hotels.find(h => h.id === r.madinahHotelId);
         const makkah = hotels.find(h => h.id === r.makkahHotelId);
         
-        let row: QuotationRow = {};
+        let row: QuotationRow;
         
         if (index < newRows.length) {
           row = {
@@ -276,7 +275,6 @@ export const QuotationView: React.FC = () => {
     if (exactMatch) return ''; // No need to show text if it's an exact match
     
     // Find closest season
-    let closestSeason = null;
     let minDiff = Infinity;
     let closestStart: Date | null = null;
 
@@ -288,7 +286,6 @@ export const QuotationView: React.FC = () => {
         const diff = Math.min(diffStart, diffEnd);
         if (diff < minDiff) {
           minDiff = diff;
-          closestSeason = s;
           closestStart = start;
         }
       }

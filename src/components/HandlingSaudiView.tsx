@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plane, Calculator, DollarSign, Users, RefreshCw } from 'lucide-react';
+import { Calculator, DollarSign, Users, RefreshCw } from 'lucide-react';
 import { HANDLING_TIERS, HANDLING_CONSTANTS } from '../data/handlingSaudi';
 
 export const HandlingSaudiView: React.FC = () => {

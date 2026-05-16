@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, db, handleFirestoreError, OperationType } from '../../firebase';
 import { generateWALink, getWATemplate, openWhatsApp } from '../../utils/whatsapp';
+import { JamaahTracker, PaketTracker } from './types';
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { Camera, RefreshCw, Plus, MessageCircle, Package, FolderOpen, FileText, Edit2, Trash2, Save, X } from 'lucide-react';
@@ -83,14 +84,14 @@ export const TrackerJamaah: React.FC = () => {
       const jsonStr = rawText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
       const result = JSON.parse(jsonStr);
       
-      const updateData: any = {};
+      const updateData: Partial<JamaahTracker> = {};
       Object.keys(result).forEach(key => {
         if (result[key] !== null && result[key] !== undefined && result[key] !== "") {
           const val = result[key];
           if (key.includes('tgl') || key.includes('tanggal')) {
-            updateData[key] = String(val);
+            (updateData as Record<string, string>)[key] = String(val);
           } else {
-            updateData[key] = String(val).toUpperCase();
+            (updateData as Record<string, string>)[key] = String(val).toUpperCase();
           }
         }
       });
@@ -178,7 +179,6 @@ export const TrackerJamaah: React.FC = () => {
   const [dokumenData, setDokumenData] = useState<Partial<JamaahTracker>>({});
   const [dokumenJamaahId, setDokumenJamaahId] = useState<string | null>(null);
 
-  // Perlengkapan Modal State
   const [isPerlengkapanModalOpen, setIsPerlengkapanModalOpen] = useState(false);
   const [perlengkapanData, setPerlengkapanData] = useState<Partial<JamaahTracker>>({});
   const [perlengkapanJamaahId, setPerlengkapanJamaahId] = useState<string | null>(null);
@@ -197,9 +197,9 @@ export const TrackerJamaah: React.FC = () => {
     return () => { unsubJamaah(); unsubPaket(); };
   }, []);
 
-  const handleInlineUpdate = async (id: string, field: keyof JamaahTracker, value: any) => {
+  const handleInlineUpdate = async (id: string, field: keyof JamaahTracker, value: string | number | boolean | undefined) => {
     try {
-      const updateData: any = { [field]: value };
+      const updateData: Partial<JamaahTracker> = { [field]: value };
       
       // If updating nama_paspor and namaLengkap is empty or same as old nama_paspor, sync it
       if (field === 'nama_paspor') {
@@ -227,8 +227,8 @@ export const TrackerJamaah: React.FC = () => {
     
     try {
       const dataToSave = { ...formData };
-      delete (dataToSave as any).id;
-      Object.keys(dataToSave).forEach(key => (dataToSave as any)[key] === undefined && delete (dataToSave as any)[key]);
+      delete dataToSave.id;
+      Object.keys(dataToSave).forEach(key => (dataToSave as Record<string, unknown>)[key] === undefined && delete (dataToSave as Record<string, unknown>)[key]);
 
       if (isEditing) {
         await updateDoc(doc(db, 'tracker_jamaah', isEditing), dataToSave);
@@ -283,8 +283,8 @@ export const TrackerJamaah: React.FC = () => {
     if (!manifestJamaahId) return;
     try {
       const dataToSave = { ...manifestData };
-      delete (dataToSave as any).id;
-      Object.keys(dataToSave).forEach(key => (dataToSave as any)[key] === undefined && delete (dataToSave as any)[key]);
+      delete dataToSave.id;
+      Object.keys(dataToSave).forEach(key => (dataToSave as Record<string, unknown>)[key] === undefined && delete (dataToSave as Record<string, unknown>)[key]);
       
       await updateDoc(doc(db, 'tracker_jamaah', manifestJamaahId), dataToSave);
       setIsManifestModalOpen(false);
@@ -303,8 +303,8 @@ export const TrackerJamaah: React.FC = () => {
     if (!dokumenJamaahId) return;
     try {
       const dataToSave = { ...dokumenData };
-      delete (dataToSave as any).id;
-      Object.keys(dataToSave).forEach(key => (dataToSave as any)[key] === undefined && delete (dataToSave as any)[key]);
+      delete dataToSave.id;
+      Object.keys(dataToSave).forEach(key => (dataToSave as Record<string, unknown>)[key] === undefined && delete (dataToSave as Record<string, unknown>)[key]);
       
       await updateDoc(doc(db, 'tracker_jamaah', dokumenJamaahId), dataToSave);
       setIsDokumenModalOpen(false);
@@ -323,8 +323,8 @@ export const TrackerJamaah: React.FC = () => {
     if (!perlengkapanJamaahId) return;
     try {
       const dataToSave = { ...perlengkapanData };
-      delete (dataToSave as any).id;
-      Object.keys(dataToSave).forEach(key => (dataToSave as any)[key] === undefined && delete (dataToSave as any)[key]);
+      delete dataToSave.id;
+      Object.keys(dataToSave).forEach(key => (dataToSave as Record<string, unknown>)[key] === undefined && delete (dataToSave as Record<string, unknown>)[key]);
       
       await updateDoc(doc(db, 'tracker_jamaah', perlengkapanJamaahId), dataToSave);
       setIsPerlengkapanModalOpen(false);
@@ -471,14 +471,14 @@ export const TrackerJamaah: React.FC = () => {
                               const result = JSON.parse(jsonStr);
 
                               setFormData(prev => {
-                                const newData = { ...prev };
+                                const newData: Partial<JamaahTracker> = { ...prev };
                                 Object.keys(result).forEach(key => {
                                   if (result[key] !== null && result[key] !== undefined && result[key] !== "") {
                                     const val = result[key];
                                     if (key.includes('tgl') || key.includes('tanggal')) {
-                                      (newData as any)[key] = String(val);
+                                      (newData as Record<string, string>)[key] = String(val);
                                     } else {
-                                      (newData as any)[key] = String(val).toUpperCase();
+                                      (newData as Record<string, string>)[key] = String(val).toUpperCase();
                                     }
                                   }
                                 });
@@ -515,7 +515,7 @@ export const TrackerJamaah: React.FC = () => {
                   </div>
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.jenisKelamin || ''} onChange={e => setFormData({...formData, jenisKelamin: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.jenisKelamin || ''} onChange={e => setFormData({...formData, jenisKelamin: e.target.value as 'L' | 'P'})}>
                     <option value="">Pilih...</option>
                     <option value="L">Laki-laki</option>
                     <option value="P">Perempuan</option>
@@ -1135,7 +1135,7 @@ export const TrackerJamaah: React.FC = () => {
                   <select 
                     className="w-full p-2 border rounded-lg text-sm font-medium"
                     value={manifestData.status_kesiapan || 'NOT_READY'}
-                    onChange={e => setManifestData({...manifestData, status_kesiapan: e.target.value as any})}
+                    onChange={e => setManifestData({...manifestData, status_kesiapan: e.target.value as 'READY' | 'NOT_READY'})}
                   >
                     <option value="NOT_READY">NOT_READY</option>
                     <option value="READY">READY</option>

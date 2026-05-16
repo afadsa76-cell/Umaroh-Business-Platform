@@ -1,33 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Edit2, Trash2, CheckCircle, Clock, AlertCircle, Wallet, Users, ArrowRight, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { format, differenceInDays, parseISO } from 'date-fns';
-import { id as idLocale } from 'date-fns/locale';
-import { db, collection, onSnapshot, query, where, doc, updateDoc, getDoc, runTransaction } from '../../firebase';
+import { Wallet, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { db, collection, onSnapshot, query, where, doc, updateDoc, runTransaction } from '../../firebase';
 
 type FinanceTab = 'ap' | 'ar' | 'komisi';
 
+interface VendorService {
+  id: string;
+  vendor?: string;
+  namaLayanan?: string;
+  namaPaket?: string;
+  estimasiBiaya?: number;
+  statusPembayaran?: string;
+  [key: string]: unknown;
+}
+
+interface Booking {
+  id: string;
+  jenisPaket?: string;
+  jamaahId: string;
+  totalHarga?: number;
+  statusPembayaran?: string;
+  [key: string]: unknown;
+}
+
+interface Transaction {
+  id: string;
+  createdAt?: string;
+  userId: string;
+  amount: number;
+  status: string;
+  [key: string]: unknown;
+}
+
 export const FinanceDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<FinanceTab>('ap');
-  const [vendorServices, setVendorServices] = useState<any[]>([]);
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [vendorServices, setVendorServices] = useState<VendorService[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch Vendor Services (AP)
     const unsubAP = onSnapshot(collection(db, 'vendor_services'), (snapshot) => {
-      setVendorServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setVendorServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VendorService)));
     });
 
     // Fetch Bookings (AR)
     const unsubAR = onSnapshot(collection(db, 'bookings'), (snapshot) => {
-      setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
     });
 
     // Fetch Transactions (Komisi/Withdrawals)
     const qTrans = query(collection(db, 'transactions'), where('type', '==', 'withdraw'));
     const unsubTrans = onSnapshot(qTrans, (snapshot) => {
-      setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction)));
     });
 
     setLoading(false);

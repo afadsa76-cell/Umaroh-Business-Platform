@@ -114,7 +114,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin();
-      allow list: if isOperasional() || isAdmin() || (resource.data.role == 'mitra');
+      allow list: if isOperasional() || isAdmin() || 
+                  (resource.data.role == 'mitra') || 
+                  (resource.data.get('uplineId', '') == request.auth.uid);
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming()) && 
                     incoming().role in ['mitra', 'jamaah'] &&
                     incoming().uid == request.auth.uid) || isAdmin();
@@ -233,13 +235,13 @@ service cloud.firestore {
     }
 
     match /paket_kemitraan/{paketId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write: if isOperasional() && isValidId(paketId);
     }
 
     match /pendaftaran_mitra/{pendaftaranId} {
       allow get: if isOperasional() || (isSignedIn() && resource.data.email == request.auth.token.email);
-      allow list: if isOperasional();
+      allow list: if isOperasional() || (isSignedIn() && resource.data.uplineId == request.auth.uid);
       allow create: if isValidPendaftaranMitra(incoming()); 
       allow update: if isOperasional() && 
                     incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&

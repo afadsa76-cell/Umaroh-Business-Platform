@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Hotel, Calendar, CheckSquare, Square, Calculator, ArrowRight, AlertCircle, TrendingUp as TrendingUpIcon, MessageCircle, Clock } from 'lucide-react';
+import { Hotel, Calendar, CheckSquare, Square, Calculator, AlertCircle, TrendingUp as TrendingUpIcon, MessageCircle } from 'lucide-react';
 import { openWhatsApp } from '../utils/whatsapp';
-import { parseDate, subMonths, formatDate, getDaysRemaining } from '../utils/dateUtils';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 

@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, doc, setDoc, getDocs, handleFirestoreError, OperationType } from '../../firebase';
-import { Hotel, hotels as staticHotelsList } from '../../data/hotels';
+import { db, collection, onSnapshot, doc, setDoc, handleFirestoreError, OperationType } from '../../firebase';
+import { hotels as staticHotelsList } from '../../data/hotels';
 import { Image, MapPin, Search, Edit3, X, Save, Upload, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleGenAI, Type } from '@google/genai';
+
+interface HotelItem {
+  id: string;
+  name: string;
+  city: string;
+  vendor?: string;
+  stars?: number;
+}
 
 interface HotelMedia {
   id: string; // Hotel id or name
@@ -14,8 +22,8 @@ interface HotelMedia {
 }
 
 export const HotelMediaView: React.FC = () => {
-  const [staticHotels, setStaticHotels] = useState<any[]>([]);
-  const [dbHotels, setDbHotels] = useState<any[]>([]);
+  const [staticHotels, setStaticHotels] = useState<HotelItem[]>([]);
+  const [dbHotels, setDbHotels] = useState<HotelItem[]>([]);
   const [mediaList, setMediaList] = useState<HotelMedia[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -28,7 +36,7 @@ export const HotelMediaView: React.FC = () => {
 
   useEffect(() => {
     // Basic static hotels
-    const staticMap = staticHotelsList.map(h => ({
+    const staticMap: HotelItem[] = staticHotelsList.map(h => ({
       id: h.id,
       name: h.name,
       city: h.city,
@@ -38,7 +46,7 @@ export const HotelMediaView: React.FC = () => {
     setStaticHotels(staticMap);
 
     const unsubHotels = onSnapshot(collection(db, 'master_hotels'), (snapshot) => {
-      const dbH = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const dbH = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HotelItem));
       setDbHotels(dbH);
     }, (error) => handleFirestoreError(error, OperationType.GET, 'master_hotels'));
 
@@ -66,7 +74,7 @@ export const HotelMediaView: React.FC = () => {
     return mediaList.find(m => m.hotelId === hotelId || m.hotelName === hotelName);
   };
 
-  const handleEdit = (hotel: any) => {
+  const handleEdit = (hotel: HotelItem) => {
     const existing = getMediaForHotel(hotel.id, hotel.name);
     setEditData({
       photoUrl: existing?.photoUrl || '',
@@ -75,7 +83,7 @@ export const HotelMediaView: React.FC = () => {
     setIsEditing(hotel.id);
   };
 
-  const handleSave = async (hotel: any) => {
+  const handleSave = async (hotel: HotelItem) => {
     setIsSaving(true);
     try {
       const safeId = hotel.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -92,11 +100,7 @@ export const HotelMediaView: React.FC = () => {
     } catch (error) {
       console.error("Error saving media", error);
       handleFirestoreError(error, OperationType.WRITE, 'hotel_metadata');
-      try {
-        alert("Gagal menyimpan data.");
-      } catch (e) {
-        console.log("Gagal menyimpan data.");
-      }
+      console.log("Gagal menyimpan data.");
     } finally {
       setIsSaving(false);
     }
@@ -107,11 +111,7 @@ export const HotelMediaView: React.FC = () => {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      try {
-        alert("Maksimal ukuran gambar adalah 2MB");
-      } catch (e) {
-        // do nothing
-      }
+      console.log("Maksimal ukuran gambar adalah 2MB");
       return;
     }
 
@@ -123,7 +123,7 @@ export const HotelMediaView: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleAiAssist = async (hotel: any) => {
+  const handleAiAssist = async (hotel: HotelItem) => {
     setIsGenerating(hotel.id);
     try {
       const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || '';
@@ -134,7 +134,7 @@ export const HotelMediaView: React.FC = () => {
 
       const ai = new GoogleGenAI({ apiKey });
       const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
-Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
+Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -162,11 +162,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
       }
     } catch (error) {
       console.error("AI Error", error);
-      try {
-        alert("Gagal menggunakan AI. Pastikan VITE_GEMINI_API_KEY diatur.");
-      } catch (e) {
-        console.log("Gagal menggunakan AI.");
-      }
+      console.log("Gagal menggunakan AI.");
     } finally {
       setIsGenerating(null);
     }
@@ -198,16 +194,10 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
       return;
     }
 
-    let confirmed = true;
     try {
-      confirmed = window.confirm(`Akan melengkapi data untuk ${hotelsToProcess.length} hotel yang belum lengkap. Proses ini akan memakan waktu. Lanjutkan?`);
-    } catch (e) {
+      window.confirm(`Akan melengkapi data untuk ${hotelsToProcess.length} hotel yang belum lengkap. Proses ini akan memakan waktu. Lanjutkan?`);
+    } catch {
       // In some sandboxed iframes, window.confirm throws
-      confirmed = true; 
-    }
-
-    if (!confirmed) {
-      return;
     }
 
     setIsGeneratingAll(true);
@@ -270,8 +260,8 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
     setIsGeneratingAll(false);
     setGenerationProgress(null);
     try {
-      alert('Proses melengkapi data selesai.');
-    } catch (e) {
+      console.log('Proses melengkapi data selesai.');
+    } catch {
       console.log('Proses melengkapi data selesai.');
     }
   };

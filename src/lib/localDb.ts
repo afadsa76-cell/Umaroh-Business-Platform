@@ -1,14 +1,27 @@
 export const db = {};
 
-type Listener = (snapshot: any) => void;
+// Use generic Record for document data
+type DocumentData = Record<string, unknown>;
+
+interface SnapshotDoc {
+  id: string;
+  data: () => DocumentData;
+}
+
+interface Snapshot {
+  empty: boolean;
+  docs: SnapshotDoc[];
+}
+
+type Listener = (snapshot: Snapshot) => void;
 const listeners: Record<string, Listener[]> = {};
 
 function notifyListeners(collectionName: string) {
   const data = getCollectionData(collectionName);
-  const snapshot = {
+  const snapshot: Snapshot = {
     empty: data.length === 0,
-    docs: data.map((item: any) => ({
-      id: item.id,
+    docs: data.map((item: DocumentData) => ({
+      id: item.id as string,
       data: () => item
     }))
   };
@@ -17,23 +30,23 @@ function notifyListeners(collectionName: string) {
   }
 }
 
-function getCollectionData(collectionName: string) {
+function getCollectionData(collectionName: string): DocumentData[] {
   const data = localStorage.getItem(`db_${collectionName}`);
   return data ? JSON.parse(data) : [];
 }
 
-function saveCollectionData(collectionName: string, data: any[]) {
+function saveCollectionData(collectionName: string, data: DocumentData[]) {
   localStorage.setItem(`db_${collectionName}`, JSON.stringify(data));
   notifyListeners(collectionName);
 }
 
-export function collection(db: any, path: string) {
+export function collection(_db: unknown, path: string) {
   return { path };
 }
 
-export function doc(dbOrCollection: any, pathOrId: string, id?: string) {
-  let path = dbOrCollection.path || pathOrId;
-  let docId = id || (dbOrCollection.path ? pathOrId : undefined);
+export function doc(dbOrCollection: { path?: string }, pathOrId: string, id?: string) {
+  const path = dbOrCollection.path || pathOrId;
+  const docId = id || (dbOrCollection.path ? pathOrId : undefined);
   
   if (!docId) {
     const parts = path.split('/');
@@ -45,9 +58,9 @@ export function doc(dbOrCollection: any, pathOrId: string, id?: string) {
   return { path, id: docId };
 }
 
-export function onSnapshot(ref: any, callback: Listener) {
+export function onSnapshot(ref: { path: string; type?: string; collectionName?: string; conditions?: { field: string; op: string; value: unknown }[] }, callback: Listener) {
   let collectionName = ref.path;
-  if (ref.type === 'query') {
+  if (ref.type === 'query' && ref.collectionName) {
     collectionName = ref.collectionName;
   }
   
@@ -55,12 +68,12 @@ export function onSnapshot(ref: any, callback: Listener) {
     listeners[collectionName] = [];
   }
   
-  const wrappedCallback = (snapshot: any) => {
-    let filteredData = snapshot.docs.map((doc: any) => doc.data());
+  const wrappedCallback = (snapshot: Snapshot) => {
+    let filteredData = snapshot.docs.map((d: SnapshotDoc) => d.data());
     
-    if (ref.type === 'query') {
-      filteredData = filteredData.filter((item: any) => {
-        for (const cond of ref.conditions) {
+    if (ref.type === 'query' && ref.conditions) {
+      filteredData = filteredData.filter((item: DocumentData) => {
+        for (const cond of ref.conditions!) {
           if (cond.op === '==') {
             if (item[cond.field] !== cond.value) return false;
           }
@@ -71,8 +84,8 @@ export function onSnapshot(ref: any, callback: Listener) {
     
     callback({
       empty: filteredData.length === 0,
-      docs: filteredData.map((item: any) => ({
-        id: item.id,
+      docs: filteredData.map((item: DocumentData) => ({
+        id: item.id as string,
         data: () => item
       }))
     });
@@ -84,8 +97,8 @@ export function onSnapshot(ref: any, callback: Listener) {
   const data = getCollectionData(collectionName);
   wrappedCallback({
     empty: data.length === 0,
-    docs: data.map((item: any) => ({
-      id: item.id,
+    docs: data.map((item: DocumentData) => ({
+      id: item.id as string,
       data: () => item
     }))
   });
@@ -95,18 +108,18 @@ export function onSnapshot(ref: any, callback: Listener) {
   };
 }
 
-export async function getDocs(ref: any) {
+export async function getDocs(ref: { path: string; type?: string; collectionName?: string; conditions?: { field: string; op: string; value: unknown }[] }) {
   let collectionName = ref.path;
-  if (ref.type === 'query') {
+  if (ref.type === 'query' && ref.collectionName) {
     collectionName = ref.collectionName;
   }
   
   const data = getCollectionData(collectionName);
   let filteredData = data;
   
-  if (ref.type === 'query') {
-    filteredData = data.filter((item: any) => {
-      for (const cond of ref.conditions) {
+  if (ref.type === 'query' && ref.conditions) {
+    filteredData = data.filter((item: DocumentData) => {
+      for (const cond of ref.conditions!) {
         if (cond.op === '==') {
           if (item[cond.field] !== cond.value) return false;
         }
@@ -117,17 +130,17 @@ export async function getDocs(ref: any) {
   
   return {
     empty: filteredData.length === 0,
-    docs: filteredData.map((item: any) => ({
-      id: item.id,
+    docs: filteredData.map((item: DocumentData) => ({
+      id: item.id as string,
       data: () => item
     }))
   };
 }
 
-export async function setDoc(docRef: any, data: any) {
+export async function setDoc(docRef: { path: string; id: string }, data: DocumentData) {
   const collectionName = docRef.path;
   const items = getCollectionData(collectionName);
-  const index = items.findIndex((item: any) => item.id === docRef.id);
+  const index = items.findIndex((item: DocumentData) => item.id === docRef.id);
   
   const newItem = { ...data, id: docRef.id };
   
@@ -140,7 +153,7 @@ export async function setDoc(docRef: any, data: any) {
   saveCollectionData(collectionName, items);
 }
 
-export async function addDoc(collectionRef: any, data: any) {
+export async function addDoc(collectionRef: { path: string }, data: DocumentData) {
   const collectionName = collectionRef.path;
   const items = getCollectionData(collectionName);
   const id = Math.random().toString(36).substring(2, 15);
@@ -152,10 +165,10 @@ export async function addDoc(collectionRef: any, data: any) {
   return { id };
 }
 
-export async function updateDoc(docRef: any, data: any) {
+export async function updateDoc(docRef: { path: string; id: string }, data: DocumentData) {
   const collectionName = docRef.path;
   const items = getCollectionData(collectionName);
-  const index = items.findIndex((item: any) => item.id === docRef.id);
+  const index = items.findIndex((item: DocumentData) => item.id === docRef.id);
   
   if (index >= 0) {
     items[index] = { ...items[index], ...data };
@@ -163,15 +176,15 @@ export async function updateDoc(docRef: any, data: any) {
   }
 }
 
-export async function deleteDoc(docRef: any) {
+export async function deleteDoc(docRef: { path: string; id: string }) {
   const collectionName = docRef.path;
   const items = getCollectionData(collectionName);
-  const newItems = items.filter((item: any) => item.id !== docRef.id);
+  const newItems = items.filter((item: DocumentData) => item.id !== docRef.id);
   
   saveCollectionData(collectionName, newItems);
 }
 
-export function query(collectionRef: any, ...conditions: any[]) {
+export function query(collectionRef: { path: string }, ...conditions: { field: string; op: string; value: unknown }[]) {
   return {
     type: 'query',
     collectionName: collectionRef.path,
@@ -179,32 +192,32 @@ export function query(collectionRef: any, ...conditions: any[]) {
   };
 }
 
-export function where(field: string, op: string, value: any) {
+export function where(field: string, op: string, value: unknown) {
   return { field, op, value };
 }
 
-export function writeBatch(db: any) {
-  const operations: any[] = [];
+export function writeBatch() {
+  const operations: { type: string; docRef: { path: string; id: string }; data?: DocumentData }[] = [];
   
   return {
-    set: (docRef: any, data: any) => {
+    set: (docRef: { path: string; id: string }, data: DocumentData) => {
       operations.push({ type: 'set', docRef, data });
     },
-    update: (docRef: any, data: any) => {
+    update: (docRef: { path: string; id: string }, data: DocumentData) => {
       operations.push({ type: 'update', docRef, data });
     },
-    delete: (docRef: any) => {
+    delete: (docRef: { path: string; id: string }) => {
       operations.push({ type: 'delete', docRef });
     },
     commit: async () => {
       // Group by collection
-      const collections = new Set(operations.map(op => op.docRef.path));
+      const collections = Array.from(new Set(operations.map(op => op.docRef.path as string)));
       
       for (const collectionName of collections) {
         const items = getCollectionData(collectionName);
         
         operations.filter(op => op.docRef.path === collectionName).forEach(op => {
-          const index = items.findIndex((item: any) => item.id === op.docRef.id);
+          const index = items.findIndex((item: DocumentData) => item.id === op.docRef.id);
           
           if (op.type === 'set') {
             const newItem = { ...op.data, id: op.docRef.id };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2 } from 'lucide-react';
 
 export interface InventoryItem {
   id: string;
@@ -193,7 +193,7 @@ export const InventoryView: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                 <select
                   value={formData.category}
-                  onChange={e => setFormData({...formData, category: e.target.value as any})}
+                  onChange={e => setFormData({...formData, category: e.target.value as 'Koper' | 'Kain Ihram' | 'Mukena' | 'Buku Panduan' | 'Lainnya'})}
                   className="w-full p-2 border border-gray-300 rounded-lg"
                 >
                   <option value="Koper">Koper</option>

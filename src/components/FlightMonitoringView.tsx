@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Calendar, Users2, Search, Filter, ArrowRight, Clock, MapPin, CheckCircle2, AlertCircle, Activity } from 'lucide-react';
+import { Plane, Calendar, Users2, Search, Filter, ArrowRight, Clock, CheckCircle2 } from 'lucide-react';
 
 interface Flight {
   id: string;

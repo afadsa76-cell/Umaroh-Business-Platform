@@ -12,24 +12,6 @@ interface DashboardViewProps {
   onNavigate?: (tab: TabType) => void;
 }
 
-type PaymentStatus = 'Belum Bayar' | 'DP' | 'Lunas';
-
-interface VendorService {
-  id: string;
-  paketId: string;
-  namaPaket: string;
-  namaLayanan: string;
-  vendor: string;
-  tanggalKeberangkatan: string;
-  tanggalKepulangan: string;
-  reminderDPHMinus: number;
-  reminderPelunasanHMinus: number;
-  estimasiBiaya: number;
-  statusPembayaran: PaymentStatus;
-  pic: string;
-  catatan: string;
-}
-
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [pakets, setPakets] = useState<PaketTracker[]>([]);
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
@@ -72,7 +54,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     { id: 'promo-sv-1', airline: 'Saudia (Promo Juli)', departure: '09 Jul 2026', return: '18 Jul 2026', availableSeats: 40, totalSeats: 40 },
   ];
 
-  const [vendorInvoices, setVendorInvoices] = useState<any[]>([]);
+  const [vendorInvoices, setVendorInvoices] = useState<VendorInvoice[]>([]);
 
   useEffect(() => {
     const savedInvoices = localStorage.getItem('vendor_invoices');
@@ -114,7 +96,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     })
     .sort((a, b) => a.daysRemaining - b.daysRemaining);
 
-  const sendWhatsAppReminder = (payment: any) => {
+  const sendWhatsAppReminder = (payment: { pic: string, package: string, type: string, vendor: string, paymentType: string, amount: string, dueDate: string }) => {
     const message = `Halo ${payment.pic}, pengingat pembayaran untuk:\n\nPaket: ${payment.package}\nLayanan: ${payment.type}\nVendor: ${payment.vendor}\nTagihan: ${payment.paymentType}\nEstimasi Biaya: ${payment.amount}\nJatuh Tempo: ${payment.dueDate}\n\nMohon segera diproses. Terima kasih.`;
     const encodedMessage = encodeURIComponent(message);
     const waUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Hotel, PriceEntry } from '../data/hotels';
-import { X, Calendar, Users, Calculator, Moon, Star, MapPin } from 'lucide-react';
+import { Hotel } from '../data/hotels';
+import { X, Calendar, Moon, Star, MapPin } from 'lucide-react';
 
 interface HotelDetailModalProps {
   hotel: Hotel;

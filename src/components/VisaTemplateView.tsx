@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, RefreshCw, Download, MapPin, DollarSign, Wand2, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
+import { captureToDataUrl } from '../utils/exportUtils';
 import { visaData } from '../data/visa';
 import { transportData } from '../data/transport';
 import { AIPromptInput } from './AIPromptInput';
@@ -15,14 +15,12 @@ export const VisaTemplateView: React.FC = () => {
   const [includeTransport, setIncludeTransport] = useState(false);
   const [transportType, setTransportType] = useState<string>('BUS');
   const [transportRoute, setTransportRoute] = useState<string>('Full Trip (Jed - Mak - CT Mak - CT Mad - Mad)');
-  const [transportCurrency, setTransportCurrency] = useState<'IDR' | 'USD' | 'SAR'>('SAR');
   const [kurs, setKurs] = useState<number>(17000); // Default USD to IDR
   const [kursSar, setKursSar] = useState<number>(4700); // Default SAR to IDR
   const [marginPercent, setMarginPercent] = useState<number>(7);
   const printRef = useRef<HTMLDivElement>(null);
 
   const [paxRows, setPaxRows] = useState<{pax: string, hargaVisa: string, hargaTransport: string, vehicle?: string}[]>(Array(5).fill({ pax: '', hargaVisa: '', hargaTransport: '' }));
-  const [includeRows, setIncludeRows] = useState(Array(10).fill({ item: '' }));
 
   const visaSchema = {
     type: Type.OBJECT,
@@ -50,16 +48,16 @@ export const VisaTemplateView: React.FC = () => {
 
   const visaSystemInstruction = "Anda adalah asisten AI untuk mengisi form Pricelist Visa. Ekstrak informasi dari teks yang diberikan pengguna (seperti tanggal, margin, kurs, mata uang IDR/USD/SAR, dan apakah termasuk transportasi beserta harganya) dan kembalikan dalam format JSON sesuai schema. Jika ada informasi yang tidak disebutkan, biarkan kosong atau gunakan nilai default yang masuk akal.";
 
-  const handleDataParsed = (data: any) => {
+  const handleDataParsed = (data: { selectedDate?: string; marginPercent?: number; kurs?: number; kursSar?: number; currency?: string; includeTransport?: boolean; tiers?: { totalPax?: number; transportType?: string; transportRoute?: string }[]; totalPax?: number }) => {
     if (data.selectedDate) setSelectedDate(data.selectedDate);
     if (data.marginPercent !== undefined) setMarginPercent(data.marginPercent);
     if (data.kurs !== undefined) setKurs(data.kurs);
     if (data.kursSar !== undefined) setKursSar(data.kursSar);
-    if (data.currency) setCurrency(data.currency as any);
+    if (data.currency) setCurrency(data.currency as 'IDR' | 'USD' | 'SAR');
     if (data.includeTransport !== undefined) setIncludeTransport(data.includeTransport);
     
     if (data.tiers && Array.isArray(data.tiers)) {
-      const newRows = data.tiers.map((tierObj: any) => {
+      const newRows = data.tiers.map((tierObj) => {
         const p = tierObj.totalPax || 45;
         const vType = (tierObj.transportType || 'BUS').toUpperCase();
         const rName = tierObj.transportRoute || transportRoute;
@@ -127,7 +125,7 @@ export const VisaTemplateView: React.FC = () => {
       }
     }
 
-    let basePriceUsd = matchingTier.foreignPriceUsd;
+    const basePriceUsd = matchingTier.foreignPriceUsd;
     let jualVisa = 0;
     if (currency === 'IDR') {
       const beli = basePriceUsd * kurs;
@@ -144,7 +142,7 @@ export const VisaTemplateView: React.FC = () => {
 
     let jualTransport = 0;
     if (includeTransport) {
-      let transportIdr = dbTransportPrice * kursSar;
+      const transportIdr = dbTransportPrice * kursSar;
       if (currency === 'IDR') jualTransport = transportIdr / pax;
       else if (currency === 'USD') jualTransport = (transportIdr / pax) / kurs;
       else if (currency === 'SAR') jualTransport = (transportIdr / pax) / kursSar;
@@ -186,20 +184,7 @@ export const VisaTemplateView: React.FC = () => {
   useEffect(() => {
     autoFillData();
     
-    // Pre-fill some default includes based on standard visa
-    const defaultIncludes = [
-      "Visa Umroh",
-      "Asuransi Perjalanan",
-      "Transportasi (Jika termasuk dalam paket visa)",
-      "Handling Dokumen",
-      "Biaya Administrasi"
-    ];
-    
-    const filledIncludes = defaultIncludes.map(item => ({ item }));
-    while (filledIncludes.length < 10) {
-        filledIncludes.push({ item: '' });
-    }
-    setIncludeRows(filledIncludes);
+    // Pre-fill some default includes based on standard visa (wait, I should just remove this since includeRows is gone)
   }, []); // Run once on mount
 
   // Recalculate when kurs, margin, currency, or transport changes
@@ -217,12 +202,6 @@ export const VisaTemplateView: React.FC = () => {
     setPaxRows(newRows);
   };
 
-  const handleIncludeChange = (index: number, value: string) => {
-    const newRows = [...includeRows];
-    newRows[index] = { ...newRows[index], item: value };
-    setIncludeRows(newRows);
-  };
-
   const handleDownloadImage = async () => {
     if (!printRef.current) return;
     setIsGeneratingImage(true);
@@ -230,10 +209,11 @@ export const VisaTemplateView: React.FC = () => {
     try {
       // Ensure input values are captured by temporarily putting them in value attributes
       const inputs = printRef.current.querySelectorAll('input, textarea');
-      inputs.forEach((input: any) => {
-        input.setAttribute('value', input.value);
-        if (input.tagName === 'TEXTAREA') {
-          input.textContent = input.value;
+      inputs.forEach((input: Element) => {
+        const el = input as HTMLInputElement | HTMLTextAreaElement;
+        el.setAttribute('value', el.value);
+        if (el.tagName === 'TEXTAREA') {
+          el.textContent = el.value;
         }
       });
 
@@ -304,7 +284,7 @@ export const VisaTemplateView: React.FC = () => {
             <span className="font-medium text-gray-700">Currency:</span>
             <select
               value={currency}
-              onChange={(e) => setCurrency(e.target.value as any)}
+              onChange={(e) => setCurrency(e.target.value as 'IDR' | 'USD' | 'SAR')}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 outline-none w-24"
             >
               <option value="IDR">IDR</option>

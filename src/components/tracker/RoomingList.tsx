@@ -3,7 +3,6 @@ import { JamaahTracker } from './types';
 import { updateDoc, doc, db, handleFirestoreError, OperationType } from '../../firebase';
 
 interface Props {
-  paketId: string;
   jamaahs: JamaahTracker[];
 }
 
@@ -15,7 +14,7 @@ interface Room {
   occupants: JamaahTracker[];
 }
 
-export const RoomingList: React.FC<Props> = ({ paketId, jamaahs }) => {
+export const RoomingList: React.FC<Props> = ({ jamaahs }) => {
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [newRoomType, setNewRoomType] = useState<RoomType>('Quad');
   const [newRoomNumber, setNewRoomNumber] = useState('');

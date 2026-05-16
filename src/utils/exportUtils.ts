@@ -33,8 +33,10 @@ export const sanitizeForHtml2Canvas = (clonedDoc: Document, originalElement: HTM
       box-shadow: none !important;
       text-shadow: none !important;
       -webkit-print-color-adjust: exact !important;
-      letter-spacing: normal !important;
-      line-height: 1.4 !important;
+      letter-spacing: 0 !important;
+      word-spacing: normal !important;
+      line-height: normal !important;
+      font-variant-ligatures: none !important;
     }
     
     /* Ensure layout columns and spacing are preserved */

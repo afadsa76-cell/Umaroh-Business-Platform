@@ -1,6 +1,6 @@
 import React from 'react';
 import { Hotel } from '../data/hotels';
-import { Calendar, Users, Utensils, Building, Star, MapPin } from 'lucide-react';
+import { Calendar, Utensils, Building, Star, MapPin } from 'lucide-react';
 
 interface HotelCardProps {
   hotel: Hotel;

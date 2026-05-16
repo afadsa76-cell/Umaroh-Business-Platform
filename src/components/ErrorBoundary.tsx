@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
             errorMessage = parsedError.error;
           }
         }
-      } catch (e) {
+      } catch {
         // If not JSON, use the original message or default
         if (this.state.error?.message && this.state.error.message.includes('permission-denied')) {
           errorMessage = "Akses ditolak. Anda tidak memiliki izin untuk melihat atau mengubah data ini. Silakan hubungi administrator.";

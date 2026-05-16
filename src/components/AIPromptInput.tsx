@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, Paperclip, X } from 'lucide-react';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 interface AIPromptInputProps {
-  onDataParsed: (data: any) => void;
-  schema: any;
+  onDataParsed: (data: unknown) => void;
+  schema: Record<string, unknown>;
   systemInstruction: string;
   placeholder?: string;
-  contextData?: any;
+  contextData?: unknown;
 }
 
 export const AIPromptInput: React.FC<AIPromptInputProps> = ({ 
@@ -62,7 +62,7 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
     setError('');
     
     try {
-      let apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || '';
+      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && (import.meta.env as Record<string, string>).VITE_GEMINI_API_KEY) || '';
       
       if (!apiKey) {
         throw new Error('API Key Gemini tidak ditemukan. Pastikan Anda telah mengatur GEMINI_API_KEY atau VITE_GEMINI_API_KEY.');
@@ -71,11 +71,17 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
       const ai = new GoogleGenAI({ apiKey });
       
       let finalPrompt = prompt;
+      
+      // Use schema to instruct the model about the expected format
+      const formatInstruction = `\n\nKeluarkan hasil HANYA dalam format JSON yang valid sesuai dengan struktur schema berikut:\n${JSON.stringify(schema, null, 2)}`;
+      
       if (contextData) {
-        finalPrompt = `Berikut adalah data dari database yang bisa Anda gunakan sebagai referensi untuk menjawab prompt:\n${JSON.stringify(contextData, null, 2)}\n\nPrompt Pengguna:\n${prompt}`;
+        finalPrompt = `Berikut adalah data dari database yang bisa Anda gunakan sebagai referensi untuk menjawab prompt:\n${JSON.stringify(contextData, null, 2)}\n\nPrompt Pengguna:\n${prompt}${formatInstruction}`;
+      } else {
+        finalPrompt = `${prompt}${formatInstruction}`;
       }
 
-      const parts: any[] = [{ text: finalPrompt }];
+      const parts: Array<{ text?: string, inlineData?: { data: string, mimeType: string } }> = [{ text: finalPrompt }];
       if (selectedFile) {
         parts.push({
           inlineData: {
@@ -85,26 +91,21 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
         });
       }
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview', // Using flash model to avoid quota limits
-        contents: { parts },
-        config: {
-          systemInstruction,
-          responseMimeType: 'application/json',
-          responseSchema: schema,
-        }
-      });
+      const response = await ai.getGenerativeModel({
+        model: 'gemini-1.5-flash', // Updated to 1.5-flash which is more standard
+        systemInstruction,
+      }).generateContent(parts);
       
-      const text = response.text;
+      const text = response.response.text();
       if (text) {
         const parsedData = JSON.parse(text);
         onDataParsed(parsedData);
         setPrompt(''); // Clear prompt on success
         setSelectedFile(null); // Clear file on success
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error generating content:', err);
-      setError(err.message || 'Terjadi kesalahan saat memproses prompt.');
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat memproses prompt.');
     } finally {
       setIsLoading(false);
     }

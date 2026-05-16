@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, Search, ArrowRight, Star, Building2, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, Search, ArrowRight, Star, Building2, CheckCircle2, Clock } from 'lucide-react';
 import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMasterWizard } from './PaketMasterWizard';
 
@@ -15,8 +15,8 @@ interface PaketMaster {
   kuota: number;
   sisaKuota: number;
   status: 'draft' | 'published' | 'closed';
-  hMakkah?: any;
-  hMadinah?: any;
+  hMakkah?: Record<string, unknown>;
+  hMadinah?: Record<string, unknown>;
   durasiMakkah?: number;
   durasiMadinah?: number;
   mitraId?: string;
@@ -30,7 +30,7 @@ interface PaketMitra {
   markup: number;
   hargaJual: number;
   status: 'active' | 'inactive';
-  createdAt?: any;
+  createdAt?: { toDate: () => Date };
 }
 
 export const PaketMitraView: React.FC = () => {
@@ -40,13 +40,13 @@ export const PaketMitraView: React.FC = () => {
   
   const [notification, setNotification] = useState<{type: 'success'|'error', message: string} | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [showOnlyMyPaket, setShowOnlyMyPaket] = useState(false);
-  
+  const [activeTab, setActiveTab] = useState<'draft' | 'publish'>('publish');
+
   // States for Wizard
   const [isAddingNewMaster, setIsAddingNewMaster] = useState(false);
-  const [editingMaster, setEditingMaster] = useState<any | null>(null);
+  const [editingMaster, setEditingMaster] = useState<PaketMaster | null>(null);
   const [isMarkingUp, setIsMarkingUp] = useState(false);
-  const [markupInitialData, setMarkupInitialData] = useState<any | null>(null);
+  const [markupInitialData, setMarkupInitialData] = useState<Record<string, unknown> | null>(null);
 
   const userId = auth.currentUser?.uid || 'mitra-dummy-id';
 
@@ -55,10 +55,10 @@ export const PaketMitraView: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const [hotels, setHotels] = useState<any[]>([]);
-  const [maskapai, setMaskapai] = useState<any[]>([]);
+  const [hotels, setHotels] = useState<Record<string, unknown>[]>([]);
+  const [maskapai, setMaskapai] = useState<Record<string, unknown>[]>([]);
 
-  const [trackerPakets, setTrackerPakets] = useState<any[]>([]);
+  const [trackerPakets, setTrackerPakets] = useState<Record<string, unknown>[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -199,7 +199,14 @@ export const PaketMitraView: React.FC = () => {
     }).format(Math.round(val));
   };
 
-  const filteredPaketMasters = paketMasters.filter(m => 
+  const filteredDraftMasters = paketMasters.filter(m => 
+    (m.status === 'draft' || m.status === 'pending_validation') &&
+    (m.mitraId === userId || userRole === 'admin' || userRole === 'operasional') &&
+    m.nama.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredPublishedMasters = paketMasters.filter(m => 
+    m.status === 'published' &&
     m.nama.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -274,23 +281,23 @@ export const PaketMitraView: React.FC = () => {
         </div>
         <div className="flex bg-gray-100 p-1 rounded-xl">
           <button 
-            onClick={() => setShowOnlyMyPaket(false)}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${!showOnlyMyPaket ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('draft')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'draft' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Tersedia di Database
+            Draf & Validasi ({filteredDraftMasters.length})
           </button>
           <button 
-            onClick={() => setShowOnlyMyPaket(true)}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${showOnlyMyPaket ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('publish')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'publish' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            Paket Saya ({paketMitras.length})
+            Publish ({paketMitras.length + filteredPublishedMasters.length})
           </button>
         </div>
       </div>
 
-      {!showOnlyMyPaket ? (
+      {activeTab === 'draft' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPaketMasters.map((paket) => (
+          {filteredDraftMasters.map((paket) => (
             <div key={paket.id} className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 relative group transition-all hover:scale-[1.02]">
               <div className="h-48 bg-gray-900 relative">
                 <img 
@@ -303,11 +310,9 @@ export const PaketMitraView: React.FC = () => {
                   <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white border border-white/30 uppercase tracking-widest">
                     {paket.kuota} SEAT TOTAL
                   </div>
-                  {paket.mitraId === userId && (
-                    <div className={`${paket.status === 'pending_validation' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-amber-500 text-white'} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border`}>
-                      {paket.status === 'pending_validation' ? 'Menunggu Validasi' : 'Custom Master'}
-                    </div>
-                  )}
+                  <div className={`${paket.status === 'pending_validation' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-gray-500 text-white'} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border`}>
+                    {paket.status === 'pending_validation' ? 'Menunggu Validasi' : 'Draf'}
+                  </div>
                 </div>
                 <div className="absolute bottom-4 left-6 right-6">
                   <h3 className="text-white font-black text-xl leading-tight uppercase italic tracking-tighter">{paket.nama}</h3>
@@ -345,15 +350,13 @@ export const PaketMitraView: React.FC = () => {
                     </button>
                   ) : (
                     <button 
-                      onClick={() => handleOpenMarkup(paket)}
-                      disabled={paket.status === 'pending_validation'}
-                      className={`flex-1 ${paket.status === 'pending_validation' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'} py-3 rounded-2xl font-black italic uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 group`}
+                      disabled={true}
+                      className="flex-1 bg-gray-100 text-gray-400 cursor-not-allowed py-3 rounded-2xl font-black italic uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2"
                     >
-                      {paket.status === 'pending_validation' ? 'Sedang Divalidasi' : 'Markup & Publish'}
-                      {paket.status !== 'pending_validation' && <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />}
+                      {paket.status === 'pending_validation' ? 'Sedang Divalidasi' : 'Draf'}
                     </button>
                   )}
-                  {paket.mitraId === userId && (
+                  {(paket.mitraId === userId || userRole === 'admin' || userRole === 'operasional') && (
                     <button 
                       onClick={() => setEditingMaster(paket)}
                       className="p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-all"
@@ -363,61 +366,81 @@ export const PaketMitraView: React.FC = () => {
                     </button>
                   )}
                 </div>
-
-                {/* Tracker Section - Admin operational status */}
-                {(() => {
-                  const tracker = trackerPakets.find(t => t.namaPaket === paket.nama || t.id === paket.id);
-                  if (!tracker) return null;
-                  return (
-                    <div className="mt-4 pt-4 border-t border-gray-50 animate-in fade-in slide-in-from-top-2 duration-500">
-                      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Tracker Operasional
-                        </div>
-                        <span className={`px-1.5 py-0.5 rounded text-[7px] font-black ${
-                          tracker.status === 'Siap Berangkat' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-50 text-blue-600'
-                        }`}>
-                          {tracker.status || 'Persiapan'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-4 gap-1">
-                        {[
-                          { label: 'Visa', done: tracker.checklist?.statusVisa === 'Issued' },
-                          { label: 'Tiket', done: tracker.checklist?.statusTiket === 'Issued' },
-                          { label: 'Hotel', done: tracker.checklist?.statusHotelMakkah === 'Paid' },
-                          { label: 'Bus', done: tracker.checklist?.statusBus === 'Paid' }
-                        ].map((item, idx) => (
-                          <div key={idx} className={`p-1.5 rounded-lg text-center transition-all ${item.done ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-50 text-gray-400 border border-transparent'}`}>
-                            <div className="text-[7px] font-black uppercase mb-0.5 leading-none">{item.label}</div>
-                            {item.done ? <CheckCircle2 className="w-2.5 h-2.5 mx-auto" /> : <Clock className="w-2.5 h-2.5 mx-auto" />}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
               </div>
             </div>
           ))}
 
-          {filteredPaketMasters.length === 0 && (
+          {filteredDraftMasters.length === 0 && (
             <div className="col-span-full py-20 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium tracking-widest text-xs uppercase">Tidak ada paket master yang tersedia</p>
-              <button 
-                onClick={handleCreateNewMaster}
-                className="mt-4 text-indigo-600 font-bold text-sm uppercase tracking-widest hover:underline"
-              >
-                Buat Paket Master Pertama Anda
-              </button>
+              <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-medium tracking-widest text-xs uppercase">Tidak ada draf atau paket yang sedang divalidasi</p>
             </div>
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-900 text-[#FDB913] text-[10px] uppercase tracking-widest font-black">
+        <div className="space-y-8">
+          {/* Katalog Master Section */}
+          <div>
+            <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5 text-indigo-600" />
+              Katalog Master Tersedia
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPublishedMasters.map((paket) => (
+                <div key={paket.id} className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 relative group transition-all hover:scale-[1.02]">
+                  <div className="h-48 bg-gray-900 relative">
+                    <img 
+                      src={`https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=800&auto=format&fit=crop`} 
+                      alt="Makkah" 
+                      className="w-full h-full object-cover opacity-60" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white border border-white/30 uppercase tracking-widest">
+                        {paket.kuota} SEAT TOTAL
+                      </div>
+                    </div>
+                    <div className="absolute bottom-4 left-6 right-6">
+                      <h3 className="text-white font-black text-xl leading-tight uppercase italic tracking-tighter">{paket.nama}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Program Master Premium</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6">
+                    <div className="space-y-3 mb-6">
+                      <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest border-b border-gray-50 pb-2">
+                        <span>Harga Dasar Master</span>
+                        <span className="text-gray-900 font-bold">Rp {Math.round(paket.hargaDasar).toLocaleString('id-ID')}</span>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => handleOpenMarkup(paket)}
+                      className="w-full bg-indigo-600 text-white hover:bg-indigo-700 py-3 rounded-2xl font-black italic uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 group shadow-lg shadow-indigo-600/20"
+                    >
+                      Markup & Publish
+                      <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Paket Jualan Saya Section */}
+          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-gray-50">
+               <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                Daftar Paket Publish Saya
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase tracking-widest font-black">
                 <tr>
                   <th className="px-6 py-4">Nama Paket Anda</th>
                   <th className="px-6 py-4">Sumber Master</th>
@@ -502,6 +525,7 @@ export const PaketMitraView: React.FC = () => {
             </table>
           </div>
         </div>
+      </div>
       )}
     </div>
   );

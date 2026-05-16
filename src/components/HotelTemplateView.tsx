@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, RefreshCw, Download, MapPin, DollarSign, Building2 } from 'lucide-react';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
+import { captureToDataUrl } from '../utils/exportUtils';
 import { hotels, Hotel } from '../data/hotels';
 import { isDateInRange, parseDateRange } from '../utils/dateUtils';
 import { AIPromptInput } from './AIPromptInput';
@@ -59,7 +59,13 @@ export const HotelTemplateView: React.FC = () => {
 
   const [userSelectedHotels, setUserSelectedHotels] = useState<string[]>([]);
 
-  const handleDataParsed = (data: any) => {
+  const handleDataParsed = (data: {
+    city?: string;
+    selectedDate?: string;
+    marginPercent?: number;
+    currency?: string;
+    selectedHotels?: string[];
+  }) => {
     if (data.city) setCity(data.city as 'Madinah' | 'Makkah');
     if (data.selectedDate) setSelectedDate(data.selectedDate);
     if (data.marginPercent !== undefined) setMarginPercent(data.marginPercent);
@@ -72,7 +78,7 @@ export const HotelTemplateView: React.FC = () => {
     }
   };
 
-  const formatPrice = (amount: number) => {
+  const formatPrice = React.useCallback((amount: number) => {
     if (currency === 'IDR') {
       return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -88,9 +94,9 @@ export const HotelTemplateView: React.FC = () => {
         maximumFractionDigits: 0,
       }).format(amount);
     }
-  };
+  }, [currency, kurs]);
 
-  const getHotelAvailabilityText = (hotelName: string, dateStr: string): string => {
+  const getHotelAvailabilityText = React.useCallback((hotelName: string, dateStr: string): string => {
     if (!hotelName || !dateStr) return '';
     const hotel = hotels.find(h => h.name.toLowerCase() === hotelName.toLowerCase() && h.city === city);
     if (!hotel || !hotel.seasons) return '';
@@ -102,7 +108,6 @@ export const HotelTemplateView: React.FC = () => {
     if (exactMatch) return ''; // No need to show text if it's an exact match
     
     // Find closest season
-    let closestSeason = null;
     let minDiff = Infinity;
     let closestStart: Date | null = null;
 
@@ -114,7 +119,6 @@ export const HotelTemplateView: React.FC = () => {
         const diff = Math.min(diffStart, diffEnd);
         if (diff < minDiff) {
           minDiff = diff;
-          closestSeason = s;
           closestStart = start;
         }
       }
@@ -124,9 +128,9 @@ export const HotelTemplateView: React.FC = () => {
       return `Avail: ${format(closestStart, 'dd MMM yyyy', { locale: id })}`;
     }
     return '';
-  };
+  }, [hotels, city]);
 
-  const getClosestSeason = (hotel: Hotel, dateStr: string) => {
+  const getClosestSeason = React.useCallback((hotel: Hotel, dateStr: string) => {
     const checkDate = new Date(dateStr);
     
     // First try exact match
@@ -151,9 +155,9 @@ export const HotelTemplateView: React.FC = () => {
     }
 
     return closestSeason;
-  };
+  }, []);
 
-  const getHotelPrice = (hotel: Hotel, dateStr: string, type: string): number => {
+  const getHotelPrice = React.useCallback((hotel: Hotel, dateStr: string, type: string): number => {
     const season = getClosestSeason(hotel, dateStr);
     const prices = season?.prices || [];
     const priceEntry = prices.find(p => p.roomType.toLowerCase().includes(type.toLowerCase()));
@@ -172,7 +176,7 @@ export const HotelTemplateView: React.FC = () => {
     }
 
     return Math.round(basePrice);
-  };
+  }, [getClosestSeason, marginPercent, currency, kurs]);
 
   const handleRowChange = (sectionIndex: number, rowIndex: number, field: keyof HotelRow, value: string) => {
     const newSections = [...sections];
@@ -225,7 +229,7 @@ export const HotelTemplateView: React.FC = () => {
       return minDiff;
     };
 
-    setSections(prevSections => {
+    setSections(() => {
       return initialSections.map(section => {
         let topHotels: Hotel[] = [];
         
@@ -274,8 +278,7 @@ export const HotelTemplateView: React.FC = () => {
         return { ...section, rows };
       });
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, city, userSelectedHotels]);
+  }, [selectedDate, city, userSelectedHotels, getHotelPrice, formatPrice]);
 
   // Recalculate prices when margin, kurs, or currency changes
   useEffect(() => {
@@ -300,8 +303,7 @@ export const HotelTemplateView: React.FC = () => {
         return row;
       })
     })));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [marginPercent, kurs, currency]);
+  }, [marginPercent, kurs, currency, selectedDate, city, getHotelPrice, formatPrice]);
 
   const handleDownloadImage = async () => {
     if (!printRef.current) return;
@@ -310,10 +312,11 @@ export const HotelTemplateView: React.FC = () => {
     try {
       // Ensure input values are captured by temporarily putting them in value attributes
       const inputs = printRef.current.querySelectorAll('input, textarea');
-      inputs.forEach((input: any) => {
-        input.setAttribute('value', input.value);
-        if (input.tagName === 'TEXTAREA') {
-          input.textContent = input.value;
+      inputs.forEach((input: Element) => {
+        const inputEl = input as HTMLInputElement | HTMLTextAreaElement;
+        inputEl.setAttribute('value', inputEl.value);
+        if (inputEl.tagName === 'TEXTAREA') {
+          inputEl.textContent = inputEl.value;
         }
       });
 

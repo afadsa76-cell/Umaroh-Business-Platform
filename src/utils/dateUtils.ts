@@ -2,7 +2,7 @@ export const parseDate = (dateStr: string): Date | null => {
   // Try parsing DD/MM/YYYY
   const slashMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (slashMatch) {
-    const [_, day, month, year] = slashMatch;
+    const [, day, month, year] = slashMatch;
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   }
 

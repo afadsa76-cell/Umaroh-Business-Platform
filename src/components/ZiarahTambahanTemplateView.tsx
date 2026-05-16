@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, Download, MapPin, RefreshCw } from 'lucide-react';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
+import { captureToDataUrl } from '../utils/exportUtils';
 import { ziarahData } from '../data/ziarah';
 import { logoBase64 } from '../utils/logoBase64';
 
@@ -18,7 +18,7 @@ export const ZiarahTambahanTemplateView: React.FC = () => {
 
   const formatCurrency = (amount: number) => {
     let finalAmount = amount;
-    let currencyCode = currency;
+    const currencyCode = currency;
     
     if (currency === 'USD') {
       finalAmount = amount / kursUSD;
@@ -72,10 +72,11 @@ export const ZiarahTambahanTemplateView: React.FC = () => {
     try {
       // Ensure input values are captured by temporarily putting them in value attributes
       const inputs = printRef.current.querySelectorAll('input, textarea');
-      inputs.forEach((input: any) => {
-        input.setAttribute('value', input.value);
-        if (input.tagName === 'TEXTAREA') {
-          input.textContent = input.value;
+      inputs.forEach((input: Element) => {
+        const el = input as HTMLInputElement | HTMLTextAreaElement;
+        el.setAttribute('value', el.value);
+        if (el.tagName === 'TEXTAREA') {
+          el.textContent = el.value;
         }
       });
 
@@ -137,7 +138,7 @@ export const ZiarahTambahanTemplateView: React.FC = () => {
             <span className="font-medium text-gray-700 text-sm">Currency:</span>
             <select
               value={currency}
-              onChange={(e) => setCurrency(e.target.value as any)}
+              onChange={(e) => setCurrency(e.target.value as 'IDR' | 'USD' | 'SAR')}
               className="border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none w-24 text-sm"
             >
               <option value="IDR">IDR</option>

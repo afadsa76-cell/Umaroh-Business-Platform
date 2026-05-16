@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Download, RefreshCw, MapPin, Search } from 'lucide-react';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
+import { captureToDataUrl } from '../utils/exportUtils';
 import { maskapaiData } from '../data/maskapai';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';

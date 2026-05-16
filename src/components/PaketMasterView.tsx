@@ -17,7 +17,7 @@ interface PaketMaster {
   kuota: number;
   sisaKuota: number;
   status: 'draft' | 'published' | 'closed' | 'pending_validation';
-  createdAt?: any;
+  createdAt?: { toDate: () => Date };
 }
 
 export const PaketMasterView: React.FC = () => {
@@ -33,7 +33,7 @@ export const PaketMasterView: React.FC = () => {
   const [notification, setNotification] = useState<{type: 'success'|'error', message: string} | null>(null);
 
   const [viewingTrackerPaket, setViewingTrackerPaket] = useState<PaketTracker | null>(null);
-  const [allTrackers, setAllTrackers] = useState<any[]>([]);
+  const [allTrackers, setAllTrackers] = useState<PaketTracker[]>([]);
 
   const showNotification = (type: 'success'|'error', message: string) => {
     setNotification({ type, message });

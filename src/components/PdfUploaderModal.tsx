@@ -174,10 +174,11 @@ Ensure the output is valid JSON and only contains the array of hotels. Do not in
         window.location.reload();
       }, 2000);
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error processing PDF:', error);
       setStatus('error');
-      setErrorMessage(error.message || 'An error occurred while processing the PDF.');
+      const message = error instanceof Error ? error.message : 'An error occurred while processing the PDF.';
+      setErrorMessage(message);
     } finally {
       setIsProcessing(false);
     }

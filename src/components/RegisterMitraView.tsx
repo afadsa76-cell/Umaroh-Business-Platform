@@ -14,10 +14,35 @@ interface RegisterMitraViewProps {
   onBack: () => void;
 }
 
+interface Upline {
+  id: string;
+  name: string;
+  subRole?: string;
+  role?: string;
+}
+
+interface AddressSuggestion {
+  place_id: number;
+  display_name: string;
+  address: {
+    state?: string;
+    province?: string;
+    city?: string;
+    town?: string;
+    county?: string;
+    municipality?: string;
+    suburb?: string;
+    village?: string;
+    district?: string;
+    [key: string]: string | number | boolean | undefined;
+  };
+  [key: string]: string | number | boolean | undefined | object;
+}
+
 export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [paketList, setPaketList] = useState<PaketKemitraan[]>([]);
-  const [uplineList, setUplineList] = useState<any[]>([]);
+  const [uplineList, setUplineList] = useState<Upline[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -42,7 +67,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) 
   });
 
   const [addressQuery, setAddressQuery] = useState('');
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -74,7 +99,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) 
     return () => clearTimeout(timeoutId);
   }, [addressQuery, showSuggestions]);
 
-  const handleSelectAddress = (suggestion: any) => {
+  const handleSelectAddress = (suggestion: AddressSuggestion) => {
     const addressDetails = suggestion.address;
     
     const provinsi = addressDetails.state || addressDetails.province || '';
@@ -113,7 +138,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) 
         const uplines = uplineSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as Upline[];
         setUplineList(uplines);
 
       } catch (err) {
@@ -225,10 +250,10 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) 
       });
 
       setIsSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error submitting registration:", err);
       handleFirestoreError(err, OperationType.CREATE, 'pendaftaran_mitra');
-      setError("Gagal mengirim pendaftaran: " + err.message);
+      setError("Gagal mengirim pendaftaran: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsSubmitting(false);
     }

@@ -60,7 +60,6 @@ export const RevenueReport: React.FC = () => {
 
   const totalOmzet = transactions.reduce((sum, t) => sum + t.totalOmzet, 0);
   const totalHpp = transactions.reduce((sum, t) => sum + t.totalHpp, 0);
-  const totalBiayaTambahan = transactions.reduce((sum, t) => sum + (t.biayaTambahan || 0), 0);
   const totalProfit = transactions.reduce((sum, t) => sum + t.totalProfit, 0);
   const averageMargin = totalOmzet > 0 ? totalProfit / totalOmzet : 0;
 

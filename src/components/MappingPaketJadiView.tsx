@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Calendar, Search, Download, Filter, Edit, CheckCircle, AlertCircle, Clock, Package, Save, X, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import { format, subDays, differenceInDays, isToday, isPast, isFuture, parseISO, startOfDay } from 'date-fns';
+import { Calendar, Search, Download, Edit, CheckCircle, AlertCircle, Clock, Package, X, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { format, subDays, differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 
 type PaymentStatus = 'Belum Bayar' | 'DP' | 'Lunas';
@@ -190,8 +190,8 @@ export const MappingPaketJadiView: React.FC = () => {
     
     const daysDiff = differenceInDays(dueDate, today);
     
-    let colorClass = 'text-gray-500 bg-gray-100';
-    let dotClass = 'bg-gray-400';
+    let colorClass: string;
+    let dotClass: string;
     let isUrgent = false;
 
     if (status === 'Lunas' || (isDP && status === 'DP')) {

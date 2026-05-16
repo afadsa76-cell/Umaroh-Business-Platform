@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, RefreshCw, Download, MapPin, DollarSign, Wand2 } from 'lucide-react';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
+import { captureToDataUrl } from '../utils/exportUtils';
 import { HANDLING_TIERS, HANDLING_CONSTANTS } from '../data/handlingSaudi';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
@@ -26,7 +26,7 @@ export const HandlingTemplateView: React.FC = () => {
 
   const handlingSystemInstruction = "Anda adalah asisten AI untuk mengisi form Pricelist Handling Saudi. Ekstrak informasi dari teks yang diberikan pengguna dan kembalikan dalam format JSON sesuai schema. Jika ada informasi yang tidak disebutkan, biarkan kosong atau gunakan nilai default yang masuk akal.";
 
-  const handleDataParsed = (data: any) => {
+  const handleDataParsed = (data: { selectedDate?: string; marginPercent?: number }) => {
     if (data.selectedDate) setSelectedDate(data.selectedDate);
     if (data.marginPercent !== undefined) setMarginPercent(data.marginPercent);
   };

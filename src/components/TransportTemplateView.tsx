@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, RefreshCw, Download, MapPin, DollarSign, Bus } from 'lucide-react';
-import { sanitizeForHtml2Canvas, captureToDataUrl } from '../utils/exportUtils';
-import { transportData, TransportVehicle } from '../data/transport';
+import { captureToDataUrl } from '../utils/exportUtils';
+import { transportData } from '../data/transport';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
@@ -29,7 +29,7 @@ export const TransportTemplateView: React.FC = () => {
 
   const transportSystemInstruction = "Anda adalah asisten AI untuk mengisi form Pricelist Transportasi Umrah. Ekstrak informasi dari teks yang diberikan pengguna dan kembalikan dalam format JSON sesuai schema. Jika ada informasi yang tidak disebutkan, biarkan kosong atau gunakan nilai default yang masuk akal.";
 
-  const handleDataParsed = (data: any) => {
+  const handleDataParsed = (data: { selectedDate?: string; selectedVehicleId?: string; marginPercent?: number; currency?: string }) => {
     if (data.selectedDate) setSelectedDate(data.selectedDate);
     if (data.selectedVehicleId) setSelectedVehicleId(data.selectedVehicleId);
     if (data.marginPercent !== undefined) setMarginPercent(data.marginPercent);
@@ -103,10 +103,11 @@ export const TransportTemplateView: React.FC = () => {
     try {
       // Ensure input values are captured by temporarily putting them in value attributes
       const inputs = printRef.current.querySelectorAll('input, textarea');
-      inputs.forEach((input: any) => {
-        input.setAttribute('value', input.value);
-        if (input.tagName === 'TEXTAREA') {
-          input.textContent = input.value;
+      inputs.forEach((input: Element) => {
+        const el = input as HTMLInputElement | HTMLTextAreaElement;
+        el.setAttribute('value', el.value);
+        if (el.tagName === 'TEXTAREA') {
+          el.textContent = el.value;
         }
       });
 

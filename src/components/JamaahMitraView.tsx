@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, collection, query, where, onSnapshot } from '../firebase';
-import { Search, User, Filter, AlertCircle, CheckCircle2, MoreVertical, CreditCard, Clock } from 'lucide-react';
+import { Search, User, Filter, CheckCircle2, MoreVertical, CreditCard, Clock } from 'lucide-react';
 
 interface Jamaah {
   id: string;
@@ -10,7 +10,7 @@ interface Jamaah {
   statusPembayaran: 'Lunas' | 'DP' | 'Belum Bayar' | 'pending';
   statusKeberangkatan: string;
   totalHarga: number;
-  createdAt: any;
+  createdAt?: { toDate: () => Date };
 }
 
 export const JamaahMitraView: React.FC = () => {

@@ -77,8 +77,24 @@ export const HotelView: React.FC = () => {
   };
 
   const handleExportExcel = () => {
+    interface HotelExportRow {
+      nama_hotel: string;
+      nama_vendor: string;
+      nama_periode: string;
+      kota_hotel: string;
+      bintang: number;
+      mata_uang: string;
+      kurs_ke_idr: number;
+      harga_quad_fx: number;
+      harga_single_fx: number;
+      komisi_persen: number;
+      jarak_meter: number;
+      link_maps: string;
+      deskripsi: string;
+    }
+
     // Collect all possible rows first
-    const allRows: any[] = [];
+    const allRows: HotelExportRow[] = [];
     
     hotels.forEach(hotel => {
       if (hotel.seasons && hotel.seasons.length > 0) {
@@ -123,7 +139,7 @@ export const HotelView: React.FC = () => {
     });
 
     // Deduplicate: group by (hotel name + period) and pick highest quad price
-    const filteredRowsMap: { [key: string]: any } = {};
+    const filteredRowsMap: { [key: string]: HotelExportRow } = {};
     allRows.forEach(row => {
       const key = `${row.nama_hotel}|${row.nama_periode}`;
       if (!filteredRowsMap[key] || row.harga_quad_fx > filteredRowsMap[key].harga_quad_fx) {

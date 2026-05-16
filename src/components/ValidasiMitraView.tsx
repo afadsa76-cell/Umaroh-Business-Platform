@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, collection, onSnapshot, doc, updateDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { CheckCircle2, XCircle, Eye, Search, Filter, AlertCircle, MapPin, Phone, Mail, Building2, User, Users } from 'lucide-react';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
+import { CheckCircle2, XCircle, Eye, Search, Filter, AlertCircle, Building2, User, Users } from 'lucide-react';
 import { openWhatsApp } from '../utils/whatsapp';
 
 interface PendaftaranMitra {
@@ -183,7 +182,7 @@ export const ValidasiMitraView: React.FC = () => {
             <Filter className="w-5 h-5 text-gray-400" />
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
+              onChange={(e) => setFilterStatus(e.target.value as 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED')}
               className="border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none bg-white w-full sm:w-auto"
             >
               <option value="ALL">Semua Status</option>
