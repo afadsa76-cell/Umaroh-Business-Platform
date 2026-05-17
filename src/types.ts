@@ -1,5 +1,3 @@
-import { serverTimestamp } from './firebase';
-
 export interface Maskapai {
   id: string;
   name: string;
@@ -69,21 +67,32 @@ export interface Layanan {
 
 export interface Bandara {
   id: string;
-  name: string;
-  code: string;
-  city: string;
+  nama: string;
+  kode: string;
+  kota: string;
+  negara: string;
 }
 
 export interface PaketWisata {
   id: string;
   nama: string;
-  negara: string;
+  deskripsi: string;
+  durasiHari: number;
   lokasi: string;
-  durasi: number;
-  hargaDasar: number;
+  img: string;
   hargaStart: number;
-  deskripsi?: string;
-  itinerary?: any[];
+}
+
+export interface VisaData {
+  id: string;
+  vendorName: string;
+  foreignPriceUsd: number;
+  paxRange: string;
+  exchangeRate: number;
+  sellingPrice: number;
+  vendorPrice: number;
+  margin: number;
+  percentage: number;
 }
 
 export interface WizardFormData {
@@ -139,6 +148,14 @@ export interface WizardFormData {
   status?: string;
   isPublished?: boolean;
   isDraft?: boolean;
-  createdAt?: any;
-  updatedAt?: any;
+  mitraId?: string | null;
+  paketWisataId?: string;
+  kuota?: number;
+  sisaKuota?: number;
+  validationStatus?: string;
+  hargaJualQuad?: number;
+  hargaJualTriple?: number;
+  hargaJualDouble?: number;
+  createdAt?: unknown;
+  updatedAt?: unknown;
 }

@@ -311,10 +311,10 @@ Data yang diekstrak harus mencakup detail paket, tipe komponen (TICKET, HOTEL, d
 Jika isChecked bernilai true, item akan masuk ke kategori READY TICKET. Jika false, masuk ke BELUM READY TICKET.
 Gunakan data context yang diberikan untuk mencocokkan nama vendor atau item jika tersedia.`;
 
-  const handleDataParsed = (data: any) => {
+  const handleDataParsed = (data: { items?: Partial<MappingRow>[] }) => {
     if (!data.items || !Array.isArray(data.items)) return;
 
-    const newItems = data.items.map((item: any, index: number) => {
+    const newItems: MappingRow[] = data.items.map((item, index) => {
       const totalPaid = (item.dpVendor || 0) + (item.payment1 || 0) + (item.payment2 || 0) + (item.payment3 || 0) + (item.finalPayment || 0);
       return {
         id: `ai-${Date.now()}-${index}`,
@@ -343,18 +343,18 @@ Gunakan data context yang diberikan untuk mencocokkan nama vendor atau item jika
       };
     });
 
-    const ready = newItems.filter((item: any) => item.isChecked);
-    const notReady = newItems.filter((item: any) => !item.isChecked);
+    const ready = newItems.filter((item) => item.isChecked);
+    const notReady = newItems.filter((item) => !item.isChecked);
 
     if (ready.length > 0) setReadyTickets(prev => [...prev, ...ready]);
     if (notReady.length > 0) setNotReadyTickets(prev => [...prev, ...notReady]);
   };
 
-  const handleInputChange = (id: string, field: keyof MappingRow, value: any, isReady: boolean) => {
+  const handleInputChange = (id: string, field: keyof MappingRow, value: string | number | boolean, isReady: boolean) => {
     const updateFn = (prev: MappingRow[]) => prev.map(row => {
       if (row.id === id) {
         if (typeof row[field] === 'number') {
-          return { ...row, [field]: parseFloat(value) || 0 };
+          return { ...row, [field]: parseFloat(value as string) || 0 };
         }
         return { ...row, [field]: value };
       }

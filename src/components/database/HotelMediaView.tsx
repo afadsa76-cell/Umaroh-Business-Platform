@@ -188,7 +188,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
     if (hotelsToProcess.length === 0) {
       try {
         alert('Semua hotel sudah lengkap (memiliki foto dan jarak).');
-      } catch (e) {
+      } catch {
         console.log('Semua hotel sudah lengkap (memiliki foto dan jarak).');
       }
       return;

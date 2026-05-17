@@ -73,13 +73,13 @@ import html2pdf from 'html2pdf.js';
 
 import {
   Maskapai,
-  Hotel,
   WizardHotel,
   Layanan,
   LayananOption,
   Bandara,
   PaketWisata,
-  WizardFormData
+  WizardFormData,
+  VisaData
 } from "../types";
 
 interface PaketMasterWizardProps {
@@ -370,7 +370,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         formData.chkInMakkah !== inMakkah ||
         formData.chkOutMakkah !== outMakkah
       ) {
-        setFormData((prev: any) => ({
+        setFormData((prev) => ({
           ...prev,
           chkInMadinah: inMadinah,
           chkOutMadinah: outMadinah,
@@ -406,9 +406,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const tourLeaderPrice =
     targetJamaah > 0 ? Math.round(baseBelanja / targetJamaah) : 0;
 
-  const vData = targetJamaah <= 34 
-    ? (visaData.find((v) => v.paxRange === "1-34 PAX") || visaData[0] || ({} as any))
-    : (visaData.find((v) => v.paxRange === "35-55 PAX") || visaData[1] || ({} as any));
+  const vData: VisaData = (targetJamaah <= 34 
+    ? (visaData.find((v) => v.paxRange === "1-34 PAX") || visaData[0])
+    : (visaData.find((v) => v.paxRange === "35-55 PAX") || visaData[1])) || visaData[0];
     
   const visaPrice = vData.sellingPrice || 0;
   const visaName = `Visa Umrah (${vData.paxRange || (targetJamaah <= 34 ? "1-34 PAX" : "35-55 PAX")})`;
@@ -843,12 +843,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       setFormData((prev) => ({
         ...prev,
         kotaKeberangkatan:
-          prev.kotaKeberangkatan || bandaraList[0]?.city.toUpperCase() || "",
+          prev.kotaKeberangkatan || (bandaraList[0]?.kota || "").toUpperCase() || "",
         kotaTujuan:
           prev.kotaTujuan ||
-          bandaraList
-            .find((b) => b.name?.toUpperCase() === "JEDDAH" || b.code === "JED")
-            ?.city.toUpperCase() ||
+          (bandaraList
+            .find((b) => b.nama?.toUpperCase() === "JEDDAH" || b.kode === "JED")
+            ?.kota || "").toUpperCase() ||
           "",
       }));
     }
@@ -862,7 +862,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     setIsSaving(true);
     try {
       const isNew = !initialData?.id;
-      const dataToSave: Partial<WizardFormData> & Record<string, any> = {
+      const dataToSave: Partial<WizardFormData> = {
         nama: formData.nama || "Paket Draft",
         deskripsi: formData.deskripsi || "",
         tipePublikasi: formData.tipePublikasi || "B2C",
@@ -896,7 +896,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         durasiWisata: Number(formData.durasiWisata || 0),
         paketWisataId: formData.paketWisataId || "",
         negaraWisata: formData.negaraWisata || "",
-        mitraId: (formData as any).mitraId || null,
+        mitraId: formData.mitraId || null,
         hargaJualQuad: Math.round(pricingSummary.finalQuad),
         hargaJualTriple: Math.round(pricingSummary.finalTriple),
         hargaJualDouble: Math.round(pricingSummary.finalDouble),
@@ -954,7 +954,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     setIsSaving(true);
     try {
       const isNew = !initialData?.id;
-      const dataToSave: Partial<WizardFormData> & Record<string, any> = {
+      const dataToSave: Partial<WizardFormData> = {
         nama: formData.nama || "Paket Umroh Tanpa Nama",
         deskripsi: formData.deskripsi || "",
         tipePublikasi: formData.tipePublikasi || "B2C",
@@ -989,7 +989,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         durasiWisata: Number(formData.durasiWisata || 0),
         paketWisataId: formData.paketWisataId || "",
         negaraWisata: formData.negaraWisata || "",
-        mitraId: (formData as any).mitraId || null,
+        mitraId: formData.mitraId || null,
         hargaJualQuad: Math.round(pricingSummary.finalQuad),
         hargaJualTriple: Math.round(pricingSummary.finalTriple),
         hargaJualDouble: Math.round(pricingSummary.finalDouble),
@@ -1352,13 +1352,13 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Array.from(
-                    new Set(paketWisataList.map((p) => p.lokasi.toUpperCase())),
+                    new Set(paketWisataList.map((p) => (p.lokasi || "").toUpperCase())),
                   ).map((negaraName) => {
                     const isSelected = formData.negaraWisata === negaraName;
                     const defaultImgUrl =
                       "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
                     const listPaket = paketWisataList.filter(
-                      (p) => p.lokasi.toUpperCase() === negaraName,
+                      (p) => (p.lokasi || "").toUpperCase() === negaraName,
                     );
                     // Ambil img dari paket pertama dari negara tsb jika tersedia
                     const destImg = listPaket[0]?.img || defaultImgUrl;
@@ -1518,7 +1518,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           {Array.from(
                             new Set(
                               paketWisataList.map((p) =>
-                                p.lokasi.toUpperCase(),
+                                (p.lokasi || "").toUpperCase(),
                               ),
                             ),
                           ).map((negara) => (
@@ -1579,8 +1579,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     >
                       <option value="">-- Pilih Kota --</option>
                       {bandaraList.map((b) => (
-                        <option key={b.id} value={b.kota.toUpperCase()}>
-                          {b.kota.toUpperCase()} ({b.kode})
+                        <option key={b.id} value={(b.kota || "").toUpperCase()}>
+                          {(b.kota || "").toUpperCase()} ({(b.kode || "")})
                         </option>
                       ))}
                     </select>
@@ -1610,11 +1610,11 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         <option value="">-- Pilih Kota Tujuan --</option>
                         {bandaraList
                           .filter(
-                            (b) => b.negara?.toUpperCase() === "ARAB SAUDI",
+                            (b) => (b.negara || "").toUpperCase() === "ARAB SAUDI",
                           )
                           .map((b) => (
-                            <option key={b.id} value={b.kota.toUpperCase()}>
-                              {b.kota.toUpperCase()} ({b.kode})
+                            <option key={b.id} value={(b.kota || "").toUpperCase()}>
+                              {(b.kota || "").toUpperCase()} ({(b.kode || "")})
                             </option>
                           ))}
                       </select>
@@ -1789,7 +1789,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   {
                     paketWisataList.filter(
                       (p) =>
-                        p.lokasi.toUpperCase() ===
+                        (p.lokasi || "").toUpperCase() ===
                         (formData.negaraWisata || "TURKEY"),
                     ).length
                   }{" "}
@@ -1801,7 +1801,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 {paketWisataList
                   .filter(
                     (p) =>
-                      p.lokasi.toUpperCase() ===
+                      (p.lokasi || "").toUpperCase() ===
                       (formData.negaraWisata || "TURKEY"),
                   )
                   .map((paket) => {
@@ -1850,8 +1850,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   })}
 
                 {paketWisataList.filter(
-                  (p: any) =>
-                    p.lokasi.toUpperCase() ===
+                  (p) =>
+                    (p.lokasi || "").toUpperCase() ===
                     (formData.negaraWisata || "TURKEY"),
                 ).length === 0 && (
                   <div className="col-span-1 md:col-span-2 py-20 text-center text-gray-400 font-bold text-xs">
@@ -3808,7 +3808,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         if (
                           currentSelections.includes(item.id) ||
                           (isGroup &&
-                            item.options.some((o: any) =>
+                            item.options?.some((o: LayananOption) =>
                               currentSelections.includes(o.id),
                             ))
                         ) {
@@ -3818,7 +3818,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                               id !== item.id &&
                               (!isGroup ||
                                 !item.options
-                                  .map((o: any) => o.id)
+                                  ?.map((o: LayananOption) => o.id)
                                   .includes(id)),
                           );
                         } else {
@@ -3886,7 +3886,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             PILIHAN LAYANAN
                           </h5>
                           <div className="flex flex-wrap gap-2">
-                            {item.options.map((opt: any) => {
+                            {item.options?.map((opt: LayananOption) => {
                               const isOptSelected =
                                 formData.selectedLayanan?.includes(opt.id);
                               return (
@@ -3895,12 +3895,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     // Remove all options of this group from selected
-                                    let wSelections = (
+                                    const wSelections = (
                                       formData.selectedLayanan || []
                                     ).filter(
                                       (id: string) =>
                                         !item.options
-                                          .map((o: any) => o.id)
+                                          ?.map((o: LayananOption) => o.id)
                                           .includes(id),
                                     );
                                     // Add this one
@@ -4030,7 +4030,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         let itemCost = 0;
                         if (item.isGroup) {
                           if (formData.selectedLayanan?.includes(item.id)) {
-                            const selectedOpt = item.options.find((opt: any) =>
+                            const selectedOpt = item.options?.find((opt: LayananOption) =>
                               formData.selectedLayanan?.includes(opt.id),
                             );
                             if (selectedOpt) itemCost = selectedOpt.price;
@@ -4515,7 +4515,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             </div>
                           )}
 
-                          {selectedLayananItems.map((item: any) => (
+                          {selectedLayananItems.map((item) => (
                               <div
                                 key={item.id}
                                 className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 border-dashed"
@@ -5534,7 +5534,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </div>
             )}
 
-            {pricingSummary.selectedLayananItems.map((item: any) => (
+            {pricingSummary.selectedLayananItems.map((item) => (
               <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
