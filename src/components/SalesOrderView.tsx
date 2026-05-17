@@ -626,7 +626,7 @@ export const SalesOrderView: React.FC = () => {
     if (ziarahHargaApk > 0) data.push([`ZIARAH: ${ziarahData.find(z => z.id === selectedZiarah)?.item || "-"}`, "-", ziarahHargaApk, ziarahHargaVendor, ziarah.estMargin, formatPercent(ziarah.pctMargin), jamaahBayar, ziarah.totalHrgJual, jamaahBeli, ziarah.totalHargaBeli, ziarah.totalMargin, ""]);
     if (keretaCepatHargaApk > 0) data.push([`KERETA CEPAT: ${keretaCepatData.find(k => k.id === selectedKeretaCepat)?.item || "-"}`, "-", keretaCepatHargaApk, keretaCepatHargaVendor, keretaCepat.estMargin, formatPercent(keretaCepat.pctMargin), jamaahBayar, keretaCepat.totalHrgJual, jamaahBeli, keretaCepat.totalHargaBeli, keretaCepat.totalMargin, ""]);
     if (handlingDomestikHargaApk > 0) data.push([`HANDLING DOMESTIK: ${handlingDomestikData.find(h => h.id === selectedHandlingDomestik)?.item || "-"}`, "BOWO", handlingDomestikHargaApk, handlingDomestikHargaVendor, handlingDomestik.estMargin, formatPercent(handlingDomestik.pctMargin), jamaahBayar, handlingDomestik.totalHrgJual, jamaahBeli, handlingDomestik.totalHargaBeli, handlingDomestik.totalMargin, "UPDATE"]);
-    if (tlHargaApk > 0) data.push(["TOUR LEADER (TL)", "", tlHargaApk, tlHargaVendor, tlRow.estMargin, "0%", jamaahBayar, tlRow.totalHrgJual, "", "", tlRow.totalMargin, ""]);
+    if (tlHargaApk > 0) data.push(["TOUR LEADER (TL)", "", tlHargaApk, 0, tlRow.estMargin, "0%", jamaahBayar, tlRow.totalHrgJual, "", "", tlRow.totalMargin, ""]);
 
     data.push(
       [],

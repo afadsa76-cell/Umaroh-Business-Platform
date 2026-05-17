@@ -36,6 +36,7 @@ export interface Hotel {
   vendor: string;
   mealPlan: 'FB' | 'HB' | 'RO' | 'BB' | string;
   stars?: number;
+  bintang?: number;
   seasons: Season[];
 }
 
@@ -93,6 +94,10 @@ export interface VisaData {
   vendorPrice: number;
   margin: number;
   percentage: number;
+}
+
+export interface PaketMaster extends WizardFormData {
+  id: string;
 }
 
 export interface WizardFormData {
@@ -158,4 +163,42 @@ export interface WizardFormData {
   hargaJualDouble?: number;
   createdAt?: unknown;
   updatedAt?: unknown;
+  requestId?: string;
+  wisataTierPax?: string;
+  wisataAddon_handlingType?: string;
+  isMarkupOnly?: boolean;
+  paketMasterId?: string;
+  namaPaketMitra?: string;
+  checklist?: {
+    pasporTerkumpul: number;
+    meningitisTerkumpul: number;
+    biometrikSelesai: number;
+    ktpKkTerkumpul: number;
+    dpMasuk: number;
+    pelunasanMasuk: number;
+    statusTiket: 'Pending' | 'Booked' | 'Issued';
+    statusHotelMakkah: 'Pending' | 'Booked' | 'Paid';
+    statusHotelMadinah: 'Pending' | 'Booked' | 'Paid';
+    statusVisa: 'Pending' | 'Proses Provider' | 'Issued';
+    statusBus: 'Pending' | 'Booked' | 'Paid';
+    koperDibagikan: number;
+    statusManasik: 'Pending' | 'Jadwal Ditetapkan' | 'Selesai';
+    statusSiskopatuh: 'Pending' | 'Proses' | 'Selesai';
+    files?: {
+      tiketPesawat?: string;
+      hotelMakkah?: string;
+      hotelMadinah?: string;
+      visa?: string;
+      bus?: string;
+      manasik?: string;
+      siskopatuh?: string;
+    };
+  };
+}
+
+export interface WizardHotel {
+  id: string;
+  nama: string;
+  bintang: number;
+  pricePerNight?: number;
 }

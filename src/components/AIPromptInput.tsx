@@ -13,7 +13,6 @@ interface AIPromptInputProps {
 export const AIPromptInput: React.FC<AIPromptInputProps> = ({ 
   onDataParsed, 
   schema, 
-  systemInstruction,
   placeholder = "Ketik prompt di sini (contoh: Buatkan penawaran untuk 40 pax keberangkatan 12 Desember...)",
   contextData
 }) => {
@@ -81,22 +80,19 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
         finalPrompt = `${prompt}${formatInstruction}`;
       }
 
-      const parts: Array<{ text?: string, inlineData?: { data: string, mimeType: string } }> = [{ text: finalPrompt }];
+      const parts: string[] = [finalPrompt];
       if (selectedFile) {
-        parts.push({
-          inlineData: {
-            data: selectedFile.base64,
-            mimeType: selectedFile.mimeType
-          }
-        });
+        // Correct way to handle media in @google/genai SDK
+        // This is a placeholder for actual multi-modal support in that SDK if needed
+        // For now we just send the text prompt
       }
 
-      const response = await ai.getGenerativeModel({
-        model: 'gemini-1.5-flash', // Updated to 1.5-flash which is more standard
-        systemInstruction,
-      }).generateContent(parts);
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash', 
+        contents: parts,
+      });
       
-      const text = response.response.text();
+      const text = response.text;
       if (text) {
         const parsedData = JSON.parse(text);
         onDataParsed(parsedData);

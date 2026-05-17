@@ -68,7 +68,6 @@ import { AIResultModal } from "./AIResultModal";
 import { generateItinerary, generateMarketingCopy } from "../services/aiService";
 import { sanitizeForHtml2Canvas, captureToDataUrl } from "../utils/exportUtils";
 import { Capacitor } from '@capacitor/core';
-// @ts-expect-error - html2pdf.js doesn't have official types
 import html2pdf from 'html2pdf.js';
 
 import {
@@ -862,7 +861,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     setIsSaving(true);
     try {
       const isNew = !initialData?.id;
+      const generateRequestId = () => {
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const code = Array.from({ length: 4 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join("");
+        return `REQ-${code}`;
+      };
+
       const dataToSave: Partial<WizardFormData> = {
+        requestId: initialData?.requestId || generateRequestId(),
         nama: formData.nama || "Paket Draft",
         deskripsi: formData.deskripsi || "",
         tipePublikasi: formData.tipePublikasi || "B2C",
@@ -954,7 +960,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     setIsSaving(true);
     try {
       const isNew = !initialData?.id;
+      const generateRequestId = () => {
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const code = Array.from({ length: 4 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join("");
+        return `REQ-${code}`;
+      };
+
       const dataToSave: Partial<WizardFormData> = {
+        requestId: initialData?.requestId || generateRequestId(),
         nama: formData.nama || "Paket Umroh Tanpa Nama",
         deskripsi: formData.deskripsi || "",
         tipePublikasi: formData.tipePublikasi || "B2C",
@@ -1107,7 +1120,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         ...formData,
         hotelMadinahNama: hMadinah?.nama || "TBA",
         hotelMakkahNama: hMakkah?.nama || "TBA",
-        maskapaiNama: maskapai?.nama || "TBA",
+        maskapaiNama: maskapai?.name || "TBA",
       };
 
       const result = await generateItinerary(data);
@@ -1133,7 +1146,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         hotelMakkahNama: hMakkah?.nama || "TBA",
         hotelMadinahStars: hMadinah?.bintang || 0,
         hotelMakkahStars: hMakkah?.bintang || 0,
-        maskapaiNama: maskapai?.nama || "TBA",
+        maskapaiNama: maskapai?.name || "TBA",
       });
       setAiResult({ title: "Marketing Content AI", content: result || "" });
     } catch {
@@ -1144,7 +1157,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   };
 
   const handleExport = async (type: 'pdf' | 'jpg') => {
-    // We use a dedicated hidden element for clean PDF/JPG export
+    // ...
     const pdfElement = document.getElementById('pdf-export-content');
     if (!pdfElement) return;
 
@@ -1152,7 +1165,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
     if (type === 'pdf') {
       const opt = {
-        margin: [10, 10],
+        margin: 10,
         filename: `${filename}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { 
@@ -1190,7 +1203,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         const { Capacitor } = await import('@capacitor/core');
         
         if (Capacitor.isNativePlatform()) {
-          const pdfDataUri = await h2p.output('datauristring');
+          const pdfDataUri = await h2p.output('datauristring') as string;
           await import('../utils/fileUtils').then(m => m.downloadFile(pdfDataUri, `${filename}.pdf`));
         } else {
           await h2p.save();
@@ -2313,7 +2326,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              wisataAddon_tourLeaderCount: e.target.value,
+                              wisataAddon_tourLeaderCount: Number(e.target.value),
                             })
                           }
                         />
@@ -4624,7 +4637,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         {currentStepName === "RINGKASAN HARGA" &&
           formData.kategori === "WISATA HALAL" &&
           (() => {
-            const { finalWisataPrice, wisataAdminFee } = pricingSummary;
+            const { finalWisataPrice, wisataAdminFee, baseIDR, totalKomisiMitra: currentMargin } = pricingSummary;
             const adminFee = wisataAdminFee;
             const finalPrice = finalWisataPrice;
 

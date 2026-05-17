@@ -86,7 +86,7 @@ export const sanitizeForHtml2Canvas = (clonedDoc: Document, originalElement: HTM
 /**
  * Robust capture utility with locked dimensions and sanitization.
  */
-export const captureToDataUrl = async (element: HTMLElement, options: any = {}) => {
+export const captureToDataUrl = async (element: HTMLElement, options: { pixelRatio?: number; backgroundColor?: string; quality?: number } = {}) => {
   try {
     const width = element.offsetWidth;
     const height = element.offsetHeight;

@@ -6,7 +6,7 @@ import { FileSpreadsheet, FileText } from 'lucide-react';
 import { JamaahTracker } from '../tracker/types';
 
 interface jsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: any) => void;
+  autoTable: (options: Record<string, unknown>) => void;
 }
 
 interface ValidatedJamaah extends JamaahTracker {

@@ -9,6 +9,7 @@ import { PaketTracker } from './tracker/types';
 
 interface PaketMaster {
   id: string;
+  requestId?: string;
   nama: string;
   deskripsi: string;
   hargaDasar: number;
@@ -59,7 +60,7 @@ export const PaketMasterView: React.FC = () => {
     });
 
     const unsubTracker = onSnapshot(collection(db, 'tracker_paket'), (snapshot) => {
-      const trackers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const trackers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaketTracker));
       setAllTrackers(trackers);
       if (viewingTrackerPaket) {
         const updated = trackers.find(t => t.id === viewingTrackerPaket.id) as PaketTracker;
@@ -94,17 +95,17 @@ export const PaketMasterView: React.FC = () => {
     setIsAdding(false);
   };
 
-  const handleValidate = async (id: string, name: string, maskapaiId: string) => {
+  const handleValidate = async (paket: PaketMaster) => {
     try {
       // 1. Update status paket_master
-      await updateDoc(doc(db, 'paket_master', id), {
+      await updateDoc(doc(db, 'paket_master', paket.id), {
         status: 'published',
         validationStatus: 'approved',
         updatedAt: serverTimestamp()
       });
 
-      // 2. Ensure tracker_paket entry exists
-      const trackerQuery = query(collection(db, 'tracker_paket'), where('namaPaket', '==', name));
+      // 2. Ensure tracker_paket entry exists using unique ID
+      const trackerQuery = query(collection(db, 'tracker_paket'), where('paketMasterId', '==', paket.id));
       let trackerSnap;
       try {
         trackerSnap = await getDocs(trackerQuery);
@@ -114,13 +115,15 @@ export const PaketMasterView: React.FC = () => {
       }
       
       if (trackerSnap.empty) {
-        const maskapai = maskapaiList.find(m => m.id === maskapaiId);
+        const maskapai = maskapaiList.find(m => m.id === paket.maskapaiId);
         try {
           await addDoc(collection(db, 'tracker_paket'), {
-            namaPaket: name,
+            paketMasterId: paket.id,
+            requestId: paket.requestId || '',
+            namaPaket: paket.nama,
             tanggalBerangkat: maskapai?.tanggalKeberangkatan || '',
             status: 'Persiapan',
-            targetJamaah: 45,
+            targetJamaah: paket.kuota || 45,
             terdaftar: 0,
             createdAt: serverTimestamp()
           });
@@ -133,14 +136,14 @@ export const PaketMasterView: React.FC = () => {
       showNotification('success', 'Paket berhasil divalidasi dan tracker diaktifkan');
     } catch (error) {
       console.error("Error validating paket:", error);
-      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${id}`);
+      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${paket.id}`);
       showNotification('error', 'Gagal memvalidasi paket');
     }
   };
 
-  const handleReject = async (id: string) => {
+  const handleReject = async (paket: PaketMaster) => {
     try {
-      await updateDoc(doc(db, 'paket_master', id), {
+      await updateDoc(doc(db, 'paket_master', paket.id), {
         status: 'draft',
         validationStatus: 'rejected',
         updatedAt: serverTimestamp()
@@ -148,7 +151,7 @@ export const PaketMasterView: React.FC = () => {
       showNotification('success', 'Paket ditolak dan dikembalikan ke draft');
     } catch (error) {
       console.error("Error rejecting paket:", error);
-      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${id}`);
+      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${paket.id}`);
       showNotification('error', 'Gagal menolak paket');
     }
   };
@@ -181,7 +184,11 @@ export const PaketMasterView: React.FC = () => {
   };
 
   const openTracker = (paket: PaketMaster) => {
-    const tracker = allTrackers.find(t => t.namaPaket === paket.nama || t.id === paket.id);
+    // Strict isolation: only match if ID or non-empty requestId matches
+    const tracker = allTrackers.find(t => 
+      t.paketMasterId === paket.id || 
+      (paket.requestId && t.requestId === paket.requestId)
+    );
     if (tracker) {
       setViewingTrackerPaket(tracker as PaketTracker);
     } else {
@@ -327,6 +334,7 @@ export const PaketMasterView: React.FC = () => {
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-900 text-[#FDB913] text-[10px] uppercase tracking-widest font-black">
               <tr>
+                <th className="px-6 py-4">Kode Paket</th>
                 <th className="px-6 py-4">Nama Paket & Deskripsi</th>
                 <th className="px-6 py-4">Maskapai & Jadwal</th>
                 <th className="px-6 py-4 text-right">Harga Jual (Quad)</th>
@@ -338,6 +346,17 @@ export const PaketMasterView: React.FC = () => {
             <tbody className="divide-y divide-gray-100 italic font-medium">
               {filteredPakets.map(paket => (
                 <tr key={paket.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    {paket.requestId ? (
+                      <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2 py-1 rounded tracking-widest border border-gray-200">
+                        {paket.requestId}
+                      </span>
+                    ) : (
+                      <span className="bg-gray-50 text-gray-400 text-[10px] font-black px-2 py-1 rounded tracking-widest border border-gray-100 italic" title="Kode Sementara">
+                        {`REQ-${paket.id.slice(0, 4).toUpperCase()}`}*
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <button 
                       onClick={() => openTracker(paket)}
@@ -389,14 +408,14 @@ export const PaketMasterView: React.FC = () => {
                         {paket.status === 'pending_validation' && (
                           <>
                             <button 
-                              onClick={() => handleValidate(paket.id, paket.nama, paket.maskapaiId)} 
+                              onClick={() => handleValidate(paket)} 
                               className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" 
                               title="Setujui & Publish"
                             >
                               <CheckCircle className="w-4 h-4" />
                             </button>
                             <button 
-                              onClick={() => handleReject(paket.id)} 
+                              onClick={() => handleReject(paket)} 
                               className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
                               title="Tolak"
                             >

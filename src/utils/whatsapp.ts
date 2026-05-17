@@ -28,7 +28,15 @@ export const openWhatsApp = async (url: string) => {
   }
 };
 
-export const getWATemplate = (type: WATemplateType, data: any): string => {
+interface WATemplateData {
+  nama: string;
+  paket?: string;
+  sisaTagihan?: number;
+  missingDocs?: string[];
+  equipmentList?: string[];
+}
+
+export const getWATemplate = (type: WATemplateType, data: WATemplateData): string => {
   switch (type) {
     case 'PAYMENT_REMINDER':
       return `Assalamu'alaikum Bapak/Ibu ${data.nama},

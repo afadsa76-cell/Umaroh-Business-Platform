@@ -54,6 +54,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     { id: 'promo-sv-1', airline: 'Saudia (Promo Juli)', departure: '09 Jul 2026', return: '18 Jul 2026', availableSeats: 40, totalSeats: 40 },
   ];
 
+  interface VendorInvoice {
+    id: string;
+    paketName: string;
+    serviceType: string;
+    notes: string;
+    vendorName: string;
+    amount: number;
+    dueDate: string;
+    status: string;
+  }
+
   const [vendorInvoices, setVendorInvoices] = useState<VendorInvoice[]>([]);
 
   useEffect(() => {

@@ -2,25 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit2, Trash2, Search, ArrowRight, Star, Building2, CheckCircle2, Clock } from 'lucide-react';
 import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMasterWizard } from './PaketMasterWizard';
-
-interface PaketMaster {
-  id: string;
-  nama: string;
-  deskripsi: string;
-  hargaDasar: number;
-  hargaJualQuad?: number;
-  maskapaiId: string;
-  hotelMakkahId?: string;
-  hotelMadinahId?: string;
-  kuota: number;
-  sisaKuota: number;
-  status: 'draft' | 'published' | 'closed';
-  hMakkah?: Record<string, unknown>;
-  hMadinah?: Record<string, unknown>;
-  durasiMakkah?: number;
-  durasiMadinah?: number;
-  mitraId?: string;
-}
+import { PaketMaster, Maskapai } from '../types';
+import { Hotel } from '../data/hotels';
+import { PaketTracker } from './tracker/types';
 
 interface PaketMitra {
   id: string;
@@ -55,10 +39,10 @@ export const PaketMitraView: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const [hotels, setHotels] = useState<Record<string, unknown>[]>([]);
-  const [maskapai, setMaskapai] = useState<Record<string, unknown>[]>([]);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [maskapai, setMaskapai] = useState<Maskapai[]>([]);
 
-  const [trackerPakets, setTrackerPakets] = useState<Record<string, unknown>[]>([]);
+  const [trackerPakets, setTrackerPakets] = useState<PaketTracker[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,21 +68,21 @@ export const PaketMitraView: React.FC = () => {
 
     // Fetch Hotels
     const unsubHotels = onSnapshot(collection(db, 'master_hotels'), (snapshot) => {
-      setHotels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setHotels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as Hotel));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'master_hotels');
     });
 
     // Fetch Maskapai
     const unsubMaskapai = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
-      setMaskapai(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setMaskapai(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as Maskapai));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'maskapai');
     });
 
     // Fetch Tracker Paket
     const unsubTracker = onSnapshot(collection(db, 'tracker_paket'), (snapshot) => {
-      setTrackerPakets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setTrackerPakets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as PaketTracker));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'tracker_paket');
     });

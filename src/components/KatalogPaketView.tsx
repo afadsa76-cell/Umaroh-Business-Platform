@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, CheckCircle2 } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp } from '../firebase';
-
-interface PaketMaster {
-  id: string;
-  nama: string;
-  deskripsi: string;
-  hargaDasar: number;
-  maskapaiId: string;
-  kuota: number;
-  sisaKuota: number;
-  status: string;
-}
+import { PaketMaster } from '../types';
 
 interface PaketMitra {
   id: string;
@@ -29,7 +19,7 @@ interface DisplayPaket {
   displayName: string;
   displayPrice: number;
   deskripsi: string;
-  sisaKuota: number;
+  sisaKuota?: number;
   paketMasterId?: string;
   mitraId?: string;
   hargaDasar?: number;

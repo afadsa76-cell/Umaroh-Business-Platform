@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Users, BedDouble, Bed, Plus, AlertCircle, User, X } from 'lucide-react';
 import { JamaahTracker } from './types';
 import { updateDoc, doc, db, handleFirestoreError, OperationType } from '../../firebase';
 

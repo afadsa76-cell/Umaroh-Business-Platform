@@ -9,6 +9,8 @@ export interface Timeline {
 
 export interface PaketTracker {
   id: string;
+  paketMasterId?: string;
+  requestId?: string;
   namaPaket: string;
   tanggalBerangkat: string;
   status: 'Persiapan' | 'Booking Seat' | 'Proses Visa' | 'Siap Berangkat' | 'Selesai';
@@ -30,6 +32,16 @@ export interface PaketTracker {
     statusBus: 'Pending' | 'Booked' | 'Paid';
     koperDibagikan: number;
     statusManasik: 'Pending' | 'Jadwal Ditetapkan' | 'Selesai';
+    statusSiskopatuh: 'Pending' | 'Proses' | 'Selesai';
+    files?: {
+      tiketPesawat?: string;
+      hotelMakkah?: string;
+      hotelMadinah?: string;
+      visa?: string;
+      bus?: string;
+      manasik?: string;
+      siskopatuh?: string;
+    };
   };
 }
 

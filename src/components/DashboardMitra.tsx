@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, History, LayoutDashboard, Calendar, User, TrendingUp, PlusCircle } from 'lucide-react';
-import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs } from '../firebase';
+import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, History, LayoutDashboard, Calendar, User, TrendingUp, PlusCircle, Shield } from 'lucide-react';
+import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMitraView } from './PaketMitraView';
 import { KatalogPaketView } from './KatalogPaketView';
 import { JamaahMitraView } from './JamaahMitraView';
 import { JaringanMitraView } from './JaringanMitraView';
 import { ProfileView } from './ProfileView';
+import { ValidasiPaketMitraView } from './ValidasiPaketMitraView';
 import { PaketMasterWizard } from './PaketMasterWizard';
 
-type MitraTab = 'overview' | 'katalog' | 'paket' | 'jamaah' | 'jaringan' | 'profile';
+type MitraTab = 'overview' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile';
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
@@ -29,27 +30,36 @@ export const DashboardMitra = () => {
     if (!userId) return;
     
     // Wallet listener
+    const walletPath = `wallets/${userId}`;
     const unsubscribeWallet = onSnapshot(doc(db, 'wallets', userId), (docSnap) => {
       if (docSnap.exists()) {
         setBalance(docSnap.data().balance || 0);
       }
-    });
+    }, (err) => handleFirestoreError(err, OperationType.GET, walletPath));
 
     // Stats fetching
     const fetchStats = async () => {
       try {
         // Paket Aktif (Markup)
-        const paketQuery = query(collection(db, 'paket_mitra'), where('mitraId', '==', userId));
-        const paketSnap = await getDocs(paketQuery);
+        const paketPath = 'paket_mitra';
+        const paketQuery = query(collection(db, paketPath), where('mitraId', '==', userId));
+        const paketSnap = await getDocs(paketQuery).catch(err => {
+          handleFirestoreError(err, OperationType.LIST, paketPath);
+          return null;
+        });
         
         // Total Jamaah/Jaringan
-        const jaringanQuery = query(collection(db, 'users'), where('uplineId', '==', userId));
-        const jaringanSnap = await getDocs(jaringanQuery);
+        const usersPath = 'users';
+        const jaringanQuery = query(collection(db, usersPath), where('uplineId', '==', userId));
+        const jaringanSnap = await getDocs(jaringanQuery).catch(err => {
+          handleFirestoreError(err, OperationType.LIST, usersPath);
+          return null;
+        });
 
         setStats(prev => ({
           ...prev,
-          paketAktif: paketSnap.size,
-          totalJaringan: jaringanSnap.size
+          paketAktif: (paketSnap && 'size' in paketSnap) ? paketSnap.size : prev.paketAktif,
+          totalJaringan: (jaringanSnap && 'size' in jaringanSnap) ? jaringanSnap.size : prev.totalJaringan
         }));
       } catch (err) {
         console.error('Error fetching stats:', err);
@@ -317,6 +327,13 @@ export const DashboardMitra = () => {
             <span className="text-[10px] font-bold">Produk</span>
           </button>
           <button
+            onClick={() => setActiveTab('validasi')}
+            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'validasi' ? 'text-blue-600' : 'text-gray-400'}`}
+          >
+            <Shield className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Validasi</span>
+          </button>
+          <button
             onClick={() => setActiveTab('jamaah')}
             className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'jamaah' ? 'text-purple-600' : 'text-gray-400'}`}
           >
@@ -378,6 +395,17 @@ export const DashboardMitra = () => {
               Kelola Paket (Markup)
             </button>
             <button
+              onClick={() => setActiveTab('validasi')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'validasi' 
+                  ? 'bg-blue-100 text-blue-800 shadow-sm ring-1 ring-blue-600/20' 
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
+              }`}
+            >
+              <Shield className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeTab === 'validasi' ? 'text-blue-700' : 'text-gray-500'}`} />
+              Tracking Validasi
+            </button>
+            <button
               onClick={() => setActiveTab('jamaah')}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'jamaah' 
@@ -418,6 +446,7 @@ export const DashboardMitra = () => {
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'katalog' && <KatalogPaketView />}
         {activeTab === 'paket' && <PaketMitraView />}
+        {activeTab === 'validasi' && <ValidasiPaketMitraView />}
         {activeTab === 'jamaah' && <JamaahMitraView />}
         {activeTab === 'jaringan' && <JaringanMitraView />}
         {activeTab === 'profile' && <ProfileView />}

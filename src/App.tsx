@@ -25,6 +25,7 @@ import { DashboardJamaah } from './components/DashboardJamaah';
 import { RegisterMitraView } from './components/RegisterMitraView';
 import { ValidasiMitraView } from './components/ValidasiMitraView';
 import { UserDatabaseView } from './components/UserDatabaseView';
+import { ProfileView } from './components/ProfileView';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';

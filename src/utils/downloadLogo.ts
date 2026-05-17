@@ -2,7 +2,7 @@ import https from 'https';
 import fs from 'fs';
 
 https.get('https://umaroh.com/assets/logo-light-D4UzTX0_.png', (res) => {
-  const data: any[] = [];
+  const data: Uint8Array[] = [];
   res.on('data', (chunk) => data.push(chunk));
   res.on('end', () => {
     const buffer = Buffer.concat(data);

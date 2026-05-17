@@ -17,6 +17,7 @@ export interface Hotel {
   vendor: string;
   mealPlan: 'FB' | 'HB' | 'RO' | 'BB';
   stars?: number;
+  bintang?: number;
   seasons: Season[];
 }
 
@@ -14256,7 +14257,7 @@ export const getHotels = (): Hotel[] => {
   }
 ];
         localStorage.setItem('hotels_db', JSON.stringify(merged));
-        return merged;
+        return merged as Hotel[];
       }
       return parsed;
     } catch (e) {

@@ -205,7 +205,7 @@ export const TrackerJamaah: React.FC = () => {
       if (field === 'nama_paspor') {
         const jamaah = jamaahs.find(j => j.id === id);
         if (jamaah && (!jamaah.namaLengkap || jamaah.namaLengkap === jamaah.nama_paspor)) {
-          updateData.namaLengkap = value;
+          updateData.namaLengkap = value as string;
         }
       }
 
@@ -529,21 +529,21 @@ export const TrackerJamaah: React.FC = () => {
                 </td>
                 <td className="p-2 text-gray-400 text-xs italic">NOT_READY</td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPembayaran || 'Belum Bayar'} onChange={e => setFormData({...formData, statusPembayaran: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPembayaran || 'Belum Bayar'} onChange={e => setFormData({...formData, statusPembayaran: e.target.value as JamaahTracker['statusPembayaran']})}>
                     <option value="Belum Bayar">Belum Bayar</option>
                     <option value="DP">DP</option>
                     <option value="Lunas">Lunas</option>
                   </select>
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPaspor || 'Belum Ada'} onChange={e => setFormData({...formData, statusPaspor: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPaspor || 'Belum Ada'} onChange={e => setFormData({...formData, statusPaspor: e.target.value as JamaahTracker['statusPaspor']})}>
                     <option value="Belum Ada">Belum Ada</option>
                     <option value="Dalam Proses">Dalam Proses</option>
                     <option value="Sudah Ada">Sudah Ada</option>
                   </select>
                 </td>
                 <td className="p-2">
-                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVaksin || 'Belum'} onChange={e => setFormData({...formData, statusVaksin: e.target.value as any})}>
+                  <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVaksin || 'Belum'} onChange={e => setFormData({...formData, statusVaksin: e.target.value as JamaahTracker['statusVaksin']})}>
                     <option value="Belum">Belum</option>
                     <option value="Sudah">Sudah</option>
                   </select>
@@ -713,7 +713,7 @@ export const TrackerJamaah: React.FC = () => {
                     </div>
                   </td>
                   <td className="p-2">
-                    <select className="w-full p-1.5 border rounded text-xs" value={formData.jenisKelamin || ''} onChange={e => setFormData({...formData, jenisKelamin: e.target.value as any})}>
+                    <select className="w-full p-1.5 border rounded text-xs" value={formData.jenisKelamin || ''} onChange={e => setFormData({...formData, jenisKelamin: e.target.value as JamaahTracker['jenisKelamin']})}>
                       <option value="">Pilih...</option>
                       <option value="L">Laki-laki</option>
                       <option value="P">Perempuan</option>
@@ -726,27 +726,27 @@ export const TrackerJamaah: React.FC = () => {
                     </select>
                   </td>
                   <td className="p-2">
-                    <select className="w-full p-1.5 border rounded text-xs" value={formData.status_kesiapan || 'NOT_READY'} onChange={e => setFormData({...formData, status_kesiapan: e.target.value as any})}>
+                    <select className="w-full p-1.5 border rounded text-xs" value={formData.status_kesiapan || 'NOT_READY'} onChange={e => setFormData({...formData, status_kesiapan: e.target.value as JamaahTracker['status_kesiapan']})}>
                       <option value="NOT_READY">NOT_READY</option>
                       <option value="READY">READY</option>
                     </select>
                   </td>
                   <td className="p-2">
-                    <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPembayaran || 'Belum Bayar'} onChange={e => setFormData({...formData, statusPembayaran: e.target.value as any})}>
+                    <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPembayaran || 'Belum Bayar'} onChange={e => setFormData({...formData, statusPembayaran: e.target.value as JamaahTracker['statusPembayaran']})}>
                       <option value="Belum Bayar">Belum Bayar</option>
                       <option value="DP">DP</option>
                       <option value="Lunas">Lunas</option>
                     </select>
                   </td>
                   <td className="p-2">
-                    <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPaspor || 'Belum Ada'} onChange={e => setFormData({...formData, statusPaspor: e.target.value as any})}>
+                    <select className="w-full p-1.5 border rounded text-xs" value={formData.statusPaspor || 'Belum Ada'} onChange={e => setFormData({...formData, statusPaspor: e.target.value as JamaahTracker['statusPaspor']})}>
                       <option value="Belum Ada">Belum Ada</option>
                       <option value="Dalam Proses">Dalam Proses</option>
                       <option value="Sudah Ada">Sudah Ada</option>
                     </select>
                   </td>
                   <td className="p-2">
-                    <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVaksin || 'Belum'} onChange={e => setFormData({...formData, statusVaksin: e.target.value as any})}>
+                    <select className="w-full p-1.5 border rounded text-xs" value={formData.statusVaksin || 'Belum'} onChange={e => setFormData({...formData, statusVaksin: e.target.value as JamaahTracker['statusVaksin']})}>
                       <option value="Belum">Belum</option>
                       <option value="Sudah">Sudah</option>
                     </select>
