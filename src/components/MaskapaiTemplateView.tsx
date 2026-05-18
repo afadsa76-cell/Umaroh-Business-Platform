@@ -6,9 +6,12 @@ import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
 
+import { INDONESIA_EMBARKASI } from '../constants';
+
 export const MaskapaiTemplateView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVendor, setSelectedVendor] = useState('');
+  const [selectedOrigin, setSelectedOrigin] = useState('');
   const [creationDate, setCreationDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterDate, setFilterDate] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -44,10 +47,16 @@ export const MaskapaiTemplateView: React.FC = () => {
 
   const filteredData = [...maskapaiData]
     .filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = searchTerm === '' || 
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.originCityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.destinationCityName.toLowerCase().includes(searchTerm.toLowerCase());
       
+      const matchesOrigin = selectedOrigin === '' || (
+        item.originCityName.toLowerCase() === selectedOrigin.toLowerCase() ||
+        item.originCityName.toLowerCase().startsWith(selectedOrigin.toLowerCase() + " (")
+      );
+
       const hasEnoughSeats = item.availableSeats > 15;
 
       const matchesVendor = selectedVendor === '' || item.namaVendor === selectedVendor;
@@ -62,7 +71,7 @@ export const MaskapaiTemplateView: React.FC = () => {
         matchesDate = itemDate >= startDate && itemDate <= endDate;
       }
       
-      return matchesSearch && hasEnoughSeats && matchesDate && matchesVendor;
+      return matchesSearch && matchesOrigin && hasEnoughSeats && matchesDate && matchesVendor;
     })
     .sort((a, b) => {
       const dateA = new Date(a.tanggalKeberangkatan).getTime();
@@ -140,6 +149,20 @@ export const MaskapaiTemplateView: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none"
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-700 whitespace-nowrap">Keberangkatan:</span>
+            <select
+              value={selectedOrigin}
+              onChange={(e) => setSelectedOrigin(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 outline-none bg-white min-w-[150px]"
+            >
+              <option value="">Seluruh Indonesia</option>
+              {INDONESIA_EMBARKASI.map(emb => (
+                <option key={emb.kode} value={emb.kota}>{emb.kota} ({emb.kode})</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-2">

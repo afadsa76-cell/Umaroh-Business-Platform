@@ -69,6 +69,7 @@ import { generateItinerary, generateMarketingCopy } from "../services/aiService"
 import { sanitizeForHtml2Canvas, captureToDataUrl } from "../utils/exportUtils";
 import { Capacitor } from '@capacitor/core';
 import html2pdf from 'html2pdf.js';
+import { INDONESIA_EMBARKASI, KATEGORI_PROGRAM } from '../constants';
 
 import {
   Maskapai,
@@ -87,13 +88,6 @@ interface PaketMasterWizardProps {
   onCancel: () => void;
   onSuccess: () => void;
 }
-
-const KATEGORI_PROGRAM = [
-  "UMRAH REGULAR",
-  "UMRAH PLUS",
-  "UMRAH LA",
-  "WISATA HALAL",
-];
 
 const getSteps = (kategori: string) => {
   if (kategori === "WISATA HALAL") {
@@ -289,6 +283,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     tglBerangkat: "",
     tglKepulangan: "",
     targetJamaah: 45,
+    preferredDepartureDate: "",
     maskapaiId: "",
     hargaDasar: 0,
     deskripsi: "",
@@ -314,14 +309,146 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     markup: 1000000,
   };
 
-  const [formData, setFormData] = useState<WizardFormData>({
-    ...defaultData,
-    ...(initialData as WizardFormData || {}),
+  const [formData, setFormData] = useState<WizardFormData>(() => {
+    const base = {
+      ...defaultData,
+      ...(initialData as WizardFormData || {}),
+    };
+    if (base.tglBerangkat && !base.preferredDepartureDate) {
+      base.preferredDepartureDate = base.tglBerangkat;
+    }
+    return base;
   });
 
   // Filter maskapai
   const filteredMaskapaiList = useMemo(() => {
     let list = maskapaiList;
+    
+    // Auto-filter by Tipe Penerbangan (DIRECT/TRANSIT)
+    if (formData.tipePenerbangan) {
+      list = list.filter((m) => {
+        // If explicitly set in DB property, use it
+        if (m.tipePenerbangan) return m.tipePenerbangan === formData.tipePenerbangan;
+        
+        const name = (m.name || "").toUpperCase();
+        
+        // 1. BRAND-BASED IDENTIFICATION
+        // Direct Carriers (Indonesia to KSA)
+        const directAirlines = ["GARUDA", "SAUDI", "SAUDIA", "LION", "BATIK", "PELITA", "AIRFAST", "JT", "ID", "GA", "SV"];
+        // Transit Carriers (Hub outside KSA)
+        const transitAirlines = [
+          "EMIRATES", "EK", "QATAR", "QR", "TURKISH", "TK", "INDIGO", "6E", "OMAN", "WY", 
+          "ETIHAD", "EY", "SINGAPORE", "SQ", "MALAYSIA", "MH", "SCOOT", "TR", "GULF", "GF",
+          "AIRASIA", "AK", "QZ", "AIR ARABIA", "G9", "KUWAIT", "KU", "Flynas", "XY",
+          "SRILANKAN", "UL", "CATHAY", "CX", "THAI", "TG", "EVA", "BR", "PHILIPPINE", "PR",
+          "EGYPTAIR", "MS", "JAL", "JL", "ANA", "NH", "IBERIA", "ETHIOPIAN"
+        ];
+        
+        const isKnownDirect = directAirlines.some(brand => {
+          // Check for full word or common code surrounded by non-word chars
+          const regex = new RegExp(`\\b${brand}\\b`, 'i');
+          return regex.test(name);
+        });
+        
+        const isKnownTransit = transitAirlines.some(brand => {
+          const regex = new RegExp(`\\b${brand}\\b`, 'i');
+          return regex.test(name);
+        });
+
+        // 2. ROUTE-BASED HEURISTIC (Fallback/Verification)
+        const transitHubs = ["BOM", "DXB", "KUL", "SIN", "AUH", "IST", "DOH", "MCT", "KWI", "SHJ", "BAH", "AMM", "LHR", "AMS", "CDG", "BKK", "HKG", "TPE", "MNL", "ADD", "CAI"];
+        const saudiCodes = ["JED", "MED", "RUH", "DMM", "ELQ", "HAS"];
+        
+        const codes = name.match(/[A-Z]{3}/g) || [];
+        // A flight is transit if it has a stop in a known transit hub OR 
+        // if it has more than 2 codes where the middle codes are not Saudi codes.
+        const hasTransitHub = transitHubs.some(hub => name.includes(hub));
+        const hasMiddleOutsideStop = codes.length > 2 && codes.slice(1, -1).some(code => !saudiCodes.includes(code));
+        
+        let isTransit = isKnownTransit || hasTransitHub || hasMiddleOutsideStop || name.includes("VIA") || name.includes("STOP");
+        
+        // Priority: Known Direct brands override general transit heuristics (e.g. Garuda via MED is still Direct)
+        if (isKnownDirect) isTransit = false;
+
+        if (formData.tipePenerbangan === "TRANSIT") return isTransit;
+        if (formData.tipePenerbangan === "DIRECT") return !isTransit;
+        return true;
+      });
+    }
+
+    // NEW: Filter by Departure City Hub (CGK, SUB, etc.)
+    if (formData.kotaKeberangkatan) {
+      const origin = formData.kotaKeberangkatan.toUpperCase();
+      const targetMatch = origin.match(/\(([A-Z]{3})\)/);
+      const targetCode = targetMatch ? targetMatch[1] : null;
+
+      if (targetCode) {
+        list = list.filter((m) => {
+          const name = (m.name || "").toUpperCase();
+          const rute = (m.ruteLabel || "").toUpperCase();
+          const searchSample = `${name} ${rute}`.replace(/\s+/g, ' ');
+          
+          // 1. Identify common Indonesian Hubs
+          const indoHubs = INDONESIA_EMBARKASI.map(e => e.kode);
+          const saudiHubs = ["JED", "MED", "RUH", "DMM", "ELQ", "HAS"];
+
+          // If user picked a Saudi city as departure (e.g. Madinah - Jeddah city trip), block all Indonesian packages
+          if (saudiHubs.includes(targetCode)) return false;
+
+          // Exclusion: If I chose SUB, I MUST NOT see CGK-JED, KNO-JED, etc.
+          const otherIndoHubs = indoHubs.filter(h => h !== targetCode);
+          const hasOtherIndoHubStart = otherIndoHubs.some(oh => 
+            searchSample.includes(`${oh}-`) || 
+            searchSample.includes(`${oh} -`) ||
+            searchSample.startsWith(oh)
+          );
+
+          if (hasOtherIndoHubStart) return false;
+
+          // Inclusion: If a route pattern is detected, it MUST start with my targetCode
+          const routeMatch = searchSample.match(/\b([A-Z]{3})\s?-\s?[A-Z]{3}\b/);
+          if (routeMatch) {
+            const detectedOrigin = routeMatch[1];
+            if (indoHubs.includes(detectedOrigin) && detectedOrigin !== targetCode) {
+              return false;
+            }
+          }
+
+          // Force presence of the target code in the flight label
+          if (!searchSample.includes(targetCode)) return false;
+
+          return true;
+        });
+      }
+    }
+
+    // NEW: Filter by Destination City Hub (Jeddah First vs Madinah First)
+    if (formData.kotaTujuan) {
+      const dest = formData.kotaTujuan.toUpperCase();
+      list = list.filter((m) => {
+        const name = (m.name || "").toUpperCase();
+        const rute = (m.ruteLabel || "").toUpperCase();
+        const searchSample = `${name} ${rute}`;
+        
+        // Precise Airport Code Extraction (exclude common non-airport 3-letter strings)
+        const codesMatch = searchSample.match(/\b[A-Z]{3}\b/g) || [];
+        const excludeWords = ["AIR", "BIG", "PNR", "VIP", "MAX", "VIA", "BOE", "BUS", "LCC"];
+        const airportCodes = codesMatch.filter(code => !excludeWords.includes(code));
+        
+        const saudiCodes = ["JED", "MED", "RUH", "DMM", "ELQ", "HAS"];
+        // The "Destination First" is the FIRST time the plane touches Saudi ground
+        const firstSaudiArrival = airportCodes.find(code => saudiCodes.includes(code));
+        
+        if (dest.includes("JEDDAH") || dest === "JED") {
+           return firstSaudiArrival === "JED";
+        }
+        if (dest.includes("MADINAH") || dest === "MED") {
+           return firstSaudiArrival === "MED";
+        }
+        return true;
+      });
+    }
+
     if (formData.durasiHari) {
       list = list.filter(
         (m) =>
@@ -329,18 +456,48 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           Number(m.programDays) === Number(formData.durasiHari),
       );
     }
-    if (!formData.tglBerangkat) return list;
-    const baseDate = new Date(formData.tglBerangkat);
+    const anchorDate = formData.preferredDepartureDate || formData.tglBerangkat;
+    if (!anchorDate) return list;
+    const baseDate = new Date(anchorDate);
     if (isNaN(baseDate.getTime())) return list;
+    
+    // Use a window around the anchor date to keep the results stable.
+    // This prevents results from disappearing if tglBerangkat updates.
+    const minDate = new Date(baseDate);
+    minDate.setDate(minDate.getDate() - 7); // 1 week before anchor
     const maxDate = new Date(baseDate);
-    maxDate.setDate(maxDate.getDate() + 30);
+    maxDate.setDate(maxDate.getDate() + 37); // ~5 weeks after anchor
+
     return list.filter((m) => {
       if (!m.tanggalKeberangkatan) return false;
       const mDate = new Date(m.tanggalKeberangkatan);
       if (isNaN(mDate.getTime())) return false;
-      return mDate >= baseDate && mDate <= maxDate;
+      return mDate >= minDate && mDate <= maxDate;
     });
-  }, [maskapaiList, formData.tglBerangkat, formData.durasiHari]);
+  }, [
+    maskapaiList, 
+    formData.tglBerangkat, 
+    formData.preferredDepartureDate, 
+    formData.durasiHari, 
+    formData.tipePenerbangan, 
+    formData.kotaKeberangkatan, 
+    formData.kotaTujuan
+  ]);
+
+  // Reset selected maskapai if it's filtered out
+  useEffect(() => {
+    if (formData.maskapaiId) {
+      const isValid = filteredMaskapaiList.some(m => m.id === formData.maskapaiId);
+      if (!isValid) {
+        setFormData(prev => ({
+          ...prev,
+          maskapaiId: '',
+          maskapaiLabel: '',
+          estimasiHargaMaskapai: 0
+        }));
+      }
+    }
+  }, [formData.tipePenerbangan, formData.kotaTujuan, formData.kotaKeberangkatan, filteredMaskapaiList, formData.maskapaiId]);
 
   // Synchronize Hotel Dates based on tglBerangkat and durations
   useEffect(() => {
@@ -582,7 +739,13 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const dateObj = new Date(dateStr);
     if (isNaN(dateObj.getTime())) return 0;
     
-    const season = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
+    let season = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
+    
+    // Fallback: If no season found, use the first season
+    if (!season && hotel.seasons.length > 0) {
+      season = hotel.seasons[0];
+    }
+    
     if (!season) return 0;
     
     const priceEntry = season.prices.find((p) => p.roomType === roomType);
@@ -838,20 +1001,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     currentStepsList[currentStep - 1] || currentStepsList[0];
 
   useEffect(() => {
-    if (bandaraList.length > 0) {
-      setFormData((prev) => ({
-        ...prev,
-        kotaKeberangkatan:
-          prev.kotaKeberangkatan || (bandaraList[0]?.kota || "").toUpperCase() || "",
-        kotaTujuan:
-          prev.kotaTujuan ||
-          (bandaraList
-            .find((b) => b.nama?.toUpperCase() === "JEDDAH" || b.kode === "JED")
-            ?.kota || "").toUpperCase() ||
-          "",
-      }));
-    }
-  }, [bandaraList]);
+    setFormData((prev) => ({
+      ...prev,
+      kotaKeberangkatan:
+        prev.kotaKeberangkatan || `${INDONESIA_EMBARKASI[0].kota} (${INDONESIA_EMBARKASI[0].kode})`,
+      kotaTujuan:
+        prev.kotaTujuan || "JEDDAH (JED)",
+    }));
+  }, []);
 
   const handleExitClick = () => {
     setShowExitConfirmation(true);
@@ -873,7 +1030,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         deskripsi: formData.deskripsi || "",
         tipePublikasi: formData.tipePublikasi || "B2C",
         tipePenjualan: formData.tipePenjualan || "INDIVIDUAL",
-        hargaDasar: Number(formData.hargaDasar || 0),
+        hargaDasar: Number(pricingSummary.baseQuad || 0),
         maskapaiId: formData.maskapaiId || "",
         hotelMadinahId: formData.hotelMadinahId || "",
         hotelMakkahId: formData.hotelMakkahId || "",
@@ -972,7 +1129,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         deskripsi: formData.deskripsi || "",
         tipePublikasi: formData.tipePublikasi || "B2C",
         tipePenjualan: formData.tipePenjualan || "INDIVIDUAL",
-        hargaDasar: Number(formData.hargaDasar || 0),
+        hargaDasar: Number(pricingSummary.baseQuad || 0),
         maskapaiId: formData.maskapaiId || "",
         hotelMadinahId: formData.hotelMadinahId || "",
         hotelMakkahId: formData.hotelMakkahId || "",
@@ -1591,10 +1748,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 font-bold appearance-none"
                     >
                       <option value="">-- Pilih Kota --</option>
-                      {bandaraList.map((b) => (
-                        <option key={b.id} value={(b.kota || "").toUpperCase()}>
-                          {(b.kota || "").toUpperCase()} ({(b.kode || "")})
-                        </option>
+                      {INDONESIA_EMBARKASI.map((item) => (
+                         <option key={item.kode} value={`${item.kota} (${item.kode})`}>
+                           {item.kota} ({item.kode})
+                         </option>
                       ))}
                     </select>
                   </div>
@@ -1708,6 +1865,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         setFormData({
                           ...formData,
                           tglBerangkat: newTglBerangkat,
+                          preferredDepartureDate: newTglBerangkat,
                           tglKepulangan: newTglPulang,
                         });
                       }}
@@ -2819,6 +2977,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             : formData.estimasiHargaMaskapai || 0,
                           tglBerangkat: newTglBerangkat,
                           tglKepulangan: newTglPulang,
+                          // If we haven't anchored a date yet, use this one as the anchor
+                          // so the list doesn't shift unexpectedly if they keep clicking.
+                          preferredDepartureDate: formData.preferredDepartureDate || newTglBerangkat
                         });
                       }}
                       className="w-full p-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-medium appearance-none bg-white"

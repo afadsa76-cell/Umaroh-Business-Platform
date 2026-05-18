@@ -177,7 +177,14 @@ export const PaketWisataView: React.FC = () => {
                   <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-3 font-bold text-gray-900">
                        <div className="flex items-center gap-3">
-                         <img src={item.img} alt={item.nama} className="w-10 h-10 object-cover rounded-md" referrerPolicy="no-referrer" />
+                         {item.img && (
+                           <img src={item.img} alt={item.nama} className="w-10 h-10 object-cover rounded-md" referrerPolicy="no-referrer" />
+                         )}
+                         {!item.img && (
+                           <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
+                             <Map className="w-5 h-5" />
+                           </div>
+                         )}
                          <div>
                            <div>{item.nama}</div>
                            <div className="text-gray-500 text-xs font-normal">{item.deskripsi}</div>
@@ -307,12 +314,12 @@ export const PaketWisataView: React.FC = () => {
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                     placeholder="https://images.unsplash.com/..."
                   />
-                  {formData.img && (
+                  {formData.img ? (
                     <div className="mt-3">
                        <p className="text-xs text-gray-500 mb-1">Preview:</p>
                        <img src={formData.img} alt="Preview" className="h-32 rounded-lg object-cover" referrerPolicy="no-referrer" />
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
 

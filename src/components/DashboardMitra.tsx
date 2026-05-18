@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, History, LayoutDashboard, Calendar, User, TrendingUp, PlusCircle, Shield } from 'lucide-react';
+import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, History, LayoutDashboard, Calendar, User, TrendingUp, PlusCircle, Shield, Zap, Target } from 'lucide-react';
 import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMitraView } from './PaketMitraView';
 import { KatalogPaketView } from './KatalogPaketView';
@@ -8,8 +8,9 @@ import { JaringanMitraView } from './JaringanMitraView';
 import { ProfileView } from './ProfileView';
 import { ValidasiPaketMitraView } from './ValidasiPaketMitraView';
 import { PaketMasterWizard } from './PaketMasterWizard';
+import { FeedKolaborasiView } from './FeedKolaborasiView';
 
-type MitraTab = 'overview' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile';
+type MitraTab = 'overview' | 'feed' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile';
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
@@ -20,7 +21,7 @@ export const DashboardMitra = () => {
     totalOmzet: 0,
     paketAktif: 0,
     totalJaringan: 0,
-    komisiTarik: 45000000 // Temporary mock to match screenshot, will be replaced by actual data if available
+    komisiTarik: 0 
   });
   
   const userId = auth.currentUser?.uid;
@@ -163,7 +164,7 @@ export const DashboardMitra = () => {
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">MITRA/AGEN</p>
           </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">{stats.totalJaringan || 128}</h3>
+          <h3 className="text-2xl font-black text-gray-900 tracking-tight">{stats.totalJaringan}</h3>
         </div>
       </div>
 
@@ -313,6 +314,13 @@ export const DashboardMitra = () => {
             <span className="text-[10px] font-bold">Beranda</span>
           </button>
           <button
+            onClick={() => setActiveTab('feed')}
+            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'feed' ? 'text-indigo-600' : 'text-gray-400'}`}
+          >
+            <Zap className="w-5 h-5 text-amber-500 fill-amber-300/20" />
+            <span className="text-[10px] font-bold">Feed</span>
+          </button>
+          <button
             onClick={() => setActiveTab('katalog')}
             className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'katalog' ? 'text-amber-600' : 'text-gray-400'}`}
           >
@@ -371,6 +379,17 @@ export const DashboardMitra = () => {
             >
               <LayoutDashboard className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeTab === 'overview' ? 'text-blue-700' : 'text-gray-500'}`} />
               Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('feed')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'feed' 
+                  ? 'bg-indigo-100 text-indigo-800 shadow-sm ring-1 ring-indigo-600/20' 
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
+              }`}
+            >
+              <Target className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeTab === 'feed' ? 'text-indigo-700' : 'text-gray-500'}`} />
+              Feed Kolaborasi
             </button>
             <button
               onClick={() => setActiveTab('katalog')}
@@ -444,6 +463,7 @@ export const DashboardMitra = () => {
 
       <div className="p-6 max-w-7xl mx-auto w-full">
         {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'feed' && <FeedKolaborasiView onNavigateToCatalog={() => setActiveTab('katalog')} />}
         {activeTab === 'katalog' && <KatalogPaketView />}
         {activeTab === 'paket' && <PaketMitraView />}
         {activeTab === 'validasi' && <ValidasiPaketMitraView />}

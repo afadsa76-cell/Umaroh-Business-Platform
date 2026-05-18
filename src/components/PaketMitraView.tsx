@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, Search, ArrowRight, Star, Building2, CheckCircle2, Clock } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, Search, ArrowRight, Star, Building2, CheckCircle2, Clock, Calendar, Plane, Share2, ChevronRight, Zap } from 'lucide-react';
 import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMasterWizard } from './PaketMasterWizard';
 import { PaketMaster, Maskapai } from '../types';
@@ -308,10 +308,21 @@ export const PaketMitraView: React.FC = () => {
               </div>
 
               <div className="p-6">
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest border-b border-gray-50 pb-2">
-                    <span>Harga Dasar Master</span>
-                    <span className="text-gray-900 font-bold">Rp {Math.round(paket.hargaDasar).toLocaleString('id-ID')}</span>
+                <div className="space-y-4 mb-6">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">HARGA DASAR ESTIMASI</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="text-gray-500 font-medium tracking-tight">QUAD (4 Bed)</span>
+                      <span className="text-gray-900 font-black italic">Rp {Math.round(paket.hargaJualQuad || paket.hargaDasar || paket.hargaEkonomi || 0).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="text-gray-500 font-medium tracking-tight">TRIPLE (3 Bed)</span>
+                      <span className="text-gray-900 font-black italic">Rp {Math.round(paket.hargaJualTriple || (paket.hargaDasar ? paket.hargaDasar * 1.1 : 0)).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="text-gray-500 font-medium tracking-tight">DOUBLE (2 Bed)</span>
+                      <span className="text-gray-900 font-black italic">Rp {Math.round(paket.hargaJualDouble || (paket.hargaDasar ? paket.hargaDasar * 1.2 : 0)).toLocaleString('id-ID')}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 py-2">
                     <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
@@ -370,44 +381,93 @@ export const PaketMitraView: React.FC = () => {
               Katalog Master Tersedia
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredPublishedMasters.map((paket) => (
-                <div key={paket.id} className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 relative group transition-all hover:scale-[1.02]">
-                  <div className="h-48 bg-gray-900 relative">
+              {filteredPublishedMasters.map((paket, idx) => (
+                <div key={paket.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl">
+                  {/* Image Header with Badges & Overlays */}
+                  <div className="h-44 bg-gray-200 relative">
                     <img 
-                      src={`https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=800&auto=format&fit=crop`} 
-                      alt="Makkah" 
-                      className="w-full h-full object-cover opacity-60" 
+                      src={`https://images.unsplash.com/photo-${idx % 3 === 0 ? '1565552643983-61629090f4fa' : idx % 3 === 1 ? '1591604129939-f1efa4d9f7fa' : '1512453979798-5ea266f8880c'}?q=80&w=800&auto=format&fit=crop`} 
+                      alt={paket.nama} 
+                      className="w-full h-full object-cover" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white border border-white/30 uppercase tracking-widest">
-                        {paket.kuota} SEAT TOTAL
-                      </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                    
+                    {/* Top Badges */}
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className="bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">UMRAH</span>
+                      <span className="bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">AKTIF</span>
                     </div>
-                    <div className="absolute bottom-4 left-6 right-6">
-                      <h3 className="text-white font-black text-xl leading-tight uppercase italic tracking-tighter">{paket.nama}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                        <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Program Master Premium</span>
-                      </div>
+
+                    {/* Bottom Left Info */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
+                      <Calendar className="w-3.0 h-3.0" />
+                      <span className="text-[10px] font-black tracking-tight">{paket.tanggalKeberangkatan || '2026-05-15'}</span>
+                    </div>
+
+                    {/* Bottom Right Rating */}
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full">
+                      <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                      <span className="text-[10px] font-black text-white">4.9</span>
                     </div>
                   </div>
 
-                  <div className="p-6">
-                    <div className="space-y-3 mb-6">
-                      <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest border-b border-gray-50 pb-2">
-                        <span>Harga Dasar Master</span>
-                        <span className="text-gray-900 font-bold">Rp {Math.round(paket.hargaDasar).toLocaleString('id-ID')}</span>
+                  <div className="p-5">
+                    {/* Title */}
+                    <h3 className="text-gray-900 font-black text-sm md:text-base leading-tight uppercase italic tracking-tight mb-3">
+                      {paket.nama}
+                    </h3>
+                    
+                    {/* Icon Info Row */}
+                    <div className="flex items-center gap-4 mb-5 pb-4 border-b border-gray-50">
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <Plane className="w-3 h-3" />
+                        <span className="text-[9px] font-bold uppercase tracking-tighter">{getMaskapaiInfo(paket.maskapaiId)}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.durasi || '9'} HARI</span>
                       </div>
                     </div>
 
-                    <button 
-                      onClick={() => handleOpenMarkup(paket)}
-                      className="w-full bg-indigo-600 text-white hover:bg-indigo-700 py-3 rounded-2xl font-black italic uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 group shadow-lg shadow-indigo-600/20"
-                    >
-                      Markup & Publish
-                      <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                    </button>
+                    {/* Price & Action Row */}
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">HARGA DASAR MASTER</p>
+                        <p className="text-emerald-600 font-black text-lg md:text-xl leading-none italic tracking-tighter">
+                          Rp {Math.round(paket.hargaJualQuad || paket.hargaDasar || paket.hargaEkonomi || 0).toLocaleString('id-ID')}
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <div className="flex gap-1.5">
+                          <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                            <Share2 className="w-3 h-3" />
+                          </button>
+                          <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors text-rose-500">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Detail Link Footer */}
+                    <div className="mt-5 pt-4 border-t border-gray-50 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                          {paket.kuota || 45} JAMAAH TERDAFTAR
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => handleOpenMarkup(paket)}
+                        className="text-indigo-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-0.5 hover:gap-1.5 transition-all"
+                      >
+                        DETAIL <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -475,10 +535,27 @@ export const PaketMitraView: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="text-sm font-black italic text-indigo-700">
-                          {formatCurrency((master?.hargaJualQuad || master?.hargaDasar || 0) + (paket.markup || 0))}
+                        <div className="space-y-1">
+                          <div className="text-[10px] flex justify-between gap-4">
+                            <span className="text-gray-400 font-bold uppercase tracking-tighter">Q</span>
+                            <span className="font-black italic text-indigo-700">
+                              {formatCurrency((master?.hargaJualQuad || master?.hargaDasar || master?.hargaEkonomi || 0) + (paket.markup || 0))}
+                            </span>
+                          </div>
+                          <div className="text-[10px] flex justify-between gap-4 border-t border-gray-50 pt-1">
+                            <span className="text-gray-400 font-bold uppercase tracking-tighter">T</span>
+                            <span className="font-black italic text-indigo-700">
+                              {formatCurrency((master?.hargaJualTriple || (master?.hargaDasar ? master.hargaDasar * 1.1 : 0) || 0) + (paket.markup || 0))}
+                            </span>
+                          </div>
+                          <div className="text-[10px] flex justify-between gap-4 border-t border-gray-50 pt-1">
+                            <span className="text-gray-400 font-bold uppercase tracking-tighter">D</span>
+                            <span className="font-black italic text-indigo-700">
+                              {formatCurrency((master?.hargaJualDouble || (master?.hargaDasar ? master.hargaDasar * 1.2 : 0) || 0) + (paket.markup || 0))}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-[9px] text-emerald-600 font-black uppercase tracking-tighter">Profit: +{formatCurrency(paket.markup)}</div>
+                        <div className="text-[9px] text-emerald-600 font-black uppercase tracking-tighter mt-1">Profit: +{formatCurrency(paket.markup)}</div>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${paket.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>

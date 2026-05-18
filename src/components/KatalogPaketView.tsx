@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, CheckCircle2 } from 'lucide-react';
+import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight, Zap } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp } from '../firebase';
 import { PaketMaster } from '../types';
 
@@ -24,6 +24,9 @@ interface DisplayPaket {
   mitraId?: string;
   hargaDasar?: number;
   hargaJual?: number;
+  hargaJualQuad?: number;
+  hargaJualTriple?: number;
+  hargaJualDouble?: number;
 }
 
 export const KatalogPaketView: React.FC = () => {
@@ -97,17 +100,33 @@ export const KatalogPaketView: React.FC = () => {
 
   // Combine and format packages for display
   const displayPackages = [
-    ...paketMasters.map(p => ({ ...p, type: 'master', displayPrice: p.hargaJualQuad || p.hargaDasar, displayName: p.nama })),
+    ...paketMasters.map(p => ({ 
+      ...p, 
+      type: 'master', 
+      displayPrice: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0, 
+      displayName: p.nama,
+      hargaJualQuad: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
+      hargaJualTriple: p.hargaJualTriple || (p.hargaDasar ? p.hargaDasar * 1.1 : 0),
+      hargaJualDouble: p.hargaJualDouble || (p.hargaDasar ? p.hargaDasar * 1.2 : 0)
+    })),
     ...paketMitras.map(p => {
       const master = paketMasters.find(m => m.id === p.paketMasterId);
-      const calculatedPrice = (master?.hargaJualQuad || master?.hargaDasar || 0) + (p.markup || 0);
+      const markup = p.markup || 0;
+      
+      const priceQuad = (master?.hargaJualQuad || master?.hargaDasar || master?.hargaEkonomi || 0) + markup;
+      const priceTriple = (master?.hargaJualTriple || 0) > 0 ? (master?.hargaJualTriple || 0) + markup : (master?.hargaDasar ? master.hargaDasar * 1.1 + markup : 0);
+      const priceDouble = (master?.hargaJualDouble || 0) > 0 ? (master?.hargaJualDouble || 0) + markup : (master?.hargaDasar ? master.hargaDasar * 1.2 + markup : 0);
+
       return { 
         ...p, 
         type: 'mitra', 
-        displayPrice: calculatedPrice, 
+        displayPrice: priceQuad, 
         displayName: p.namaPaketMitra,
         deskripsi: master?.deskripsi || 'Paket Umroh Spesial',
-        sisaKuota: master?.sisaKuota || 0
+        sisaKuota: master?.sisaKuota || 0,
+        hargaJualQuad: priceQuad,
+        hargaJualTriple: priceTriple,
+        hargaJualDouble: priceDouble
       };
     })
   ].filter(p => p.displayName?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -131,31 +150,88 @@ export const KatalogPaketView: React.FC = () => {
       {/* Package Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {displayPackages.map((paket, index) => (
-          <div key={paket.id + index} className="bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col">
-            <div className="h-40 md:h-48 bg-gray-200 relative">
-              <img src={`https://images.unsplash.com/photo-${index % 2 === 0 ? '1565552643983-61629090f4fa' : '1591604129939-f1efa4d9f7fa'}?q=80&w=800&auto=format&fit=crop`} alt="Makkah" className="w-full h-full object-cover" />
-              <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-white/90 backdrop-blur-sm px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-bold text-emerald-700">
-                Tersedia: {paket.sisaKuota} Seat
+          <div key={paket.id + index} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl flex flex-col">
+            {/* Image Header with Badges & Overlays */}
+            <div className="h-44 bg-gray-200 relative">
+              <img 
+                src={`https://images.unsplash.com/photo-${index % 3 === 0 ? '1565552643983-61629090f4fa' : index % 3 === 1 ? '1591604129939-f1efa4d9f7fa' : '1512453979798-5ea266f8880c'}?q=80&w=800&auto=format&fit=crop`} 
+                alt={paket.displayName} 
+                className="w-full h-full object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+              
+              {/* Top Badges */}
+              <div className="absolute top-3 left-3 flex gap-2">
+                <span className="bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">UMRAH</span>
+                <span className="bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">AKTIF</span>
               </div>
-              {paket.type === 'mitra' && (
-                <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-amber-500 text-white px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-sm">
-                  Paket Spesial
-                </div>
-              )}
+
+              {/* Bottom Left Info */}
+              <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
+                <Calendar className="w-3.0 h-3.0" />
+                <span className="text-[10px] font-black tracking-tight">{(paket as any).tanggalKeberangkatan || '2026-05-15'}</span>
+              </div>
+
+              {/* Bottom Right Rating */}
+              <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full">
+                <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                <span className="text-[10px] font-black text-white">4.9</span>
+              </div>
             </div>
-            <div className="p-4 md:p-5 flex-grow flex flex-col">
-              <h3 className="font-bold text-base md:text-lg text-gray-900 mb-1 md:mb-2">{paket.displayName}</h3>
-              <p className="text-[10px] md:text-sm text-gray-500 mb-3 md:mb-4 line-clamp-2 flex-grow">{paket.deskripsi}</p>
-              <div className="flex justify-between items-center pt-3 md:pt-4 border-t border-gray-100 mt-auto">
+
+            <div className="p-5 flex-grow flex flex-col">
+              {/* Title */}
+              <h3 className="text-gray-900 font-black text-sm md:text-base leading-tight uppercase italic tracking-tight mb-3">
+                {paket.displayName}
+              </h3>
+              
+              {/* Icon Info Row */}
+              <div className="flex items-center gap-4 mb-5 pb-4 border-b border-gray-50">
+                <div className="flex items-center gap-1.5 text-gray-400">
+                  <Plane className="w-3 h-3" />
+                  <span className="text-[9px] font-bold uppercase tracking-tighter">SAUDI</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-gray-400">
+                  <Clock className="w-3 h-3" />
+                  <span className="text-[9px] font-bold uppercase tracking-tighter">{(paket as any).durasi || '9'} HARI</span>
+                </div>
+              </div>
+
+              {/* Price & Action Row */}
+              <div className="flex items-end justify-between mb-4">
                 <div>
-                  <p className="text-[8px] md:text-xs text-gray-500">Harga</p>
-                  <p className="font-bold text-amber-600 text-sm md:text-lg">{formatCurrency(paket.displayPrice)}</p>
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">HARGA JUAL</p>
+                  <p className="text-emerald-600 font-black text-lg md:text-xl leading-none italic tracking-tighter">
+                    {formatCurrency(paket.displayPrice)}
+                  </p>
+                </div>
+                
+                <div className="flex gap-1.5">
+                  <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                    <Edit2 className="w-3 h-3" />
+                  </button>
+                  <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                    <Share2 className="w-3 h-3" />
+                  </button>
+                  <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors text-rose-500">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Detail Link Footer */}
+              <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                    {paket.sisaKuota || 12} JAMAAH TERDAFTAR
+                  </span>
                 </div>
                 <button 
                   onClick={() => setSelectedPaket(paket)}
-                  className="bg-emerald-50 text-emerald-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-[10px] md:text-sm font-bold hover:bg-emerald-100 transition-colors"
+                  className="text-indigo-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-0.5 hover:gap-1.5 transition-all"
                 >
-                  Pesan
+                  DETAIL <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
             </div>
@@ -184,12 +260,29 @@ export const KatalogPaketView: React.FC = () => {
             ) : (
               <>
                 <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Konfirmasi Pemesanan</h3>
-                <div className="bg-gray-50 p-3 md:p-4 rounded-xl mb-6 border border-gray-100">
-                  <h4 className="font-bold text-sm md:text-base text-gray-900 mb-1">{selectedPaket.displayName}</h4>
-                  <p className="text-[10px] md:text-sm text-gray-500 mb-4">{selectedPaket.deskripsi}</p>
-                  <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                    <span className="text-[10px] md:text-sm text-gray-600 font-medium">Total Harga</span>
-                    <span className="font-black text-amber-600 text-base md:text-lg">{formatCurrency(selectedPaket.displayPrice)}</span>
+                <div className="bg-gray-50 rounded-xl mb-6 border border-gray-100 overflow-hidden">
+                  <div className="p-3 md:p-4 border-b border-gray-100">
+                    <h4 className="font-bold text-sm md:text-base text-gray-900 mb-1">{selectedPaket.displayName}</h4>
+                    <p className="text-[10px] md:text-sm text-gray-500">{selectedPaket.deskripsi}</p>
+                  </div>
+                  
+                  <div className="p-3 md:p-4 space-y-3 bg-white">
+                    <div className="flex justify-between items-center text-xs md:text-sm">
+                      <span className="text-gray-600">QUAD (4 Bed)</span>
+                      <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualQuad)}</span>
+                    </div>
+                    {selectedPaket.hargaJualTriple ? (
+                      <div className="flex justify-between items-center text-xs md:text-sm">
+                        <span className="text-gray-600">TRIPLE (3 Bed)</span>
+                        <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualTriple)}</span>
+                      </div>
+                    ) : null}
+                    {selectedPaket.hargaJualDouble ? (
+                      <div className="flex justify-between items-center text-xs md:text-sm">
+                        <span className="text-gray-600">DOUBLE (2 Bed)</span>
+                        <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualDouble)}</span>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 

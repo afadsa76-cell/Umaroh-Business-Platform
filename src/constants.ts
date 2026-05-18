@@ -1,0 +1,38 @@
+export const INDONESIA_EMBARKASI = [
+  { kota: "JAKARTA", kode: "CGK" },
+  { kota: "SURABAYA", kode: "SUB" },
+  { kota: "MAKASSAR", kode: "UPG" },
+  { kota: "MEDAN", kode: "KNO" },
+  { kota: "SOLO", kode: "SOC" },
+  { kota: "BALIKPAPAN", kode: "BPN" },
+  { kota: "PALEMBANG", kode: "PLM" },
+  { kota: "PADANG", kode: "PDG" },
+  { kota: "BANDA ACEH", kode: "BTJ" },
+  { kota: "BATAM", kode: "BTH" },
+  { kota: "LOMBOK", kode: "LOP" },
+  { kota: "KERTAJATI", kode: "KJT" },
+  { kota: "BANJARMASIN", kode: "BDJ" },
+  { kota: "SEMARANG", kode: "SRG" },
+  { kota: "YOGYAKARTA", kode: "YIA" },
+  { kota: "PEKANBARU", kode: "PKU" },
+  { kota: "JAMBI", kode: "DJB" },
+  { kota: "PONTIANAK", kode: "PNK" },
+  { kota: "PALANGKARAYA", kode: "PKY" },
+  { kota: "SAMARINDA", kode: "AAP" },
+  { kota: "TARAKAN", kode: "TRK" },
+  { kota: "GORONTALO", kode: "GTO" },
+  { kota: "KENDARI", kode: "KDI" },
+  { kota: "PALU", kode: "PLW" },
+  { kota: "MANADO", kode: "MDC" },
+  { kota: "AMBON", kode: "AMQ" },
+  { kota: "JAYAPURA", kode: "DJJ" },
+  { kota: "DENPASAR", kode: "DPS" },
+  { kota: "KUPANG", kode: "KOE" }
+];
+
+export const KATEGORI_PROGRAM = [
+  "UMRAH REGULAR",
+  "UMRAH PLUS",
+  "UMRAH LA",
+  "WISATA HALAL",
+];
