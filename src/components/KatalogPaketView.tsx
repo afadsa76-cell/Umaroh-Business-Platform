@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight, Zap } from 'lucide-react';
+import React from 'react';
+import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp } from '../firebase';
-import { PaketMaster } from '../types';
+import { PaketMaster, Maskapai, Hotel } from '../types';
+import { PaketDetailView } from './PaketDetailView';
 
 interface PaketMitra {
   id: string;
@@ -19,6 +20,9 @@ interface DisplayPaket {
   displayName: string;
   displayPrice: number;
   deskripsi: string;
+  tglBerangkat?: string;
+  durasiHari?: number;
+  maskapaiId?: string;
   sisaKuota?: number;
   paketMasterId?: string;
   mitraId?: string;
@@ -29,16 +33,19 @@ interface DisplayPaket {
   hargaJualDouble?: number;
 }
 
-export const KatalogPaketView: React.FC = () => {
-  const [paketMasters, setPaketMasters] = useState<PaketMaster[]>([]);
-  const [paketMitras, setPaketMitras] = useState<PaketMitra[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPaket, setSelectedPaket] = useState<DisplayPaket | null>(null);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
+export const KatalogPaketView = () => {
+  const [paketMasters, setPaketMasters] = React.useState<PaketMaster[]>([]);
+  const [paketMitras, setPaketMitras] = React.useState<PaketMitra[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedPaket, setSelectedPaket] = React.useState<DisplayPaket | null>(null);
+  const [bookingSuccess, setBookingSuccess] = React.useState(false);
+  const [viewingDetail, setViewingDetail] = React.useState<PaketMaster | null>(null);
+  const [hotels, setHotels] = React.useState<Hotel[]>([]);
+  const [maskapai, setMaskapai] = React.useState<Maskapai[]>([]);
 
   const userId = auth.currentUser?.uid;
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Fetch published Paket Master
     const qMaster = query(collection(db, 'paket_master'), where('status', '==', 'published'));
     const unsubMaster = onSnapshot(qMaster, (snapshot) => {
@@ -53,9 +60,20 @@ export const KatalogPaketView: React.FC = () => {
       setPaketMitras(data);
     });
 
+    // Fetch Hotels & Maskapai for detail view
+    const unsubHotels = onSnapshot(collection(db, 'master_hotels'), (snapshot) => {
+      setHotels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as Hotel));
+    });
+
+    const unsubMaskapai = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
+      setMaskapai(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as Maskapai));
+    });
+
     return () => {
       unsubMaster();
       unsubMitra();
+      unsubHotels();
+      unsubMaskapai();
     };
   }, []);
 
@@ -99,12 +117,15 @@ export const KatalogPaketView: React.FC = () => {
   };
 
   // Combine and format packages for display
-  const displayPackages = [
+  const displayPackages: DisplayPaket[] = [
     ...paketMasters.map(p => ({ 
       ...p, 
       type: 'master', 
       displayPrice: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0, 
       displayName: p.nama,
+      tglBerangkat: p.tglBerangkat,
+      durasiHari: p.durasiHari,
+      maskapaiId: p.maskapaiId,
       hargaJualQuad: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
       hargaJualTriple: p.hargaJualTriple || (p.hargaDasar ? p.hargaDasar * 1.1 : 0),
       hargaJualDouble: p.hargaJualDouble || (p.hargaDasar ? p.hargaDasar * 1.2 : 0)
@@ -123,6 +144,9 @@ export const KatalogPaketView: React.FC = () => {
         displayPrice: priceQuad, 
         displayName: p.namaPaketMitra,
         deskripsi: master?.deskripsi || 'Paket Umroh Spesial',
+        tglBerangkat: master?.tglBerangkat,
+        durasiHari: master?.durasiHari,
+        maskapaiId: master?.maskapaiId,
         sisaKuota: master?.sisaKuota || 0,
         hargaJualQuad: priceQuad,
         hargaJualTriple: priceTriple,
@@ -130,6 +154,34 @@ export const KatalogPaketView: React.FC = () => {
       };
     })
   ].filter(p => p.displayName?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  if (viewingDetail) {
+    return (
+      <PaketDetailView 
+        paket={viewingDetail}
+        hotels={hotels}
+        maskapai={maskapai}
+        isMitraContext={false}
+        onBack={() => setViewingDetail(null)}
+        onBook={(p) => {
+          // Convert PaketMaster to DisplayPaket structure for booking modal
+          setSelectedPaket({
+            id: p.id,
+            type: 'master',
+            displayName: p.nama,
+            displayPrice: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
+            deskripsi: p.deskripsi || '',
+            tglBerangkat: p.tglBerangkat,
+            durasiHari: p.durasiHari,
+            maskapaiId: p.maskapaiId,
+            hargaJualQuad: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
+            hargaJualTriple: p.hargaJualTriple || (p.hargaDasar ? p.hargaDasar * 1.1 : 0),
+            hargaJualDouble: p.hargaJualDouble || (p.hargaDasar ? p.hargaDasar * 1.2 : 0)
+          });
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -150,8 +202,15 @@ export const KatalogPaketView: React.FC = () => {
       {/* Package Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {displayPackages.map((paket, index) => (
-          <div key={paket.id + index} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl flex flex-col">
-            {/* Image Header with Badges & Overlays */}
+            <div 
+              key={paket.id + index} 
+              onClick={() => {
+                const master = paketMasters.find(m => m.id === (paket as DisplayPaket).paketMasterId || m.id === paket.id);
+                if (master) setViewingDetail(master);
+              }}
+              className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl flex flex-col cursor-pointer"
+            >
+              {/* Image Header with Badges & Overlays */}
             <div className="h-44 bg-gray-200 relative">
               <img 
                 src={`https://images.unsplash.com/photo-${index % 3 === 0 ? '1565552643983-61629090f4fa' : index % 3 === 1 ? '1591604129939-f1efa4d9f7fa' : '1512453979798-5ea266f8880c'}?q=80&w=800&auto=format&fit=crop`} 
@@ -168,8 +227,8 @@ export const KatalogPaketView: React.FC = () => {
 
               {/* Bottom Left Info */}
               <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
-                <Calendar className="w-3.0 h-3.0" />
-                <span className="text-[10px] font-black tracking-tight">{(paket as any).tanggalKeberangkatan || '2026-05-15'}</span>
+                <Calendar className="w-3 h-3" />
+                <span className="text-[10px] font-black tracking-tight">{paket.tglBerangkat || '2026-05-15'}</span>
               </div>
 
               {/* Bottom Right Rating */}
@@ -189,11 +248,11 @@ export const KatalogPaketView: React.FC = () => {
               <div className="flex items-center gap-4 mb-5 pb-4 border-b border-gray-50">
                 <div className="flex items-center gap-1.5 text-gray-400">
                   <Plane className="w-3 h-3" />
-                  <span className="text-[9px] font-bold uppercase tracking-tighter">SAUDI</span>
+                  <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.maskapaiId || 'SAUDI'}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-gray-400">
                   <Clock className="w-3 h-3" />
-                  <span className="text-[9px] font-bold uppercase tracking-tighter">{(paket as any).durasi || '9'} HARI</span>
+                  <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.durasiHari || '9'} HARI</span>
                 </div>
               </div>
 
@@ -228,7 +287,11 @@ export const KatalogPaketView: React.FC = () => {
                   </span>
                 </div>
                 <button 
-                  onClick={() => setSelectedPaket(paket)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const master = paketMasters.find(m => m.id === (paket as DisplayPaket).paketMasterId || m.id === paket.id);
+                    if (master) setViewingDetail(master);
+                  }}
                   className="text-indigo-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-0.5 hover:gap-1.5 transition-all"
                 >
                   DETAIL <ChevronRight className="w-3 h-3" />

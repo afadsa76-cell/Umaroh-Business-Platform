@@ -38,6 +38,7 @@ export interface Hotel {
   mealPlan: 'FB' | 'HB' | 'RO' | 'BB' | string;
   stars?: number;
   bintang?: number;
+  photo?: string;
   seasons: Season[];
 }
 

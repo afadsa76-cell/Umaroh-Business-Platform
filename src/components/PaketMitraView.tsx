@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, Search, ArrowRight, Star, Building2, CheckCircle2, Clock, Calendar, Plane, Share2, ChevronRight, Zap } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, Search, Star, Building2, CheckCircle2, Clock, Calendar, Plane, Share2, ChevronRight } from 'lucide-react';
 import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMasterWizard } from './PaketMasterWizard';
+import { PaketDetailView } from './PaketDetailView';
 import { PaketMaster, Maskapai } from '../types';
 import { Hotel } from '../data/hotels';
 import { PaketTracker } from './tracker/types';
@@ -31,6 +32,7 @@ export const PaketMitraView: React.FC = () => {
   const [editingMaster, setEditingMaster] = useState<PaketMaster | null>(null);
   const [isMarkingUp, setIsMarkingUp] = useState(false);
   const [markupInitialData, setMarkupInitialData] = useState<Record<string, unknown> | null>(null);
+  const [viewingPaketDetail, setViewingPaketDetail] = useState<PaketMaster | null>(null);
 
   const userId = auth.currentUser?.uid || 'mitra-dummy-id';
 
@@ -217,10 +219,30 @@ export const PaketMitraView: React.FC = () => {
             setEditingMaster(null);
             setIsMarkingUp(false);
             setMarkupInitialData(null);
+            setViewingPaketDetail(null);
             showNotification('success', 'Paket berhasil diperbarui!');
           }}
         />
       </div>
+    );
+  }
+
+  if (viewingPaketDetail) {
+    return (
+      <PaketDetailView 
+        paket={viewingPaketDetail}
+        hotels={hotels}
+        maskapai={maskapai}
+        onBack={() => setViewingPaketDetail(null)}
+        onEdit={(paket) => {
+          if (paket.mitraId === userId || userRole === 'admin' || userRole === 'operasional') {
+            setEditingMaster(paket);
+          } else {
+            handleOpenMarkup(paket);
+          }
+        }}
+        onDelete={(userId === viewingPaketDetail.mitraId || userRole === 'admin') ? (id) => setDeleteConfirm(id) : undefined}
+      />
     );
   }
 
@@ -382,7 +404,11 @@ export const PaketMitraView: React.FC = () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredPublishedMasters.map((paket, idx) => (
-                <div key={paket.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl">
+                <div 
+                  key={paket.id} 
+                  onClick={() => setViewingPaketDetail(paket)}
+                  className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl cursor-pointer"
+                >
                   {/* Image Header with Badges & Overlays */}
                   <div className="h-44 bg-gray-200 relative">
                     <img 
@@ -401,7 +427,7 @@ export const PaketMitraView: React.FC = () => {
                     {/* Bottom Left Info */}
                     <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
                       <Calendar className="w-3.0 h-3.0" />
-                      <span className="text-[10px] font-black tracking-tight">{paket.tanggalKeberangkatan || '2026-05-15'}</span>
+                      <span className="text-[10px] font-black tracking-tight">{paket.tglBerangkat || '2026-05-15'}</span>
                     </div>
 
                     {/* Bottom Right Rating */}
@@ -425,7 +451,7 @@ export const PaketMitraView: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1.5 text-gray-400">
                         <Clock className="w-3 h-3" />
-                        <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.durasi || '9'} HARI</span>
+                        <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.durasiHari || '9'} HARI</span>
                       </div>
                     </div>
 
@@ -462,7 +488,7 @@ export const PaketMitraView: React.FC = () => {
                         </span>
                       </div>
                       <button 
-                        onClick={() => handleOpenMarkup(paket)}
+                        onClick={() => setViewingPaketDetail(paket)}
                         className="text-indigo-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-0.5 hover:gap-1.5 transition-all"
                       >
                         DETAIL <ChevronRight className="w-3 h-3" />
