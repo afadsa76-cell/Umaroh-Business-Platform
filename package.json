@@ -43,6 +43,10 @@
     "vite": "^6.2.0",
     "xlsx": "^0.18.5"
   },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@firebase/eslint-plugin-security-rules": "^0.0.2",

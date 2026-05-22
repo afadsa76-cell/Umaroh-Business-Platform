@@ -1,16 +1,36 @@
 import React, { useState } from 'react';
-import { Database, FileSpreadsheet, ShoppingCart, LayoutDashboard, Hotel, Bell, Plane, Menu, X, MapPin, FileText, TrendingUp, Users } from 'lucide-react';
+import { 
+  Database, 
+  FileSpreadsheet, 
+  ShoppingCart, 
+  LayoutDashboard, 
+  Hotel, 
+  Bell, 
+  Plane, 
+  Menu, 
+  X, 
+  MapPin, 
+  FileText, 
+  TrendingUp, 
+  Users,
+  Handshake,
+  Sliders,
+  Coins,
+  Megaphone
+} from 'lucide-react';
 import { Role } from './LoginView';
 
 export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'finance' | 'profile';
+export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   userRole: Role | null;
+  subRole?: string | null;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole }) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole, subRole }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const allNavItems: { id: TabType; label: string; icon: React.ElementType }[] = [
@@ -31,43 +51,132 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'profile', label: 'Profil Saya', icon: Users },
   ];
 
+  const CATEGORIES: {
+    id: CategoryType;
+    label: string;
+    icon: React.ElementType;
+    items: TabType[];
+  }[] = [
+    {
+      id: 'mitra_dev',
+      label: '1. MITRA DEVELOPMENT',
+      icon: Handshake,
+      items: ['validasi-mitra', 'user-database']
+    },
+    {
+      id: 'operasional',
+      label: '2. OPERASIONAL',
+      icon: Sliders,
+      items: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory']
+    },
+    {
+      id: 'finance',
+      label: '3. FINANCE',
+      icon: Coins,
+      items: ['finance', 'mapping', 'revenue']
+    },
+    {
+      id: 'marketing',
+      label: '4. DIGITAL MARKETING',
+      icon: Megaphone,
+      items: ['templates', 'profile']
+    }
+  ];
+
   const navItems = userRole === 'mitra' 
     ? allNavItems.filter(item => item.id === 'templates' || item.id === 'flights')
     : allNavItems;
+
+  // Find category for any tab
+  const getCategoryOfTab = (tab: TabType): CategoryType => {
+    const found = CATEGORIES.find(c => c.items.includes(tab));
+    return found ? found.id : 'operasional';
+  };
+
+  const [activeCategory, setActiveCategory] = useState<CategoryType>(getCategoryOfTab(activeTab));
+
+  // Keep category in sync with active tab updates from parent
+  React.useEffect(() => {
+    setActiveCategory(getCategoryOfTab(activeTab));
+  }, [activeTab]);
 
   const handleTabClick = (id: TabType) => {
     onTabChange(id);
     setIsMenuOpen(false);
   };
 
+  // Pre-filter visible categories based on items role has access to and admin subRole
+  const visibleCategories = CATEGORIES
+    .filter(category => !subRole || category.id === subRole)
+    .map(category => {
+      const allowedItems = category.items.filter(itemId => navItems.some(item => item.id === itemId));
+      return { ...category, allowedItems };
+    })
+    .filter(category => category.allowedItems.length > 0);
+
   return (
     <>
-      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40 hidden lg:block">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between min-h-[4rem] py-2">
-            {/* Desktop Navigation */}
-            <div className="flex flex-wrap gap-2 flex-grow justify-center items-center">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                
+      {/* Desktop categorized header */}
+      <nav className="bg-white shadow-md border-b border-gray-100 sticky top-0 z-40 hidden lg:block">
+        <div className="container mx-auto px-4 py-3">
+          {/* Main Category Tabs */}
+          <div className="flex justify-center border-b border-gray-100 pb-3 mb-3">
+            <div className="flex bg-gray-100 p-1 rounded-xl gap-1.5">
+              {visibleCategories.map((cat) => {
+                const CatIcon = cat.icon;
+                const isCatActive = activeCategory === cat.id;
                 return (
                   <button
-                    key={item.id}
-                    onClick={() => handleTabClick(item.id)}
+                    key={cat.id}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      // Auto switch current active tab to the first allowed item in this category
+                      if (cat.allowedItems.length > 0 && !cat.allowedItems.includes(activeTab)) {
+                        onTabChange(cat.allowedItems[0] as TabType);
+                      }
+                    }}
                     className={`
-                      flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
-                      ${isActive 
-                        ? 'bg-amber-50 text-amber-700 shadow-sm ring-1 ring-amber-600/20' 
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold tracking-wider transition-all duration-200
+                      ${isCatActive 
+                        ? 'bg-amber-600 text-white shadow-md' 
+                        : 'text-gray-500 hover:text-gray-800 hover:bg-white/60'
                       }
                     `}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-gray-400'}`} />
-                    {item.label}
+                    <CatIcon className={`w-4 h-4 ${isCatActive ? 'text-white' : 'text-gray-400'}`} />
+                    {cat.label}
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Sub Navigation Items for selected Category */}
+          <div className="flex items-center justify-between py-1">
+            <div className="flex flex-wrap gap-2 flex-grow justify-center items-center">
+              {navItems
+                .filter(item => getCategoryOfTab(item.id) === activeCategory)
+                .map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleTabClick(item.id)}
+                      className={`
+                        flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all duration-200 whitespace-nowrap uppercase tracking-wider border
+                        ${isActive 
+                          ? 'bg-amber-50 border-amber-500 text-amber-800 shadow-sm' 
+                          : 'bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-950 border-gray-200'
+                        }
+                      `}
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-600' : 'text-gray-400'}`} />
+                      {item.label}
+                    </button>
+                  );
+                })}
             </div>
             
             <div className="flex items-center gap-2 ml-4">
@@ -121,30 +230,48 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
         </div>
       </nav>
 
-      {/* Mobile Sidebar Full Menu Overlay */}
+      {/* Mobile Sidebar Full Menu Overlay with categorized items */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-[60] lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-[80%] max-w-sm bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <span className="font-black text-amber-600 text-xl tracking-tighter">UMAROH MENU</span>
+          <div className="absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <span className="font-black text-amber-600 text-lg tracking-tight uppercase">Dashboard Umaroh</span>
               <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-50 rounded-full">
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
-            <div className="flex-grow overflow-y-auto p-4 flex flex-col gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
+            <div className="flex-grow overflow-y-auto p-4 space-y-5">
+              {visibleCategories.map((cat) => {
+                const CatIcon = cat.icon;
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleTabClick(item.id)}
-                    className={`flex items-center gap-4 px-4 py-4 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-amber-50 text-amber-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-amber-600' : 'text-gray-400'}`} />
-                    {item.label}
-                  </button>
+                  <div key={cat.id} className="space-y-2">
+                    <div className="text-[10px] font-black tracking-wider text-amber-700 uppercase flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-lg">
+                      <CatIcon className="w-3.5 h-3.5 text-amber-600" />
+                      {cat.label}
+                    </div>
+                    <div className="flex flex-col gap-1 pl-1">
+                      {navItems
+                        .filter(item => cat.allowedItems.includes(item.id))
+                        .map((item) => {
+                          const Icon = item.icon;
+                          const isActive = activeTab === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => handleTabClick(item.id)}
+                              className={`
+                                flex items-center gap-3 px-3.5 py-3 rounded-lg text-xs font-bold transition-all
+                                ${isActive ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-50'}
+                              `}
+                            >
+                              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                              {item.label}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
                 );
               })}
             </div>

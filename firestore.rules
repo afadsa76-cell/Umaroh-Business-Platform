@@ -113,31 +113,34 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin();
+      allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email));
       allow list: if isOperasional() || isAdmin() || 
+                  (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email)) ||
                   (resource.data.role == 'mitra') || 
                   (resource.data.get('uplineId', '') == request.auth.uid);
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming()) && 
-                    incoming().role in ['mitra', 'jamaah'] &&
+                    (incoming().role in ['mitra', 'jamaah'] || (incoming().email == request.auth.token.email)) &&
                     incoming().uid == request.auth.uid) || isAdmin();
       allow update: if (isAdmin() || isOwner(userId)) && 
                     isValidUserProfile(incoming()) && (
                       isAdmin() ||
-                      (incoming().diff(existing()).affectedKeys().hasOnly(['name', 'subRole', 'uplineId', 'createdAt']) &&
+                      (incoming().diff(existing()).affectedKeys().hasOnly(['name', 'subRole', 'uplineId', 'createdAt', 'kota', 'brandName', 'passwordAwal']) &&
                        incoming().uid == existing().uid &&
                        incoming().role == existing().role &&
                        incoming().email == existing().email)
                     );
+      allow delete: if isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email));
     }
 
     match /wallets/{walletId} {
-      allow get: if isOwner(walletId) || isFinance();
+      allow get: if isOwner(walletId) || isFinance() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(walletId)) && get(/databases/$(database)/documents/users/$(walletId)).data.email == request.auth.token.email);
       allow list: if isFinance();
       allow update: if isFinance() && 
                     isValidWallet(incoming()) &&
                     incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt']);
       // Allow creation by finance or when user registers (if app does it client-side)
       allow create: if isFinance() || (isSignedIn() && isOwner(walletId) && isValidWallet(incoming()));
+      allow delete: if isFinance() || isOwner(walletId) || isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(walletId)) && get(/databases/$(database)/documents/users/$(walletId)).data.email == request.auth.token.email);
     }
 
     match /transactions/{transactionId} {

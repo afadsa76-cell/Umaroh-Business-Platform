@@ -174,6 +174,7 @@ export interface WizardFormData {
   isMarkupOnly?: boolean;
   paketMasterId?: string;
   namaPaketMitra?: string;
+  isNewMarkup?: boolean;
   checklist?: {
     pasporTerkumpul: number;
     meningitisTerkumpul: number;

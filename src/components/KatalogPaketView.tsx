@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight } from 'lucide-react';
-import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp } from '../firebase';
+import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc } from '../firebase';
 import { PaketMaster, Maskapai, Hotel } from '../types';
 import { PaketDetailView } from './PaketDetailView';
 
@@ -114,6 +114,34 @@ export const KatalogPaketView = () => {
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(Math.round(val));
+  };
+
+  const handleEdit = (e: React.MouseEvent, paket: DisplayPaket) => {
+    e.stopPropagation();
+    const master = paketMasters.find(m => m.id === paket.paketMasterId || m.id === paket.id);
+    if (master) {
+      setViewingDetail(master);
+    }
+  };
+
+  const handleShare = (e: React.MouseEvent, paket: DisplayPaket) => {
+    e.stopPropagation();
+    const shareText = `*${paket.displayName}*\n\n📅 Berangkat: ${paket.tglBerangkat || '-'}\n💰 Harga mulai: ${formatCurrency(paket.displayPrice)}\n✈️ Maskapai: ${paket.maskapaiId || '-'}\n⏳ Durasi: ${paket.durasiHari || '-'} Hari\n\nInfo selengkapnya hubungi kami!`;
+    navigator.clipboard.writeText(shareText);
+    alert('Link & detail paket disalin!');
+  };
+
+  const handleDelete = async (e: React.MouseEvent, paket: DisplayPaket) => {
+    e.stopPropagation();
+    if (window.confirm(`Hapus paket "${paket.displayName}"?`)) {
+      try {
+        const collectionName = paket.type === 'master' ? 'paket_master' : 'paket_mitra';
+        await deleteDoc(doc(db, collectionName, paket.id));
+      } catch (error) {
+        console.error("Error deleting:", error);
+        alert('Gagal menghapus paket');
+      }
+    }
   };
 
   // Combine and format packages for display
@@ -265,14 +293,23 @@ export const KatalogPaketView = () => {
                   </p>
                 </div>
                 
-                <div className="flex gap-1.5">
-                  <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <button 
+                    onClick={(e) => handleEdit(e, paket)}
+                    className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                  >
                     <Edit2 className="w-3 h-3" />
                   </button>
-                  <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={(e) => handleShare(e, paket)}
+                    className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                  >
                     <Share2 className="w-3 h-3" />
                   </button>
-                  <button className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition-colors text-rose-500">
+                  <button 
+                    onClick={(e) => handleDelete(e, paket)}
+                    className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shadow-sm"
+                  >
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>

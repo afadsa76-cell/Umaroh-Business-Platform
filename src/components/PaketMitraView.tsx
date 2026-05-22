@@ -164,13 +164,15 @@ export const PaketMitraView: React.FC = () => {
 
   const handleOpenMarkup = (master: PaketMaster) => {
     // Use wizard instead of markup modal
+    const { id, ...masterWithoutId } = master;
     setMarkupInitialData({
-      ...master,
-      paketMasterId: master.id,
+      ...masterWithoutId,
+      paketMasterId: id,
       nama: master.nama,
       markup: 1000000,
       isMarkupOnly: true,
-      mitraId: userId
+      mitraId: userId,
+      isNewMarkup: true
     });
     setIsMarkingUp(true);
   };

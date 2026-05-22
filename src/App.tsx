@@ -31,6 +31,13 @@ import { LogOut, User, Settings, Users } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
+const categoryItems: Record<string, string[]> = {
+  mitra_dev: ['validasi-mitra', 'user-database'],
+  operasional: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory'],
+  finance: ['finance', 'mapping', 'revenue'],
+  marketing: ['templates', 'profile']
+};
+
 function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -41,11 +48,20 @@ function App() {
   const [adminViewMode, setAdminViewMode] = useState<'operasional' | 'mitra' | 'jamaah'>('operasional');
   const [showRegisterMitra, setShowRegisterMitra] = useState(false);
 
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
   useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setIsLoggedIn(true);
         setUserEmail(user.email);
+        const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+        
         // Fetch user role from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -54,13 +70,18 @@ function App() {
             setUserRole(data.role as Role);
             setSubRole(data.subRole || null);
             
-            // Set initial tab based on role
+            // Set initial tab based on role and subRole
             if (data.role === 'mitra') setActiveTab('dashboard' as TabType);
             else if (data.role === 'jamaah') setActiveTab('dashboard' as TabType);
-            else setActiveTab('dashboard');
+            else {
+              if (data.subRole && categoryItems[data.subRole]) {
+                setActiveTab(categoryItems[data.subRole][0] as TabType);
+              } else {
+                setActiveTab('dashboard');
+              }
+            }
           } else {
             // Master Admin bypass: If user doc doesn't exist yet, we still allow master admins
-            const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
             if (isMA) {
               setUserRole('admin');
               setIsLoggedIn(true);
@@ -71,9 +92,25 @@ function App() {
           }
         } catch (error) {
           console.error("Error fetching user role:", error);
-          if (error instanceof Error && !error.message.includes('permission-denied')) {
-             // We don't throw on permission-denied here because it might happen before user registers
-             handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+          if (isMA) {
+            // Always grant Master Admin fallback access regardless of Firestore errors
+            setUserRole('admin');
+            setIsLoggedIn(true);
+            setActiveTab('dashboard');
+          } else {
+            const isErrorOffline = error instanceof Error && (
+              error.message.includes('offline') || 
+              error.message.includes('Could not reach Cloud Firestore backend') ||
+              error.message.includes('timeout')
+            );
+            if (isErrorOffline) {
+              setIsOffline(true);
+              // Standby / offline fallback for existing session info if accessible
+              console.warn("Firestore client is offline. App is operating in offline mode.");
+            } else if (error instanceof Error && !error.message.includes('permission-denied')) {
+               // We don't throw on permission-denied here because it might happen before user registers
+               handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+            }
           }
         }
       } else {
@@ -84,18 +121,32 @@ function App() {
       }
       setIsAuthReady(true);
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const isMasterAdmin = userEmail === 'operationalumaroh@gmail.com' || userEmail === 'afadsa76@gmail.com';
 
   const handleLogin = (role: Role, subRole?: string) => {
     setUserRole(role);
-    if (subRole) setSubRole(subRole);
+    if (subRole) {
+      setSubRole(subRole);
+    } else {
+      setSubRole(null);
+    }
     
     if (role === 'mitra') setActiveTab('dashboard' as TabType);
     else if (role === 'jamaah') setActiveTab('dashboard' as TabType);
-    else setActiveTab('dashboard');
+    else {
+      if (subRole && categoryItems[subRole]) {
+        setActiveTab(categoryItems[subRole][0] as TabType);
+      } else {
+        setActiveTab('dashboard');
+      }
+    }
     
     setIsLoggedIn(true);
   };
@@ -197,6 +248,12 @@ function App() {
         
         {/* User Info & Logout */}
         <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex items-center gap-2 md:gap-4">
+          {isOffline && (
+            <div className="flex items-center gap-1.5 bg-amber-550/10 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold animate-pulse shadow-sm">
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+              Mode Offline
+            </div>
+          )}
           <div className="hidden sm:flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
             <User className="w-4 h-4 text-gray-500" />
             <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -225,7 +282,7 @@ function App() {
       </header>
 
       {(userRole === 'operasional' || userRole === 'admin' || isMasterAdmin) && (!isMasterAdmin || adminViewMode === 'operasional') && (
-        <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={userRole || 'admin'} />
+        <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={userRole || 'admin'} subRole={subRole} />
       )}
 
       {/* Main Content */}

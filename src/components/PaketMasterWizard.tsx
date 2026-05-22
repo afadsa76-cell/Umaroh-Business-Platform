@@ -1010,6 +1010,58 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }));
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // Allow up to 10MB for input, but we will compress it
+        alert("Ukuran file terlalu besar. Maksimal 10MB sebelum kompresi.");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Resize logic
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1000; // Max dimension 1000px
+
+          if (width > height) {
+            if (width > maxDim) {
+              height *= maxDim / width;
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width *= maxDim / height;
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Compress as JPEG with 0.5 quality
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+          
+          // Check compressed size (Base64 length * 0.75 is approx byte size)
+          if (compressedBase64.length * 0.75 > 800 * 1024) {
+            alert("Hasil kompresi masih terlalu besar. Gunakan foto dengan dimensi lebih kecil.");
+            return;
+          }
+
+          setFormData((prev) => ({ ...prev, photoUtama: compressedBase64 }));
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleExitClick = () => {
     setShowExitConfirmation(true);
   };
@@ -1025,6 +1077,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       };
 
       const dataToSave: Partial<WizardFormData> = {
+        photoUtama: formData.photoUtama || null,
         requestId: initialData?.requestId || generateRequestId(),
         nama: formData.nama || "Paket Draft",
         deskripsi: formData.deskripsi || "",
@@ -1124,6 +1177,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       };
 
       const dataToSave: Partial<WizardFormData> = {
+        photoUtama: formData.photoUtama || null,
         requestId: initialData?.requestId || generateRequestId(),
         nama: formData.nama || "Paket Umroh Tanpa Nama",
         deskripsi: formData.deskripsi || "",
@@ -1166,38 +1220,37 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       };
 
       if (isMitraContext) {
-        if (initialData?.paketMasterId) {
+        if (formData.isMarkupOnly || formData.paketMasterId || initialData?.paketMasterId) {
           const markupData = {
-            paketMasterId: initialData.paketMasterId,
+            paketMasterId: formData.paketMasterId || initialData?.paketMasterId,
             mitraId: formData.mitraId,
             namaPaketMitra: formData.nama || formData.namaPaketMitra,
             markup: Number(formData.markup || 0),
             hargaJual: Math.round(pricingSummary.finalQuad),
             hargaJualTriple: Math.round(pricingSummary.finalTriple),
             hargaJualDouble: Math.round(pricingSummary.finalDouble),
+            photoUtama: formData.photoUtama || null,
             status: 'active',
             updatedAt: serverTimestamp(),
           };
-          try {
-            await updateDoc(doc(db, "paket_mitra", initialData.id), markupData);
-          } catch (e) {
-            handleFirestoreError(e, OperationType.WRITE, `paket_mitra/${initialData.id}`);
-          }
-        } else if (formData.isMarkupOnly && formData.paketMasterId) {
-          try {
-            await addDoc(collection(db, "paket_mitra"), {
-              paketMasterId: formData.paketMasterId,
-              mitraId: formData.mitraId,
-              namaPaketMitra: formData.nama,
-              markup: Number(formData.markup || 0),
-              hargaJual: Math.round(pricingSummary.finalQuad),
-              hargaJualTriple: Math.round(pricingSummary.finalTriple),
-              hargaJualDouble: Math.round(pricingSummary.finalDouble),
-              status: 'active',
-              createdAt: serverTimestamp(),
-            });
-          } catch (e) {
-            handleFirestoreError(e, OperationType.CREATE, 'paket_mitra');
+
+          if (!isNew && initialData?.id && !formData.isNewMarkup) {
+            // Update Existing Markup
+            try {
+              await updateDoc(doc(db, "paket_mitra", initialData.id), markupData);
+            } catch (e) {
+              handleFirestoreError(e, OperationType.WRITE, `paket_mitra/${initialData.id}`);
+            }
+          } else {
+            // Create New Markup
+            try {
+              await addDoc(collection(db, "paket_mitra"), {
+                ...markupData,
+                createdAt: serverTimestamp(),
+              });
+            } catch (e) {
+              handleFirestoreError(e, OperationType.CREATE, 'paket_mitra');
+            }
           }
         } else {
           // Validation process for Mitra creating OWN Master Package
@@ -5136,19 +5189,38 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
               <div className="mt-6">
                 <div className="w-full h-80 border-2 border-dashed border-gray-200 rounded-[2rem] flex flex-col items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors cursor-pointer group relative overflow-hidden">
-                  <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <ImagePlus className="w-8 h-8 text-gray-300" />
-                  </div>
-                  <p className="text-xs font-black text-gray-700 uppercase tracking-wider">
-                    Klik atau seret foto ke sini
-                  </p>
-                  <p className="text-[10px] font-bold text-gray-400 mt-2">
-                    PNG, JPG (MAX 5MB)
-                  </p>
+                  {formData.photoUtama ? (
+                    <>
+                      <img 
+                        src={formData.photoUtama} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                          <ImagePlus className="w-6 h-6 text-white" />
+                        </div>
+                        <p className="text-[10px] font-black text-white uppercase tracking-widest">GANTI FOTO</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <ImagePlus className="w-8 h-8 text-gray-300" />
+                      </div>
+                      <p className="text-xs font-black text-gray-700 uppercase tracking-wider">
+                        Klik atau seret foto ke sini
+                      </p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-2">
+                        PNG, JPG (MAX 5MB)
+                      </p>
+                    </>
+                  )}
                   <input
                     type="file"
                     className="absolute inset-0 opacity-0 cursor-pointer"
                     accept="image/*"
+                    onChange={handleFileChange}
                   />
                 </div>
               </div>

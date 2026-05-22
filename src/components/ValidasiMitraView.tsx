@@ -86,13 +86,19 @@ export const ValidasiMitraView: React.FC = () => {
       const newUserId = `mitra_${Date.now()}`; // Simulated UID
       await setDoc(doc(db, 'users', newUserId), {
         uid: newUserId,
+        id: newUserId,
         name: pendaftaran.nama,
+        namaLengkap: pendaftaran.nama,
         email: pendaftaran.email,
         role: 'mitra',
         phone: pendaftaran.phone,
         brandName: pendaftaran.brandName,
         paketId: pendaftaran.paketId,
         uplineId: pendaftaran.uplineId,
+        provinsi: pendaftaran.provinsi || '',
+        kota: pendaftaran.kota || '',
+        kecamatan: pendaftaran.kecamatan || '',
+        address: pendaftaran.alamatLengkap || '',
         createdAt: new Date().toISOString()
       });
 

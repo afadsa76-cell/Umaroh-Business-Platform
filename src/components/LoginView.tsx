@@ -60,8 +60,28 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         user = userCredential.user;
       } else {
         // Login existing account
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        user = userCredential.user;
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          user = userCredential.user;
+        } catch (signInErr: unknown) {
+          const authError = signInErr as { code?: string; message?: string };
+          // If login fails because user is not found or credentials invalid (which Firebase returns for non-existent Auth users)
+          if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
+            try {
+              // Try to automatically register them under the hood. Since their profile is already in Firestore, 
+              // they can transition seamlessly by typing their email and password and clicking Login.
+              const { createUserWithEmailAndPassword } = await import('firebase/auth');
+              const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+              user = userCredential.user;
+            } catch {
+              // If signup also fails (e.g. email already exists in Auth, meaning it's just a wrong password),
+              // throw the original signInErr to show the correct invalid credential error.
+              throw signInErr;
+            }
+          } else {
+            throw signInErr;
+          }
+        }
       }
 
       // Check if user exists in Firestore
@@ -70,12 +90,66 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       try {
         userDocSnap = await getDoc(userDocRef);
       } catch (err: unknown) {
-        handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        const isOffline = errorMsg.includes('offline') || errorMsg.includes('Could not reach Cloud Firestore backend');
+        const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+        if (isMA) {
+          console.warn("Firestore error bypassed for Master Admin:", errorMsg);
+        } else if (isOffline) {
+          console.warn("Firestore offline error in LoginView:", errorMsg);
+        } else {
+          handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+        }
       }
 
+      let userDataObj = null;
+      const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
       if (userDocSnap && userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        onLogin(userData.role as Role, userData.subRole);
+        userDataObj = userDocSnap.data();
+      } else if (isMA) {
+        userDataObj = { role: 'admin', subRole: null };
+      } else if (user.email) {
+        // Look up pre-created user via email query
+        try {
+          const { query, collection, where, getDocs, deleteDoc } = await import('firebase/firestore');
+          const q = query(collection(db, 'users'), where('email', '==', user.email.toLowerCase().trim()));
+          const querySnap = await getDocs(q);
+          if (!querySnap.empty) {
+            const preDoc = querySnap.docs[0];
+            const preData = preDoc.data();
+            userDataObj = {
+              ...preData,
+              uid: user.uid,
+              id: user.uid,
+              updatedAt: new Date().toISOString()
+            };
+            // Set the new user.uid document
+            await setDoc(userDocRef, userDataObj);
+            // Delete the temporary pre-created document if the ID is different
+            if (preDoc.id !== user.uid) {
+              // Also update wallet if it exists (must do before deleting the old user document,
+              // as the wallet deletion permissions check relies on the user document's existence)
+              const oldWalletRef = doc(db, 'wallets', preDoc.id);
+              const walletSnap = await getDoc(oldWalletRef);
+              if (walletSnap.exists()) {
+                await setDoc(doc(db, 'wallets', user.uid), {
+                  ...walletSnap.data(),
+                  userId: user.uid,
+                  updatedAt: new Date().toISOString()
+                });
+                await deleteDoc(oldWalletRef);
+              }
+              // Delete the old user document last
+              await deleteDoc(doc(db, 'users', preDoc.id));
+            }
+          }
+        } catch (queryErr) {
+          console.error("Failed to migrate pre-created user:", queryErr);
+        }
+      }
+
+      if (userDataObj) {
+        onLogin(userDataObj.role as Role, userDataObj.subRole);
       } else {
         // If user just signed up or document missing, lead to registration
         // But first check if they are a hardcoded admin
@@ -143,12 +217,66 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       try {
         userDocSnap = await getDoc(userDocRef);
       } catch (err: unknown) {
-        handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        const isOffline = errorMsg.includes('offline') || errorMsg.includes('Could not reach Cloud Firestore backend');
+        const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+        if (isMA) {
+          console.warn("Firestore error bypassed for Master Admin:", errorMsg);
+        } else if (isOffline) {
+          console.warn("Firestore offline error in LoginView:", errorMsg);
+        } else {
+          handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+        }
       }
 
+      let userDataObj = null;
+      const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
       if (userDocSnap && userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        onLogin(userData.role as Role, userData.subRole);
+        userDataObj = userDocSnap.data();
+      } else if (isMA) {
+        userDataObj = { role: 'admin', subRole: null };
+      } else if (user.email) {
+        // Look up pre-created user via email query
+        try {
+          const { query, collection, where, getDocs, deleteDoc } = await import('firebase/firestore');
+          const q = query(collection(db, 'users'), where('email', '==', user.email.toLowerCase().trim()));
+          const querySnap = await getDocs(q);
+          if (!querySnap.empty) {
+            const preDoc = querySnap.docs[0];
+            const preData = preDoc.data();
+            userDataObj = {
+              ...preData,
+              uid: user.uid,
+              id: user.uid,
+              updatedAt: new Date().toISOString()
+            };
+            // Set the new user.uid document
+            await setDoc(userDocRef, userDataObj);
+            // Delete the temporary pre-created document if the ID is different
+            if (preDoc.id !== user.uid) {
+              // Also update wallet if it exists (must do before deleting the old user document,
+              // as the wallet deletion permissions check relies on the user document's existence)
+              const oldWalletRef = doc(db, 'wallets', preDoc.id);
+              const walletSnap = await getDoc(oldWalletRef);
+              if (walletSnap.exists()) {
+                await setDoc(doc(db, 'wallets', user.uid), {
+                  ...walletSnap.data(),
+                  userId: user.uid,
+                  updatedAt: new Date().toISOString()
+                });
+                await deleteDoc(oldWalletRef);
+              }
+              // Delete the old user document last
+              await deleteDoc(doc(db, 'users', preDoc.id));
+            }
+          }
+        } catch (queryErr) {
+          console.error("Failed to migrate pre-created user:", queryErr);
+        }
+      }
+
+      if (userDataObj) {
+        onLogin(userDataObj.role as Role, userDataObj.subRole);
       } else {
         // User doesn't exist, needs to register
         setTempUser(user);

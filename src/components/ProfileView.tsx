@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Shield, LogOut, Camera, Globe, MapPin } from 'lucide-react';
+import { User, Mail, Shield, LogOut, Camera, Globe, MapPin, Building2, Award } from 'lucide-react';
 import { auth, db, doc, getDoc } from '../firebase';
 import { signOut } from 'firebase/auth';
 
 interface UserData {
   namaLengkap?: string;
+  name?: string;
   email?: string;
   role?: string;
   photoURL?: string;
   phone?: string;
   address?: string;
   mitraName?: string;
+  brandName?: string;
+  kota?: string;
+  city?: string;
 }
 
 export const ProfileView = () => {
@@ -83,7 +87,7 @@ export const ProfileView = () => {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-1">
-                {userData?.namaLengkap || userData?.mitraName || 'User'}
+                {userData?.namaLengkap || userData?.name || userData?.mitraName || 'User'}
               </h1>
               <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
                 <Shield className="w-4 h-4 text-emerald-500" />
@@ -105,6 +109,46 @@ export const ProfileView = () => {
       {/* Profile Details */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
+          {userData?.role === 'mitra' && (
+            <div className="bg-gradient-to-br from-amber-500/5 to-amber-600/10 rounded-3xl border border-amber-100 p-8 shadow-sm animate-in slide-in-from-top-4 duration-300">
+              <h2 className="text-lg font-black text-amber-950 mb-6 flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-amber-600" />
+                Informasi Kemitraan & Kantor
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-600 border border-amber-200/50 shadow-sm shrink-0">
+                    <User size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-amber-700/60 uppercase tracking-widest leading-none mb-1">Nama Mitra</p>
+                    <p className="text-gray-950 font-black text-sm">{userData?.namaLengkap || userData?.name || userData?.mitraName || '-'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-600 border border-amber-200/50 shadow-sm shrink-0">
+                    <Award size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-amber-700/60 uppercase tracking-widest leading-none mb-1">Nama Brand Travel</p>
+                    <p className="text-gray-950 font-black text-sm uppercase italic">{userData?.brandName || 'MITRA UMAROH'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 sm:col-span-2">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-600 border border-amber-200/50 shadow-sm shrink-0">
+                    <MapPin size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-amber-700/60 uppercase tracking-widest leading-none mb-1">Kota Kantor Mitra</p>
+                    <p className="text-gray-950 font-black text-sm uppercase tracking-tight">{userData?.kota || userData?.city || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
               Informasi Pribadi
