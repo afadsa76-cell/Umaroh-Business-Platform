@@ -9,6 +9,7 @@ import { ProfileView } from './ProfileView';
 import { ValidasiPaketMitraView } from './ValidasiPaketMitraView';
 import { PaketMasterWizard } from './PaketMasterWizard';
 import { FeedKolaborasiView } from './FeedKolaborasiView';
+import { FlightTrackerWidget } from './FlightTrackerWidget';
 
 type MitraTab = 'overview' | 'feed' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile';
 
@@ -211,6 +212,9 @@ export const DashboardMitra = () => {
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Belum ada aktivitas terbaru</p>
              </div>
           </div>
+
+          {/* Real-Time Flight Tracker Section */}
+          <FlightTrackerWidget />
         </div>
 
         {/* Right Column: Chart */}

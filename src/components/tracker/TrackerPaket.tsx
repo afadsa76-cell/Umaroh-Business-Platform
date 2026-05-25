@@ -13,7 +13,7 @@ import { MapTracking } from './MapTracking';
 
 export const TrackerPaket: React.FC = () => {
   const [pakets, setPakets] = useState<PaketTracker[]>([]);
-  const [selectedPaket, setSelectedPaket] = useState<PaketTracker | null>(null);
+  const [selectedPaketId, setSelectedPaketId] = useState<string | null>(null);
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
   const [keberangkatans, setKeberangkatans] = useState<KeberangkatanTracker[]>([]);
   
@@ -22,30 +22,28 @@ export const TrackerPaket: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  const selectedPaket = selectedPaketId ? pakets.find(p => p.id === selectedPaketId) || null : null;
+
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'tracker_paket'), (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaketTracker));
       setPakets(data);
-      if (selectedPaket) {
-        const updated = data.find(p => p.id === selectedPaket.id);
-        if (updated) setSelectedPaket(updated);
-      }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'tracker_paket');
     });
     return () => unsubscribe();
-  }, [selectedPaket]);
+  }, []);
 
   useEffect(() => {
-    if (!selectedPaket) return;
-    const qJamaah = query(collection(db, 'tracker_jamaah'), where('paketId', '==', selectedPaket.id));
+    if (!selectedPaketId) return;
+    const qJamaah = query(collection(db, 'tracker_jamaah'), where('paketId', '==', selectedPaketId));
     const unsubJamaah = onSnapshot(qJamaah, (snapshot) => {
       setJamaahs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JamaahTracker)));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'tracker_jamaah');
     });
 
-    const qKeberangkatan = query(collection(db, 'tracker_keberangkatan'), where('paketId', '==', selectedPaket.id));
+    const qKeberangkatan = query(collection(db, 'tracker_keberangkatan'), where('paketId', '==', selectedPaketId));
     const unsubKeberangkatan = onSnapshot(qKeberangkatan, (snapshot) => {
       setKeberangkatans(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as KeberangkatanTracker)));
     }, (error) => {
@@ -56,7 +54,7 @@ export const TrackerPaket: React.FC = () => {
       unsubJamaah();
       unsubKeberangkatan();
     };
-  }, [selectedPaket]);
+  }, [selectedPaketId]);
 
   const handleSave = async () => {
     if (!formData.namaPaket || !formData.tanggalBerangkat) return;
@@ -90,7 +88,7 @@ export const TrackerPaket: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'tracker_paket', id));
-      if (selectedPaket?.id === id) setSelectedPaket(null);
+      if (selectedPaketId === id) setSelectedPaketId(null);
       setDeleteConfirm(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'tracker_paket');
@@ -155,7 +153,7 @@ export const TrackerPaket: React.FC = () => {
     return (
       <div className="space-y-6">
         <button 
-          onClick={() => setSelectedPaket(null)}
+          onClick={() => setSelectedPaketId(null)}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium"
         >
           <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Paket
@@ -274,7 +272,7 @@ export const TrackerPaket: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              <tr key={paket.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedPaket(paket)}>
+              <tr key={paket.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedPaketId(paket.id)}>
                 <td className="p-3 font-medium text-gray-900">{paket.namaPaket}</td>
                 <td className="p-3 text-gray-600">{paket.tanggalBerangkat}</td>
                 <td className="p-3 text-gray-600">{paket.targetJamaah} / {paket.terdaftar} Jamaah</td>

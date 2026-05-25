@@ -78,6 +78,16 @@ export interface JamaahTracker {
   tanggal_lahir?: string;
   kewarganegaraan?: string;
   status_kesiapan?: 'READY' | 'NOT_READY';
+  nama_ayah?: string;
+  alamat?: string;
+  kelurahan?: string;
+  kecamatan?: string;
+  kabupaten_kota?: string;
+  provinsi?: string;
+  status_nikah?: string;
+  pekerjaan?: string;
+  telepon?: string;
+  emergency_contact?: string;
 
   // Rooming fields
   jenisKelamin?: 'L' | 'P';

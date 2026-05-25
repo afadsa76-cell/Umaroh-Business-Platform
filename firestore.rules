@@ -271,5 +271,20 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isOperasional() || (isMitra() && incoming().leader_id == request.auth.uid);
     }
+
+    match /mitra_tracker/{trackerId} {
+      allow read: if isSignedIn();
+      allow write: if (isFinance() || isOperasional()) && isValidId(trackerId);
+    }
+
+    match /mitra_followup/{followupId} {
+      allow read: if isSignedIn();
+      allow write: if (isFinance() || isOperasional()) && isValidId(followupId);
+    }
+
+    match /mitra_payment_history/{payId} {
+      allow read: if isSignedIn();
+      allow write: if (isFinance() || isOperasional()) && isValidId(payId);
+    }
   }
 }

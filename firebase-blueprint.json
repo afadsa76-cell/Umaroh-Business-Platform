@@ -311,6 +311,77 @@
         "status": { "type": "string", "enum": ["persiapan", "berangkat", "di_madinah", "di_mekkah", "pulang", "selesai"] }
       },
       "required": ["id", "paket_id", "nama_group", "leader_id", "status"]
+    },
+    "MitraTracker": {
+      "title": "MitraTracker",
+      "description": "Tracker pembayaran khusus MITRA tanpa detail jemaah",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama_mitra": { "type": "string" },
+        "nama_brand": { "type": "string" },
+        "pic": { "type": "string" },
+        "hp": { "type": "string" },
+        "kota": { "type": "string" },
+        "jumlah_seat": { "type": "number" },
+        "paket_umroh": { "type": "string" },
+        "tanggal_berangkat": { "type": "string" },
+        "total_tagihan": { "type": "number" },
+        "dp": { "type": "number" },
+        "term1": { "type": "number" },
+        "term2": { "type": "number" },
+        "pelunasan": { "type": "number" },
+        "total_bayar": { "type": "number" },
+        "sisa_tagihan": { "type": "number" },
+        "persentase_bayar": { "type": "number" },
+        "deadline_pelunasan": { "type": "string" },
+        "hari_menuju_berangkat": { "type": "number" },
+        "status_pembayaran": { "type": "string" },
+        "status_risiko": { "type": "string" },
+        "penyebab_masalah": { "type": "string" },
+        "last_follow_up": { "type": "string" },
+        "pic_finance": { "type": "string" },
+        "status_keberangkatan": { "type": "string" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["id", "nama_mitra", "jumlah_seat", "total_tagihan"]
+    },
+    "MitraFollowup": {
+      "title": "MitraFollowup",
+      "description": "Riwayat follow up finance mitra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "mitra_id": { "type": "string" },
+        "tanggal_followup": { "type": "string" },
+        "hasil_followup": { "type": "string" },
+        "janji_bayar": { "type": "string" },
+        "nominal_janji": { "type": "number" },
+        "status_followup": { "type": "string" },
+        "pic_finance": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "mitra_id", "tanggal_followup", "hasil_followup"]
+    },
+    "MitraPaymentHistory": {
+      "title": "MitraPaymentHistory",
+      "description": "Riwayat pembayaran atau cicilan mitra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "mitra_id": { "type": "string" },
+        "tanggal_bayar": { "type": "string" },
+        "jenis_pembayaran": { "type": "string" },
+        "nominal": { "type": "number" },
+        "metode": { "type": "string" },
+        "bank": { "type": "string" },
+        "bukti_transfer": { "type": "string" },
+        "catatan": { "type": "string" },
+        "created_by": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "mitra_id", "tanggal_bayar", "nominal", "jenis_pembayaran"]
     }
   },
   "firestore": {
@@ -333,6 +404,9 @@
     "/tracker_paket/{paketId}": { "schema": "PaketTracker", "description": "Koleksi tracking paket" },
     "/tracker_jamaah/{jamaahId}": { "schema": "JamaahTracker", "description": "Koleksi tracking jamaah" },
     "/tracker_keberangkatan/{keberangkatanId}": { "schema": "KeberangkatanTracker", "description": "Koleksi tracking keberangkatan" },
-    "/tracking_group/{groupId}": { "schema": "TrackingGroup", "description": "Koleksi live tracking group" }
+    "/tracking_group/{groupId}": { "schema": "TrackingGroup", "description": "Koleksi live tracking group" },
+    "/mitra_tracker/{trackerId}": { "schema": "MitraTracker", "description": "Koleksi data tracking mitra" },
+    "/mitra_followup/{followupId}": { "schema": "MitraFollowup", "description": "Koleksi riwayat follow up mitra" },
+    "/mitra_payment_history/{payId}": { "schema": "MitraPaymentHistory", "description": "Koleksi riwayat pembayaran mitra" }
   }
 }

@@ -18,6 +18,7 @@ import { ManifestPage } from './components/manifest/ManifestPage';
 import { RevenueReport } from './components/RevenueReport';
 import { InventoryView } from './components/inventory/InventoryView';
 import { FinanceDashboard } from './components/finance/FinanceDashboard';
+import { MitraTrackerView } from './components/finance/MitraTrackerView';
 import { LoginView, Role } from './components/LoginView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DashboardMitra } from './components/DashboardMitra';
@@ -34,7 +35,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
   operasional: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory'],
-  finance: ['finance', 'mapping', 'revenue'],
+  finance: ['finance', 'mitra-tracker', 'mapping', 'revenue'],
   marketing: ['templates', 'profile']
 };
 
@@ -222,6 +223,8 @@ function App() {
         return <InventoryView />;
       case 'finance':
         return <FinanceDashboard />;
+      case 'mitra-tracker':
+        return <MitraTrackerView />;
       case 'profile':
         return <ProfileView />;
       default:

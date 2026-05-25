@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'finance' | 'profile';
+export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'finance' | 'mitra-tracker' | 'profile';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
@@ -48,6 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'tl-portal', label: 'Portal TL (Mobile)', icon: MapPin },
     { id: 'inventory', label: 'Inventory & Gudang', icon: Database },
     { id: 'finance', label: 'Finance & Keuangan', icon: TrendingUp },
+    { id: 'mitra-tracker', label: 'Tracker Mitra (Realtime)', icon: Handshake },
     { id: 'profile', label: 'Profil Saya', icon: Users },
   ];
 
@@ -73,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'finance',
       label: '3. FINANCE',
       icon: Coins,
-      items: ['finance', 'mapping', 'revenue']
+      items: ['finance', 'mitra-tracker', 'mapping', 'revenue']
     },
     {
       id: 'marketing',

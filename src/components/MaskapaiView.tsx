@@ -10,6 +10,11 @@ export const MaskapaiView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [migrationStatus, setMigrationStatus] = useState<'idle' | 'confirm' | 'migrating' | 'success' | 'error'>('idle');
 
+  // Dynamic filter states
+  const [filterKeberangkatan, setFilterKeberangkatan] = useState<'future' | 'past' | 'all'>('future');
+  const [filterMinSeats, setFilterMinSeats] = useState<number>(10);
+  const [isCleaning, setIsCleaning] = useState(false);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Maskapai>>({
@@ -28,18 +33,10 @@ export const MaskapaiView: React.FC = () => {
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
       const maskapaiList: Maskapai[] = [];
-      const currentYear = new Date().getFullYear();
       
       snapshot.forEach((doc) => {
         const item = { id: doc.id, ...doc.data() } as Maskapai;
-        const itemYear = new Date(item.tanggalKeberangkatan).getFullYear();
-        const isOldYear = itemYear < currentYear;
-        const isLowSeat = item.availableSeats < 10;
-        
-        // Hanya tampilkan data yang tahunnya >= tahun ini DAN sisa seat >= 10
-        if (!isOldYear && !isLowSeat) {
-          maskapaiList.push(item);
-        }
+        maskapaiList.push(item);
       });
       
       setData(maskapaiList);
@@ -94,10 +91,14 @@ export const MaskapaiView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        updatedAt: new Date().toISOString()
+      };
       if (editingId) {
-        await updateDoc(doc(db, 'maskapai', editingId), formData);
+        await updateDoc(doc(db, 'maskapai', editingId), payload);
       } else {
-        await addDoc(collection(db, 'maskapai'), formData);
+        await addDoc(collection(db, 'maskapai'), payload);
       }
       handleCloseForm();
     } catch (error) {
@@ -118,9 +119,12 @@ export const MaskapaiView: React.FC = () => {
     try {
       const batch = writeBatch(db);
       initialData.forEach((item) => {
-        // Use ID from static data as doc ID to avoid duplicates if possible
         const itemRef = doc(db, 'maskapai', item.id);
-        batch.set(itemRef, item, { merge: true });
+        const seedPayload = {
+          ...item,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, seedPayload, { merge: true });
       });
       await batch.commit();
       setMigrationStatus('success');
@@ -178,14 +182,67 @@ export const MaskapaiView: React.FC = () => {
     }).format(amount);
   };
 
-  const filteredData = data.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.tanggalKeberangkatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.tanggalKepulangan.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.namaVendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.originCityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.destinationCityName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const filteredData = data.filter(item => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.tanggalKeberangkatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.tanggalKepulangan.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.namaVendor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.originCityName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.destinationCityName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    // Departure Date Filter
+    if (filterKeberangkatan === 'future') {
+      if (item.tanggalKeberangkatan < todayStr) return false;
+    } else if (filterKeberangkatan === 'past') {
+      if (item.tanggalKeberangkatan >= todayStr) return false;
+    }
+
+    // Minimum Seats Filter
+    if (item.availableSeats < filterMinSeats) return false;
+
+    return true;
+  });
+
+  // Database maintenance counters
+  const expiredCount = data.filter(item => item.tanggalKeberangkatan < todayStr).length;
+  const zeroSeatCount = data.filter(item => item.availableSeats <= 0).length;
+  const outdatedCount = data.filter(item => item.tanggalKeberangkatan < todayStr || item.availableSeats <= 0).length;
+
+  const handleCleanupDatabase = async () => {
+    const outdated = data.filter(item => item.tanggalKeberangkatan < todayStr || item.availableSeats <= 0);
+    if (outdated.length === 0) {
+      alert("Tidak ada jadwal kedaluwarsa atau habis bangku yang perlu dibersihkan saat ini.");
+      return;
+    }
+
+    const confirmMsg = `⚠️ PEMBERSIHAN DATABASE MASTER\n\nSistem menemukan ${outdated.length} data maskapai tidak aktif:\n• ${expiredCount} Penerbangan masa lampau (sudah berangkat)\n• ${zeroSeatCount} Tiket dengan sisa 0 bangku\n\nApakah Anda yakin ingin MENGHAPUS PERMANEN dari Firestore? Tindakan ini tidak bisa dibatalkan.`;
+    const confirmed = window.confirm ? window.confirm(confirmMsg) : true;
+    if (!confirmed) return;
+
+    setIsCleaning(true);
+    try {
+      const batchLength = 100;
+      for (let i = 0; i < outdated.length; i += batchLength) {
+        const batch = writeBatch(db);
+        const chunk = outdated.slice(i, i + batchLength);
+        chunk.forEach(item => {
+          batch.delete(doc(db, 'maskapai', item.id));
+        });
+        await batch.commit();
+      }
+      alert(`Berhasil! ${outdated.length} data maskapai kedaluwarsa telah dihapus dari database.`);
+    } catch (err) {
+      console.error("Gagal melakukan pembersihan:", err);
+      alert("Gagal melakukan pembersihan database.");
+    } finally {
+      setIsCleaning(false);
+    }
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -229,40 +286,135 @@ export const MaskapaiView: React.FC = () => {
         </div>
       </div>
 
-      {/* Info Panel */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-sm">
+      {/* Info Panel & Advisory */}
+      <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 mb-6 text-sm shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p className="font-semibold text-yellow-800 mb-2">Asumsi Dasar Margin:</p>
-            <ul className="list-disc list-inside text-yellow-700 space-y-1">
-              <li>Indigo: 2%</li>
-              <li>Hainan: 2%</li>
-              <li>Pesawat di bawah 15jt: 2%</li>
-              <li>Pesawat di atas 15jt: 1%</li>
+            <p className="font-bold text-amber-900 flex items-center gap-1.5 mb-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
+              Asumsi Dasar Margin:
+            </p>
+            <ul className="list-disc list-inside text-amber-800 space-y-1 pl-1">
+              <li>Indigo & Hainan: <span className="font-bold">2%</span></li>
+              <li>Harga Tiket Pesawat &lt; Rp 15.000.000: <span className="font-bold">2%</span></li>
+              <li>Harga Tiket Pesawat &ge; Rp 15.000.000: <span className="font-bold">1%</span></li>
             </ul>
           </div>
           <div>
-            <p className="font-semibold text-yellow-800 mb-2">Catatan:</p>
-            <ul className="list-disc list-inside text-yellow-700 space-y-1">
-              <li>Keuntungan base on persentase</li>
-              <li>Data by actual vendor</li>
-              <li>Update berkala setiap vendor berikan harga</li>
+            <p className="font-bold text-amber-900 flex items-center gap-1.5 mb-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
+              Catatan Operasional:
+            </p>
+            <ul className="list-disc list-inside text-amber-800 space-y-1 pl-1">
+              <li>Keuntungan otomatis dikalkulasi berdasarkan persentase.</li>
+              <li>Data diperbarui secara real-time berdasarkan laporan dari Wholesaler/Vendor tiket.</li>
+              <li>Lakukan pembersihan berkala pada rute lama agar performa pencarian tetap optimal.</li>
             </ul>
           </div>
         </div>
       </div>
 
+      {/* SYSTEM MAINTENANCE CONSOLE */}
+      <div className="bg-slate-900 text-white rounded-2xl p-5 mb-6 border border-slate-800 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px] tracking-wider uppercase animate-pulse">OPTIMALISASI DB</span>
+            <h3 className="text-sm font-black tracking-widest uppercase text-amber-400">Database Optimization Engine (Auto-Hapus)</h3>
+          </div>
+          <p className="text-slate-300 text-xs leading-relaxed max-w-xl">
+            Sistem otomatis menganalisis jadwal lampau dan kursi habis untuk memperkecil beban database.
+            Terdeteksi <span className="font-extrabold text-amber-400 underline">{outdatedCount} rute kedaluwarsa / mati</span> dari total <span className="font-extrabold text-white">{data.length} item</span> yang tersimpan.
+          </p>
+          
+          <div className="flex gap-4 mt-1 font-mono text-[10px] text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-rose-500 rounded-full"></span> 
+              Berangkat Lampau: <strong className="text-rose-400 font-bold">{expiredCount}</strong>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-yellow-400 rounded-full"></span> 
+              Sisa 0 Seats: <strong className="text-yellow-400 font-bold">{zeroSeatCount}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={handleCleanupDatabase}
+            disabled={isCleaning || outdatedCount === 0}
+            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+              outdatedCount === 0 ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/50' :
+              isCleaning ? 'bg-orange-600 text-white animate-pulse' :
+              'bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white shadow-lg cursor-pointer hover:shadow-amber-500/10'
+            }`}
+          >
+            <Trash2 className="w-4 h-4" />
+            {isCleaning ? 'Sedang Menghapus...' : `Bersihkan ${outdatedCount} Jadwal Expired`}
+          </button>
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
-          <div className="relative max-w-md">
+        {/* Dynamic Filters Deck */}
+        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+          <div className="relative flex-grow max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Cari maskapai, rute, atau periode..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium bg-white"
             />
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0">
+            {/* Keberangkatan Filter Tabs */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Rerata Jadwal:</span>
+              <div className="flex bg-gray-200 p-1 rounded-xl border border-gray-300/40">
+                <button
+                  onClick={() => setFilterKeberangkatan('future')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                    filterKeberangkatan === 'future' ? 'bg-white text-emerald-700 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Aktif / Mendatang
+                </button>
+                <button
+                  onClick={() => setFilterKeberangkatan('past')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                    filterKeberangkatan === 'past' ? 'bg-white text-rose-700 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Lampau / Expired
+                </button>
+                <button
+                  onClick={() => setFilterKeberangkatan('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                    filterKeberangkatan === 'all' ? 'bg-white text-gray-800 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Semua
+                </button>
+              </div>
+            </div>
+
+            {/* Seats Filter select drop down */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Batas Sisa Seat:</span>
+              <select
+                value={filterMinSeats}
+                onChange={(e) => setFilterMinSeats(Number(e.target.value))}
+                className="px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              >
+                <option value={0}>Tampilkan Semua Seats</option>
+                <option value={1}>Sisa &ge; 1 Seat</option>
+                <option value={5}>Sisa &ge; 5 Seats</option>
+                <option value={10}>Sisa &ge; 10 Seats (Default)</option>
+                <option value={20}>Sisa &ge; 20 Seats</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -291,8 +443,38 @@ export const MaskapaiView: React.FC = () => {
                 </thead>
                 <tbody>
                   {filteredData.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-900">{item.name}</td>
+                    <tr 
+                      key={item.id} 
+                      className={`border-b border-gray-100 transition-colors ${
+                        item.tanggalKeberangkatan < todayStr 
+                          ? 'bg-rose-50/25 hover:bg-rose-50/40 opacity-70' 
+                          : item.availableSeats <= 0
+                            ? 'bg-gray-50/40 hover:bg-gray-50/60 opacity-80'
+                            : 'hover:bg-gray-55/50'
+                      }`}
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-950">{item.name}</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {item.tanggalKeberangkatan < todayStr && (
+                              <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                Kedaluwarsa
+                              </span>
+                            )}
+                            {item.availableSeats <= 0 && (
+                              <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                Habis Seat
+                              </span>
+                            )}
+                            {item.availableSeats > 0 && item.availableSeats < 10 && (
+                              <span className="bg-yellow-105 text-yellow-800 border border-yellow-250 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                Sisa Menipis
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-col items-center">
                           <span className={`px-2 py-1 rounded text-xs font-bold ${
@@ -361,11 +543,37 @@ export const MaskapaiView: React.FC = () => {
             {/* Mobile/Tablet Card View */}
             <div className="xl:hidden divide-y divide-gray-100">
               {filteredData.map((item) => (
-                <div key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div 
+                  key={item.id} 
+                  className={`p-4 transition-colors ${
+                    item.tanggalKeberangkatan < todayStr 
+                      ? 'bg-rose-50/15 border-l-4 border-rose-500 opacity-75 animate-pulse-slow' 
+                      : item.availableSeats <= 0
+                        ? 'bg-gray-50/40 border-l-4 border-gray-400 opacity-80'
+                        : 'hover:bg-gray-50 border-l-4 border-transparent'
+                  }`}
+                >
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h3 className="font-bold text-gray-900 text-lg">{item.name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                      <h3 className="font-bold text-gray-950 text-base">{item.name}</h3>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.tanggalKeberangkatan < todayStr && (
+                          <span className="bg-rose-150 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
+                            Kedaluwarsa
+                          </span>
+                        )}
+                        {item.availableSeats <= 0 && (
+                          <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
+                            Habis Seat
+                          </span>
+                        )}
+                        {item.availableSeats > 0 && item.availableSeats < 10 && (
+                          <span className="bg-yellow-105 text-yellow-800 border border-yellow-250 text-[9px] font-black px-1.5 py-0.5 rounded uppercase font-bold">
+                            Sisa Menipis
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-2.5">
                         <span className="font-medium text-emerald-600">{item.originCityName}</span>
                         <span>→</span>
                         <span className="font-medium text-emerald-600">{item.destinationCityName}</span>
