@@ -1,13 +1,9 @@
 import React from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { FileSpreadsheet, FileText } from 'lucide-react';
 import { JamaahTracker } from '../tracker/types';
-
-interface jsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: Record<string, unknown>) => void;
-}
 
 interface ValidatedJamaah extends JamaahTracker {
   isValid: boolean;
@@ -75,7 +71,7 @@ export const ExportButton: React.FC<Props> = ({ data, paketName }) => {
       (j.kewarganegaraan || 'WNI').toUpperCase()
     ]);
 
-    (doc as jsPDFWithAutoTable).autoTable({
+    autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 30,

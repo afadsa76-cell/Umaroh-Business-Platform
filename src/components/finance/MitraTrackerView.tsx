@@ -11,7 +11,7 @@ import {
 } from '../../firebase';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // Type definitions matching blueprint
 export interface MitraTracker {
@@ -614,6 +614,42 @@ export const MitraTrackerView: React.FC = () => {
     }
   };
 
+  // 4b. Open WhatsApp with highly-detailed pre-filled billing detail message
+  const handleOpenWhatsApp = (tr: MitraTracker) => {
+    if (!tr.hp) {
+      alert("Hubungi WA Gagal: Nomor HP Mitra tidak terdaftar.");
+      return;
+    }
+
+    const cleanedNumber = tr.hp.replace(/[^0-9]/g, '');
+    const waNumber = cleanedNumber.startsWith('0') ? '62' + cleanedNumber.slice(1) : cleanedNumber;
+    
+    const hariLagiText = tr.hari_menuju_berangkat != null && tr.hari_menuju_berangkat !== 999 
+      ? `(${tr.hari_menuju_berangkat} Hari Lagi)` 
+      : '';
+
+    const message = `*Konfirmasi Pembayaran Mitra - Umaroh Platform* 📑\n\n` +
+      `Yth. Bapak/Ibu *${tr.pic || tr.nama_mitra}*\n` +
+      `dari *${tr.nama_brand || tr.nama_mitra}*\n\n` +
+      `Berikut rincian status pembayaran saat ini:\n\n` +
+      `• *Paket Umroh:* ${tr.paket_umroh || '-'}\n` +
+      `• *Rencana Keberangkatan:* ${tr.tanggal_berangkat || '-'} ${hariLagiText}\n` +
+      `• *Jumlah Seat:* ${tr.jumlah_seat || 0} pax\n\n` +
+      `*Rincian Finansial:*\n` +
+      `• Total Tagihan Kontrak: *${formatCurrency(tr.total_tagihan)}*\n` +
+      `• Total Terbayar: *${formatCurrency(tr.total_bayar)}* (${tr.persentase_bayar?.toFixed(1)}%)\n` +
+      `• *Sisa Piutang Berjalan: ${formatCurrency(tr.sisa_tagihan)}*\n\n` +
+      `• *Batas Pelunasan (Deadline):* ${tr.deadline_pelunasan || '-'}\n\n` +
+      `Mohon perwakilan mitra dapat segera mengoordinasikan pelunasan tagihan sisa piutang di atas sesuai tanggal deadline demi kelancaran penerbitan dokumen dan ticketing jamaah.\n\n` +
+      `Jika ada pertanyaan atau konfirmasi pembayaran cicilan baru, silakan hubungi kami dengan melampirkan bukti transfer.\n\n` +
+      `Terima kasih. 🙏\n` +
+      `*Finance - Umaroh Platform*`;
+
+    const encodedText = encodeURIComponent(message);
+    const waUrl = `https://wa.me/${waNumber}?text=${encodedText}`;
+    window.open(waUrl, '_blank');
+  };
+
   // 5. Delete Mitra Tracker Guard
   const handleDeleteTracker = (id: string) => {
     setDeleteConfirmationId(id);
@@ -1000,34 +1036,102 @@ export const MitraTrackerView: React.FC = () => {
   // Export to professional printed elements or clean PDF with jsPDF AutoTable
   const handleExportPdf = () => {
     const doc = new jsPDF('l', 'mm', 'a4');
-    doc.text('UMAROH PLATFORM - LAPORAN TRACKER PEMBAYARAN MITRA', 14, 15);
-    doc.setFontSize(8);
-    const headers = [['Mitra', 'Seat', 'Keberangkatan', 'Total Tagihan', 'Total Bayar', 'Sisa', '%', 'Risiko', 'Status Keberangkatan']];
-    const data = filteredAndSortedTrackers.map(t => [
-      t.nama_mitra,
-      t.jumlah_seat.toString(),
-      t.tanggal_berangkat,
-      formatCurrency(t.total_tagihan),
-      formatCurrency(t.total_bayar),
-      formatCurrency(t.sisa_tagihan),
-      `${t.persentase_bayar?.toFixed(1)}%`,
-      t.status_risiko,
-      t.status_keberangkatan
-    ]);
-
+    
     interface jsPDFWithAutoTable extends jsPDF {
-      autoTable: (options: Record<string, unknown>) => void;
+      lastAutoTable?: {
+        finalY: number;
+      };
     }
+    
+    // Header Laporan
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text('UMAROH PLATFORM - LAPORAN TRACKER PEMBAYARAN MITRA (PER PAKET)', 14, 15);
+    
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')} | Total Paket: ${Object.keys(groupedTrackers).length} Paket`, 14, 20);
+    
+    let currentY = 24;
 
-    (doc as unknown as jsPDFWithAutoTable).autoTable({
-      head: headers,
-      body: data,
-      startY: 23,
-      theme: 'grid',
-      styles: { fontSize: 7, cellPadding: 2 }
+    Object.keys(groupedTrackers).forEach((paketName) => {
+      const items = groupedTrackers[paketName];
+      if (items.length === 0) return;
+      const firstItem = items[0];
+      const tglBerangkat = firstItem?.tanggal_berangkat || '-';
+      const hariLagi = firstItem?.hari_menuju_berangkat != null ? `(${firstItem.hari_menuju_berangkat} Hari Lagi)` : '';
+
+      // Tentukan apakah butuh halaman baru (jika posisinya terlalu rendah)
+      if (currentY > 170) {
+        doc.addPage();
+        currentY = 15;
+      }
+
+      // Judul Blok Paket
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(5, 150, 105); // emerald-600
+      doc.text(`🟢 PAKET: ${paketName.toUpperCase()}  |  KEBERANGKATAN: ${tglBerangkat} ${hariLagi}`, 14, currentY);
+      currentY += 4;
+
+      const headers = [['Mitra / Brand', 'Seat', 'PIC & No. HP', 'Total Tagihan', 'Total Terbayar', 'Sisa Piutang', '% Bayar', 'Batas Pelunasan', 'Risiko']];
+      
+      // Map data baris
+      const data = items.map(t => [
+        t.nama_brand || t.nama_mitra,
+        t.jumlah_seat.toString(),
+        `${t.pic || '-'} (${t.hp || '-'})`,
+        formatCurrency(t.total_tagihan),
+        formatCurrency(t.total_bayar),
+        formatCurrency(t.sisa_tagihan),
+        `${t.persentase_bayar?.toFixed(1)}%`,
+        t.deadline_pelunasan || '-',
+        t.status_risiko
+      ]);
+
+      // Hitung sub total untuk paket ini
+      const totalSeats = items.reduce((sum, item) => sum + (item.jumlah_seat || 0), 0);
+      const totalTagihan = items.reduce((sum, item) => sum + (item.total_tagihan || 0), 0);
+      const totalBayar = items.reduce((sum, item) => sum + (item.total_bayar || 0), 0);
+      const totalSisa = items.reduce((sum, item) => sum + (item.sisa_tagihan || 0), 0);
+      const avgPercent = totalTagihan > 0 ? (totalBayar / totalTagihan) * 100 : 0;
+
+      // Sisipkan baris subtotal di akhir data tabel ini
+      data.push([
+        `TOTAL ${paketName.toUpperCase()}`,
+        totalSeats.toString(),
+        `${items.length} Mitra Terdaftar`,
+        formatCurrency(totalTagihan),
+        formatCurrency(totalBayar),
+        formatCurrency(totalSisa),
+        `${avgPercent.toFixed(1)}%`,
+        '',
+        ''
+      ]);
+
+      autoTable(doc, {
+        head: headers,
+        body: data,
+        startY: currentY,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [5, 150, 105] }, // Hijau emerald
+        didParseCell: (hookData) => {
+          // Highlight baris total (baris terakhir)
+          if (hookData.row.index === data.length - 1) {
+            hookData.cell.styles.fontStyle = 'bold';
+            hookData.cell.styles.fillColor = [240, 253, 250]; // emerald-50 bg
+            hookData.cell.styles.textColor = [15, 23, 42]; // slate-900
+          }
+        }
+      });
+
+      // Update currentY setelah tabel selesai dibuat
+      const docWithTable = doc as jsPDFWithAutoTable;
+      currentY = (docWithTable.lastAutoTable?.finalY ?? currentY + 30) + 8;
     });
 
-    doc.save(`Laporan_Umroh_Mitra_Tracker_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Laporan_Umroh_Mitra_Per_Paket_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   if (loading) {
@@ -1595,6 +1699,14 @@ export const MitraTrackerView: React.FC = () => {
                                       className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all"
                                     >
                                       Follow Up
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenWhatsApp(tr)}
+                                      className="bg-green-600 hover:bg-green-700 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 active:scale-95"
+                                      title="Kirim status rincian tagihan via WhatsApp ke Mitra"
+                                    >
+                                      💬 WA Share
                                     </button>
                                     {(currentUserRole === 'admin' || currentUserRole === 'finance') && (
                                       <>
@@ -2572,6 +2684,34 @@ export const MitraTrackerView: React.FC = () => {
 
             <form onSubmit={handleRegisterFollowup} className="space-y-3 block text-xs">
               
+              {/* WhatsApp Quick Communication Banner */}
+              {trackers.find(t => t.id === selectedMitraId) && (() => {
+                const tr = trackers.find(t => t.id === selectedMitraId)!;
+                return (
+                  <div className="bg-emerald-50 border border-emerald-250 rounded-2xl p-3.5 space-y-2 text-left animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Integrasi WhatsApp
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-extrabold">{tr.nama_brand || tr.nama_mitra}</span>
+                    </div>
+                    
+                    <div className="text-[11px] font-medium text-gray-700 space-y-0.5">
+                      <p>👤 <strong>PIC:</strong> {tr.pic || '-'} ({tr.hp || 'No HP Kosong'})</p>
+                      <p>💰 <strong>Sisa Tagihan:</strong> <span className="text-rose-600 font-black">{formatCurrency(tr.sisa_tagihan)}</span> / {formatCurrency(tr.total_tagihan)}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenWhatsApp(tr)}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black py-2 rounded-xl text-center text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>💬</span> Kirim Rincian Tagihan ke WA
+                    </button>
+                  </div>
+                );
+              })()}
+
               <div className="space-y-1">
                 <label className="font-extrabold text-gray-500">Hasil Korespondensi Penagihan</label>
                 <textarea 
