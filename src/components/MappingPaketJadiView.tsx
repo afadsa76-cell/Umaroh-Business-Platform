@@ -127,6 +127,7 @@ export const MappingPaketJadiView: React.FC = () => {
   const [editTotalPembelian, setEditTotalPembelian] = useState<number>(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
+  const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = () => {
@@ -144,10 +145,15 @@ export const MappingPaketJadiView: React.FC = () => {
   }, []);
 
   const handleDeleteService = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
-      const updatedServices = services.filter(service => service.id !== id);
+    setDeleteConfirmationId(id);
+  };
+
+  const confirmDeleteService = () => {
+    if (deleteConfirmationId) {
+      const updatedServices = services.filter(service => service.id !== deleteConfirmationId);
       setServices(updatedServices);
       localStorage.setItem('vendor_services', JSON.stringify(updatedServices));
+      setDeleteConfirmationId(null);
     }
   };
 
@@ -1313,6 +1319,41 @@ export const MappingPaketJadiView: React.FC = () => {
                 className="px-4 py-2 text-sm font-bold bg-amber-500 text-white hover:bg-amber-600 rounded-lg transition-colors"
               >
                 Simpan Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Absolute Custom Deletion Dialog Modal */}
+      {deleteConfirmationId && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 text-xs animate-in fade-in duration-250">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
+                ⚠️
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-gray-950 text-sm uppercase tracking-wider">Konfirmasi Hapus Layanan</h3>
+                <p className="text-[11px] text-gray-550 font-medium">
+                  Apakah Anda yakin ingin menghapus layanan ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 flex gap-3 border-t border-gray-150">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmationId(null)}
+                className="flex-1 py-2 font-bold text-gray-750 bg-white border border-gray-200 hover:bg-gray-100 rounded-xl transition-all cursor-pointer text-center"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteService}
+                className="flex-1 py-2 font-black text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-center"
+              >
+                Ya, Hapus
               </button>
             </div>
           </div>

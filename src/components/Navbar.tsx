@@ -16,11 +16,12 @@ import {
   Handshake,
   Sliders,
   Coins,
-  Megaphone
+  Megaphone,
+  Truck
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'finance' | 'mitra-tracker' | 'profile';
+export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
@@ -47,6 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'revenue', label: 'Laporan Pendapatan', icon: TrendingUp },
     { id: 'tl-portal', label: 'Portal TL (Mobile)', icon: MapPin },
     { id: 'inventory', label: 'Inventory & Gudang', icon: Database },
+    { id: 'perlengkapan', label: 'Perlengkapan & Distribusi', icon: Truck },
     { id: 'finance', label: 'Finance & Keuangan', icon: TrendingUp },
     { id: 'mitra-tracker', label: 'Tracker Mitra (Realtime)', icon: Handshake },
     { id: 'profile', label: 'Profil Saya', icon: Users },
@@ -68,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'operasional',
       label: '2. OPERASIONAL',
       icon: Sliders,
-      items: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory']
+      items: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan']
     },
     {
       id: 'finance',

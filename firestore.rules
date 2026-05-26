@@ -286,5 +286,40 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if (isFinance() || isOperasional()) && isValidId(payId);
     }
+
+    match /perlengkapan_master/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /perlengkapan_packing/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /perlengkapan_pengiriman/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /perlengkapan_penerimaan/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /perlengkapan_komplain/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /package_cost_components/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /package_cost_audit_logs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
   }
 }

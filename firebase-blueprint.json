@@ -382,6 +382,115 @@
         "created_at": { "type": "string" }
       },
       "required": ["id", "mitra_id", "tanggal_bayar", "nominal", "jenis_pembayaran"]
+    },
+    "PerlengkapanMaster": {
+      "title": "PerlengkapanMaster",
+      "description": "Master barang perlengkapan logistik",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "kode_barang": { "type": "string" },
+        "nama_barang": { "type": "string" },
+        "kategori_barang": { "type": "string" },
+        "stok": { "type": "number" }
+      },
+      "required": ["id", "kode_barang", "nama_barang", "stok"]
+    },
+    "PerlengkapanPacking": {
+      "title": "PerlengkapanPacking",
+      "description": "Daftar packing perlengkapan jemaah",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama_paket": { "type": "string" },
+        "mitra_id": { "type": "string" },
+        "status_packing": { "type": "string" }
+      },
+      "required": ["id", "nama_paket", "mitra_id", "status_packing"]
+    },
+    "PerlengkapanPengiriman": {
+      "title": "PerlengkapanPengiriman",
+      "description": "Pelacakan pengiriman perlengkapan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "packing_id": { "type": "string" },
+        "nama_paket": { "type": "string" },
+        "status_pengiriman": { "type": "string" }
+      },
+      "required": ["id", "packing_id", "nama_paket", "status_pengiriman"]
+    },
+    "PerlengkapanPenerimaan": {
+      "title": "PerlengkapanPenerimaan",
+      "description": "Penerimaan barang perlengkapan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "pengiriman_id": { "type": "string" },
+        "kondisi_barang": { "type": "string" }
+      },
+      "required": ["id", "pengiriman_id", "kondisi_barang"]
+    },
+    "PerlengkapanKomplain": {
+      "title": "PerlengkapanKomplain",
+      "description": "Komplain dan retur",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "pengiriman_id": { "type": "string" },
+        "status_komplain": { "type": "string" }
+      },
+      "required": ["id", "pengiriman_id", "status_komplain"]
+    },
+    "PackageCostComponents": {
+      "title": "PackageCostComponents",
+      "description": "Peningkatan sistem biaya vendor & cost component keberangkatan umroh",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama_komponen": { "type": "string" },
+        "kategori_komponen": { "type": "string" },
+        "vendor_id": { "type": "string" },
+        "package_id": { "type": "string" },
+        "qty": { "type": "number" },
+        "qty_used": { "type": "number" },
+        "harga_satuan": { "type": "number" },
+        "total_biaya": { "type": "number" },
+        "dp": { "type": "number" },
+        "termin_1": { "type": "number" },
+        "termin_2": { "type": "number" },
+        "pelunasan": { "type": "number" },
+        "total_bayar": { "type": "number" },
+        "sisa_tagihan": { "type": "number" },
+        "persentase_bayar": { "type": "number" },
+        "tanggal_jatuh_tempo": { "type": "string" },
+        "tanggal_pembayaran": { "type": "string" },
+        "status_pembayaran": { "type": "string" },
+        "status_risiko": { "type": "string" },
+        "status_operasional": { "type": "string" },
+        "invoice_file": { "type": "string" },
+        "bukti_transfer": { "type": "string" },
+        "approval_status": { "type": "string" },
+        "catatan": { "type": "string" },
+        "created_by": { "type": "string" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["id", "nama_komponen", "kategori_komponen", "total_biaya"]
+    },
+    "PackageCostAuditLogs": {
+      "title": "PackageCostAuditLogs",
+      "description": "Audit logs for Package Cost Component changes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "activity": { "type": "string" },
+        "details": { "type": "string" },
+        "user": { "type": "string" },
+        "componentId": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "activity", "details", "user", "componentId"]
     }
   },
   "firestore": {
@@ -407,6 +516,13 @@
     "/tracking_group/{groupId}": { "schema": "TrackingGroup", "description": "Koleksi live tracking group" },
     "/mitra_tracker/{trackerId}": { "schema": "MitraTracker", "description": "Koleksi data tracking mitra" },
     "/mitra_followup/{followupId}": { "schema": "MitraFollowup", "description": "Koleksi riwayat follow up mitra" },
-    "/mitra_payment_history/{payId}": { "schema": "MitraPaymentHistory", "description": "Koleksi riwayat pembayaran mitra" }
+    "/mitra_payment_history/{payId}": { "schema": "MitraPaymentHistory", "description": "Koleksi riwayat pembayaran mitra" },
+    "/perlengkapan_master/{id}": { "schema": "PerlengkapanMaster", "description": "Koleksi master barang perlengkapan / logistik" },
+    "/perlengkapan_packing/{id}": { "schema": "PerlengkapanPacking", "description": "Koleksi packing list perlengkapan jamaah" },
+    "/perlengkapan_pengiriman/{id}": { "schema": "PerlengkapanPengiriman", "description": "Koleksi pelacakan pengiriman perlengkapan" },
+    "/perlengkapan_penerimaan/{id}": { "schema": "PerlengkapanPenerimaan", "description": "Koleksi penerimaan barang perlengkapan" },
+    "/perlengkapan_komplain/{id}": { "schema": "PerlengkapanKomplain", "description": "Koleksi komplain dan retur perlengkapan" },
+    "/package_cost_components/{id}": { "schema": "PackageCostComponents", "description": "Koleksi sistem biaya vendor & cost component keberangkatan umroh" },
+    "/package_cost_audit_logs/{id}": { "schema": "PackageCostAuditLogs", "description": "Koleksi riwayat audit biaya komponen paket vendor" }
   }
 }
