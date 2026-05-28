@@ -1,0 +1,2 @@
+# Google AdSense ads.txt for Umaroh Business Platform
+google.com, pub-3377023550565067, DIRECT, f08c47fec0942fa0
