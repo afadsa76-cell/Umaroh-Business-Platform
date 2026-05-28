@@ -118,6 +118,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     })
     .filter(category => category.allowedItems.length > 0);
 
+  const allowedTabIds = visibleCategories.flatMap(c => c.allowedItems);
+  const activeNavItems = navItems.filter(item => allowedTabIds.includes(item.id));
+
   return (
     <>
       {/* Desktop categorized header */}
@@ -210,7 +213,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 pb-safe">
         <div className="flex justify-around items-center h-16">
-          {navItems.slice(0, 5).map((item) => {
+          {activeNavItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
