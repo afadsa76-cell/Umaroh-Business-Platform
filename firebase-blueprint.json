@@ -491,6 +491,57 @@
         "componentId": { "type": "string" }
       },
       "required": ["id", "timestamp", "activity", "details", "user", "componentId"]
+    },
+    "AdNetworkConfig": {
+      "title": "AdNetworkConfig",
+      "description": "Configuration for Google AdSense and overall simulation options",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "mode": { "type": "string" },
+        "adSenseClient": { "type": "string" },
+        "adSenseSlotHeader": { "type": "string" },
+        "adSenseSlotSidebar": { "type": "string" },
+        "adSenseSlotFooter": { "type": "string" },
+        "adSenseSlotDashboard": { "type": "string" },
+        "autoInjectionEnabled": { "type": "boolean" },
+        "adSenseScriptsLoaded": { "type": "boolean" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "mode"]
+    },
+    "AdCampaign": {
+      "title": "AdCampaign",
+      "description": "Custom partner/internal marketing campaigns for traveling",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "tagline": { "type": "string" },
+        "cta": { "type": "string" },
+        "targetUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "layoutBg": { "type": "string" },
+        "priority": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "targetUrl", "status"]
+    },
+    "AdPerformanceLog": {
+      "title": "AdPerformanceLog",
+      "description": "Tracks impressions, clicks, and metrics for the Umaroh system ads",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "adId": { "type": "string" },
+        "adTitle": { "type": "string" },
+        "adSlot": { "type": "string" },
+        "type": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "userEmail": { "type": "string" }
+      },
+      "required": ["id", "adSlot", "type", "timestamp"]
     }
   },
   "firestore": {
@@ -523,6 +574,9 @@
     "/perlengkapan_penerimaan/{id}": { "schema": "PerlengkapanPenerimaan", "description": "Koleksi penerimaan barang perlengkapan" },
     "/perlengkapan_komplain/{id}": { "schema": "PerlengkapanKomplain", "description": "Koleksi komplain dan retur perlengkapan" },
     "/package_cost_components/{id}": { "schema": "PackageCostComponents", "description": "Koleksi sistem biaya vendor & cost component keberangkatan umroh" },
-    "/package_cost_audit_logs/{id}": { "schema": "PackageCostAuditLogs", "description": "Koleksi riwayat audit biaya komponen paket vendor" }
+    "/package_cost_audit_logs/{id}": { "schema": "PackageCostAuditLogs", "description": "Koleksi riwayat audit biaya komponen paket vendor" },
+    "/ad_network_config/{id}": { "schema": "AdNetworkConfig", "description": "Koleksi konfigurasi Google AdSense & setelan" },
+    "/ad_campaigns/{id}": { "schema": "AdCampaign", "description": "Koleksi kampanye iklan promo internal & mitra" },
+    "/ad_performance_logs/{id}": { "schema": "AdPerformanceLog", "description": "Koleksi log telemetri kinerja iklan (impressions & clicks)" }
   }
 }

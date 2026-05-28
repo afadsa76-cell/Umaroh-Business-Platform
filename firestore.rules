@@ -321,5 +321,20 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && isValidId(id);
     }
+
+    match /ad_network_config/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /ad_campaigns/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /ad_performance_logs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(id);
+    }
   }
 }

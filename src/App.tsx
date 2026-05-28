@@ -20,6 +20,7 @@ import { InventoryView } from './components/inventory/InventoryView';
 import { PerlengkapanView } from './components/inventory/PerlengkapanView';
 import { FinanceDashboard } from './components/finance/FinanceDashboard';
 import { MitraTrackerView } from './components/finance/MitraTrackerView';
+import { VendorPaymentTracker } from './components/finance/VendorPaymentTracker';
 import { LoginView, Role } from './components/LoginView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DashboardMitra } from './components/DashboardMitra';
@@ -28,6 +29,7 @@ import { RegisterMitraView } from './components/RegisterMitraView';
 import { ValidasiMitraView } from './components/ValidasiMitraView';
 import { UserDatabaseView } from './components/UserDatabaseView';
 import { ProfileView } from './components/ProfileView';
+import { AdManagementView } from './components/AdManagementView';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
@@ -36,8 +38,8 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
   operasional: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
-  finance: ['finance', 'mitra-tracker', 'mapping', 'revenue'],
-  marketing: ['templates', 'profile']
+  finance: ['mapping', 'revenue', 'finance', 'mitra-tracker', 'tracker-vendor'],
+  marketing: ['templates', 'ad-management', 'profile']
 };
 
 function App() {
@@ -228,6 +230,10 @@ function App() {
         return <FinanceDashboard />;
       case 'mitra-tracker':
         return <MitraTrackerView />;
+      case 'tracker-vendor':
+        return <VendorPaymentTracker />;
+      case 'ad-management':
+        return <AdManagementView />;
       case 'profile':
         return <ProfileView />;
       default:

@@ -17,11 +17,12 @@ import {
   Sliders,
   Coins,
   Megaphone,
-  Truck
+  Truck,
+  Layers
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile';
+export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
@@ -51,6 +52,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'perlengkapan', label: 'Perlengkapan & Distribusi', icon: Truck },
     { id: 'finance', label: 'Finance & Keuangan', icon: TrendingUp },
     { id: 'mitra-tracker', label: 'Tracker Mitra (Realtime)', icon: Handshake },
+    { id: 'tracker-vendor', label: 'Cost Component Tracker (ERP)', icon: Layers },
+    { id: 'ad-management', label: 'Iklan & Ad Management (Ads)', icon: Megaphone },
     { id: 'profile', label: 'Profil Saya', icon: Users },
   ];
 
@@ -76,13 +79,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'finance',
       label: '3. FINANCE',
       icon: Coins,
-      items: ['finance', 'mitra-tracker', 'mapping', 'revenue']
+      items: ['mapping', 'revenue', 'finance', 'mitra-tracker', 'tracker-vendor']
     },
     {
       id: 'marketing',
       label: '4. DIGITAL MARKETING',
       icon: Megaphone,
-      items: ['templates', 'profile']
+      items: ['templates', 'ad-management', 'profile']
     }
   ];
 

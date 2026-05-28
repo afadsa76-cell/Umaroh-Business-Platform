@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, Globe } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
+import { AdBanner } from './AdBanner';
 
 interface FooterProps {
   minimalOnMobile?: boolean;
@@ -143,6 +144,10 @@ export const Footer: React.FC<FooterProps> = ({ minimalOnMobile = false }) => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-8 mb-4">
+          <AdBanner adSlot="footer-banner" />
         </div>
 
         <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">

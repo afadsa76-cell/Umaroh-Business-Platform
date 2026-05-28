@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, ArrowUpRight, ArrowDownRight, Layers } from 'lucide-react';
+import { Wallet, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { db, collection, onSnapshot, query, where, doc, updateDoc, runTransaction } from '../../firebase';
-import { VendorPaymentTracker } from './VendorPaymentTracker';
 
-type FinanceTab = 'ap' | 'ar' | 'komisi' | 'tracker_vendor';
+type FinanceTab = 'ap' | 'ar' | 'komisi';
 
 interface VendorService {
   id: string;
@@ -406,24 +405,12 @@ export const FinanceDashboard: React.FC = () => {
           <Users className="w-4 h-4" />
           Pencairan Komisi Mitra
         </button>
-        <button
-          onClick={() => setActiveTab('tracker_vendor')}
-          className={`flex items-center gap-2 px-6 py-3 font-bold text-sm transition-colors whitespace-nowrap border-b-2 ${
-            activeTab === 'tracker_vendor' 
-              ? 'border-teal-600 text-teal-600' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          Cost Component Tracker (ERP)
-        </button>
       </div>
 
       {/* Content */}
       {activeTab === 'ap' && renderAP()}
       {activeTab === 'ar' && renderAR()}
       {activeTab === 'komisi' && renderKomisi()}
-      {activeTab === 'tracker_vendor' && <VendorPaymentTracker />}
     </div>
   );
 };
