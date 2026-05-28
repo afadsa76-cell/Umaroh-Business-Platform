@@ -4,7 +4,6 @@ import {
   FileSpreadsheet, 
   ShoppingCart, 
   LayoutDashboard, 
-  Hotel, 
   Bell, 
   Plane, 
   Menu, 
@@ -22,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'mapping' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management';
+export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
@@ -41,7 +40,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'user-database', label: 'Database User', icon: Users },
     { id: 'database', label: 'Database Master', icon: Database },
     { id: 'templates', label: 'Templates', icon: FileSpreadsheet },
-    { id: 'mapping', label: 'Mapping Pembayaran & Booking', icon: Hotel },
     { id: 'sales-order', label: 'Sales Order', icon: ShoppingCart },
     { id: 'flights', label: 'Monitoring Penerbangan', icon: Plane },
     { id: 'tracker', label: 'Mapping & Tracker Paket, Jamaah & Keberangkatan', icon: MapPin },
@@ -79,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'finance',
       label: '3. FINANCE',
       icon: Coins,
-      items: ['mapping', 'revenue', 'finance', 'mitra-tracker', 'tracker-vendor']
+      items: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor']
     },
     {
       id: 'marketing',

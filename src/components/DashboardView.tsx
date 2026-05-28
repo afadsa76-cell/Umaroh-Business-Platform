@@ -211,10 +211,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-gray-900">Pending Payments</h2>
             <button 
-              onClick={() => onNavigate?.('mapping')}
+              onClick={() => onNavigate?.('finance')}
               className="text-sm text-blue-600 font-semibold hover:underline flex items-center gap-1"
             >
-              View All <span className="hidden sm:inline">Mapping</span> <ArrowRight className="w-4 h-4" />
+              View All <span className="hidden sm:inline">Finance</span> <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -277,7 +277,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                           <MessageCircle className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => onNavigate?.('mapping')}
+                          onClick={() => onNavigate?.('finance')}
                           className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
                         >
                           <ArrowRight className="w-4 h-4" />
@@ -336,7 +336,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                       <MessageCircle className="w-4 h-4" />
                     </button>
                     <button 
-                      onClick={() => onNavigate?.('mapping')}
+                      onClick={() => onNavigate?.('finance')}
                       className="p-2 rounded-lg bg-blue-50 text-blue-600"
                     >
                       <ArrowRight className="w-4 h-4" />
@@ -477,7 +477,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {[
             { title: 'New Quotation Created', desc: 'John Doe created a quotation for Saudia Airlines', time: '2 hours ago', tab: 'sales-order' as TabType },
-            { title: 'Hotel Mapping Updated', desc: 'Jane Smith updated room needs for Grand Zowar', time: '4 hours ago', tab: 'mapping' as TabType },
+            { title: 'Vendor Payments Updated', desc: 'Jane Smith updated room costs for Grand Zowar', time: '4 hours ago', tab: 'finance' as TabType },
             { title: 'New Customer Added', desc: 'PT. Berkah Umrah added to database', time: '1 day ago', tab: 'database' as TabType },
             { title: 'Template Modified', desc: 'Standard 9 Days itinerary updated', time: '2 days ago', tab: 'templates' as TabType },
           ].map((activity, i) => (

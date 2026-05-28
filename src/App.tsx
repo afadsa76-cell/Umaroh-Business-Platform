@@ -8,7 +8,6 @@ import { Footer } from './components/Footer';
 import { Navbar, TabType } from './components/Navbar';
 import { DatabaseView } from './components/DatabaseView';
 import { DashboardView } from './components/DashboardView';
-import { MappingPaketJadiView } from './components/MappingPaketJadiView';
 import { TemplatesView } from './components/TemplatesView';
 import { SalesOrderView } from './components/SalesOrderView';
 import { FlightMonitoringView } from './components/FlightMonitoringView';
@@ -38,7 +37,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
   operasional: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
-  finance: ['mapping', 'revenue', 'finance', 'mitra-tracker', 'tracker-vendor'],
+  finance: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor'],
   marketing: ['templates', 'ad-management', 'profile']
 };
 
@@ -208,8 +207,6 @@ function App() {
         return <DatabaseView />;
       case 'templates':
         return <TemplatesView />;
-      case 'mapping':
-        return <MappingPaketJadiView />;
       case 'sales-order':
         return <SalesOrderView />;
       case 'flights':

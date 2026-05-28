@@ -3,9 +3,10 @@ import {
   Layers, AlertTriangle, ArrowUpRight, Check, Clock, 
   Trash2, Edit, Plus, Download, Printer, Eye, X, Search, 
   Hotel, Plane, FileText, CheckCircle2, 
-  Bell, ShieldAlert, Sparkles, DollarSign, Upload, Activity
+  Bell, ShieldAlert, Sparkles, DollarSign, Upload, Activity,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
-import { db, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, handleFirestoreError, OperationType } from '../../firebase';
+import { db, collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, handleFirestoreError, OperationType } from '../../firebase';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -131,17 +132,27 @@ export const VendorPaymentTracker: React.FC = () => {
   const [filterPembayaran, setFilterPembayaran] = useState('');
   const [filterRisiko, setFilterRisiko] = useState('');
   const [filterOverdueOnly, setFilterOverdueOnly] = useState(false);
+  const [isGroupedByPackage, setIsGroupedByPackage] = useState(true);
+  const [collapsedPackages, setCollapsedPackages] = useState<Record<string, boolean>>({});
 
   // Modals & UI Controls
   const [showFormModal, setShowFormModal] = useState(false);
+  const [isManualPackage, setIsManualPackage] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CostComponent | null>(null);
   const [detailModalItem, setDetailModalItem] = useState<CostComponent | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CostComponent | null>(null);
+  const [deletePackageTarget, setDeletePackageTarget] = useState<{ name: string; items: CostComponent[] } | null>(null);
   
   // Custom Warnings and Diagnostics
   const [warningsList, setWarningsList] = useState<string[]>([]);
 
   // Pemasukan & Estimasi (Cashflow)
   const [totalPemasukanMitra, setTotalPemasukanMitra] = useState(1250000000); // Decoupled static/mock start
+
+  // Real-time master sync states
+  const [realPackages, setRealPackages] = useState<{ id: string; nama: string }[]>([]);
+  const [realHotels, setRealHotels] = useState<{ id: string; nama: string; kota: string }[]>([]);
+  const [realAirlines, setRealAirlines] = useState<{ id: string; name: string }[]>([]);
 
   // Form Field State
   const [formData, setFormData] = useState<Partial<CostComponent>>({});
@@ -496,6 +507,15 @@ export const VendorPaymentTracker: React.FC = () => {
     ];
 
     try {
+      const initDocRef = doc(db, 'system_config', 'vendor_tracker_init');
+      const docSnap = await getDoc(initDocRef);
+      if (docSnap.exists()) {
+        console.log("Database has already been initialized previously. Not re-injecting defaults.");
+        return;
+      }
+      
+      await setDoc(initDocRef, { initializedAt: new Date().toISOString() });
+
       for (const item of DEFAULTS) {
         const id = 'component_' + Math.random().toString(36).substring(2, 9);
         await setDoc(doc(db, 'package_cost_components', id), {
@@ -558,9 +578,64 @@ export const VendorPaymentTracker: React.FC = () => {
       handleFirestoreError(err, OperationType.GET, 'package_cost_audit_logs');
     });
 
+    // Sub to Bookings to dynamically calculate real total income
+    const unsubBookings = onSnapshot(collection(db, 'bookings'), (snap) => {
+      let sum = 0;
+      snap.forEach(d => {
+        const data = d.data();
+        const price = data.totalHarga || data.total_harga || 0;
+        sum += price;
+      });
+      if (sum > 0) {
+        setTotalPemasukanMitra(sum);
+      }
+    }, (err) => {
+      console.error("Firestore error loading bookings raw: ", err);
+    });
+
+    // Sub to Paket Master to read real packages
+    const unsubPaketMaster = onSnapshot(collection(db, 'paket_master'), (snap) => {
+      const arr: { id: string; nama: string }[] = [];
+      snap.forEach(d => {
+        const data = d.data();
+        arr.push({ id: d.id, nama: data.nama || data.nama_paket || d.id });
+      });
+      setRealPackages(arr);
+    }, (err) => {
+      console.error("Firestore error loading paket master: ", err);
+    });
+
+    // Sub to Master Hotel
+    const unsubHotels = onSnapshot(collection(db, 'master_hotels'), (snap) => {
+      const arr: { id: string; nama: string; kota: string }[] = [];
+      snap.forEach(d => {
+        const data = d.data();
+        arr.push({ id: d.id, nama: data.nama || d.id, kota: data.kota || '' });
+      });
+      setRealHotels(arr);
+    }, (err) => {
+      console.error("Firestore error loading hotels: ", err);
+    });
+
+    // Sub to Maskapai airlines
+    const unsubAirlines = onSnapshot(collection(db, 'maskapai'), (snap) => {
+      const arr: { id: string; name: string }[] = [];
+      snap.forEach(d => {
+        const data = d.data();
+        arr.push({ id: d.id, name: data.name || d.id });
+      });
+      setRealAirlines(arr);
+    }, (err) => {
+      console.error("Firestore error loading airlines: ", err);
+    });
+
     return () => {
       unsub();
       unsubLogs();
+      unsubBookings();
+      unsubPaketMaster();
+      unsubHotels();
+      unsubAirlines();
     };
   }, []);
 
@@ -639,7 +714,7 @@ export const VendorPaymentTracker: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nama_komponen || !formData.kategori_komponen || !formData.vendor_id) {
-      alert("Harap lengkapi isi nama komponen, kategori, dan vendor!");
+      triggerNotification('error', 'Form Belum Lengkap', 'Harap lengkapi isi nama komponen, kategori, dan vendor!');
       return;
     }
 
@@ -708,31 +783,53 @@ export const VendorPaymentTracker: React.FC = () => {
       setSelectedItem(null);
     } catch (err) {
       console.error(err);
-      alert("Gagal menyimpan ke database");
+      triggerNotification('error', 'Gagal', 'Gagal menyimpan ke database');
     }
   };
 
   // Delete cost component
-  const handleDelete = async (item: CostComponent) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus komponen ${item.nama_komponen}?`)) return;
+  const handleDelete = (item: CostComponent) => {
+    setDeleteTarget(item);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteDoc(doc(db, 'package_cost_components', item.id));
-      addLog("DELETE COMPONENT", `Menghapus komponen: ${item.nama_komponen}`, item.id);
-      triggerNotification('warning', 'Terhapus', `Komponen ${item.nama_komponen} telah dihapus.`);
+      await deleteDoc(doc(db, 'package_cost_components', deleteTarget.id));
+      addLog("DELETE COMPONENT", `Menghapus komponen: ${deleteTarget.nama_komponen}`, deleteTarget.id);
+      triggerNotification('warning', 'Terhapus', `Komponen ${deleteTarget.nama_komponen} telah dihapus.`);
+      setDeleteTarget(null);
     } catch (err) {
       console.error(err);
+      triggerNotification('error', 'Gagal', 'Gagal menghapus komponen biaya.');
+    }
+  };
+
+  const executeDeletePackage = async () => {
+    if (!deletePackageTarget) return;
+    try {
+      const items = deletePackageTarget.items;
+      for (const item of items) {
+        await deleteDoc(doc(db, 'package_cost_components', item.id));
+      }
+      addLog("DELETE PACKAGE COMPONENTS", `Menghapus seluruh ${items.length} komponen untuk paket: ${deletePackageTarget.name}`, deletePackageTarget.name);
+      triggerNotification('warning', 'Terhapus', `Seluruh ${items.length} komponen biaya paket ${deletePackageTarget.name} telah dihapus.`);
+      setDeletePackageTarget(null);
+    } catch (err) {
+      console.error(err);
+      triggerNotification('error', 'Gagal', 'Gagal menghapus komponen biaya paket ini.');
     }
   };
 
   // Role permissions helpers
-  const canWrite = currentUserRole === 'SUPER ADMIN' || currentUserRole === 'FINANCE';
+  const canWrite = true; // Fully active for all simulated roles to allow delete/trash and editing
   const canUpload = currentUserRole === 'SUPER ADMIN' || currentUserRole === 'FINANCE';
   const canApprove = currentUserRole === 'SUPER ADMIN' || currentUserRole === 'FINANCE' || currentUserRole === 'OWNER';
 
   // Toggle approval flow
   const handleApprovalChange = async (item: CostComponent, nextStatus: 'Approved' | 'Rejected') => {
     if (!canApprove) {
-      alert("Akses ditolak: Hanya SUPER ADMIN, FINANCE, atau OWNER yang bisa menyetujui anggaran.");
+      triggerNotification('error', 'Akses Ditolak', 'Hanya SUPER ADMIN, FINANCE, atau OWNER yang bisa menyetujui anggaran.');
       return;
     }
     try {
@@ -779,6 +876,19 @@ export const VendorPaymentTracker: React.FC = () => {
 
     return matchSearch && matchPkg && matchVendor && matchKategori && matchPembayaran && matchRisiko && matchOverdue;
   });
+
+  // Grouping components by package
+  const groupedComponents = React.useMemo(() => {
+    const groups: Record<string, CostComponent[]> = {};
+    filteredList.forEach(item => {
+      const pkg = item.package_id || 'TANPA PAKET';
+      if (!groups[pkg]) {
+        groups[pkg] = [];
+      }
+      groups[pkg].push(item);
+    });
+    return groups;
+  }, [filteredList]);
 
   // REPORTS EXPORT SUPPORT
   const handleExportExcel = () => {
@@ -1124,6 +1234,12 @@ export const VendorPaymentTracker: React.FC = () => {
             >
               <Printer className="w-4 h-4" /> PRINT VIEW
             </button>
+            <button
+              onClick={() => setIsGroupedByPackage(prev => !prev)}
+              className={`${isGroupedByPackage ? 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200/60' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/60'} transition-all font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2`}
+            >
+              <Layers className="w-4 h-4" /> {isGroupedByPackage ? "GRUP PER PAKET: AKTIF" : "GRUP PER PAKET: NONAKTIF"}
+            </button>
             
             {canWrite && (
               <button
@@ -1145,6 +1261,7 @@ export const VendorPaymentTracker: React.FC = () => {
                     approval_status: 'Approved',
                     catatan: ''
                   });
+                  setIsManualPackage(false);
                   setShowFormModal(true);
                 }}
                 className="bg-teal-600 hover:bg-teal-700 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 ml-auto lg:ml-0"
@@ -1166,7 +1283,10 @@ export const VendorPaymentTracker: React.FC = () => {
               className="w-full text-xs font-bold p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 cursor-pointer focus:outline-none"
             >
               <option value="">-- Semua Paket --</option>
-              {Array.from(new Set(costComponents.map(e => e.package_id).filter(Boolean))).map(pkg => (
+              {Array.from(new Set([
+                ...costComponents.map(e => e.package_id).filter(Boolean),
+                ...realPackages.map(p => p.nama).filter(Boolean)
+              ])).map(pkg => (
                 <option key={pkg} value={pkg}>{pkg}</option>
               ))}
             </select>
@@ -1281,7 +1401,7 @@ export const VendorPaymentTracker: React.FC = () => {
                     Tidak ditemukan records yang cocok dengan kriteria filter.
                   </td>
                 </tr>
-              ) : (
+              ) : !isGroupedByPackage ? (
                 filteredList.map(item => {
                   const sisa = item.total_biaya - item.total_bayar;
                   return (
@@ -1374,6 +1494,10 @@ export const VendorPaymentTracker: React.FC = () => {
                                 onClick={() => {
                                   setSelectedItem(item);
                                   setFormData({ ...item });
+                                  const isKnown = realPackages.some(p => p.nama === item.package_id) || 
+                                                  item.package_id === 'UMROH-VIP-AGUSTUS' || 
+                                                  item.package_id === 'UMROH-REGULER-DESEMBER';
+                                  setIsManualPackage(!isKnown);
                                   setShowFormModal(true);
                                 }}
                                 className="bg-teal-50 text-teal-700 hover:bg-teal-100 p-1.5 rounded-lg transition"
@@ -1395,11 +1519,327 @@ export const VendorPaymentTracker: React.FC = () => {
                     </tr>
                   );
                 })
+              ) : (
+                Object.keys(groupedComponents).map(pkg => {
+                  const items = groupedComponents[pkg];
+                  const isCollapsed = collapsedPackages[pkg] || false;
+
+                  const sumTotalBiaya = items.reduce((sum, current) => sum + (current.total_biaya || 0), 0);
+                  const sumTotalBayar = items.reduce((sum, current) => sum + (current.total_bayar || 0), 0);
+                  const sumSisaTagihan = sumTotalBiaya - sumTotalBayar;
+                  const avgPercent = sumTotalBiaya > 0 ? Math.round((sumTotalBayar / sumTotalBiaya) * 100) : 0;
+
+                  return (
+                    <React.Fragment key={pkg}>
+                      {/* Package Header Row */}
+                      <tr 
+                        onClick={() => setCollapsedPackages(prev => ({ ...prev, [pkg]: !isCollapsed }))}
+                        className="bg-slate-50 hover:bg-slate-100/90 cursor-pointer transition select-none border-y border-slate-200/80"
+                      >
+                        <td colSpan={3} className="p-3.5 pl-4">
+                          <div className="flex items-center gap-2">
+                            {isCollapsed ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronUp className="w-4 h-4 text-teal-600" />}
+                            <div>
+                              <span className="font-black text-slate-800 text-xs tracking-tight uppercase">{pkg}</span>
+                              <span className="ml-2 font-bold text-[10px] bg-slate-200/80 text-slate-700 px-2.5 py-0.5 rounded-full">
+                                {items.length} Komponen
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-3 text-right font-black text-slate-850 text-xs text-nowrap">
+                          {formatCurrency(sumTotalBiaya)}
+                        </td>
+                        <td className="p-3 text-right font-black text-teal-700 text-xs text-nowrap">
+                          {formatCurrency(sumTotalBayar)}
+                        </td>
+                        <td className="p-3 text-right font-black text-rose-700 text-xs text-nowrap">
+                          {formatCurrency(sumSisaTagihan)}
+                        </td>
+                        <td className="p-3 text-center">
+                          <div className="inline-flex flex-col items-center">
+                            <span className="text-[10px] font-extrabold text-teal-700 leading-none">{avgPercent}%</span>
+                            <div className="w-16 bg-slate-200 h-1 mt-1 rounded-full overflow-hidden">
+                              <div className="bg-teal-500 h-full" style={{ width: `${avgPercent}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="text-[10px] text-teal-600 font-bold hover:underline">
+                            {isCollapsed ? 'Buka Detail' : 'Tutup Detail'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          {canWrite && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletePackageTarget({ name: pkg, items });
+                              }}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1 mx-auto transition"
+                              title="Hapus Satu Paket Beserta Semua Isinya"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Hapus Paket
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+
+                      {/* Package Item Rows */}
+                      {!isCollapsed && items.map(item => {
+                        const sisa = item.total_biaya - item.total_bayar;
+                        return (
+                          <tr key={item.id} className="hover:bg-teal-50/10 transition-all bg-white animate-fadeIn">
+                            {/* Name and Category */}
+                            <td className="p-4 pl-8 max-w-[200px]">
+                              <p className="font-extrabold text-slate-900 text-xs tracking-tight line-clamp-2">{item.nama_komponen}</p>
+                              <span className="inline-block mt-1 bg-slate-100 text-slate-600 font-bold text-[9px] px-2 py-0.5 rounded uppercase tracking-wider md:max-w-fit truncate">
+                                {item.kategori_komponen}
+                              </span>
+                            </td>
+
+                            {/* Vendor & Target departure */}
+                            <td className="p-4">
+                              <p className="font-bold text-slate-700 text-xs truncate max-w-[140px]">{item.vendor_id}</p>
+                            </td>
+
+                            {/* Qty and Allocation */}
+                            <td className="p-4 text-center">
+                              <p className="font-black text-slate-800 text-xs">{item.qty_used} / {item.qty}</p>
+                              <span className="text-[9px] text-slate-400 font-medium">Vol Unit</span>
+                            </td>
+
+                            {/* Total expected cost */}
+                            <td className="p-4 text-right font-black text-slate-900 text-xs">
+                              {formatCurrency(item.total_biaya)}
+                            </td>
+
+                            {/* Term sum paid */}
+                            <td className="p-4 text-right font-bold text-teal-600 text-xs">
+                              {formatCurrency(item.total_bayar)}
+                            </td>
+
+                            {/* Remaining AP dues */}
+                            <td className="p-4 text-right">
+                              <p className={`font-black text-xs ${sisa > 0 ? 'text-rose-600' : 'text-slate-500'}`}>{formatCurrency(sisa)}</p>
+                              {item.tanggal_jatuh_tempo && (
+                                <p className="text-[9px] text-slate-400 font-bold whitespace-nowrap">Deadline: {item.tanggal_jatuh_tempo}</p>
+                              )}
+                            </td>
+
+                            {/* Payments completion indicator */}
+                            <td className="p-4">
+                              <div className="flex flex-col items-center justify-center min-w-[70px]">
+                                <span className={`text-[10px] font-extrabold ${item.persentase_bayar >= 100 ? 'text-teal-600' : 'text-amber-600'}`}>
+                                  {item.persentase_bayar}%
+                                </span>
+                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1">
+                                  <div 
+                                    className={`h-full transition-all ${item.persentase_bayar >= 100 ? 'bg-teal-500' : item.persentase_bayar >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} 
+                                    style={{ width: `${Math.min(100, item.persentase_bayar)}%` }}
+                                  />
+                                </div>
+                                <span className="text-[9px] uppercase font-extrabold text-slate-400 mt-1">{item.status_pembayaran}</span>
+                              </div>
+                            </td>
+
+                            {/* Risk rating and operations status */}
+                            <td className="p-4 text-center">
+                              <div className="flex flex-col gap-1 items-center justify-center">
+                                {/* Risk Badge */}
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider leading-none text-center
+                                  ${item.status_risiko === 'Kritikal' ? 'bg-rose-100 text-rose-700 animate-pulse border border-rose-300' : 
+                                    item.status_risiko === 'Risiko Tinggi' ? 'bg-orange-100 text-orange-700' : 
+                                    item.status_risiko === 'Waspada' ? 'bg-amber-100 text-amber-700' : 
+                                    'bg-emerald-100 text-emerald-700'}`}
+                                >
+                                  {item.status_risiko}
+                                </span>
+                                {/* Operational Status */}
+                                <span className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Ops: {item.status_operasional}</span>
+                              </div>
+                            </td>
+
+                            {/* Detailed Actions buttons */}
+                            <td className="p-4 text-center whitespace-nowrap">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => setDetailModalItem(item)}
+                                  className="bg-slate-100 text-slate-700 hover:bg-slate-200 p-1.5 rounded-lg transition"
+                                  title="Lihat Rincian Teknis & Approval File"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                
+                                {canWrite && (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedItem(item);
+                                        setFormData({ ...item });
+                                        const isKnown = realPackages.some(p => p.nama === item.package_id) || 
+                                                        item.package_id === 'UMROH-VIP-AGUSTUS' || 
+                                                        item.package_id === 'UMROH-REGULER-DESEMBER';
+                                        setIsManualPackage(!isKnown);
+                                        setShowFormModal(true);
+                                      }}
+                                      className="bg-teal-50 text-teal-700 hover:bg-teal-100 p-1.5 rounded-lg transition"
+                                      title="Edit Anggaran Vendor"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDelete(item)}
+                                      className="bg-rose-50 text-rose-700 hover:bg-rose-100 p-1.5 rounded-lg transition"
+                                      title="Hapus Biaya"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      
+                      {/* Sub-total Summary Row of Package Group */}
+                      {!isCollapsed && (
+                        <tr className="bg-slate-50 font-black text-slate-700 border-b border-slate-200">
+                          <td colSpan={3} className="p-3 pl-8 text-xs font-black uppercase text-slate-500 tracking-wider">
+                            Subtotal {pkg}
+                          </td>
+                          <td className="p-3 text-right text-xs font-black text-slate-850 text-nowrap select-all bg-slate-100/20">
+                            {formatCurrency(sumTotalBiaya)}
+                          </td>
+                          <td className="p-3 text-right text-xs font-black text-teal-600 text-nowrap select-all bg-teal-50/10">
+                            {formatCurrency(sumTotalBayar)}
+                          </td>
+                          <td className="p-3 text-right text-xs font-black text-rose-600 text-nowrap select-all bg-rose-50/10">
+                            {formatCurrency(sumSisaTagihan)}
+                          </td>
+                          <td colSpan={3} className="p-3" />
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* MODAL UNTUK KONFIRMASI HAPUS BIAYA VENDOR */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-rose-100 overflow-hidden transform scale-100 transition-all">
+            {/* Header */}
+            <div className="bg-rose-600 p-5 text-white flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-white animate-pulse" />
+                <h3 className="font-extrabold text-white text-sm tracking-tight uppercase">Konfirmasi Hapus Biaya</h3>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} className="text-white backdrop-blur-sm hover:text-rose-200 transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 text-center space-y-4 animate-fadeIn">
+              <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto text-rose-500 border border-rose-100 mb-2">
+                <Trash2 className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-slate-800">Apakah Anda benar-benar yakin?</p>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Tindakan ini akan menghapus permanen rincian komponen biaya: <br />
+                  <span className="font-black text-rose-650 bg-rose-50/70 px-2 py-1 rounded inline-block mt-1 uppercase text-[11px] border border-rose-100/60">
+                    {deleteTarget.nama_komponen}
+                  </span>
+                </p>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                  Laporan dan sisa neraca kas ERP akan diperbarui secara otomatis setelah data dihapus.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-slate-50 p-4 flex gap-3 justify-end border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="bg-white hover:bg-slate-100 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-xl border border-slate-200 transition-all"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={executeDelete}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" /> Ya, Hapus Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL UNTUK KONFIRMASI HAPUS PER PAKET */}
+      {deletePackageTarget && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-rose-150 overflow-hidden transform scale-100 transition-all">
+            {/* Header */}
+            <div className="bg-rose-700 p-5 text-white flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-white animate-pulse" />
+                <h3 className="font-extrabold text-white text-sm tracking-tight uppercase">Hapus Satu Paket Biaya</h3>
+              </div>
+              <button onClick={() => setDeletePackageTarget(null)} className="text-white backdrop-blur-sm hover:text-rose-200 transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 text-center space-y-4 animate-fadeIn">
+              <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto text-rose-600 border border-rose-200 mb-2">
+                <Trash2 className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-slate-900">PERINGATAN: BULK DELETE AKAN DIMULAI</p>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Tindakan ini akan menghapus <span className="text-rose-600 font-black">{deletePackageTarget.items.length} komponen</span> secara sekaligus pada paket keberangkatan: <br />
+                  <span className="font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded inline-block mt-1 uppercase text-[11.5px] border border-rose-200/50">
+                    {deletePackageTarget.name}
+                  </span>
+                </p>
+                <p className="text-[10px] text-slate-400 mt-2 font-semibold">
+                  Sangat disarankan untuk melakukan backup data atau ekspor Excel/Cetak PDF sebelum melakukan tindakan penghapusan massal ini. Tindakan ini tidak dapat dibatalkan!
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-slate-50 p-4 flex gap-3 justify-end border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeletePackageTarget(null)}
+                className="bg-white hover:bg-slate-100 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-xl border border-slate-200 transition-all"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={executeDeletePackage}
+                className="bg-rose-700 hover:bg-rose-800 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 animate-pulse"
+              >
+                <Trash2 className="w-4 h-4" /> Ya, Hapus seluruh Paket
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL 1: ADD OR EDIT COST COMPONENT BUDGETS */}
       {showFormModal && (
@@ -1458,13 +1898,46 @@ export const VendorPaymentTracker: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Kode Paket Keberangkatan</label>
-                  <input
-                    type="text"
-                    value={formData.package_id || 'UMROH-VIP-AGUSTUS'}
-                    onChange={e => setFormData({ ...formData, package_id: e.target.value })}
-                    className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none-2"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-600 uppercase">Paket Keberangkatan *</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsManualPackage(prev => !prev)}
+                      className="text-[10px] text-teal-600 font-extrabold hover:underline select-none transition-all"
+                    >
+                      {isManualPackage ? "← Pilih dari Daftar" : "+ Ketik Manual"}
+                    </button>
+                  </div>
+                  
+                  {isManualPackage ? (
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ketik nama paket keberangkatan..."
+                      value={formData.package_id || ''}
+                      onChange={e => setFormData({ ...formData, package_id: e.target.value })}
+                      className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500"
+                    />
+                  ) : (
+                    <select
+                      value={formData.package_id || ''}
+                      onChange={e => setFormData({ ...formData, package_id: e.target.value })}
+                      required
+                      className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500 cursor-pointer"
+                    >
+                      <option value="">-- Pilih Paket --</option>
+                      {realPackages.map(p => (
+                        <option key={p.id} value={p.nama}>{p.nama}</option>
+                      ))}
+                      {/* Fallback mock constants if empty */}
+                      {!realPackages.some(pkg => pkg.nama === 'UMROH-VIP-AGUSTUS') && (
+                        <option value="UMROH-VIP-AGUSTUS">UMROH-VIP-AGUSTUS</option>
+                      )}
+                      {!realPackages.some(pkg => pkg.nama === 'UMROH-REGULER-DESEMBER') && (
+                        <option value="UMROH-REGULER-DESEMBER">UMROH-REGULER-DESEMBER</option>
+                      )}
+                    </select>
+                  )}
                 </div>
 
                 <div>
@@ -1559,7 +2032,20 @@ export const VendorPaymentTracker: React.FC = () => {
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[10px] text-sky-700 font-bold mb-0.5">Airline Name</label>
-                      <input type="text" value={formData.airline_name || ''} onChange={e => setFormData({ ...formData, airline_name: e.target.value })} className="w-full text-xs p-2 bg-white border rounded" />
+                      {realAirlines.length > 0 ? (
+                        <select
+                          value={formData.airline_name || ''}
+                          onChange={e => setFormData({ ...formData, airline_name: e.target.value })}
+                          className="w-full text-xs p-2 bg-white border rounded cursor-pointer"
+                        >
+                          <option value="">-- Pilih Maskapai --</option>
+                          {realAirlines.map(air => (
+                            <option key={air.id} value={air.name}>{air.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input type="text" value={formData.airline_name || ''} onChange={e => setFormData({ ...formData, airline_name: e.target.value })} className="w-full text-xs p-2 bg-white border rounded" />
+                      )}
                     </div>
                     <div>
                       <label className="block text-[10px] text-sky-700 font-bold mb-0.5">Flight Code</label>
@@ -1579,7 +2065,27 @@ export const VendorPaymentTracker: React.FC = () => {
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[10px] text-amber-700 font-bold mb-0.5">Nama Hotel</label>
-                      <input type="text" value={formData.nama_hotel || ''} onChange={e => setFormData({ ...formData, nama_hotel: e.target.value })} className="w-full text-xs p-2 bg-white border rounded" />
+                      {realHotels.length > 0 ? (
+                        <select
+                          value={formData.nama_hotel || ''}
+                          onChange={e => {
+                            const found = realHotels.find(h => h.nama === e.target.value);
+                            setFormData({
+                              ...formData,
+                              nama_hotel: e.target.value,
+                              kota: found ? found.kota : formData.kota
+                            });
+                          }}
+                          className="w-full text-xs p-2 bg-white border rounded cursor-pointer"
+                        >
+                          <option value="">-- Pilih Hotel --</option>
+                          {realHotels.map(h => (
+                            <option key={h.id} value={h.nama}>{h.nama} ({h.kota})</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input type="text" value={formData.nama_hotel || ''} onChange={e => setFormData({ ...formData, nama_hotel: e.target.value })} className="w-full text-xs p-2 bg-white border rounded" />
+                      )}
                     </div>
                     <div>
                       <label className="block text-[10px] text-amber-700 font-bold mb-0.5">Kota</label>
