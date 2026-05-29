@@ -63,20 +63,24 @@ function App() {
       if (user) {
         setIsLoggedIn(true);
         setUserEmail(user.email);
-        const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+        const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
         
         // Fetch user role from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
-            setUserRole(data.role as Role);
-            setSubRole(data.subRole || null);
+            setUserRole(isMA ? 'admin' : (data.role as Role));
+            setSubRole(isMA ? null : (data.subRole || null));
             
             // Set initial tab based on role and subRole
-            if (data.role === 'mitra') setActiveTab('dashboard' as TabType);
-            else if (data.role === 'jamaah') setActiveTab('dashboard' as TabType);
-            else {
+            if (isMA) {
+              setActiveTab('dashboard');
+            } else if (data.role === 'mitra') {
+              setActiveTab('dashboard' as TabType);
+            } else if (data.role === 'jamaah') {
+              setActiveTab('dashboard' as TabType);
+            } else {
               if (data.subRole && categoryItems[data.subRole]) {
                 setActiveTab(categoryItems[data.subRole][0] as TabType);
               } else {
@@ -131,7 +135,7 @@ function App() {
     };
   }, []);
 
-  const isMasterAdmin = userEmail === 'operationalumaroh@gmail.com' || userEmail === 'afadsa76@gmail.com';
+  const isMasterAdmin = userEmail ? (userEmail.toLowerCase() === 'operationalumaroh@gmail.com' || userEmail.toLowerCase() === 'afadsa76@gmail.com') : false;
 
   const handleLogin = (role: Role, subRole?: string) => {
     setUserRole(role);
@@ -291,7 +295,7 @@ function App() {
       </header>
 
       {(userRole === 'operasional' || userRole === 'admin' || isMasterAdmin) && (!isMasterAdmin || adminViewMode === 'operasional') && (
-        <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={userRole || 'admin'} subRole={subRole} />
+        <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={isMasterAdmin ? 'admin' : (userRole || 'admin')} subRole={isMasterAdmin ? null : subRole} />
       )}
 
       {/* Main Content */}

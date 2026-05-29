@@ -65,8 +65,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
           user = userCredential.user;
         } catch (signInErr: unknown) {
           const authError = signInErr as { code?: string; message?: string };
+          const errCode = authError.code || '';
+          const errMsg = authError.message || '';
+          const isUserNotFoundOrInvalid = errCode === 'auth/user-not-found' || 
+                                          errCode === 'auth/invalid-credential' || 
+                                          errMsg.includes('user-not-found') || 
+                                          errMsg.includes('invalid-credential');
           // If login fails because user is not found or credentials invalid (which Firebase returns for non-existent Auth users)
-          if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
+          if (isUserNotFoundOrInvalid) {
             try {
               // Try to automatically register them under the hood. Since their profile is already in Firestore, 
               // they can transition seamlessly by typing their email and password and clicking Login.
@@ -92,7 +98,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         const isOffline = errorMsg.includes('offline') || errorMsg.includes('Could not reach Cloud Firestore backend');
-        const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+        const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
         if (isMA) {
           console.warn("Firestore error bypassed for Master Admin:", errorMsg);
         } else if (isOffline) {
@@ -103,9 +109,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       }
 
       let userDataObj = null;
-      const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+      const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
       if (userDocSnap && userDocSnap.exists()) {
         userDataObj = userDocSnap.data();
+        if (isMA) {
+          userDataObj.role = 'admin';
+          userDataObj.subRole = null;
+        }
       } else if (isMA) {
         userDataObj = { role: 'admin', subRole: null };
       } else if (user.email) {
@@ -153,7 +163,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else {
         // If user just signed up or document missing, lead to registration
         // But first check if they are a hardcoded admin
-        const isHardcodedAdmin = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+        const isHardcodedAdmin = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
         if (isHardcodedAdmin) {
           onLogin('admin');
         } else {
@@ -164,21 +174,31 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
     } catch (err: unknown) {
       console.error(err);
       const authError = err as { code?: string, message?: string };
-      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
-        const isTargetEmail = email === 'afadsa76@gmail.com';
+      const errCode = authError.code || '';
+      const errMsg = authError.message || '';
+      const isTargetEmail = email ? (email.trim().toLowerCase() === 'afadsa76@gmail.com') : false;
+
+      const isInvalidCredOrNotFound = errCode === 'auth/user-not-found' || 
+                                      errCode === 'auth/wrong-password' || 
+                                      errCode === 'auth/invalid-credential' ||
+                                      errMsg.includes('invalid-credential') ||
+                                      errMsg.includes('wrong-password') ||
+                                      errMsg.includes('user-not-found');
+
+      if (isInvalidCredOrNotFound) {
         setError(isTargetEmail 
           ? 'Credential tidak valid. Karena email ini terdaftar lewat Google, Anda HARUS klik "Lupa Password" di bawah untuk mengatur password "D@rkman31" pertama kali agar bisa login manual.'
           : 'Email atau Password salah. Jika Anda biasanya login dengan Google, silakan klik "Lupa Password" di bawah untuk mengatur password pertama kali.');
-      } else if (authError.code === 'auth/email-already-in-use') {
+      } else if (errCode === 'auth/email-already-in-use' || errMsg.includes('email-already-in-use')) {
         setError('Email ini sudah terdaftar via Google. Silakan klik "Lupa Password" untuk mengatur password manual Anda.');
-      } else if (authError.code === 'auth/operation-not-allowed') {
+      } else if (errCode === 'auth/operation-not-allowed' || errMsg.includes('operation-not-allowed')) {
         setError('Login Email & Password belum diaktifkan di Firebase Console. Silakan aktifkan di Authentication > Sign-in method.');
-      } else if (authError.code === 'auth/weak-password') {
+      } else if (errCode === 'auth/weak-password' || errMsg.includes('weak-password')) {
         setError('Password terlalu lemah. Minimal 6 karakter.');
-      } else if (authError.code === 'auth/too-many-requests') {
+      } else if (errCode === 'auth/too-many-requests' || errMsg.includes('too-many-requests')) {
         setError('Terlalu banyak percobaan login. Silakan tunggu beberapa saat atau reset password.');
       } else {
-        setError('Terjadi kesalahan: ' + (authError.message || 'Unknown error'));
+        setError('Terjadi kesalahan: ' + (errMsg || 'Unknown error'));
       }
     } finally {
       setIsLoading(false);
@@ -189,27 +209,28 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
     setError('');
     setIsLoading(true);
     try {
-      let idToken: string | undefined;
+      let user;
       
       if (Capacitor.isNativePlatform()) {
         const result = await GoogleAuth.signIn();
-        idToken = result.authentication.idToken;
+        const idToken = result.authentication.idToken;
+        if (!idToken) {
+          throw new Error('ID Token tidak ditemukan dari Google Sign In');
+        }
+        const credential = GoogleAuthProvider.credential(idToken);
+        const userCredential = await signInWithCredential(auth, credential);
+        user = userCredential.user;
       } else {
-        // Fallback or handle differently on web if needed
+        // Standard Web Google Sign-In with popup. signInWithPopup automatically logs the user in.
         const provider = new GoogleAuthProvider();
         const { signInWithPopup } = await import('firebase/auth');
         const result = await signInWithPopup(auth, provider);
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        idToken = credential?.idToken;
+        user = result.user;
       }
 
-      if (!idToken) {
-        throw new Error('ID Token tidak ditemukan dari Google Sign In');
+      if (!user) {
+        throw new Error('Tidak dapat memperoleh data pengguna dari Google Sign In');
       }
-
-      const credential = GoogleAuthProvider.credential(idToken);
-      const userCredential = await signInWithCredential(auth, credential);
-      const user = userCredential.user;
 
       // Check if user exists in Firestore
       const userDocRef = doc(db, 'users', user.uid);
@@ -219,7 +240,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         const isOffline = errorMsg.includes('offline') || errorMsg.includes('Could not reach Cloud Firestore backend');
-        const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+        const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
         if (isMA) {
           console.warn("Firestore error bypassed for Master Admin:", errorMsg);
         } else if (isOffline) {
@@ -230,9 +251,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       }
 
       let userDataObj = null;
-      const isMA = user.email === 'operationalumaroh@gmail.com' || user.email === 'afadsa76@gmail.com';
+      const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
       if (userDocSnap && userDocSnap.exists()) {
         userDataObj = userDocSnap.data();
+        if (isMA) {
+          userDataObj.role = 'admin';
+          userDataObj.subRole = null;
+        }
       } else if (isMA) {
         userDataObj = { role: 'admin', subRole: null };
       } else if (user.email) {
@@ -284,7 +309,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       }
     } catch (err: unknown) {
       console.error(err);
-      setError('Gagal login dengan Google: ' + (err instanceof Error ? err.message : String(err)));
+      const authError = err as { code?: string; message?: string };
+      const errCode = authError.code || '';
+      const errMsg = authError.message || '';
+
+      if (errCode === 'auth/invalid-credential' || errMsg.includes('invalid-credential')) {
+        setError('Google Auth Gagal (auth/invalid-credential). Hal ini sering terjadi di web preview AI Studio (iframe) karena kebijakan browser membatasi cookie/pop-up pihak ketiga. Silakan login secara manual dengan mengetik Email & Password di atas.');
+      } else if (errCode === 'auth/popup-closed-by-user' || errMsg.includes('popup-closed-by-user')) {
+        setError('Login dibatalkan karena jendela pop-up Google ditutup sebelum selesai.');
+      } else if (errCode === 'auth/popup-blocked' || errMsg.includes('popup-blocked')) {
+        setError('Pop-up Google diblokir oleh browser. Silakan izinkan pop-up untuk situs ini atau login secara manual.');
+      } else {
+        setError('Gagal login dengan Google: ' + (errMsg || String(err)));
+      }
     } finally {
       setIsLoading(false);
     }

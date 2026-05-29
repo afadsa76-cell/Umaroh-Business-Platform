@@ -79,11 +79,9 @@ service cloud.firestore {
     }
 
     function isValidTransaction(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.userId is string && data.userId.size() <= 128 &&
-             data.type in ['komisi', 'withdraw', 'pembayaran', 'bonus_rekrut'] &&
+      return data.userId is string && data.userId.size() <= 128 &&
              data.amount is number &&
-             data.status in ['pending', 'approved', 'rejected', 'success'] &&
+             data.status is string &&
              data.createdAt is string;
     }
 
@@ -95,10 +93,9 @@ service cloud.firestore {
     }
 
     function isValidBooking(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.jamaahId is string && data.jamaahId.size() <= 128 &&
-             data.statusPembayaran in ['pending', 'dp', 'lunas'] &&
-             data.totalHarga is number && data.totalHarga >= 0;
+      return (data.get('jamaahId', '') == '' || data.jamaahId is string) &&
+             (data.get('statusPembayaran', '') is string) &&
+             (data.get('totalHarga', 0) is number);
     }
 
     function isValidPendaftaranMitra(data) {
@@ -148,8 +145,6 @@ service cloud.firestore {
       allow list: if isFinance() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow create: if isSignedIn() && 
                     incoming().userId == request.auth.uid && 
-                    incoming().type == 'withdraw' && 
-                    incoming().status == 'pending' &&
                     isValidTransaction(incoming());
       allow write: if isFinance() && isValidTransaction(incoming());
     }
@@ -179,22 +174,30 @@ service cloud.firestore {
 
     match /bookings/{bookingId} {
       allow get: if isSignedIn() && (
-                    resource.data.jamaahId == request.auth.uid || 
-                    resource.data.mitraId == request.auth.uid || 
+                    resource.data.get('jamaahId', '') == request.auth.uid || 
+                    resource.data.get('mitraId', '') == request.auth.uid || 
                     isOperasional()
                   );
       allow list: if isSignedIn() && (
-                    resource.data.jamaahId == request.auth.uid || 
-                    resource.data.mitraId == request.auth.uid || 
+                    resource.data.get('jamaahId', '') == request.auth.uid || 
+                    resource.data.get('mitraId', '') == request.auth.uid || 
                     isOperasional()
                   );
       allow create: if isSignedIn() && 
-                    (incoming().jamaahId == request.auth.uid || (isMitra() && incoming().mitraId == request.auth.uid)) &&
+                    (incoming().get('jamaahId', '') == request.auth.uid || 
+                     incoming().get('mitraId', '') == request.auth.uid || 
+                     isOperasional()) &&
                     isValidBooking(incoming());
       allow update: if isOperasional() || 
-                    (isOwner(existing().jamaahId) && 
-                     incoming().diff(existing()).affectedKeys().hasOnly(['statusPembayaran']) &&
-                     isValidBooking(incoming()));
+                    (isSignedIn() && (
+                      existing().get('jamaahId', '') == request.auth.uid || 
+                      existing().get('mitraId', '') == request.auth.uid
+                    ) && isValidBooking(incoming()));
+      allow delete: if isOperasional() || 
+                    (isSignedIn() && (
+                      existing().get('jamaahId', '') == request.auth.uid || 
+                      existing().get('mitraId', '') == request.auth.uid
+                    ));
     }
 
     match /maskapai/{maskapaiId} {
@@ -259,7 +262,12 @@ service cloud.firestore {
 
     match /tracker_jamaah/{jamaahId} {
       allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(jamaahId);
+      allow write: if isOperasional() || (isSignedIn() && (
+                    incoming().get('mitraId', '') == request.auth.uid || 
+                    incoming().get('bookingId', '') == request.auth.uid ||
+                    existing().get('mitraId', '') == request.auth.uid ||
+                    existing().get('bookingId', '') == request.auth.uid
+                  ));
     }
 
     match /tracker_keberangkatan/{keberangkatanId} {

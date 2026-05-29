@@ -6,7 +6,7 @@ import {
   Bell, ShieldAlert, Sparkles, DollarSign, Upload, Activity,
   ChevronDown, ChevronUp
 } from 'lucide-react';
-import { db, collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, handleFirestoreError, OperationType } from '../../firebase';
+import { db, collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, handleFirestoreError, OperationType, getDocs } from '../../firebase';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -153,6 +153,21 @@ export const VendorPaymentTracker: React.FC = () => {
   const [realPackages, setRealPackages] = useState<{ id: string; nama: string }[]>([]);
   const [realHotels, setRealHotels] = useState<{ id: string; nama: string; kota: string }[]>([]);
   const [realAirlines, setRealAirlines] = useState<{ id: string; name: string }[]>([]);
+
+  // Flight Risk Allocation Controls (Avtur & Middle East Conflict Mitigation Engine)
+  const [avturIndex, setAvturIndex] = useState<number>(85); // Global index baseline Bbl in USD
+  const [middleEastConflict, setMiddleEastConflict] = useState<'Low' | 'Medium' | 'High'>('Low');
+  const [safetyBuffers, setSafetyBuffers] = useState<Record<string, { percent: number; fixed: number }>>({
+    'Garuda': { percent: 15, fixed: 4500000 },
+    'Saudia': { percent: 15, fixed: 4000000 },
+    'Lion': { percent: 18, fixed: 4000000 },
+    'Scoot': { percent: 12, fixed: 3000000 },
+    'Indigo': { percent: 12, fixed: 3000000 },
+  });
+  const [syncToMitra, setSyncToMitra] = useState<boolean>(true);
+  const [autoLockBooking, setAutoLockBooking] = useState<boolean>(true);
+  const [surchargeNotification, setSurchargeNotification] = useState<boolean>(true);
+  const [expandMitigation, setExpandMitigation] = useState<boolean>(true);
 
   // Form Field State
   const [formData, setFormData] = useState<Partial<CostComponent>>({});
@@ -1117,6 +1132,449 @@ export const VendorPaymentTracker: React.FC = () => {
           <p className="text-[11px] text-slate-500 uppercase font-extrabold tracking-wide">ESTIMASI KEKURANGAN REKONSILIASI</p>
           <p className="text-lg font-black text-slate-900">{formatCurrency(deficitAssessment)}</p>
         </div>
+      </div>
+
+      {/* PUSAT MITIGASI FLUKTUASI TIKET & KONTINGENSI SEAT (FLIGHT MITIGATION CONSOLE) */}
+      <div id="flight-mitigation-console" className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-teal-500/30 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+        
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-teal-500/10 p-3 rounded-2xl border border-teal-500/20 text-teal-400">
+              <Plane className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                Flight Risk & Airfare Mitigation Control Unit
+                <span className="bg-emerald-500/20 text-emerald-400 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                  ONLINE PROTECTION
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                Pencegah risiko kerugian akibat fluktuasi Avtur, konflik geopolitik Navigasi Udara, serta ketersediaan seat maskapai secara real-time.
+              </p>
+            </div>
+          </div>
+          <button 
+            id="toggle-mitigation-panel"
+            onClick={() => setExpandMitigation(prev => !prev)}
+            className="text-xs font-bold text-slate-400 hover:text-white bg-slate-800/80 px-3.5 py-2 rounded-xl border border-slate-700 transition"
+          >
+            {expandMitigation ? "Sembunyikan Panel" : "Tampilkan Panel"}
+          </button>
+        </div>
+
+        {expandMitigation && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Left Column: external sliders & variables */}
+              <div className="lg:col-span-4 bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-5">
+                <h3 className="text-xs font-extrabold text-teal-400 uppercase tracking-widest flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-teal-500" /> 1. Parameter Simulasi Makro Eksternal
+                </h3>
+                
+                {/* Avtur slider */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-slate-300">Indeks Global Avtur (fuel index):</span>
+                    <span className="text-teal-400 font-black">${avturIndex} / Bbl</span>
+                  </div>
+                  <input 
+                    id="avtur-slider"
+                    type="range"
+                    min="60"
+                    max="180"
+                    value={avturIndex}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setAvturIndex(val);
+                      if (val > 110) {
+                        triggerNotification('warning', 'Peringatan Avtur Tinggi', `Indeks Avtur di atas $110/Bbl memicu kenaikan harga tiket maskapai.`);
+                      }
+                    }}
+                    className="w-full accent-teal-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                    <span>Normal ($80)</span>
+                    <span className="text-amber-500">Krisis ($110)</span>
+                    <span className="text-rose-500">Kritikal ($150+)</span>
+                  </div>
+                </div>
+
+                {/* Conflict Geopolitics selector */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-slate-300">Skala Konflik Timur Tengah (Navigasi):</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-extrabold ${
+                      middleEastConflict === 'High' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                      middleEastConflict === 'Medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                      'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                    }`}>
+                      {middleEastConflict === 'High' ? '🚨 HIGH CONFLICT' : middleEastConflict === 'Medium' ? '⚠️ MEDIUM ALERT' : '✅ SAFE / LOW'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['Low', 'Medium', 'High'] as const).map(lvl => (
+                      <button
+                        id={`conflict-${lvl.toLowerCase()}`}
+                        key={lvl}
+                        onClick={() => {
+                          setMiddleEastConflict(lvl);
+                          if (lvl === 'High') {
+                            triggerNotification('error', 'Rawan Konflik Timur Tengah', 'Skala konflik tinggi memicu maskapai mengalihkan rute penerbangan. Surcharge diproyeksikan melonjak!');
+                          } else {
+                            triggerNotification('info', 'Adjustment Geopolitik', `Status konflik diatur ke ${lvl}.`);
+                          }
+                        }}
+                        className={`py-2 text-xs font-black rounded-lg border transition ${
+                          middleEastConflict === lvl 
+                            ? 'bg-teal-500 text-slate-950 border-teal-400' 
+                            : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-800'
+                        }`}
+                      >
+                        {lvl === 'High' ? 'Tinggi' : lvl === 'Medium' ? 'Sedang' : 'Rendah'}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-normal font-medium">
+                    *Kenaikan Avtur dan rute udara memicu maskapai menagih surcharge tambahan per jemaah secara sepihak.
+                  </p>
+                </div>
+              </div>
+
+              {/* Middle Column: Calculated Safety Surcharges per carrier */}
+              <div className="lg:col-span-4 bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4">
+                <h3 className="text-xs font-extrabold text-teal-400 uppercase tracking-widest flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-teal-500" /> 2. Estimasi Surcharge & Total Buffer
+                </h3>
+                
+                <div className="space-y-3.5">
+                  {Object.entries(safetyBuffers).map(([airline, config]) => {
+                    // Calculation formula
+                    const avturSurcharge = Math.max(0, (avturIndex - 85) * 65000);
+                    const conflictSurcharge = middleEastConflict === 'High' ? 1800000 : middleEastConflict === 'Medium' ? 800000 : 0;
+                    const calculatedSurcharge = avturSurcharge + conflictSurcharge;
+                    const totalBufferRequired = config.fixed + calculatedSurcharge;
+
+                    return (
+                      <div key={airline} className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-black text-white">{airline === 'Garuda' ? 'Garuda Indonesia' : airline === 'Saudia' ? 'Saudi Arabian Airlines' : airline === 'Lion' ? 'Lion Air Group' : airline === 'Scoot' ? 'Scoot Airlines' : 'Indigo Airlines'}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="text-[10px] font-bold text-slate-500">
+                              Base: {formatCurrency(config.fixed)}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setSafetyBuffers(prev => ({
+                                  ...prev,
+                                  [airline]: { ...prev[airline], fixed: Math.max(0, prev[airline].fixed - 500000) }
+                                }));
+                              }}
+                              className="text-[10px] text-rose-400 hover:text-rose-300 font-extrabold bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700 transition"
+                              title="Kurangi Base Buffer Rp500.000"
+                            >
+                              -
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSafetyBuffers(prev => ({
+                                  ...prev,
+                                  [airline]: { ...prev[airline], fixed: prev[airline].fixed + 500000 }
+                                }));
+                              }}
+                              className="text-[10px] text-teal-400 hover:text-teal-300 font-extrabold bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700 transition"
+                              title="Tambah Base Buffer Rp500.000"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-black text-amber-400">
+                            + {formatCurrency(calculatedSurcharge)} <span className="text-[9px] text-slate-400">(Surchg)</span>
+                          </p>
+                          <p className="text-[11px] font-black text-teal-400 mt-0.5">
+                            Total: {formatCurrency(totalBufferRequired)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right Column: Mitra & Integration syncing status */}
+              <div className="lg:col-span-4 bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <h3 className="text-xs font-extrabold text-teal-400 uppercase tracking-widest flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-teal-500" /> 3. Sinkronisasi Dashboard Mitra
+                  </h3>
+                  
+                  {/* Toggles */}
+                  <div className="space-y-3 pt-1">
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                      <input 
+                        id="checkbox-sync-mitra"
+                        type="checkbox"
+                        checked={syncToMitra}
+                        onChange={e => setSyncToMitra(e.target.checked)}
+                        className="rounded accent-teal-500 w-4 h-4 bg-slate-900 border-slate-800 focus:ring-0"
+                      />
+                      <span className="text-slate-300 text-xs font-semibold leading-tight">
+                        Sync Surcharge Otomatis ke Paket Mitra
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                      <input 
+                        id="checkbox-lock-booking"
+                        type="checkbox"
+                        checked={autoLockBooking}
+                        onChange={e => setAutoLockBooking(e.target.checked)}
+                        className="rounded accent-teal-500 w-4 h-4 bg-slate-900 border-slate-800 focus:ring-0"
+                      />
+                      <span className="text-slate-300 text-xs font-semibold leading-tight">
+                        Kunci Booking Seat jika Sisa Seat &lt; 10
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                      <input 
+                        id="checkbox-surcharge-notification"
+                        type="checkbox"
+                        checked={surchargeNotification}
+                        onChange={e => setSurchargeNotification(e.target.checked)}
+                        className="rounded accent-teal-500 w-4 h-4 bg-slate-900 border-slate-800 focus:ring-0"
+                      />
+                      <span className="text-slate-300 text-xs font-semibold leading-tight">
+                        Broadcast Kenaikan Harga ke Portal Mitra
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-850 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+                    <span>Status Integrasi:</span>
+                    <span className="text-teal-400 font-extrabold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-ping" /> AKTIF SYNC
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-500">
+                    Mitra Terhubung: <strong>48 Perwakilan Agen Mitra</strong>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Actions section */}
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-amber-500/10 p-2 rounded-xl text-amber-400 border border-amber-500/20">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-white leading-tight">Informasi Fluktuasi Saat Ini</p>
+                  <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                    Proyeksi Surcharge tambahan rata-rata: <strong className="text-amber-400">{formatCurrency(
+                      Math.max(0, (avturIndex - 85) * 65000) + (middleEastConflict === 'High' ? 1800000 : middleEastConflict === 'Medium' ? 800000 : 0)
+                    )}</strong> per seat umroh.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
+                <button
+                  id="btn-apply-surcharge"
+                  onClick={async () => {
+                    const extraSurcharge = Math.max(0, (avturIndex - 85) * 65000) + (middleEastConflict === 'High' ? 1800000 : middleEastConflict === 'Medium' ? 800000 : 0);
+                    
+                    try {
+                      let updatedComponentsCount = 0;
+                      let updatedMasterCount = 0;
+                      let updatedMitraCount = 0;
+                      let updatedMaskapaiCount = 0;
+
+                      // Helper to parse airline config from name
+                      const getAirlineInfo = (nameStr: string) => {
+                        const name = (nameStr || '').toLowerCase();
+                        if (name.includes('garuda')) {
+                          return { nameKey: 'Garuda', config: safetyBuffers['Garuda'] || { percent: 15, fixed: 4500000 } };
+                        }
+                        if (name.includes('saudia') || name.includes('saudi')) {
+                          return { nameKey: 'Saudia', config: safetyBuffers['Saudia'] || { percent: 15, fixed: 4000000 } };
+                        }
+                        if (name.includes('lion') || name.includes('batik') || name.includes('super air') || name.includes('wings')) {
+                          return { nameKey: 'Lion', config: safetyBuffers['Lion'] || { percent: 18, fixed: 4000000 } };
+                        }
+                        if (name.includes('scoot')) {
+                          return { nameKey: 'Scoot', config: safetyBuffers['Scoot'] || { percent: 12, fixed: 3000000 } };
+                        }
+                        if (name.includes('indigo')) {
+                          return { nameKey: 'Indigo', config: safetyBuffers['Indigo'] || { percent: 12, fixed: 3000000 } };
+                        }
+                        return { nameKey: 'General', config: { percent: 12, fixed: 3000000 } };
+                      };
+
+                      // 1. UPDATE COST COMPONENTS (ERP VENDORS)
+                      const componentPromises = costComponents
+                        .filter(item => item.kategori_komponen === 'Maskapai')
+                        .map(async (item) => {
+                          const airline = getAirlineInfo(item.nama_komponen || item.airline_name || '');
+                          const totalSurcharge = airline.config.fixed + extraSurcharge;
+                          
+                          const previousSurcharge = Number(item.avtur_cost || 0); // we use avtur_cost to track applied surcharge changes safely
+                          const diff = totalSurcharge - previousSurcharge;
+                          
+                          if (diff !== 0) {
+                            const basePrice = Number(item.harga_satuan) || 0;
+                            const newPrice = basePrice + diff;
+                            const currentQty = item.qty || 1;
+                            const newTotalBiaya = newPrice * currentQty;
+                            
+                            await updateDoc(doc(db, 'package_cost_components', item.id), {
+                              harga_satuan: newPrice,
+                              total_biaya: newTotalBiaya,
+                              sisa_tagihan: Math.max(0, newTotalBiaya - (item.total_bayar || 0)),
+                              avtur_cost: totalSurcharge, // save current applied total surcharge
+                              catatan: `${(item.catatan || '').replace(/\[Surcharge:[^\]]+\]/g, '')} [Surcharge: +${formatCurrency(totalSurcharge)} (Avtur Index: $${avturIndex}, Konflik: ${middleEastConflict})]`.trim(),
+                              updated_at: new Date().toISOString()
+                            });
+                            updatedComponentsCount++;
+                          }
+                        });
+                      await Promise.all(componentPromises);
+
+                      // 2. UPDATE MASKAPAI DOCUMENTS (FLIGHT INVENTORY COLLECTION)
+                      const maskapaiSnap = await getDocs(collection(db, 'maskapai'));
+                      const maskapaiPromises: Promise<void>[] = [];
+                      maskapaiSnap.forEach((d) => {
+                        const maskData = d.data();
+                        const maskName = maskData.name || '';
+                        const airline = getAirlineInfo(maskName);
+                        const totalSurcharge = airline.config.fixed + extraSurcharge;
+                        
+                        const previousSurcharge = Number(maskData.hargaSetoran || 0); // use custom field to store applied surcharge safely
+                        const diff = totalSurcharge - previousSurcharge;
+
+                        if (diff !== 0) {
+                          maskapaiPromises.push(
+                            updateDoc(doc(db, 'maskapai', d.id), {
+                              hargaBeli: (Number(maskData.hargaBeli) || 0) + diff,
+                              hargaJual: (Number(maskData.hargaJual) || 0) + diff,
+                              hargaSetoran: totalSurcharge, // track applied surcharge
+                              updatedAt: new Date().toISOString()
+                            })
+                          );
+                          updatedMaskapaiCount++;
+                        }
+                      });
+                      await Promise.all(maskapaiPromises);
+
+                      // 3. UPDATE MASTER PACKAGES (PAKET_MASTER)
+                      if (syncToMitra) {
+                        const masterSnap = await getDocs(collection(db, 'paket_master'));
+                        const masterPromises: Promise<void>[] = [];
+                        masterSnap.forEach((d) => {
+                          const docData = d.data();
+                          // Identify package airline
+                          const airlineName = docData.maskapaiNama || docData.maskapaiLabel || docData.nama || docData.nama_paket || '';
+                          const airline = getAirlineInfo(airlineName);
+                          const totalSurcharge = airline.config.fixed + extraSurcharge;
+
+                          const previousSurcharge = Number(docData.appliedSurcharge || 0);
+                          const diff = totalSurcharge - previousSurcharge;
+
+                          if (diff !== 0) {
+                            masterPromises.push(
+                              updateDoc(doc(db, 'paket_master', d.id), {
+                                estimasiHargaMaskapai: (Number(docData.estimasiHargaMaskapai) || 0) + diff,
+                                hargaJualQuad: (Number(docData.hargaJualQuad) || 0) + diff,
+                                hargaJualTriple: (Number(docData.hargaJualTriple) || 0) + diff,
+                                hargaJualDouble: (Number(docData.hargaJualDouble) || 0) + diff,
+                                appliedSurcharge: totalSurcharge,
+                                updatedAt: new Date().toISOString()
+                              })
+                            );
+                            updatedMasterCount++;
+                          }
+                        });
+                        await Promise.all(masterPromises);
+
+                        // 4. UPDATE PARTNER PACKAGES (PAKET_MITRA)
+                        const mitraSnap = await getDocs(collection(db, 'paket_mitra'));
+                        const mitraPromises: Promise<void>[] = [];
+                        mitraSnap.forEach((d) => {
+                          const docData = d.data();
+                          const airlineName = docData.maskapaiNama || docData.maskapaiLabel || docData.nama || docData.nama_paket || '';
+                          const airline = getAirlineInfo(airlineName);
+                          const totalSurcharge = airline.config.fixed + extraSurcharge;
+
+                          const previousSurcharge = Number(docData.appliedSurcharge || 0);
+                          const diff = totalSurcharge - previousSurcharge;
+
+                          if (diff !== 0) {
+                            mitraPromises.push(
+                              updateDoc(doc(db, 'paket_mitra', d.id), {
+                                estimasiHargaMaskapai: (Number(docData.estimasiHargaMaskapai) || 0) + diff,
+                                hargaJualQuad: (Number(docData.hargaJualQuad) || 0) + diff,
+                                hargaJualTriple: (Number(docData.hargaJualTriple) || 0) + diff,
+                                hargaJualDouble: (Number(docData.hargaJualDouble) || 0) + diff,
+                                appliedSurcharge: totalSurcharge,
+                                updatedAt: new Date().toISOString()
+                              })
+                            );
+                            updatedMitraCount++;
+                          }
+                        });
+                        await Promise.all(mitraPromises);
+                      }
+
+                      await addLog(
+                        "FLIGHT RISK MITIGATION RUN", 
+                        `Kalkulasi ulang harga rute & fuel surcharge berhasil diselaraskan. Terupdate: ${updatedComponentsCount} Vendor Cost Components, ${updatedMaskapaiCount} Maskapai Inventory, ${updatedMasterCount} Master Packages, ${updatedMitraCount} Partner Packages.`
+                      );
+
+                      triggerNotification(
+                        'success', 
+                        'Sinkronisasi Sukses', 
+                        `Surcharge berhasil disinkronkan ke seluruh sistem database real: ${updatedComponentsCount} ERP, ${updatedMaskapaiCount} Maskapai, ${updatedMasterCount} Master, ${updatedMitraCount} Mitra.`
+                      );
+
+                    } catch (err) {
+                      console.error("Error batch updating real database: ", err);
+                      triggerNotification('error', 'Gagal update data real', `Eror saat sinkronisasi: ${err instanceof Error ? err.message : err}`);
+                    }
+                  }}
+                  className="bg-teal-500 hover:bg-teal-300 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl transition-all shadow flex items-center gap-1.5 focus:outline-none"
+                >
+                  <Sparkles className="w-4 h-4" /> Terapkan Surcharge Massal ke ERP
+                </button>
+
+                <button
+                  id="btn-broadcast-mitra"
+                  onClick={async () => {
+                    const extraSurcharge = Math.max(0, (avturIndex - 85) * 65000) + (middleEastConflict === 'High' ? 1800000 : middleEastConflict === 'Medium' ? 800000 : 0);
+                    
+                    try {
+                      await addLog("MITRA BROADCAST SURCHARGE", `Menyiarkan pengumuman kenaikan biaya avtur & safety buffer sebesar ${formatCurrency(extraSurcharge)} per seat kepada seluruh 48 Mitra aktif via server notifications.`);
+                      triggerNotification('success', 'Pemberitahuan Disebarkan', `Broadcast sukses! Info kenaikan avtur & surcharge keamanan berantai berhasil dikirimkan ke 48 Mitra Rekanan.`);
+                    } catch (err) {
+                      console.error("Error broadcasting: ", err);
+                    }
+                  }}
+                  className="bg-slate-850 hover:bg-slate-800 text-slate-200 font-extrabold text-xs px-5 py-2.5 rounded-xl border border-slate-750 transition"
+                >
+                  Siarkan Pengumuman ke Mitra
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
 
       {/* NOTIFICATION HUD & INTERACTIVE ANALYTIC METRICS */}

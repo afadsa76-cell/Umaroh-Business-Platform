@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc } from '../firebase';
+import { syncBookingToTracker } from '../utils/firebaseSync';
 import { PaketMaster, Maskapai, Hotel } from '../types';
 import { PaketDetailView } from './PaketDetailView';
 
@@ -94,7 +95,11 @@ export const KatalogPaketView = () => {
         createdAt: serverTimestamp()
       };
 
-      await addDoc(collection(db, 'bookings'), bookingData);
+      const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+      await syncBookingToTracker(docRef.id, {
+        ...bookingData,
+        createdAt: new Date().toISOString()
+      });
       setBookingSuccess(true);
       setTimeout(() => {
         setBookingSuccess(false);

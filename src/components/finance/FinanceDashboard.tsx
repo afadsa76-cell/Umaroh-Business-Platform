@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { db, collection, onSnapshot, query, where, doc, updateDoc, runTransaction } from '../../firebase';
+import { syncBookingToTracker } from '../../utils/firebaseSync';
 
 type FinanceTab = 'ap' | 'ar' | 'komisi';
 
@@ -84,6 +85,13 @@ export const FinanceDashboard: React.FC = () => {
   const updateBookingStatus = async (id: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, 'bookings', id), { statusPembayaran: newStatus });
+      const booking = bookings.find(b => b.id === id);
+      if (booking) {
+        await syncBookingToTracker(id, {
+          ...booking,
+          statusPembayaran: newStatus
+        });
+      }
     } catch (error) {
       console.error("Error updating status:", error);
     }

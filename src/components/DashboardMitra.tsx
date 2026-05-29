@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, History, LayoutDashboard, Calendar, User, TrendingUp, PlusCircle, Shield, Zap, Target } from 'lucide-react';
+import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, History, LayoutDashboard, Calendar, User, TrendingUp, PlusCircle, Shield, Zap, Target, Sparkles, BarChart2 } from 'lucide-react';
 import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType } from '../firebase';
 import { PaketMitraView } from './PaketMitraView';
 import { KatalogPaketView } from './KatalogPaketView';
@@ -10,8 +10,10 @@ import { ValidasiPaketMitraView } from './ValidasiPaketMitraView';
 import { PaketMasterWizard } from './PaketMasterWizard';
 import { FeedKolaborasiView } from './FeedKolaborasiView';
 import { FlightTrackerWidget } from './FlightTrackerWidget';
+import { AIMarketingView } from './AIMarketingView';
+import { AISmartAnalyticsView } from './AISmartAnalyticsView';
 
-type MitraTab = 'overview' | 'feed' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile';
+type MitraTab = 'overview' | 'feed' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics';
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
@@ -263,6 +265,53 @@ export const DashboardMitra = () => {
         </div>
       </div>
 
+      {/* AI Smart Features Bento Grid Launcher */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Card 1: AI Copywriter */}
+        <div className="bg-gradient-to-br from-indigo-950 to-slate-900 rounded-3xl p-6 text-white flex flex-col justify-between border border-indigo-500/20 shadow-lg relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
+          <div>
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/20 flex items-center justify-center text-indigo-300 mb-4 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+            </div>
+            <h4 className="text-lg font-black uppercase tracking-tight mb-1 italic">Asisten Pemasaran AI</h4>
+            <p className="text-[10px] text-indigo-200/80 font-bold uppercase tracking-wider mb-5 leading-relaxed">
+              Tulis salinan promo WhatsApp Broadcast, Caption Instagram, & flyer dalam sekejap berdasarkan informasi paket kustom Anda.
+            </p>
+          </div>
+          <div>
+            <button 
+              onClick={() => setActiveTab('marketing')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md cursor-pointer"
+            >
+              Buka Copywriter AI
+            </button>
+          </div>
+        </div>
+
+        {/* Card 2: AI Smart Analytics */}
+        <div className="bg-gradient-to-br from-slate-950 to-emerald-950 rounded-3xl p-6 text-white flex flex-col justify-between border border-emerald-500/20 shadow-lg relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
+          <div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/20 flex items-center justify-center text-emerald-300 mb-4 group-hover:scale-110 transition-transform">
+              <BarChart2 className="w-5 h-5 text-emerald-300" />
+            </div>
+            <h4 className="text-lg font-black uppercase tracking-tight mb-1 italic">Mesin Analitik Cerdas</h4>
+            <p className="text-[10px] text-emerald-200/80 font-bold uppercase tracking-wider mb-5 leading-relaxed">
+              Audit kepatuhan berkas paspor jamaah, pantau sisa pelunasan piutang, mitigasi anomali data, & forekasting omset.
+            </p>
+          </div>
+          <div>
+            <button 
+              onClick={() => setActiveTab('analytics')}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md cursor-pointer"
+            >
+              Auditing Sistem AI
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Referral Link - Moved to bottom or can be kept as per existing design but stylized */}
       <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100">
         <div className="flex flex-col md:flex-row items-center gap-6">
@@ -451,6 +500,28 @@ export const DashboardMitra = () => {
               Jaringan Saya
             </button>
             <button
+              onClick={() => setActiveTab('marketing')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'marketing' 
+                  ? 'bg-indigo-100 text-indigo-850 shadow-sm ring-1 ring-indigo-600/20' 
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
+              }`}
+            >
+              <Sparkles className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeTab === 'marketing' ? 'text-indigo-705' : 'text-gray-500'}`} />
+              AI Marketing Assistant
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
+                activeTab === 'analytics' 
+                  ? 'bg-emerald-100 text-emerald-850 shadow-sm ring-1 ring-emerald-600/20' 
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
+              }`}
+            >
+              <BarChart2 className={`w-3.5 h-3.5 md:w-4 md:h-4 ${activeTab === 'analytics' ? 'text-emerald-705' : 'text-gray-500'}`} />
+              Smart Engine Analytics
+            </button>
+            <button
               onClick={() => setActiveTab('profile')}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                 activeTab === 'profile' 
@@ -473,6 +544,8 @@ export const DashboardMitra = () => {
         {activeTab === 'validasi' && <ValidasiPaketMitraView />}
         {activeTab === 'jamaah' && <JamaahMitraView />}
         {activeTab === 'jaringan' && <JaringanMitraView />}
+        {activeTab === 'marketing' && <AIMarketingView />}
+        {activeTab === 'analytics' && <AISmartAnalyticsView />}
         {activeTab === 'profile' && <ProfileView />}
       </div>
     </div>
