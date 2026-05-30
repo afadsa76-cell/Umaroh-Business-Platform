@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, Paperclip, X } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
+import { safeJsonParse } from '../utils/firebaseSync';
 
 interface AIPromptInputProps {
   onDataParsed: (data: unknown) => void;
@@ -94,7 +95,7 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
       
       const text = response.text;
       if (text) {
-        const parsedData = JSON.parse(text);
+        const parsedData = safeJsonParse(text);
         onDataParsed(parsedData);
         setPrompt(''); // Clear prompt on success
         setSelectedFile(null); // Clear file on success

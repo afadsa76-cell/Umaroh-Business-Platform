@@ -1,6 +1,29 @@
 import { db, doc, setDoc, deleteDoc, getDocs, collection, query, where } from '../firebase';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function safeJsonParse(rawText: string): any {
+  if (!rawText) return null;
+  let clean = rawText.trim();
+  
+  const firstBrace = clean.indexOf('{');
+  const firstBracket = clean.indexOf('[');
+  const isArray = (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace));
+  
+  const startIdx = isArray ? firstBracket : firstBrace;
+  const endIdx = isArray ? clean.lastIndexOf(']') : clean.lastIndexOf('}');
+  
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    clean = clean.substring(startIdx, endIdx + 1);
+  } else {
+    clean = clean.replace(/```json/gi, '')
+                 .replace(/```/g, '')
+                 .trim();
+  }
+  
+  return JSON.parse(clean);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function syncBookingToTracker(bookingId: string, bookingData: any) {
   try {
     if (!bookingId || !bookingData) return;

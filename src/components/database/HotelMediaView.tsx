@@ -3,6 +3,7 @@ import { db, collection, onSnapshot, doc, setDoc, handleFirestoreError, Operatio
 import { hotels as staticHotelsList } from '../../data/hotels';
 import { Image, MapPin, Search, Edit3, X, Save, Upload, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleGenAI, Type } from '@google/genai';
+import { safeJsonParse } from '../../utils/firebaseSync';
 
 interface HotelItem {
   id: string;
@@ -154,7 +155,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
       });
 
       if (response.text) {
-        const parsed = JSON.parse(response.text);
+        const parsed = safeJsonParse(response.text);
         setEditData({
           photoUrl: parsed.photoUrl || editData.photoUrl,
           distance: parsed.distance || editData.distance
@@ -230,7 +231,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
         });
 
         if (response.text) {
-          const parsed = JSON.parse(response.text);
+          const parsed = safeJsonParse(response.text);
           const safeId = hotel.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
           const docRef = doc(db, 'hotel_metadata', safeId);
           

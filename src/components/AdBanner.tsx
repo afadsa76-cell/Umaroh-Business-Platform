@@ -34,6 +34,59 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
   
   const [activeCampaign, setActiveCampaign] = useState<AdCampaignData | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [hasValidWidth, setHasValidWidth] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Selective global error interceptor to prevent AdSense tag script noise from bubbling up
+  useEffect(() => {
+    const handleGlobalError = (event: ErrorEvent) => {
+      const msg = event?.message || '';
+      if (msg.includes('adsbygoogle') || msg.includes('TagError') || msg.includes('No slot size')) {
+        console.warn('[AdSense Safeguard] Intercepted uncaught ad container layout error safely:', msg);
+        try {
+          event.preventDefault();
+        } catch (err) {
+          console.debug('preventDefault error', err);
+        }
+        return true;
+      }
+    };
+    
+    window.addEventListener('error', handleGlobalError);
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+    };
+  }, []);
+
+  // Measure parent container offsetWidth before allowing initialization
+  useEffect(() => {
+    if (config.mode !== 'adsense' || !containerRef.current) return;
+
+    const checkWidth = () => {
+      const w = containerRef.current?.offsetWidth || 0;
+      if (w > 0) {
+        setHasValidWidth(true);
+      }
+    };
+
+    checkWidth();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0) {
+            setHasValidWidth(true);
+            observer.disconnect();
+          }
+        }
+      });
+      observer.observe(containerRef.current);
+      return () => observer.disconnect();
+    } else {
+      const timer = setTimeout(checkWidth, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [config.mode, activeCampaign]);
 
   // Load configuration and campaigns
   useEffect(() => {
@@ -140,9 +193,9 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
     };
   }, [adSlot]);
 
-  // Inject Google AdSense scripts dynamically if AdSense mode is active
+  // Inject Google AdSense scripts dynamically if AdSense mode is active and parent width is verified
   useEffect(() => {
-    if (config.mode === 'adsense') {
+    if (config.mode === 'adsense' && hasValidWidth) {
       try {
         const existingScript = document.getElementById('adsbygoogle-script');
         if (!existingScript) {
@@ -151,18 +204,21 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
           script.async = true;
           script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${config.adSenseClient}`;
           script.crossOrigin = 'anonymous';
+          script.onerror = (e) => {
+            console.warn('Google AdSense script loading blocked or failed.', e);
+          };
           document.head.appendChild(script);
         }
         
-        // Push the ad unit
+        // Push the ad unit safely
         const win = window as unknown as { adsbygoogle: unknown[] };
         win.adsbygoogle = win.adsbygoogle || [];
         win.adsbygoogle.push({});
-      } catch {
-        console.error('Google AdSense script loading failed');
+      } catch (err) {
+        console.warn('Google AdSense script initialization failed gracefully:', err);
       }
     }
-  }, [config.mode, config.adSenseClient]);
+  }, [config.mode, config.adSenseClient, hasValidWidth]);
 
   // Log track events to Firebase & localStorage
   const trackAdEvent = async (type: 'impression' | 'click') => {
@@ -212,7 +268,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
   if (isDismissed) return null;
 
   return (
-    <div className={`w-full overflow-hidden ${className}`}>
+    <div ref={containerRef} className={`w-full overflow-hidden ${className}`}>
       {config.mode === 'adsense' ? (
         // Google AdSense Implementation Space
         <div className="relative bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center select-none shadow-sm">
@@ -232,15 +288,21 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
           </div>
           
           <div className="py-2 flex flex-col items-center justify-center min-h-[90px]">
-            {/* The AdSense Ad Slot Tag */}
-            <ins 
-              className="adsbygoogle"
-              style={{ display: 'block' }}
-              data-ad-client={config.adSenseClient}
-              data-ad-slot={config.adSenseSlot}
-              data-ad-format="auto"
-              data-full-width-responsive="true"
-            />
+            {/* The AdSense Ad Slot Tag - Render only when width > 0 to prevent availableWidth=0 TagError */}
+            {hasValidWidth ? (
+              <ins 
+                className="adsbygoogle"
+                style={{ display: 'block', minWidth: '120px', minHeight: '90px' }}
+                data-ad-client={config.adSenseClient}
+                data-ad-slot={config.adSenseSlot}
+                data-ad-format="auto"
+                data-full-width-responsive="true"
+              />
+            ) : (
+              <div className="text-xs text-slate-400 animate-pulse font-mono flex items-center justify-center p-4">
+                Memuat ukuran penempatan iklan...
+              </div>
+            )}
             
             {/* Sandboxed visual loader to let users know where Ads would render */}
             <div className="flex flex-col items-center gap-1 mt-2 text-slate-400 text-xs">

@@ -17,11 +17,12 @@ import {
   Coins,
   Megaphone,
   Truck,
-  Layers
+  Layers,
+  Crown
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management';
+export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
@@ -36,6 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
 
   const allNavItems: { id: TabType; label: string; icon: React.ElementType }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'owner-kpi', label: 'Dashboard KPI Owner', icon: Crown },
     { id: 'validasi-mitra', label: 'Validasi Mitra', icon: Users },
     { id: 'user-database', label: 'Database User', icon: Users },
     { id: 'database', label: 'Database Master', icon: Database },
@@ -71,7 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'operasional',
       label: '2. OPERASIONAL',
       icon: Sliders,
-      items: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan']
+      items: ['dashboard', 'owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan']
     },
     {
       id: 'finance',

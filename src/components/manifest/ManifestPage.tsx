@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { db, collection, onSnapshot, query, where, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from '../../firebase';
 import { PaketTracker, JamaahTracker } from '../tracker/types';
+import { safeJsonParse } from '../../utils/firebaseSync';
 import { GoogleGenAI, Type } from '@google/genai';
 import * as XLSX from 'xlsx';
 
@@ -539,8 +540,7 @@ export const ManifestPage: React.FC = () => {
           });
 
           const rawText = response.text || '';
-          const cleanJson = rawText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-          const parsed = JSON.parse(cleanJson);
+          const parsed = safeJsonParse(rawText);
           resolve(parsed);
         } catch (e) {
           reject(e);

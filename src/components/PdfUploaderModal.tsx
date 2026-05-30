@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { GoogleGenAI, Type } from '@google/genai';
+import { safeJsonParse } from '../utils/firebaseSync';
 import { Hotel, getHotels, saveHotels } from '../data/hotels';
 
 interface PdfUploaderModalProps {
@@ -147,7 +148,7 @@ Ensure the output is valid JSON and only contains the array of hotels. Do not in
         throw new Error('Empty response from AI');
       }
 
-      const extractedHotels: Hotel[] = JSON.parse(textResponse);
+      const extractedHotels: Hotel[] = safeJsonParse(textResponse);
       
       if (!Array.isArray(extractedHotels) || extractedHotels.length === 0) {
         throw new Error('No valid hotel data found in the PDF.');

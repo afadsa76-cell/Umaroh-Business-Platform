@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, db, handleFirestoreError, OperationType } from '../../firebase';
 import { generateWALink, getWATemplate, openWhatsApp } from '../../utils/whatsapp';
 import { JamaahTracker, PaketTracker } from './types';
+import { safeJsonParse } from '../../utils/firebaseSync';
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { Camera, RefreshCw, Plus, MessageCircle, Package, FolderOpen, FileText, Edit2, Trash2, Save, X } from 'lucide-react';
@@ -80,9 +81,8 @@ export const TrackerJamaah: React.FC = () => {
       });
 
       // Use a safe JSON parse approach
-      const rawText = response.text;
-      const jsonStr = rawText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-      const result = JSON.parse(jsonStr);
+      const rawText = response.text || '';
+      const result = safeJsonParse(rawText);
       
       const updateData: Partial<JamaahTracker> = {};
       Object.keys(result).forEach(key => {
@@ -466,9 +466,8 @@ export const TrackerJamaah: React.FC = () => {
                                 }
                               });
 
-                              const rawText = response.text;
-                              const jsonStr = rawText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-                              const result = JSON.parse(jsonStr);
+                              const rawText = response.text || '';
+                              const result = safeJsonParse(rawText);
 
                               setFormData(prev => {
                                 const newData: Partial<JamaahTracker> = { ...prev };

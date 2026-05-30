@@ -29,6 +29,7 @@ import { ValidasiMitraView } from './components/ValidasiMitraView';
 import { UserDatabaseView } from './components/UserDatabaseView';
 import { ProfileView } from './components/ProfileView';
 import { AdManagementView } from './components/AdManagementView';
+import { OwnerKpiDashboard } from './components/OwnerKpiDashboard';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
@@ -36,7 +37,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
-  operasional: ['dashboard', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
+  operasional: ['dashboard', 'owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
   finance: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor'],
   marketing: ['templates', 'ad-management', 'profile']
 };
@@ -203,6 +204,8 @@ function App() {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardView onNavigate={handleTabChange} />;
+      case 'owner-kpi':
+        return <OwnerKpiDashboard />;
       case 'validasi-mitra':
         return <ValidasiMitraView />;
       case 'user-database':
