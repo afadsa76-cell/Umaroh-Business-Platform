@@ -71,6 +71,7 @@ export const JamaahMitraView: React.FC = () => {
   
   // Selected items for editing or view
   const [selectedJamaah, setSelectedJamaah] = useState<Jamaah | null>(null);
+  const [jamaahToDelete, setJamaahToDelete] = useState<Jamaah | null>(null);
 
   // Form Fields
   const [formFields, setFormFields] = useState({
@@ -422,15 +423,15 @@ export const JamaahMitraView: React.FC = () => {
     }
   };
 
-  const handleDeleteJamaah = async (jamaahId: string, name: string) => {
-    if (window.confirm(`Apakah Anda yakin ingin membatalkan & menghapus pendaftaran jamaah "${name}"?`)) {
-      try {
-        await deleteDoc(doc(db, 'bookings', jamaahId));
-        await deleteBookingFromTracker(jamaahId);
-      } catch (err) {
-        console.error("Error deleting booking:", err);
-        handleFirestoreError(err, OperationType.DELETE, `bookings/${jamaahId}`);
-      }
+  const confirmDeleteJamaah = async () => {
+    if (!jamaahToDelete) return;
+    try {
+      await deleteDoc(doc(db, 'bookings', jamaahToDelete.id));
+      await deleteBookingFromTracker(jamaahToDelete.id);
+      setJamaahToDelete(null);
+    } catch (err) {
+      console.error("Error deleting booking:", err);
+      handleFirestoreError(err, OperationType.DELETE, `bookings/${jamaahToDelete.id}`);
     }
   };
 
@@ -951,8 +952,8 @@ export const JamaahMitraView: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => handleDeleteJamaah(jamaah.id, jamaah.namaJamaah)}
-                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-xl transition"
+                            onClick={() => setJamaahToDelete(jamaah)}
+                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-xl transition cursor-pointer"
                             title="Batalkan Booking"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1621,6 +1622,65 @@ export const JamaahMitraView: React.FC = () => {
                     className="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 py-3 rounded-xl text-xs font-black uppercase transition shadow-md shadow-amber-500/10"
                   >
                     Terapkan & Cetak Kwitansi
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CONFIRM DELETE MODAL */}
+      <AnimatePresence>
+        {jamaahToDelete && (
+          <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100"
+            >
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+                <h3 className="text-sm font-black text-rose-600 uppercase tracking-tight flex items-center gap-1.5">
+                  <AlertCircle className="text-rose-500 w-5 h-5" /> Batalkan & Hapus Jamaah
+                </h3>
+                <button 
+                  onClick={() => setJamaahToDelete(null)}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-500 p-1.5 rounded-full transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 space-y-1.5 text-xs text-rose-900">
+                  <p className="font-bold">Apakah Anda yakin ingin membatalkan & menghapus pendaftaran jamaah?</p>
+                  <p className="border-t border-rose-200/50 pt-2 font-black text-sm">
+                    👤 {jamaahToDelete.namaJamaah}
+                  </p>
+                  {jamaahToDelete.paketNama && (
+                    <p className="text-gray-600 mt-1">
+                      📦 Paket: <span className="font-bold">{jamaahToDelete.paketNama}</span>
+                    </p>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-gray-400 font-semibold leading-relaxed">
+                  Tindakan ini tidak dapat dibatalkan. Seluruh data booking, status keberangkatan, dan laporan terkait jamaah ini akan dihapus secara permanen dari sistem.
+                </p>
+
+                <div className="flex gap-2 pt-3">
+                  <button
+                    onClick={() => setJamaahToDelete(null)}
+                    className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 rounded-xl text-xs font-bold uppercase transition"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={confirmDeleteJamaah}
+                    className="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl text-xs font-black uppercase transition shadow-md shadow-rose-650/10 cursor-pointer"
+                  >
+                    Ya, Hapus
                   </button>
                 </div>
               </div>

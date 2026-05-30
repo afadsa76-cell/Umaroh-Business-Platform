@@ -51,6 +51,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [adminViewMode, setAdminViewMode] = useState<'operasional' | 'mitra' | 'jamaah'>('operasional');
   const [showRegisterMitra, setShowRegisterMitra] = useState(false);
+  const [registerPrefill, setRegisterPrefill] = useState<{ email?: string; name?: string; uid?: string } | null>(null);
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
@@ -184,9 +185,36 @@ function App() {
 
   if (!isLoggedIn || (!userRole && !isMasterAdmin)) {
     if (showRegisterMitra) {
-      return <RegisterMitraView onBack={() => setShowRegisterMitra(false)} />;
+      return (
+        <RegisterMitraView 
+          prefilledEmail={registerPrefill?.email}
+          prefilledName={registerPrefill?.name}
+          prefilledUid={registerPrefill?.uid}
+          onBack={async () => {
+            try {
+              await signOut(auth);
+            } catch (err) {
+              console.error('Error signing out during onBack:', err);
+            }
+            setRegisterPrefill(null);
+            setShowRegisterMitra(false);
+          }}
+        />
+      );
     }
-    return <LoginView onLogin={handleLogin} onGoToRegister={() => setShowRegisterMitra(true)} />;
+    return (
+      <LoginView 
+        onLogin={handleLogin} 
+        onGoToRegister={(email, name, uid) => {
+          if (email || name || uid) {
+            setRegisterPrefill({ email, name, uid });
+          } else {
+            setRegisterPrefill(null);
+          }
+          setShowRegisterMitra(true);
+        }} 
+      />
+    );
   }
 
   const renderContent = () => {

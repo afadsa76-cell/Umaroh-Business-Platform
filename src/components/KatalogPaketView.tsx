@@ -32,12 +32,14 @@ interface DisplayPaket {
   hargaJualQuad?: number;
   hargaJualTriple?: number;
   hargaJualDouble?: number;
+  status?: string;
 }
 
 export const KatalogPaketView = () => {
   const [paketMasters, setPaketMasters] = React.useState<PaketMaster[]>([]);
   const [paketMitras, setPaketMitras] = React.useState<PaketMitra[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [showExpired, setShowExpired] = React.useState(false);
   const [selectedPaket, setSelectedPaket] = React.useState<DisplayPaket | null>(null);
   const [bookingSuccess, setBookingSuccess] = React.useState(false);
   const [viewingDetail, setViewingDetail] = React.useState<PaketMaster | null>(null);
@@ -47,10 +49,12 @@ export const KatalogPaketView = () => {
   const userId = auth.currentUser?.uid;
 
   React.useEffect(() => {
-    // Fetch published Paket Master
-    const qMaster = query(collection(db, 'paket_master'), where('status', '==', 'published'));
+    // Fetch published & archived Paket Master
+    const qMaster = query(collection(db, 'paket_master'));
     const unsubMaster = onSnapshot(qMaster, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaketMaster));
+      const data = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as PaketMaster))
+        .filter(p => p.status === 'published' || p.status === 'archived');
       setPaketMasters(data);
     });
 
@@ -186,7 +190,19 @@ export const KatalogPaketView = () => {
         hargaJualDouble: priceDouble
       };
     })
-  ].filter(p => p.displayName?.toLowerCase().includes(searchTerm.toLowerCase()));
+  ].filter(p => {
+    const matchesSearch = p.displayName?.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const masterObj = p.paketMasterId ? paketMasters.find(m => m.id === p.paketMasterId) : p;
+    const isArchived = p.status === 'archived' || masterObj?.status === 'archived';
+    const hasPassed = !!(masterObj?.tglBerangkat && masterObj.tglBerangkat < todayStr);
+    const isExpired = isArchived || hasPassed;
+
+    if (!showExpired && isExpired) return false;
+    return true;
+  });
 
   if (viewingDetail) {
     return (
@@ -218,9 +234,9 @@ export const KatalogPaketView = () => {
 
   return (
     <div className="space-y-8">
-      {/* Search Bar */}
-      <div className="bg-white p-1.5 md:p-2 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-2 w-full relative z-20">
-        <div className="flex-1 flex items-center px-3 md:px-4 py-2 md:py-3 bg-gray-50 rounded-lg md:rounded-xl border border-gray-100">
+      {/* Search Bar & Expiry Filter */}
+      <div className="bg-white p-1.5 md:p-2 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-2 w-full relative z-20">
+        <div className="flex-1 flex items-center px-3 md:px-4 py-2 md:py-3 bg-gray-50 rounded-lg md:rounded-xl border border-gray-100 w-full">
           <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mr-2 md:mr-3" />
           <input 
             type="text" 
@@ -230,18 +246,39 @@ export const KatalogPaketView = () => {
             className="bg-transparent border-none outline-none w-full text-xs md:text-sm text-gray-700" 
           />
         </div>
+        
+        <button
+          onClick={() => setShowExpired(!showExpired)}
+          className={`px-4 py-2.5 rounded-lg md:rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap w-full md:w-auto justify-center ${
+            showExpired 
+              ? 'bg-rose-50 text-rose-600 border border-rose-200' 
+              : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          {showExpired ? 'Sembunyikan Kadaluarsa' : 'Lihat Paket Kadaluarsa'}
+        </button>
       </div>
 
       {/* Package Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {displayPackages.map((paket, index) => (
+        {displayPackages.map((paket, index) => {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const masterRef = paket.paketMasterId ? paketMasters.find(m => m.id === paket.paketMasterId) : paket;
+          const isArchived = paket.status === 'archived' || masterRef?.status === 'archived';
+          const hasPassed = !!(masterRef?.tglBerangkat && masterRef.tglBerangkat < todayStr);
+          const isExpired = isArchived || hasPassed;
+
+          return (
             <div 
               key={paket.id + index} 
               onClick={() => {
                 const master = paketMasters.find(m => m.id === (paket as DisplayPaket).paketMasterId || m.id === paket.id);
                 if (master) setViewingDetail(master);
               }}
-              className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl flex flex-col cursor-pointer"
+              className={`bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group transition-all hover:shadow-xl flex flex-col cursor-pointer lg:min-h-[480px] ${
+                isExpired ? 'opacity-70 grayscale-[35%] border-dashed border-gray-300' : ''
+              }`}
             >
               {/* Image Header with Badges & Overlays */}
             <div className="h-44 bg-gray-200 relative">
@@ -255,7 +292,13 @@ export const KatalogPaketView = () => {
               {/* Top Badges */}
               <div className="absolute top-3 left-3 flex gap-2">
                 <span className="bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">UMRAH</span>
-                <span className="bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">AKTIF</span>
+                {isExpired ? (
+                  <span className="bg-rose-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">
+                    {isArchived ? 'DIARSIPKAN' : 'KADALUARSA'}
+                  </span>
+                ) : (
+                  <span className="bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">AKTIF</span>
+                )}
               </div>
 
               {/* Bottom Left Info */}
@@ -341,7 +384,8 @@ export const KatalogPaketView = () => {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {displayPackages.length === 0 && (
           <div className="col-span-full text-center py-12 text-gray-500">

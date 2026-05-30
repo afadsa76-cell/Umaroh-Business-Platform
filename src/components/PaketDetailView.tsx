@@ -39,6 +39,11 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   const [jamaahs, setJamaahs] = React.useState<JamaahTracker[]>([]);
   const [notification, setNotification] = React.useState<{type: 'success' | 'error', message: string} | null>(null);
 
+  const todayStr = React.useMemo(() => new Date().toISOString().split('T')[0], []);
+  const isExpired = React.useMemo(() => {
+    return paket.status === 'archived' || (paket.tglBerangkat && paket.tglBerangkat < todayStr);
+  }, [paket.status, paket.tglBerangkat, todayStr]);
+
   React.useEffect(() => {
     // Fetch jamaah for this package to show real stats
     const q = query(collection(db, 'tracker_jamaah'), where('paketId', '==', paket.id));
@@ -411,11 +416,22 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
               </div>
             </div>
 
+            {isExpired && (
+              <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 text-center text-xs font-black uppercase text-rose-700 tracking-tight mb-2">
+                ⚠️ {paket.status === 'archived' ? 'Paket Ini Telah Diarsipkan' : 'Pendaftaran Ditutup (Batas Tanggal Lewat)'}
+              </div>
+            )}
+
             <button 
+              disabled={isExpired && !isMitraContext}
               onClick={() => isMitraContext ? setShowManifest(true) : (onBook ? onBook(paket) : showMsg('success', 'Silakan hubungi agen terdekat untuk pemesanan.'))}
-              className="w-full bg-slate-900 text-white hover:bg-slate-800 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-slate-900/20 active:scale-95"
+              className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-xl active:scale-95 ${
+                isExpired && !isMitraContext
+                ? 'bg-gray-100 text-gray-400 border border-gray-200 shadow-none cursor-not-allowed'
+                : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/20'
+              }`}
             >
-              {isMitraContext ? 'LIHAT MANIFEST JAMAAH' : 'PESAN SEKARANG'}
+              {isMitraContext ? 'LIHAT MANIFEST JAMAAH' : (isExpired ? 'Pendaftaran Ditutup' : 'PESAN SEKARANG')}
             </button>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity, Archive } from 'lucide-react';
 import { db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, handleFirestoreError, OperationType } from '../firebase';
 import { Maskapai } from '../data/maskapai';
 
@@ -17,8 +17,9 @@ interface PaketMaster {
   maskapaiId: string;
   kuota: number;
   sisaKuota: number;
-  status: 'draft' | 'published' | 'closed' | 'pending_validation';
+  status: 'draft' | 'published' | 'closed' | 'pending_validation' | 'expired' | 'archived';
   createdAt?: { toDate: () => Date };
+  tglBerangkat?: string;
 }
 
 export const PaketMasterView: React.FC = () => {
@@ -26,6 +27,7 @@ export const PaketMasterView: React.FC = () => {
   const [maskapaiList, setMaskapaiList] = useState<Maskapai[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'active' | 'archived_expired'>('all');
   
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -164,17 +166,50 @@ export const PaketMasterView: React.FC = () => {
     }).format(amount);
   };
 
-  const filteredPakets = pakets.filter(p => 
-    p.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.deskripsi.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPakets = pakets.filter(p => {
+    const matchesSearch = p.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          p.deskripsi.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isArchived = p.status === 'archived';
+    
+    const maskapai = maskapaiList.find(m => m.id === p.maskapaiId);
+    const flightDate = maskapai?.tanggalKeberangkatan || p.tglBerangkat || '';
+    const hasPassed = !!(flightDate && flightDate < todayStr);
+    const isExpired = isArchived || hasPassed;
+
+    if (filterType === 'active') {
+      return !isExpired && p.status !== 'archived';
+    } else if (filterType === 'archived_expired') {
+      return isExpired || p.status === 'archived';
+    }
+    return true;
+  });
+
+  const handleToggleArchive = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'archived' ? 'published' : 'archived';
+      await updateDoc(doc(db, 'paket_master', id), {
+        status: newStatus,
+        updatedAt: serverTimestamp()
+      });
+      showNotification('success', `Paket berhasil ${newStatus === 'archived' ? 'diarsipkan' : 'diaktifkan kembali'}`);
+    } catch (error) {
+      console.error("Error toggling archive status:", error);
+      handleFirestoreError(error, OperationType.UPDATE, `paket_master/${id}`);
+      showNotification('error', 'Gagal memproses arsip paket.');
+    }
+  };
 
   const getMaskapaiName = (id: string) => {
     const maskapai = maskapaiList.find(m => m.id === id);
     return maskapai ? `${maskapai.name} (${maskapai.tanggalKeberangkatan})` : 'Maskapai Tidak Ditemukan';
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isExpired = false) => {
+    if (status === 'archived') return 'bg-purple-100 text-purple-800';
+    if (isExpired) return 'bg-rose-100 text-rose-800';
     switch (status) {
       case 'published': return 'bg-emerald-100 text-emerald-800';
       case 'pending_validation': return 'bg-amber-100 text-amber-800';
@@ -317,16 +352,49 @@ export const PaketMasterView: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
-          <div className="relative max-w-md">
+        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="relative max-w-sm w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Cari paket master..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white font-bold"
             />
+          </div>
+
+          <div className="flex gap-1 p-1 bg-gray-150 rounded-xl bg-gray-200/50 border border-gray-200 self-start md:self-auto">
+            <button
+              onClick={() => setFilterType('all')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                filterType === 'all' 
+                  ? 'bg-white text-gray-900 shadow-sm' 
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Semua
+            </button>
+            <button
+              onClick={() => setFilterType('active')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                filterType === 'active' 
+                  ? 'bg-white text-emerald-700 shadow-sm' 
+                  : 'text-gray-500 hover:text-emerald-700'
+              }`}
+            >
+              Aktif Pelaksanaan
+            </button>
+            <button
+              onClick={() => setFilterType('archived_expired')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                filterType === 'archived_expired' 
+                  ? 'bg-white text-rose-750 shadow-sm' 
+                  : 'text-gray-500 hover:text-rose-750'
+              }`}
+            >
+              Arsip & Lewat
+            </button>
           </div>
         </div>
 
@@ -344,101 +412,128 @@ export const PaketMasterView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 italic font-medium">
-              {filteredPakets.map(paket => (
-                <tr key={paket.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    {paket.requestId ? (
-                      <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2 py-1 rounded tracking-widest border border-gray-200">
-                        {paket.requestId}
-                      </span>
-                    ) : (
-                      <span className="bg-gray-50 text-gray-400 text-[10px] font-black px-2 py-1 rounded tracking-widest border border-gray-100 italic" title="Kode Sementara">
-                        {`REQ-${paket.id.slice(0, 4).toUpperCase()}`}*
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button 
-                      onClick={() => openTracker(paket)}
-                      className="text-left group"
-                    >
-                      <div className="font-black italic text-gray-900 uppercase tracking-tighter text-sm group-hover:text-emerald-600 transition-colors">{paket.nama}</div>
-                      <div className="text-[10px] text-gray-400 font-bold uppercase mt-1 line-clamp-1">{paket.deskripsi}</div>
-                    </button>
-                    {allTrackers.some(t => t.namaPaket === paket.nama) && (
-                      <div className="mt-2 flex gap-1">
-                        {(() => {
-                           const t = allTrackers.find(t => t.namaPaket === paket.nama);
-                           return (
-                             <>
-                               <div className={`w-1.5 h-1.5 rounded-full ${t?.checklist?.statusVisa === 'Issued' ? 'bg-emerald-500' : 'bg-gray-200'}`} />
-                               <div className={`w-1.5 h-1.5 rounded-full ${t?.checklist?.statusTiket === 'Issued' ? 'bg-emerald-500' : 'bg-gray-200'}`} />
-                               <div className={`w-1.5 h-1.5 rounded-full ${t?.checklist?.statusHotelMakkah === 'Paid' ? 'bg-emerald-500' : 'bg-gray-200'}`} />
-                               <span className="text-[8px] font-black uppercase text-gray-400 ml-1">Tracker Active</span>
-                             </>
-                           )
-                        })()}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-xs font-bold text-gray-700 uppercase">{getMaskapaiName(paket.maskapaiId)}</div>
-                  </td>
-                  <td className="px-6 py-4 text-right font-black italic text-emerald-600 text-sm">
-                    {formatCurrency(paket.hargaJualQuad || paket.hargaDasar)}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="font-black text-gray-900">{paket.kuota}</span>
-                    <span className="text-gray-300 mx-1">/</span>
-                    <span className={`font-black ${paket.sisaKuota < 5 ? 'text-rose-600' : 'text-blue-600'}`}>{paket.sisaKuota}</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${getStatusColor(paket.status)}`}>
-                      {paket.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {deleteConfirm === paket.id ? (
-                      <div className="flex gap-2 justify-end">
-                        <button onClick={() => handleDelete(paket.id)} className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 font-medium">Hapus</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="text-xs bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-300 font-medium">Batal</button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-end gap-2">
-                        {paket.status === 'pending_validation' && (
-                          <>
-                            <button 
-                              onClick={() => handleValidate(paket)} 
-                              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" 
-                              title="Setujui & Publish"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => handleReject(paket)} 
-                              className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
-                              title="Tolak"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-                        <button onClick={() => startEdit(paket)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setDeleteConfirm(paket.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {filteredPakets.map(paket => {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const isArchived = paket.status === 'archived';
+                const maskapaiRef = maskapaiList.find(m => m.id === paket.maskapaiId);
+                const flightDate = maskapaiRef?.tanggalKeberangkatan || paket.tglBerangkat || '';
+                const hasPassed = !!(flightDate && flightDate < todayStr);
+                const isExpired = isArchived || hasPassed;
 
-              {pakets.length === 0 && !loading && !isAdding && (
+                return (
+                  <tr key={paket.id} className={`hover:bg-gray-50 transition-colors ${isExpired ? 'bg-gray-50/50 opacity-75' : ''}`}>
+                    <td className="px-6 py-4">
+                      {paket.requestId ? (
+                        <span className="bg-gray-100 text-gray-500 text-[10px] font-black px-2 py-1 rounded tracking-widest border border-gray-200">
+                          {paket.requestId}
+                        </span>
+                      ) : (
+                        <span className="bg-gray-50 text-gray-400 text-[10px] font-black px-2 py-1 rounded tracking-widest border border-gray-100 italic" title="Kode Sementara">
+                          {`REQ-${paket.id.slice(0, 4).toUpperCase()}`}*
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <button 
+                        onClick={() => openTracker(paket)}
+                        className="text-left group"
+                      >
+                        <div className="font-black italic text-gray-900 uppercase tracking-tighter text-sm group-hover:text-emerald-600 transition-colors">{paket.nama}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase mt-1 line-clamp-1">{paket.deskripsi}</div>
+                      </button>
+                      {allTrackers.some(t => t.namaPaket === paket.nama) && (
+                        <div className="mt-2 flex gap-1">
+                          {(() => {
+                             const t = allTrackers.find(t => t.namaPaket === paket.nama);
+                             return (
+                               <>
+                                 <div className={`w-1.5 h-1.5 rounded-full ${t?.checklist?.statusVisa === 'Issued' ? 'bg-emerald-500' : 'bg-gray-200'}`} />
+                                 <div className={`w-1.5 h-1.5 rounded-full ${t?.checklist?.statusTiket === 'Issued' ? 'bg-emerald-500' : 'bg-gray-200'}`} />
+                                 <div className={`w-1.5 h-1.5 rounded-full ${t?.checklist?.statusHotelMakkah === 'Paid' ? 'bg-emerald-500' : 'bg-gray-200'}`} />
+                                 <span className="text-[8px] font-black uppercase text-gray-400 ml-1">Tracker Active</span>
+                               </>
+                             )
+                          })()}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs font-bold text-gray-700 uppercase">{getMaskapaiName(paket.maskapaiId)}</div>
+                      {hasPassed && (
+                        <div className="text-[9px] text-rose-600 font-extrabold uppercase mt-1 tracking-tight flex items-center gap-1">
+                          ⚠️ Lewat Tanggal (Expired)
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right font-black italic text-emerald-600 text-sm">
+                      {formatCurrency(paket.hargaJualQuad || paket.hargaDasar)}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="font-black text-gray-900">{paket.kuota}</span>
+                      <span className="text-gray-300 mx-1">/</span>
+                      <span className={`font-black ${paket.sisaKuota < 5 ? 'text-rose-600' : 'text-blue-600'}`}>{paket.sisaKuota}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${getStatusColor(paket.status, hasPassed)}`}>
+                        {isArchived ? 'DIARSIPKAN' : hasPassed ? 'EXPIRED' : paket.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {deleteConfirm === paket.id ? (
+                        <div className="flex gap-2 justify-end">
+                          <button onClick={() => handleDelete(paket.id)} className="text-xs bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 font-bold uppercase tracking-widest text-[9px]">Hapus</button>
+                          <button onClick={() => setDeleteConfirm(null)} className="text-xs bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-300 font-bold uppercase tracking-widest text-[9px]">Batal</button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-1.5">
+                          {paket.status === 'pending_validation' && (
+                            <>
+                              <button 
+                                onClick={() => handleValidate(paket)} 
+                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" 
+                                title="Setujui & Publish"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleReject(paket)} 
+                                className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
+                                title="Tolak"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          
+                          <button 
+                            onClick={() => handleToggleArchive(paket.id, paket.status)} 
+                            className={`p-2 rounded-lg transition-colors ${
+                              isArchived 
+                                ? 'text-purple-600 hover:bg-purple-50' 
+                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}
+                            title={isArchived ? 'Aktifkan Kembali' : 'Arsipkan Paket'}
+                          >
+                            <Archive className="w-4 h-4" />
+                          </button>
+
+                          <button onClick={() => startEdit(paket)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setDeleteConfirm(paket.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {filteredPakets.length === 0 && !loading && !isAdding && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">
-                    Belum ada data Paket Master. Silakan buat paket baru.
+                  <td colSpan={7} className="p-8 text-center text-gray-500 font-bold uppercase tracking-wider text-xs">
+                    Belum ada data Paket Master untuk kriteria filter ini.
                   </td>
                 </tr>
               )}

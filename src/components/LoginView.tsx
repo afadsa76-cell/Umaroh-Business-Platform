@@ -11,7 +11,7 @@ export type Role = 'operasional' | 'mitra' | 'jamaah' | 'admin';
 
 interface LoginViewProps {
   onLogin: (role: Role, subRole?: string) => void;
-  onGoToRegister?: () => void;
+  onGoToRegister?: (email?: string, name?: string, uid?: string) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister }) => {
@@ -190,7 +190,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
           ? 'Credential tidak valid. Karena email ini terdaftar lewat Google, Anda HARUS klik "Lupa Password" di bawah untuk mengatur password "D@rkman31" pertama kali agar bisa login manual.'
           : 'Email atau Password salah. Jika Anda biasanya login dengan Google, silakan klik "Lupa Password" di bawah untuk mengatur password pertama kali.');
       } else if (errCode === 'auth/email-already-in-use' || errMsg.includes('email-already-in-use')) {
-        setError('Email ini sudah terdaftar via Google. Silakan klik "Lupa Password" untuk mengatur password manual Anda.');
+        setError('Email ini sudah terdaftar. Silakan login menggunakan email ini. Jika Anda mendaftar melalui Google atau lupa password, silakan klik "Lupa Password" di bawah untuk mengatur ulang password Anda.');
       } else if (errCode === 'auth/operation-not-allowed' || errMsg.includes('operation-not-allowed')) {
         setError('Login Email & Password belum diaktifkan di Firebase Console. Silakan aktifkan di Authentication > Sign-in method.');
       } else if (errCode === 'auth/weak-password' || errMsg.includes('weak-password')) {
@@ -332,6 +332,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
     setError('');
     setIsLoading(true);
     try {
+      if (selectedRole === 'mitra') {
+        if (onGoToRegister) {
+          onGoToRegister(tempUser.email || '', tempUser.displayName || '', tempUser.uid);
+        }
+        setIsLoading(false);
+        return;
+      }
+
       const userDocRef = doc(db, 'users', tempUser.uid);
       const newUserData = {
         uid: tempUser.uid,
@@ -346,20 +354,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         await setDoc(userDocRef, newUserData);
       } catch (err: unknown) {
         handleFirestoreError(err, OperationType.WRITE, `users/${tempUser.uid}`);
-      }
-      
-      // If Mitra, create a wallet for them
-      if (selectedRole === 'mitra') {
-        const walletRef = doc(db, 'wallets', tempUser.uid);
-        try {
-          await setDoc(walletRef, {
-            userId: tempUser.uid,
-            balance: 0,
-            updatedAt: new Date().toISOString()
-          });
-        } catch (err: unknown) {
-          handleFirestoreError(err, OperationType.WRITE, `wallets/${tempUser.uid}`);
-        }
       }
 
       onLogin(selectedRole);
@@ -537,7 +531,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
             
             {onGoToRegister && (
               <button
-                onClick={onGoToRegister}
+                onClick={() => onGoToRegister()}
                 className="mt-2 w-full flex justify-center items-center py-3 px-4 border border-amber-600 rounded-lg shadow-sm text-sm font-bold text-amber-600 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
               >
                 Daftar sebagai Mitra

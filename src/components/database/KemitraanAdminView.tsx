@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, doc, updateDoc, setDoc } from '../../firebase';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, handleFirestoreError, OperationType } from '../../firebase';
 import { Edit2, CheckCircle, XCircle, Users, Package, Save, X } from 'lucide-react';
 
 type AdminTab = 'paket' | 'pendaftaran';
@@ -57,6 +57,8 @@ export const KemitraanAdminView: React.FC = () => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaketKemitraan));
         setPaketList(data.sort((a, b) => a.level - b.level));
       }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'paket_kemitraan');
     });
 
     // Fetch Pendaftaran Mitra
@@ -68,6 +70,8 @@ export const KemitraanAdminView: React.FC = () => {
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
       }));
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'pendaftaran_mitra');
     });
 
     return () => {

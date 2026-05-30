@@ -12,6 +12,9 @@ interface PaketKemitraan {
 
 interface RegisterMitraViewProps {
   onBack: () => void;
+  prefilledEmail?: string;
+  prefilledName?: string;
+  prefilledUid?: string;
 }
 
 interface Upline {
@@ -39,7 +42,12 @@ interface AddressSuggestion {
   [key: string]: string | number | boolean | undefined | object;
 }
 
-export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) => {
+export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ 
+  onBack,
+  prefilledEmail,
+  prefilledName,
+  prefilledUid
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [paketList, setPaketList] = useState<PaketKemitraan[]>([]);
   const [uplineList, setUplineList] = useState<Upline[]>([]);
@@ -65,6 +73,16 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) 
     metodePembayaran: 'transfer',
     buktiTransfer: ''
   });
+
+  useEffect(() => {
+    if (prefilledEmail || prefilledName) {
+      setFormData(prev => ({
+        ...prev,
+        email: prefilledEmail || prev.email,
+        nama: prefilledName || prev.nama
+      }));
+    }
+  }, [prefilledEmail, prefilledName]);
 
   const [addressQuery, setAddressQuery] = useState('');
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
@@ -246,6 +264,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({ onBack }) 
         metodePembayaran: formData.metodePembayaran,
         buktiTransfer: formData.buktiTransfer,
         status: 'PENDING',
+        uid: prefilledUid || '',
         createdAt: new Date().toISOString()
       });
 

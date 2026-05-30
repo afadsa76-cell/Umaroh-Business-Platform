@@ -30,6 +30,8 @@ export const FeedKolaborasiView = ({ onNavigateToCatalog }: { onNavigateToCatalo
         agencyMap[doc.id] = data.brandName || data.nama || 'MITRA UMAROH';
       });
       setAgencies(agencyMap);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'users');
     });
 
     // Fetch validated packages with "JUAL BERSAMA" type

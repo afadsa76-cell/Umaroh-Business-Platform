@@ -110,10 +110,10 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email));
+      allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin() || (isSignedIn() && (resource.data.get('email', '') == request.auth.token.email));
       allow list: if isOperasional() || isAdmin() || 
-                  (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email)) ||
-                  (resource.data.role == 'mitra') || 
+                  (isSignedIn() && (resource.data.get('email', '') == request.auth.token.email)) ||
+                  (resource.data.get('role', '') == 'mitra') || 
                   (resource.data.get('uplineId', '') == request.auth.uid);
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming()) && 
                     (incoming().role in ['mitra', 'jamaah'] || (incoming().email == request.auth.token.email)) &&
@@ -246,8 +246,8 @@ service cloud.firestore {
     }
 
     match /pendaftaran_mitra/{pendaftaranId} {
-      allow get: if isOperasional() || (isSignedIn() && resource.data.email == request.auth.token.email);
-      allow list: if isOperasional() || (isSignedIn() && resource.data.uplineId == request.auth.uid);
+      allow get: if isOperasional() || (isSignedIn() && resource.data.get('email', '') == request.auth.token.email);
+      allow list: if isOperasional() || (isSignedIn() && resource.data.get('uplineId', '') == request.auth.uid);
       allow create: if isValidPendaftaranMitra(incoming()); 
       allow update: if isOperasional() && 
                     incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&

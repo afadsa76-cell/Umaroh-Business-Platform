@@ -24,6 +24,7 @@ interface PendaftaranMitra {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   password?: string; // Only available before approval
+  uid?: string;
 }
 
 export const ValidasiMitraView: React.FC = () => {
@@ -81,9 +82,9 @@ export const ValidasiMitraView: React.FC = () => {
         approvedAt: new Date().toISOString()
       });
 
-      // Create user document (Auth creation skipped to prevent admin logout)
+      // Create user document (Auth creation skipped to prevent admin logout if simulated, but if they registered manually they are already created)
       // In a real app, use Firebase Admin SDK to create the auth user.
-      const newUserId = `mitra_${Date.now()}`; // Simulated UID
+      const newUserId = pendaftaran.uid || `mitra_${Date.now()}`;
       await setDoc(doc(db, 'users', newUserId), {
         uid: newUserId,
         id: newUserId,
