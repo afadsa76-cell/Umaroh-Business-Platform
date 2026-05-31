@@ -305,7 +305,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
       format: 'a4'
     });
 
-    // Elegant Theme Colors: Kuning Umaroh (#F5B800), Deep Slate Navy (#0F4C81)
+    // Elegant Theme Colors: Kuning Umaroh (#F5B800), Deep Slate Navy (#047857)
     docPdf.setFillColor(15, 76, 129); // Secondary Navy
     docPdf.rect(0, 0, 210, 45, 'F');
 
@@ -722,7 +722,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2 space-y-4">
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
-                  <h4 className="text-xs font-black text-[#0F4C81] uppercase tracking-wider mb-2">Deskripsi Travel</h4>
+                  <h4 className="text-xs font-black text-[#047857] uppercase tracking-wider mb-2">Deskripsi Travel</h4>
                   <p className="text-slate-600 text-xs md:text-sm leading-relaxed text-justify select-text font-medium">
                     "{profile.description}"
                   </p>
@@ -769,7 +769,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#0F4C81]/10 text-[#0F4C81] flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#047857]/10 text-[#047857] flex items-center justify-center shrink-0">
                       <Users size={16} />
                     </div>
                     <div className="min-w-0">
@@ -823,7 +823,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   onClick={() => setActiveTab(tab)}
                   className={`py-3 px-1 text-xs font-extrabold uppercase tracking-wider relative border-b-2 transition-all active:scale-95 cursor-pointer ${
                     activeTab === tab 
-                      ? 'border-[#0F4C81] text-[#0F4C81] font-black' 
+                      ? 'border-[#047857] text-[#047857] font-black' 
                       : 'border-transparent text-slate-400 hover:text-slate-600'
                   }`}
                 >
@@ -839,7 +839,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   {/* Legalitas */}
                   <div className="bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4">
                     <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
-                      <div className="p-1.5 bg-[#0F4C81]/10 rounded-lg text-[#0F4C81]">
+                      <div className="p-1.5 bg-[#047857]/10 rounded-lg text-[#047857]">
                         <Building2 size={18} />
                       </div>
                       <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
@@ -910,7 +910,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                           className="p-3 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-105 flex items-center justify-between group transition-colors"
                         >
                           <div className="space-y-1 min-w-0 pr-2">
-                            <span className="text-[8px] bg-[#0F4C81] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
+                            <span className="text-[8px] bg-[#047857] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
                               {pkg.type}
                             </span>
                             <h4 className="text-xs font-bold text-slate-900 truncate mt-1">
@@ -951,12 +951,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                       <strong className="text-xl font-black text-slate-900 block leading-tight mt-1">
                         321 Paket
                       </strong>
-                      <span className="text-[9px] text-[#0F4C81] font-bold block mt-1">Sisa 12 kuota promo</span>
+                      <span className="text-[9px] text-[#047857] font-bold block mt-1">Sisa 12 kuota promo</span>
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
                       <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Conversion Rate</span>
-                      <strong className="text-xl font-black text-[#0F4C81] block leading-tight mt-1">
+                      <strong className="text-xl font-black text-[#047857] block leading-tight mt-1">
                         34%
                       </strong>
                       <span className="text-[9px] text-slate-400 font-bold block mt-1">Efisiensi tinggi</span>
@@ -997,7 +997,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                           <path 
                             d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15" 
                             fill="none" 
-                            stroke="#0F4C81" 
+                            stroke="#047857" 
                             strokeWidth="3.5" 
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -1010,12 +1010,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                             strokeDasharray="4 3" 
                             strokeLinecap="round"
                           />
-                          <circle cx="10" cy="90" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                          <circle cx="60" cy="75" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                          <circle cx="120" cy="50" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                          <circle cx="180" cy="65" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                          <circle cx="240" cy="30" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                          <circle cx="290" cy="15" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                          <circle cx="10" cy="90" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="60" cy="75" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="120" cy="50" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="180" cy="65" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="240" cy="30" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="290" cy="15" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
                         </svg>
 
                         <div className="flex justify-between px-1 text-[10px] font-black text-slate-400 select-none z-10 mt-2">
@@ -1030,7 +1030,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
 
                       <div className="flex justify-between text-[11px] font-bold text-slate-450 mt-3 border-t border-slate-100 pt-2.5">
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                          <span className="inline-block w-2.5 h-1.5 bg-[#0F4C81] rounded" /> Realisasi Keberangkatan (Pax)
+                          <span className="inline-block w-2.5 h-1.5 bg-[#047857] rounded" /> Realisasi Keberangkatan (Pax)
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">
                           <span className="inline-block w-2.5 h-1.5 bg-amber-400 rounded-full" /> Target Program
@@ -1043,7 +1043,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                       <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Timeline Aktivitas</h3>
                       <div className="relative border-l border-slate-200 pl-4 ml-2 space-y-4 max-h-[220px] overflow-y-auto">
                         <div className="relative">
-                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-[#0F4C81] border-2 border-white ring-2 ring-[#0F4C81]/20" />
+                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-[#047857] border-2 border-white ring-2 ring-[#047857]/20" />
                           <time className="text-[9px] font-bold text-slate-400 block">Hari ini, 09:20 WIB</time>
                           <h4 className="text-xs font-bold text-slate-900 mt-0.5 font-sans">42 Jamaah Berhasil Diberangkatkan</h4>
                         </div>
@@ -1074,7 +1074,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                         onClick={() => setGalleryFilter(cat)}
                         className={`py-1.5 px-3 rounded-full text-[10px] font-black tracking-tight border shrink-0 transition-all cursor-pointer ${
                           galleryFilter === cat
-                            ? 'bg-[#0F4C81] text-white border-transparent'
+                            ? 'bg-[#047857] text-white border-transparent'
                             : 'bg-white text-slate-500 border-slate-200/80 hover:bg-slate-50'
                         }`}
                       >
@@ -1324,7 +1324,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                     rel="noreferrer"
                     className="flex flex-col items-center gap-1.5"
                   >
-                    <div className="w-11 h-11 rounded-xl bg-indigo-100 text-[#0F4C81] flex items-center justify-center font-sans">
+                    <div className="w-11 h-11 rounded-xl bg-indigo-100 text-[#047857] flex items-center justify-center font-sans">
                       <Facebook size={16} />
                     </div>
                     <span className="text-[10px] font-bold text-slate-500">Facebook</span>
@@ -1386,7 +1386,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   
                   <div className="py-3 px-3 bg-white/90 border border-amber-200 rounded-2xl shadow-inner font-serif text-slate-850 leading-relaxed text-[11px] font-semibold font-sans">
                     Sertifikat ini menerangkan bahwa <br />
-                    <strong className="text-xs font-black text-[#0F4C81]">{profile.travelName}</strong> <br />
+                    <strong className="text-xs font-black text-[#047857]">{profile.travelName}</strong> <br />
                     ({profile.companyName}) <br />
                     terdaftar secara sah dan legal sebagai PPIU Nasional dengan nomor sertifikat resmi:
                     <div className="my-2.5 border-t border-b border-amber-200/50 py-1 text-center font-mono text-xs font-black text-amber-800 bg-amber-50">
@@ -1424,7 +1424,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
       <div className="max-w-[480px] mx-auto bg-white shadow-2xl min-h-screen relative border-x border-slate-100 flex flex-col font-sans">
         
         {/* --- STICKY APPBAR --- */}
-        <header className="sticky top-0 z-40 bg-[#0F4C81] text-white px-4 py-3 shadow-md flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-[#047857] text-white px-4 py-3 shadow-md flex items-center justify-between">
           <button 
             onClick={() => {
               if (isEditMode) setIsEditMode(false);
@@ -1547,7 +1547,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
               {/* Grid 2x2 Stats */}
               <div className="grid grid-cols-2 gap-2.5 mt-3">
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#0F4C81]/10 text-[#0F4C81] flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-[#047857]/10 text-[#047857] flex items-center justify-center shrink-0">
                     <Users size={18} />
                   </div>
                   <div>
@@ -1609,7 +1609,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   onClick={() => setActiveTab(tab)}
                   className={`py-3 px-2 text-xs font-extrabold uppercase tracking-tight relative border-b-2 transition-colors active:scale-95 ${
                     activeTab === tab 
-                      ? 'border-[#F5B800] text-[#0F4C81] font-black' 
+                      ? 'border-[#F5B800] text-[#047857] font-black' 
                       : 'border-transparent text-slate-400 hover:text-slate-600'
                   }`}
                 >
@@ -1627,7 +1627,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   {/* Company Detail / Legalitas Card */}
                   <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3.5">
                     <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
-                      <div className="p-1 bg-[#0F4C81]/10 rounded-lg text-[#0F4C81]">
+                      <div className="p-1 bg-[#047857]/10 rounded-lg text-[#047857]">
                         <Building2 size={16} />
                       </div>
                       <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">
@@ -1698,10 +1698,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                           className="p-3 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-100 flex items-center justify-between group transition-colors"
                         >
                           <div className="space-y-0.5">
-                            <span className="text-[8px] bg-[#0F4C81] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
+                            <span className="text-[8px] bg-[#047857] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
                               {pkg.type}
                             </span>
-                            <h4 className="text-xs font-black text-slate-900 group-hover:text-[#0F4C81] transition-colors mt-1 select-all">
+                            <h4 className="text-xs font-black text-slate-900 group-hover:text-[#047857] transition-colors mt-1 select-all">
                               {pkg.name}
                             </h4>
                             <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
@@ -1756,12 +1756,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                       <strong className="text-base font-black text-slate-900 block leading-tight">
                         321 Paket
                       </strong>
-                      <span className="text-[8px] text-[#0F4C81] font-bold block mt-1">Sisa 12 kuota promo</span>
+                      <span className="text-[8px] text-[#047857] font-bold block mt-1">Sisa 12 kuota promo</span>
                     </div>
 
                     <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
                       <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Conversion Rate</span>
-                      <strong className="text-base font-black text-[#0F4C81] block leading-tight">
+                      <strong className="text-base font-black text-[#047857] block leading-tight">
                         34%
                       </strong>
                       <span className="text-[8px] text-slate-400 font-bold block mt-1">Efisiensi tinggi</span>
@@ -1805,7 +1805,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                         <path 
                           d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15" 
                           fill="none" 
-                          stroke="#0F4C81" 
+                          stroke="#047857" 
                           strokeWidth="3.5" 
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -1820,12 +1820,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                           strokeLinecap="round"
                         />
                         {/* Draw Data Points */}
-                        <circle cx="10" cy="90" r="4.5" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                        <circle cx="60" cy="75" r="4.5" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                        <circle cx="120" cy="50" r="4.5" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                        <circle cx="180" cy="65" r="4.5" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                        <circle cx="240" cy="30" r="4.5" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
-                        <circle cx="290" cy="15" r="4.5" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                        <circle cx="10" cy="90" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="60" cy="75" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="120" cy="50" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="180" cy="65" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="240" cy="30" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="290" cy="15" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
                       </svg>
 
                       {/* Labels X and Y */}
@@ -1841,7 +1841,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
 
                     <div className="flex justify-between text-[10px] font-bold text-slate-400 pt-1">
                       <div className="flex items-center gap-1.5Box">
-                        <span className="inline-block w-2.5 h-1.5 bg-[#0F4C81] rounded" /> Realisasi (Keberangkatan)
+                        <span className="inline-block w-2.5 h-1.5 bg-[#047857] rounded" /> Realisasi (Keberangkatan)
                       </div>
                       <div className="flex items-center gap-1.5Box">
                         <span className="inline-block w-2.5 h-1.5 bg-amber-400 rounded-full" /> Target Umrah
@@ -1854,7 +1854,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Timeline Aktivitas Terakhir</h3>
                     <div className="relative border-l border-slate-200 pl-4 ml-2 space-y-4">
                       <div className="relative">
-                        <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-[#0F4C81] border-2 border-white ring-2 ring-[#0F4C81]/20" />
+                        <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-[#047857] border-2 border-white ring-2 ring-[#047857]/20" />
                         <time className="text-[9px] font-bold text-slate-400">Hari ini, 09:20 WIB</time>
                         <h4 className="text-xs font-bold text-slate-900">42 Jamaah Berhasil Diberangkatkan</h4>
                         <p className="text-[10px] text-slate-500 mt-0.5">Kloter Syawal Group 1, Pesawat Saudia Airways SV-812.</p>
@@ -1889,7 +1889,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                         onClick={() => setGalleryFilter(cat)}
                         className={`py-1.5 px-3 rounded-full text-[10px] font-black tracking-tight border shrink-0 transition-all ${
                           galleryFilter === cat
-                            ? 'bg-[#0F4C81] text-white border-transparent'
+                            ? 'bg-[#047857] text-white border-transparent'
                             : 'bg-white text-slate-500 border-slate-200/80 hover:bg-slate-50'
                         }`}
                       >
@@ -1998,8 +1998,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   </div>
 
                   {/* Tambah Testimoni Baru Form */}
-                  <div className="bg-gradient-to-tr from-[#0F4C81]/5 to-slate-100 border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
-                    <h4 className="text-xs font-black text-[#0F4C81] uppercase tracking-tight">Kirim Testimoni / Ulasan Anda</h4>
+                  <div className="bg-gradient-to-tr from-[#047857]/5 to-slate-100 border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+                    <h4 className="text-xs font-black text-[#047857] uppercase tracking-tight">Kirim Testimoni / Ulasan Anda</h4>
                     <form onSubmit={(e) => {
                       e.preventDefault();
                       const target = e.currentTarget;
@@ -2028,11 +2028,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="text-[10px] text-slate-400 font-bold block mb-1">Nama Lengkap</label>
-                          <input required name="senderName" type="text" placeholder="Cth: Bpk. H. Ahmad" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0F4C81]" />
+                          <input required name="senderName" type="text" placeholder="Cth: Bpk. H. Ahmad" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#047857]" />
                         </div>
                         <div>
                           <label className="text-[10px] text-slate-400 font-bold block mb-1">Rating</label>
-                          <select name="senderRating" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0F4C81]">
+                          <select name="senderRating" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#047857]">
                             <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
                             <option value="4">⭐⭐⭐⭐ (4/5)</option>
                             <option value="3">⭐⭐⭐ (3/5)</option>
@@ -2041,9 +2041,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                       </div>
                       <div>
                         <label className="text-[10px] text-slate-400 font-bold block mb-1">Pesan Ulasan</label>
-                        <textarea required name="reviewText" rows={2} placeholder="Tuliskan pengalaman ibadah umroh Anda bersama kami..." className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium focus:outline-[#0F4C81] leading-relaxed"></textarea>
+                        <textarea required name="reviewText" rows={2} placeholder="Tuliskan pengalaman ibadah umroh Anda bersama kami..." className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium focus:outline-[#047857] leading-relaxed"></textarea>
                       </div>
-                      <button type="submit" className="w-full py-2.5 bg-[#0F4C81] text-white hover:bg-[#0c3e6a] font-black text-xs rounded-xl shadow-xs transition-transform active:scale-95 cursor-pointer text-center select-none">
+                      <button type="submit" className="w-full py-2.5 bg-[#047857] text-white hover:bg-[#035a41] font-black text-xs rounded-xl shadow-xs transition-transform active:scale-95 cursor-pointer text-center select-none">
                         Kirim Ulasan Sekarang
                       </button>
                     </form>
@@ -2131,7 +2131,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   // Quick smooth scroll down to package list container if applicable
                   document.querySelector('main')?.scrollTo({ top: 300, behavior: 'smooth' });
                 }}
-                className="flex-1 py-3 px-3 bg-[#0F4C81] hover:bg-[#0c3e6a] active:scale-95 text-white font-extrabold text-xs rounded-xl text-center shadow-xs transition-transform"
+                className="flex-1 py-3 px-3 bg-[#047857] hover:bg-[#035a41] active:scale-95 text-white font-extrabold text-xs rounded-xl text-center shadow-xs transition-transform"
               >
                 Lihat Paket
               </button>
@@ -2221,7 +2221,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                     rel="noreferrer"
                     className="flex flex-col items-center gap-1.5"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-indigo-100 text-[#0F4C81] flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-indigo-100 text-[#047857] flex items-center justify-center">
                       <Facebook size={18} />
                     </div>
                     <span className="text-[10px] font-bold text-slate-500 font-semibold">Facebook</span>
@@ -2287,7 +2287,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
                   
                   <div className="py-2.5 px-3 bg-white/80 border border-amber-200 rounded-xl shadow-inner font-serif text-slate-900 leading-relaxed text-[11px] font-medium">
                     Sertifikat ini menerangkan bahwa <br />
-                    <strong className="text-sm font-black text-[#0F4C81]">{profile.travelName}</strong> <br />
+                    <strong className="text-sm font-black text-[#047857]">{profile.travelName}</strong> <br />
                     ({profile.companyName}) <br />
                     terdaftar secara sah dan legal sebagai PPIU Nasional dengan nomor sertifikat resmi:
                     <div className="my-2 border-t border-b border-amber-200/50 py-1 text-center font-mono text-xs font-black text-amber-800 bg-amber-50">
@@ -2365,7 +2365,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
   return (
     <div className="flex-1 bg-slate-50 p-4 space-y-4 overflow-y-auto pb-24">
       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3.5 select-text">
-        <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-widest border-b pb-2">
+        <h3 className="text-xs font-black uppercase text-[#047857] tracking-widest border-b pb-2">
           Detail Identitas Travel
         </h3>
 
@@ -2376,7 +2376,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
             name="travelName" 
             value={form.travelName} 
             onChange={handleChange} 
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
           />
         </div>
 
@@ -2387,7 +2387,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
             name="companyName" 
             value={form.companyName} 
             onChange={handleChange} 
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
           />
         </div>
 
@@ -2398,7 +2398,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
             value={form.description} 
             onChange={handleChange} 
             rows={3}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:outline-[#0F4C81] leading-relaxed"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:outline-[#047857] leading-relaxed"
           />
         </div>
 
@@ -2525,7 +2525,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
 
       {/* CUSTOM PACKAGE CREATOR FOR DEMO OR REAL INTERACTION */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3.5">
-        <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-widest border-b pb-2">
+        <h3 className="text-xs font-black uppercase text-[#047857] tracking-widest border-b pb-2">
           Kelola Paket Keberangkatan ({form.packages.length})
         </h3>
 
@@ -2534,7 +2534,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
           {form.packages.map((pkg) => (
             <div key={pkg.id} className="p-2.5 bg-slate-50 border rounded-xl flex items-center justify-between">
               <div className="text-xs">
-                <span className="font-extrabold text-[#0F4C81] block">{pkg.name}</span>
+                <span className="font-extrabold text-[#047857] block">{pkg.name}</span>
                 <span className="text-[10px] text-slate-400">{pkg.price} • {pkg.duration}</span>
               </div>
               <button 
@@ -2549,7 +2549,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
 
         {/* Add package action form */}
         <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-2.5">
-          <span className="text-[10px] text-[#0F4C81] font-black uppercase">Tambah Paket Baru:</span>
+          <span className="text-[10px] text-[#047857] font-black uppercase">Tambah Paket Baru:</span>
           
           <input 
             type="text" 
@@ -2578,7 +2578,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
 
           <button 
             onClick={handleAddPackage}
-            className="w-full py-2 bg-[#0F4C81]/10 text-[#0F4C81] hover:bg-[#0F4C81]/20 font-extrabold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+            className="w-full py-2 bg-[#047857]/10 text-[#047857] hover:bg-[#047857]/20 font-extrabold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
           >
             <Plus size={14} /> Tambahkan ke Daftar
           </button>
@@ -2587,7 +2587,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
 
       {/* SOCIAL MEDIA & MEDIA ASSETS SETUP */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3.5">
-        <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-widest border-b pb-2">
+        <h3 className="text-xs font-black uppercase text-[#047857] tracking-widest border-b pb-2">
           Aset Desain & Media Sosial
         </h3>
 
@@ -2599,7 +2599,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
             value={form.coverImage} 
             onChange={handleChange} 
             placeholder="https://images.unsplash.com/..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
           />
         </div>
 
@@ -2611,7 +2611,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
             value={form.logo} 
             onChange={handleChange} 
             placeholder="https://images.unsplash.com/..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
           />
         </div>
 
@@ -2623,7 +2623,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               value={form.socialMedia.instagram} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, instagram: e.target.value } }))} 
               placeholder="@sahabatumroh"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
           <div className="space-y-1.5 text-xs">
@@ -2633,7 +2633,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               value={form.socialMedia.whatsapp} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, whatsapp: e.target.value } }))} 
               placeholder="628123456789"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
         </div>
@@ -2646,7 +2646,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               value={form.socialMedia.facebook} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, facebook: e.target.value } }))} 
               placeholder="Sahabat Umroh Official"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
           <div className="space-y-1.5 text-xs">
@@ -2656,7 +2656,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               value={form.socialMedia.youtube} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, youtube: e.target.value } }))} 
               placeholder="@SahabatUmroh"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
         </div>
@@ -2669,7 +2669,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               value={form.socialMedia.tiktok || ''} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, tiktok: e.target.value } }))} 
               placeholder="@sahabatumroh"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
           <div className="space-y-1.5 text-xs">
@@ -2679,7 +2679,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               value={form.socialMedia.website} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, website: e.target.value } }))} 
               placeholder="www.sahabatumroh.com"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#0F4C81]"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
         </div>

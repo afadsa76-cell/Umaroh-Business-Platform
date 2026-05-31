@@ -147,7 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                     className={`
                       flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold tracking-wider transition-all duration-200
                       ${isCatActive 
-                        ? 'bg-amber-600 text-white shadow-md' 
+                        ? 'bg-indigo-600 text-white shadow-md' 
                         : 'text-gray-500 hover:text-gray-800 hover:bg-white/60'
                       }
                     `}
@@ -176,12 +176,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                       className={`
                         flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all duration-200 whitespace-nowrap uppercase tracking-wider border
                         ${isActive 
-                          ? 'bg-amber-50 border-amber-500 text-amber-800 shadow-sm' 
+                          ? 'bg-indigo-50 border-indigo-500 text-indigo-800 shadow-sm' 
                           : 'bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-950 border-gray-200'
                         }
                       `}
                     >
-                      <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-600' : 'text-gray-400'}`} />
+                      <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
                       {item.label}
                     </button>
                   );
@@ -189,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
             </div>
             
             <div className="flex items-center gap-2 ml-4">
-              <button className="relative p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors">
+              <button className="relative p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
               </button>
@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
               <button
                 key={item.id}
                 onClick={() => handleTabClick(item.id)}
-                className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${isActive ? 'text-amber-600' : 'text-gray-400'}`}
+                className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400'}`}
               >
                 <Icon className="w-5 h-5" />
                 <span className="text-[10px] font-medium truncate w-full px-1 text-center">{item.label.split(' ')[0]}</span>
@@ -245,7 +245,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-              <span className="font-black text-amber-600 text-lg tracking-tight uppercase">Dashboard Umaroh</span>
+              <span className="font-black text-indigo-600 text-lg tracking-tight uppercase">Dashboard Umaroh</span>
               <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-50 rounded-full">
                 <X className="w-5 h-5 text-gray-400" />
               </button>
@@ -255,8 +255,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                 const CatIcon = cat.icon;
                 return (
                   <div key={cat.id} className="space-y-2">
-                    <div className="text-[10px] font-black tracking-wider text-amber-700 uppercase flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-lg">
-                      <CatIcon className="w-3.5 h-3.5 text-amber-600" />
+                    <div className="text-[10px] font-black tracking-wider text-indigo-700 uppercase flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-lg">
+                      <CatIcon className="w-3.5 h-3.5 text-indigo-600" />
                       {cat.label}
                     </div>
                     <div className="flex flex-col gap-1 pl-1">
@@ -271,7 +271,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                               onClick={() => handleTabClick(item.id)}
                               className={`
                                 flex items-center gap-3 px-3.5 py-3 rounded-lg text-xs font-bold transition-all
-                                ${isActive ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-50'}
+                                ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}
                               `}
                             >
                               <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
