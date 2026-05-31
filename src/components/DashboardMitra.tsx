@@ -531,29 +531,7 @@ export const DashboardMitra = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Stat Cards - Top Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Omzet */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">TOTAL OMZET</p>
-          </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">Rp0.0M</h3>
-        </div>
-
-        {/* Paket Aktif */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-              <Package className="w-5 h-5" />
-            </div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking_widest">PAKET AKTIF</p>
-          </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">{stats.paketAktif}</h3>
-        </div>
-
-        {/* Komisi Agen */}
+        {/* Komisi Agen (Dompet Komisi) - Moved to top */}
         <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-[#0f172a] p-6 rounded-2xl text-white shadow-md relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl -mr-8 -mt-8"></div>
           <div className="flex items-center justify-between mb-4">
@@ -564,7 +542,10 @@ export const DashboardMitra = () => {
               <p className="text-[10px] font-black tracking-widest text-indigo-100 uppercase">DOMPET KOMISI</p>
             </div>
             <button 
-              onClick={() => setActiveTab('wallet')}
+              onClick={() => {
+                setActiveTab('wallet');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="text-[9px] font-black bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg uppercase tracking-wider transition-colors cursor-pointer"
             >
               BUKA DOMPET ➔
@@ -590,6 +571,28 @@ export const DashboardMitra = () => {
               KIRIM
             </button>
           </div>
+        </div>
+
+        {/* Total Omzet */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">TOTAL OMZET</p>
+          </div>
+          <h3 className="text-2xl font-black text-gray-900 tracking-tight">Rp0.0M</h3>
+        </div>
+
+        {/* Paket Aktif */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+              <Package className="w-5 h-5" />
+            </div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking_widest">PAKET AKTIF</p>
+          </div>
+          <h3 className="text-2xl font-black text-gray-900 tracking-tight">{stats.paketAktif}</h3>
         </div>
 
         {/* Mitra/Agen */}
