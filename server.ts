@@ -115,6 +115,51 @@ async function startServer() {
     }
   });
 
+  // API Route for Jamaah CS Chat Assistant (Shopee Premium style)
+  app.post('/api/ai/jamaah-chat', async (req, res) => {
+    try {
+      const { message, history } = req.body;
+      if (!message) {
+        return res.status(400).json({ error: 'Pesan wajib diisi' });
+      }
+
+      const systemInstruction = `Anda adalah asisten AI pintar "Sahabat Marawa" dari UMAROH Marketplace (Aplikasi Marketplace Haji & Umroh terlengkap nomor 1).
+      Tugas Anda adalah memandu calon Jamaah dengan ramah, komunikatif, profesional, dan menyejukkan hati.
+      Aturan berkomunikasi:
+      - Sapa dengan sebutan "Kakak / Sahabat" layaknya Customer Service Shopee yang interaktif dan antusias.
+      - Jawab dengan bahasa Indonesia yang santun, sopan, dan mudah dipahami.
+      - Berikan informasi akurat seputar rukun Umroh & Haji, syarat pembuatan dokumen/paspor/visa, perlengkapan yang wajib dibawa, tips akomodasi hotel di Mekkah dan Madinah, maupun perbandingan paket.
+      - Selalu akhiri dengan doa terbaik agar impian ibadah ke tanah suci segera terwujud.
+      - Jawablah secara padat, bersahabat, menggunakan format bullet points terstruktur jika diperlukan dan bubuhkan emoji yang ramah (seperti 🕋, ✨, 🕌, 🙏).`;
+
+      const ai = getAIClient();
+      const chatHistory = (history || []).map((h: { role: string; content: string }) => ({
+        role: h.role === 'user' ? 'user' : 'model',
+        parts: [{ text: h.content }]
+      }));
+
+      // Add user message
+      chatHistory.push({
+        role: 'user',
+        parts: [{ text: message }]
+      });
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: chatHistory,
+        config: {
+          systemInstruction: systemInstruction,
+        }
+      });
+
+      res.json({ reply: response.text });
+    } catch (error) {
+      const err = error as Error;
+      console.error('Gemini Jamaah Chat Error:', err);
+      res.status(500).json({ reply: 'Maaf Kak, Sahabat Marawa saat ini sedang kesulitan terhubung dengan sistem. Silakan coba lagi sebentar ya Kak! 🙏✨' });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

@@ -105,6 +105,16 @@ service cloud.firestore {
              data.createdAt is string;
     }
 
+    function isValidShopOrder(data) {
+      return data.jamaahId is string && data.jamaahId.size() <= 128 &&
+             data.productName is string && data.productName.size() <= 255 &&
+             data.productPrice is number &&
+             data.quantity is number &&
+             data.totalCost is number &&
+             data.paymentMethod is string &&
+             data.status is string;
+    }
+
     // ===============================================================
     // COLLECTIONS
     // ===============================================================
@@ -117,16 +127,16 @@ service cloud.firestore {
                   (resource.data.get('uplineId', '') == request.auth.uid);
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming()) && 
                     (incoming().role in ['mitra', 'jamaah'] || (incoming().email == request.auth.token.email)) &&
-                    incoming().uid == request.auth.uid) || isAdmin();
-      allow update: if (isAdmin() || isOwner(userId)) && 
+                    incoming().uid == request.auth.uid) || isOperasional() || isAdmin();
+      allow update: if (isAdmin() || isOperasional() || isOwner(userId)) && 
                     isValidUserProfile(incoming()) && (
-                      isAdmin() ||
+                      isAdmin() || isOperasional() ||
                       (incoming().diff(existing()).affectedKeys().hasOnly(['name', 'subRole', 'uplineId', 'createdAt', 'kota', 'brandName', 'passwordAwal']) &&
                        incoming().uid == existing().uid &&
                        incoming().role == existing().role &&
                        incoming().email == existing().email)
                     );
-      allow delete: if isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email));
+      allow delete: if isAdmin() || isOperasional() || (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email));
     }
 
     match /wallets/{walletId} {
@@ -141,12 +151,12 @@ service cloud.firestore {
     }
 
     match /transactions/{transactionId} {
-      allow get: if isOwner(resource.data.userId) || isFinance();
-      allow list: if isFinance() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow get: if isOwner(resource.data.userId) || isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.get('recipientId', '') == request.auth.uid));
+      allow list: if isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.get('recipientId', '') == request.auth.uid));
       allow create: if isSignedIn() && 
                     incoming().userId == request.auth.uid && 
                     isValidTransaction(incoming());
-      allow write: if isFinance() && isValidTransaction(incoming());
+      allow write: if (isFinance() || isAdmin()) && isValidTransaction(incoming());
     }
 
     match /paket_master/{paketId} {
@@ -343,6 +353,13 @@ service cloud.firestore {
     match /ad_performance_logs/{id} {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && isValidId(id);
+    }
+
+    match /shop_orders/{orderId} {
+      allow get, list: if isSignedIn() && (resource.data.jamaahId == request.auth.uid || isOperasional() || isAdmin());
+      allow create: if isSignedIn() && incoming().jamaahId == request.auth.uid && isValidShopOrder(incoming());
+      allow update: if isOperasional() || isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

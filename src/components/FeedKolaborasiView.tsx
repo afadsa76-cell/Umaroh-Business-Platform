@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Calendar, Clock, Plane, Users, Download, ArrowUpRight, Megaphone, Target, Zap, CheckCircle2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { db, collection, query, where, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
 import { WizardFormData } from '../types';
 

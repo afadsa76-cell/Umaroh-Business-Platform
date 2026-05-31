@@ -208,3 +208,20 @@ export interface WizardHotel {
   bintang: number;
   pricePerNight?: number;
 }
+
+export interface ShopOrder {
+  id: string;
+  jamaahId: string;
+  jamaahName?: string;
+  mitraId?: string | null;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  totalCost: number;
+  paymentMethod: string;
+  shippingVendor: string;
+  shippingAddress: string;
+  status: string;
+  createdAt?: unknown;
+  noResi?: string;
+}

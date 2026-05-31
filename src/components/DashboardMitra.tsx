@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ShopOrder } from '../types';
 import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, PlusCircle, History } from 'lucide-react';
 import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction } from '../firebase';
 import { PaketMitraView } from './PaketMitraView';
@@ -78,6 +79,7 @@ export const DashboardMitra = () => {
   const [currentUserData, setCurrentUserData] = useState<CurrentUserData | null>(null);
   const [sentTransactions, setSentTransactions] = useState<WalletTransaction[]>([]);
   const [recvTransactions, setRecvTransactions] = useState<WalletTransaction[]>([]);
+  const [mitraShopOrders, setMitraShopOrders] = useState<ShopOrder[]>([]);
   
   const userId = auth.currentUser?.uid;
   const referralLink = `https://umaroh.com/register?ref=${userId}`;
@@ -113,42 +115,45 @@ export const DashboardMitra = () => {
       setRecvTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletTransaction)));
     });
 
-    // Stats fetching
-    const fetchStats = async () => {
-      try {
-        // Paket Aktif (Markup)
-        const paketPath = 'paket_mitra';
-        const paketQuery = query(collection(db, paketPath), where('mitraId', '==', userId));
-        const paketSnap = await getDocs(paketQuery).catch(err => {
-          handleFirestoreError(err, OperationType.LIST, paketPath);
-          return null;
-        });
-        
-        // Total Jamaah/Jaringan
-        const usersPath = 'users';
-        const jaringanQuery = query(collection(db, usersPath), where('uplineId', '==', userId));
-        const jaringanSnap = await getDocs(jaringanQuery).catch(err => {
-          handleFirestoreError(err, OperationType.LIST, usersPath);
-          return null;
-        });
+    // Real-time Paket Aktif (Markup)
+    const qPaket = query(collection(db, 'paket_mitra'), where('mitraId', '==', userId));
+    const unsubscribePaket = onSnapshot(qPaket, (snapshot) => {
+      setStats(prev => ({ ...prev, paketAktif: snapshot.size }));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'paket_mitra'));
 
-        setStats(prev => ({
-          ...prev,
-          paketAktif: (paketSnap && 'size' in paketSnap) ? paketSnap.size : prev.paketAktif,
-          totalJaringan: (jaringanSnap && 'size' in jaringanSnap) ? jaringanSnap.size : prev.totalJaringan
-        }));
-      } catch (err) {
-        console.error('Error fetching stats:', err);
-      }
-    };
+    // Real-time Total Jamaah/Jaringan
+    const qJaringan = query(collection(db, 'users'), where('uplineId', '==', userId));
+    const unsubscribeJaringan = onSnapshot(qJaringan, (snapshot) => {
+      setStats(prev => ({ ...prev, totalJaringan: snapshot.size }));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'users'));
 
-    fetchStats();
+    // Real-time Bookings/Total Omzet
+    const qBookings = query(collection(db, 'bookings'), where('mitraId', '==', userId));
+    const unsubscribeBookings = onSnapshot(qBookings, (snapshot) => {
+      let sum = 0;
+      snapshot.docs.forEach(docSnap => {
+        const d = docSnap.data();
+        const price = Number(d.totalHarga || d.harga || 0);
+        sum += price;
+      });
+      setStats(prev => ({ ...prev, totalOmzet: sum }));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'bookings'));
+
+    // Real-time Mitra Network Shop Orders
+    const qShop = query(collection(db, 'shop_orders'), where('mitraId', '==', userId));
+    const unsubscribeShop = onSnapshot(qShop, (snapshot) => {
+      setMitraShopOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShopOrder)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'shop_orders'));
 
     return () => {
       unsubscribeUser();
       unsubscribeWallet();
       unsubscribeSent();
       unsubscribeRecv();
+      unsubscribePaket();
+      unsubscribeJaringan();
+      unsubscribeBookings();
+      unsubscribeShop();
     };
   }, [userId]);
 
@@ -581,7 +586,13 @@ export const DashboardMitra = () => {
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">TOTAL OMZET</p>
           </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">Rp0.0M</h3>
+          <h3 className="text-2xl font-black text-gray-900 tracking-tight">
+            Rp {stats.totalOmzet >= 1000000000 
+              ? `${(stats.totalOmzet / 1000000000).toFixed(1)}M` 
+              : stats.totalOmzet >= 1000000 
+                ? `${(stats.totalOmzet / 1000000).toFixed(1)}Jt` 
+                : stats.totalOmzet.toLocaleString('id-ID')}
+          </h3>
         </div>
 
         {/* Paket Aktif */}
@@ -649,6 +660,51 @@ export const DashboardMitra = () => {
                 </div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Belum ada aktivitas terbaru</p>
              </div>
+          </div>
+
+          {/* NEW: Network Shop Orders section */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+             <div className="flex items-center justify-between mb-6">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Belanja Perlengkapan Jamaah Anda ({mitraShopOrders.length})</p>
+                <div className="h-[2px] flex-grow mx-6 bg-gray-50"></div>
+             </div>
+             {mitraShopOrders.length === 0 ? (
+               <div className="flex flex-col items-center justify-center py-8 text-gray-300">
+                 <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+                   <History className="w-6 h-6 opacity-20" strokeWidth={2} />
+                 </div>
+                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Belum ada pesanan belanja perlengkapan</p>
+               </div>
+             ) : (
+               <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                 {mitraShopOrders.map((order) => (
+                   <div key={order.id} className="p-4 rounded-2xl bg-gray-50/50 border border-gray-100 flex items-center justify-between text-xs font-sans hover:shadow-sm transition-shadow">
+                     <div className="space-y-1">
+                       <span className="font-mono text-[9px] text-gray-400 font-bold block">ID: #{order.id.substring(0, 8).toUpperCase()}</span>
+                       <strong className="text-gray-900 block text-[11px]">{order.productName || 'Perlengkapan'}</strong>
+                       <p className="text-[10px] text-gray-500">
+                         Kuantitas: <span className="font-bold text-gray-800">{order.quantity || 1} Pcs</span> | Pembeli: <span className="font-bold text-gray-800">{order.jamaahName || 'Jamaah Anda'}</span>
+                       </p>
+                       <p className="text-[9px] text-gray-400 line-clamp-1">Kirim: {order.shippingAddress}</p>
+                     </div>
+                     <div className="text-right shrink-0 ml-4 font-sans">
+                       <span className="font-black text-emerald-600 block text-xs">Rp {(order.totalCost || 0).toLocaleString('id-ID')}</span>
+                       <span className={`inline-block px-2 py-0.5 mt-1 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                         order.status === 'Selesai' ? 'bg-emerald-100 text-emerald-800' :
+                         order.status === 'Dibatalkan' ? 'bg-red-100 text-red-800' :
+                         order.status?.startsWith('Dikirim') ? 'bg-indigo-100 text-indigo-800' :
+                         'bg-amber-100 text-amber-800'
+                       }`}>
+                         {order.status || 'Diproses'}
+                       </span>
+                       {order.noResi && (
+                         <span className="text-[8px] font-mono text-indigo-600 block font-bold mt-1">Resi: {order.noResi}</span>
+                       )}
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             )}
           </div>
 
           {/* Real-Time Flight Tracker Section */}
@@ -993,7 +1049,7 @@ export const DashboardMitra = () => {
         {activeTab === 'jaringan' && <JaringanMitraView />}
         {activeTab === 'marketing' && <AIMarketingView />}
         {activeTab === 'analytics' && <AISmartAnalyticsView />}
-        {activeTab === 'profile' && <ProfileView />}
+        {activeTab === 'profile' && <ProfileView isDesktop={true} />}
         {activeTab === 'wallet' && renderWallet()}
       </div>
 

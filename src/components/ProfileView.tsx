@@ -77,12 +77,49 @@ interface MitraProfile {
   areas: string[];
 }
 
-export const ProfileView: React.FC = () => {
+interface ProfileViewProps {
+  isDesktop?: boolean;
+}
+
+export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) => {
   const user = auth.currentUser;
   const [loading, setLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'profil' | 'performa' | 'galeri' | 'testimoni'>('profil');
   
+  // Custom user role & profile details in real-time
+  const [role, setRole] = useState<'admin' | 'mitra' | 'jamaah'>('jamaah');
+  const [userData, setUserData] = useState<{
+    id: string;
+    namaLengkap: string;
+    email: string;
+    phone: string;
+    kota: string;
+    address: string;
+  }>({
+    id: user?.uid || '',
+    namaLengkap: user?.displayName || '',
+    email: user?.email || '',
+    phone: '',
+    kota: '',
+    address: '',
+  });
+
+  const [editNama, setEditNama] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editKota, setEditKota] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [isSavingJamaah, setIsSavingJamaah] = useState(false);
+
+  useEffect(() => {
+    if (userData) {
+      setEditNama(userData.namaLengkap);
+      setEditPhone(userData.phone);
+      setEditKota(userData.kota);
+      setEditAddress(userData.address);
+    }
+  }, [userData]);
+
   // Modals/Lightbox states
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -151,6 +188,18 @@ export const ProfileView: React.FC = () => {
       (docSnap) => {
         if (docSnap.exists()) {
           const uData = docSnap.data();
+          if (uData.role) {
+            setRole(uData.role);
+          }
+          setUserData({
+            id: user.uid,
+            namaLengkap: uData.namaLengkap || uData.name || user.displayName || '',
+            email: uData.email || user.email || '',
+            phone: uData.phone || uData.telepon || uData.noHP || '',
+            address: uData.alamatLengkap || uData.address || '',
+            kota: uData.kota || '',
+          });
+
           // Update profile options in real-time
           if (uData.role === 'mitra' || uData.role === 'admin') {
             setProfile(prev => {
@@ -357,11 +406,1014 @@ export const ProfileView: React.FC = () => {
     }
   };
 
+  const handleSaveJamaahProfile = async () => {
+    if (!user) return;
+    setIsSavingJamaah(true);
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, {
+        namaLengkap: editNama,
+        phone: editPhone,
+        kota: editKota,
+        alamatLengkap: editAddress,
+      }, { merge: true });
+      
+      setUserData(prev => ({
+        ...prev,
+        namaLengkap: editNama,
+        phone: editPhone,
+        kota: editKota,
+        address: editAddress,
+      }));
+      setIsEditMode(false);
+    } catch (err) {
+      console.error("Gagal menyimpan profil jamaah:", err);
+    } finally {
+      setIsSavingJamaah(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-96 gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-yellow-500"></div>
         <p className="text-gray-500 text-sm font-semibold">Memuat Profil Premium...</p>
+      </div>
+    );
+  }
+
+  if (userData && role === 'jamaah' && !isDesktop) {
+    if (isEditMode) {
+      return (
+        <div className="min-h-screen bg-slate-50 antialiased pb-28 md:px-4 flex justify-center">
+          <div className="w-full max-w-[480px] bg-white shadow-xl min-h-screen border-x border-slate-100 flex flex-col font-sans">
+            {/* Header */}
+            <header className="sticky top-0 z-40 bg-emerald-800 text-white px-4 py-3 shadow-md flex items-center justify-between">
+              <button 
+                onClick={() => setIsEditMode(false)}
+                className="p-1.5 hover:bg-white/10 rounded-full transition-colors active:scale-95"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <span className="font-extrabold text-base tracking-tight">Edit Profil Saya</span>
+              <div className="w-5 h-5"></div>
+            </header>
+
+            {/* Inputs Form */}
+            <div className="p-5 flex-grow space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Nama Lengkap</label>
+                <input 
+                  type="text" 
+                  value={editNama} 
+                  onChange={(e) => setEditNama(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:border-emerald-600 outline-none text-gray-800"
+                  placeholder="Ketik nama lengkap Anda..."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Nomor HP / WhatsApp</label>
+                <input 
+                  type="text" 
+                  value={editPhone} 
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:border-emerald-600 outline-none text-gray-800"
+                  placeholder="Contoh: 081234567890"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Kota Domisili</label>
+                <input 
+                  type="text" 
+                  value={editKota} 
+                  onChange={(e) => setEditKota(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:border-emerald-600 outline-none text-gray-800"
+                  placeholder="Contoh: Jakarta Selatan, Surabaya"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Alamat Lengkap Rumah</label>
+                <textarea 
+                  value={editAddress} 
+                  onChange={(e) => setEditAddress(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold focus:border-emerald-600 outline-none text-gray-800 min-h-[100px]"
+                  placeholder="Masukkan alamat tempat tinggal pengiriman perlengkapan..."
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  onClick={() => setIsEditMode(false)}
+                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-black rounded-xl transition-all cursor-pointer text-center"
+                >
+                  BATAL
+                </button>
+                <button 
+                  onClick={handleSaveJamaahProfile}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all cursor-pointer text-center flex items-center justify-center gap-2 shadow"
+                  disabled={isSavingJamaah}
+                >
+                  {isSavingJamaah ? 'MENYIMPAN...' : 'SIMPAN SEKARANG'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Otherwise, render read-only Jamaah view
+    return (
+      <div className="min-h-screen bg-slate-50 antialiased pb-28 md:px-4 flex justify-center">
+        <div className="w-full max-w-[480px] bg-white shadow-xl min-h-screen border-x border-slate-100 flex flex-col font-sans">
+          
+          {/* Header */}
+          <header className="sticky top-0 z-40 bg-emerald-800 text-white px-4 py-3 shadow-md flex items-center justify-between">
+            <span className="font-extrabold text-base tracking-tight">Akun Profil Jamaah</span>
+            <button 
+              onClick={() => setIsEditMode(true)}
+              className="p-1.5 hover:bg-white/10 rounded-full transition-colors active:scale-95"
+              title="Edit Profile"
+            >
+              <Edit2 size={18} />
+            </button>
+          </header>
+
+          <div className="p-4 space-y-6 flex-grow">
+            {/* Pilgrim Identity Card */}
+            <div className="bg-gradient-to-br from-emerald-800 via-teal-700 to-emerald-900 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden ring-4 ring-emerald-500/10">
+              <div className="absolute right-[-20px] bottom-[-20px] text-[120px] opacity-10 pointer-events-none font-mono">
+                🕋
+              </div>
+              
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="text-[10px] bg-white/20 text-white font-black uppercase tracking-wider px-2 py-0.5 rounded-full backdrop-blur-md">
+                    KARTU IDENTITAS DIGITAL
+                  </span>
+                  <h3 className="text-sm font-black tracking-tight mt-1">SAHABAT MARAWA EMERALD</h3>
+                </div>
+                <span className="text-2xl">💚</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[9px] text-emerald-200 block font-bold tracking-wider uppercase">Nama Pemegang Kartu</span>
+                  <strong className="text-base font-black tracking-wide block uppercase truncate">
+                    {userData.namaLengkap || 'Nama Belum Diisi'}
+                  </strong>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[9px] text-emerald-200 block font-bold tracking-wider uppercase">ID Anggota</span>
+                    <span className="text-xs font-mono font-bold tracking-wide block uppercase truncate">
+                      #{userData.id.substring(0, 10).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-emerald-200 block font-bold tracking-wider uppercase">Status Verifikasi</span>
+                    <span className="text-[10px] bg-amber-400 text-slate-900 font-extrabold px-2 py-0.5 rounded-full inline-block mt-0.5">
+                      ✓ JAMAAH AKTIF
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Fields List */}
+            <div className="bg-white rounded-2xl border border-gray-150 p-4 shadow-sm space-y-4">
+              <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2 flex items-center gap-2">
+                📂 Detail Informasi Akun
+              </h4>
+
+              <div className="space-y-3 text-xs font-semibold">
+                <div className="flex justify-between items-start py-1">
+                  <span className="text-gray-400">Nama Lengkap</span>
+                  <span className="text-gray-800 font-bold max-w-[200px] text-right">{userData.namaLengkap || '-'}</span>
+                </div>
+
+                <div className="flex justify-between items-start py-1 border-t border-gray-50 pt-2">
+                  <span className="text-gray-400">Alamat Email</span>
+                  <span className="text-gray-700 font-mono font-bold">{userData.email || '-'}</span>
+                </div>
+
+                <div className="flex justify-between items-start py-1 border-t border-gray-50 pt-2">
+                  <span className="text-gray-400">Nomor HP/WA</span>
+                  <span className="text-gray-800 font-bold">{userData.phone || '-'}</span>
+                </div>
+
+                <div className="flex justify-between items-start py-1 border-t border-gray-50 pt-2">
+                  <span className="text-gray-400">Kota Asal</span>
+                  <span className="text-gray-800 font-bold">{userData.kota || '-'}</span>
+                </div>
+
+                <div className="py-1 border-t border-gray-50 pt-2 space-y-1.5">
+                  <span className="text-gray-400 block">Alamat Pengiriman Perlengkapan</span>
+                  <p className="text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-150 leading-relaxed font-bold">
+                    📌 {userData.address || 'Belum ada alamat pengiriman diatur. Klik edit profil untuk melengkapinya.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation buttons */}
+            <div className="space-y-2.5 pt-4 border-t border-gray-100">
+              <button
+                onClick={() => setIsEditMode(true)}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow"
+              >
+                <Edit2 size={14} /> EDIT DATA PROFIL
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-black rounded-xl transition-all cursor-pointer text-center"
+              >
+                ✕ KELUAR DARI AKUN
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDesktop) {
+    return (
+      <div className="w-full bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm font-sans space-y-8">
+        {/* Header Title */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-5">
+          <div>
+            <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">PROFIL TRAVEL MITRA</h2>
+            <p className="text-xs text-slate-500 mt-1">Kelola branding, informasi legalitas, deskripsi travel, dan galeri portofolio Anda.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {!isEditMode && (
+              <>
+                <button 
+                  onClick={() => setIsEditMode(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-sm transition-all active:scale-95 cursor-pointer"
+                >
+                  <Edit2 size={14} /> EDIT PROFIL
+                </button>
+                <button 
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 rounded-xl text-xs font-black shadow-sm transition-all active:scale-95 cursor-pointer"
+                >
+                  <Share2 size={14} /> BAGIKAN PROFIL
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {isEditMode ? (
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-150">
+            <EditProfileForm 
+              initialProfile={profile} 
+              onSave={handleSaveProfile} 
+              onCancel={() => setIsEditMode(false)} 
+            />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* HERO COVER IMAGE FOR DESKTOP */}
+            <div className="relative w-full h-48 md:h-64 bg-slate-900 rounded-2xl overflow-hidden shrink-0 shadow-sm">
+              <img 
+                src={profile.coverImage} 
+                alt="Ka'bah Travel Background" 
+                className="w-full h-full object-cover opacity-80"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+              
+              {/* Logo Overlay */}
+              <div className="absolute bottom-6 left-6 flex items-end gap-4">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white p-1 border-2 border-amber-400 shadow-xl overflow-hidden shrink-0">
+                  <img 
+                    src={profile.logo} 
+                    alt="Logo Mitra" 
+                    className="w-full h-full object-cover rounded-xl"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="mb-2 text-white font-sans">
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    <span className="text-[10px] bg-amber-500 font-extrabold px-2 py-0.5 rounded text-slate-950 uppercase tracking-wide shadow-sm font-sans">
+                      Premium Partner
+                    </span>
+                    <span className="text-[10px] bg-emerald-600 font-extrabold px-2 py-0.5 rounded text-white uppercase tracking-wide flex items-center gap-1 shadow-sm font-sans">
+                      <CheckCircle2 size={10} /> Terverifikasi
+                    </span>
+                  </div>
+                  <h1 className="text-xl md:text-2xl font-black tracking-tight leading-tight select-all">
+                    {profile.travelName}
+                  </h1>
+                </div>
+              </div>
+            </div>
+
+            {/* DESCRIPTION & CARD STATS BASICS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-2 space-y-4">
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
+                  <h4 className="text-xs font-black text-[#0F4C81] uppercase tracking-wider mb-2">Deskripsi Travel</h4>
+                  <p className="text-slate-600 text-xs md:text-sm leading-relaxed text-justify select-text font-medium">
+                    "{profile.description}"
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-y-2 gap-x-5 text-xs text-slate-500 font-medium">
+                  <span className="flex items-center gap-1 font-bold text-slate-800">
+                    📍 {profile.city}
+                  </span>
+                  <span>
+                    📅 Bergabung Sejak: <strong className="text-slate-850 font-black">{profile.joinDate}</strong>
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {autoBadges.map((bd, i) => (
+                    <span key={i} className={`text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-xs ${bd.color}`}>
+                      {bd.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Score and Stats Panel */}
+              <div className="space-y-4">
+                {/* Score */}
+                <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-50 border border-amber-200/65 rounded-2xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-amber-400 rounded-xl text-slate-950 flex items-center justify-center font-black text-md shadow-sm shrink-0">
+                      {profile.performanceScore}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 leading-none">Skor Kinerja Kemitraan</h4>
+                      <span className="text-[10px] text-slate-500 leading-normal block mt-1.5">
+                        Sangat Tinggi • Ditinjau Otomatis
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] bg-slate-900 text-amber-505 font-black px-2 py-0.5 rounded-full uppercase scale-90">
+                    Sangat Layak
+                  </span>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-[#0F4C81]/10 text-[#0F4C81] flex items-center justify-center shrink-0">
+                      <Users size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] text-slate-400 font-bold block leading-tight">Total Jamaah</span>
+                      <strong className="text-xs font-black text-slate-900 block truncate">
+                        {profile.jamaahCount.toLocaleString('id-ID')}+
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Plane size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] text-slate-400 font-bold block leading-tight">Kloter</span>
+                      <strong className="text-xs font-black text-slate-900 block truncate">
+                        {profile.departureCount}x
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                      <Calendar size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] text-slate-400 font-bold block leading-tight">Lama Gabung</span>
+                      <strong className="text-xs font-black text-slate-900 block truncate font-sans">4 Tahun</strong>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                      <Star className="fill-orange-500 stroke-orange-500" size={14} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] text-slate-400 font-bold block leading-tight">Rating</span>
+                      <strong className="text-xs font-black text-slate-900 block truncate">{profile.rating} / 5.0</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* TAB SELECTOR FOR DESKTOP */}
+            <div className="border-b border-slate-200 flex items-center gap-6 mt-6">
+              {(['profil', 'performa', 'galeri', 'testimoni'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`py-3 px-1 text-xs font-extrabold uppercase tracking-wider relative border-b-2 transition-all active:scale-95 cursor-pointer ${
+                    activeTab === tab 
+                      ? 'border-[#0F4C81] text-[#0F4C81] font-black' 
+                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* TAB CONTENTS */}
+            <div className="pt-2 font-sans">
+              {activeTab === 'profil' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in-50 duration-200">
+                  {/* Legalitas */}
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4">
+                    <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
+                      <div className="p-1.5 bg-[#0F4C81]/10 rounded-lg text-[#0F4C81]">
+                        <Building2 size={18} />
+                      </div>
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                        Dokumen Legalitas & Alamat
+                      </h3>
+                    </div>
+
+                    <div className="space-y-3 text-xs md:text-sm">
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-slate-400 font-semibold">Nama Resmi PT</span>
+                        <span className="text-slate-800 font-bold text-right">{profile.companyName}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-t border-slate-50">
+                        <span className="text-slate-400 font-semibold">No. PPIU</span>
+                        <span className="text-amber-800 bg-amber-50 font-black px-2 py-0.5 rounded">
+                          {profile.ppiu}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-t border-slate-50">
+                        <span className="text-slate-400 font-semibold">Nomor NIB</span>
+                        <span className="text-slate-800 font-mono font-bold">{profile.nib}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-t border-slate-50">
+                        <span className="text-slate-400 font-semibold">NPWP Resmi</span>
+                        <span className="text-slate-800 font-mono font-bold">{profile.npwp}</span>
+                      </div>
+                      <div className="pt-2 border-t border-slate-50 space-y-1">
+                        <span className="text-slate-400 font-semibold block">Alamat Kantor Pusat</span>
+                        <p className="text-slate-705 bg-slate-50 p-3 rounded-lg border border-slate-150 leading-relaxed font-semibold">
+                          📍 {profile.address}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button 
+                        onClick={() => setShowLegalModal(true)}
+                        className="flex-1 py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                      >
+                        <CheckCircle2 size={14} className="fill-slate-950 stroke-amber-200" /> Sertifikat Kemenag
+                      </button>
+                      <button 
+                        onClick={handlePdfDownload}
+                        className="flex-1 py-2.5 px-3 bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                      >
+                        <FileText size={14} /> Download PDF
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Packages */}
+                  <div className="bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4">
+                    <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-amber-450/20 rounded-lg text-amber-705 font-sans">
+                          <Briefcase size={18} />
+                        </div>
+                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                          Paket Keberangkatan
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1 flex flex-col">
+                      {profile.packages.map((pkg) => (
+                        <div 
+                          key={pkg.id} 
+                          className="p-3 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-105 flex items-center justify-between group transition-colors"
+                        >
+                          <div className="space-y-1 min-w-0 pr-2">
+                            <span className="text-[8px] bg-[#0F4C81] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
+                              {pkg.type}
+                            </span>
+                            <h4 className="text-xs font-bold text-slate-900 truncate mt-1">
+                              {pkg.name}
+                            </h4>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
+                              <span>📅 {pkg.duration}</span>
+                              <span>•</span>
+                              <span>🏨 Hotel Bintang {pkg.hotelStar}</span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-[8px] text-slate-400 block font-semibold uppercase leading-none mb-0.5">Mulai</span>
+                            <strong className="text-xs font-black text-slate-900 bg-white border border-slate-200/60 px-2.5 py-1.5 rounded-xl block font-sans">
+                              {pkg.price}
+                            </strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'performa' && (
+                <div className="bg-white rounded-2xl border border-slate-200/50 p-6 shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Tahun Ini</span>
+                      <strong className="text-xl font-black text-slate-900 block leading-tight mt-1">
+                        845 Jamaah
+                      </strong>
+                      <span className="text-[9px] text-emerald-600 font-bold block mt-1">+14% vs tahun lalu</span>
+                    </div>
+
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Paket Terjual</span>
+                      <strong className="text-xl font-black text-slate-900 block leading-tight mt-1">
+                        321 Paket
+                      </strong>
+                      <span className="text-[9px] text-[#0F4C81] font-bold block mt-1">Sisa 12 kuota promo</span>
+                    </div>
+
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Conversion Rate</span>
+                      <strong className="text-xl font-black text-[#0F4C81] block leading-tight mt-1">
+                        34%
+                      </strong>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-1">Efisiensi tinggi</span>
+                    </div>
+
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Repeat Customer</span>
+                      <strong className="text-xl font-black text-amber-605 block leading-tight mt-1">
+                        42%
+                      </strong>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-1">Loyalitas mantap</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* SVG Chart */}
+                    <div className="md:col-span-2 bg-slate-50 rounded-xl p-5 border border-slate-100 flex flex-col justify-between">
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight mb-4">
+                        Grafik Pertumbuhan Jamaah (Jan - Jun)
+                      </h3>
+                      
+                      <div className="relative w-full h-48 bg-white rounded-xl p-3 border border-slate-200/50 flex flex-col justify-between">
+                        <div className="absolute inset-x-0 top-1/4 h-px bg-slate-100 dashed" />
+                        <div className="absolute inset-x-0 top-2/4 h-px bg-slate-100 dashed" />
+                        <div className="absolute inset-x-0 top-3/4 h-px bg-slate-100 dashed" />
+
+                        <svg className="w-full h-full overflow-visible z-10" viewBox="0 0 300 100" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="chartGradDesk" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#F5B800" stopOpacity="0.45" />
+                              <stop offset="100%" stopColor="#F5B800" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          <path 
+                            d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15 L 290 100 L 10 100 Z" 
+                            fill="url(#chartGradDesk)" 
+                          />
+                          <path 
+                            d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15" 
+                            fill="none" 
+                            stroke="#0F4C81" 
+                            strokeWidth="3.5" 
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path 
+                            d="M 10 80 L 60 70 L 120 60 L 180 40 L 240 35 L 290 20" 
+                            fill="none" 
+                            stroke="#F5B800" 
+                            strokeWidth="2" 
+                            strokeDasharray="4 3" 
+                            strokeLinecap="round"
+                          />
+                          <circle cx="10" cy="90" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                          <circle cx="60" cy="75" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                          <circle cx="120" cy="50" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                          <circle cx="180" cy="65" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                          <circle cx="240" cy="30" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                          <circle cx="290" cy="15" r="4" fill="#0F4C81" stroke="#fff" strokeWidth="2" />
+                        </svg>
+
+                        <div className="flex justify-between px-1 text-[10px] font-black text-slate-400 select-none z-10 mt-2">
+                          <span>Jan</span>
+                          <span>Feb</span>
+                          <span>Mar</span>
+                          <span>Apr</span>
+                          <span>Mei</span>
+                          <span>Jun</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between text-[11px] font-bold text-slate-450 mt-3 border-t border-slate-100 pt-2.5">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                          <span className="inline-block w-2.5 h-1.5 bg-[#0F4C81] rounded" /> Realisasi Keberangkatan (Pax)
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                          <span className="inline-block w-2.5 h-1.5 bg-amber-400 rounded-full" /> Target Program
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4 font-sans flex flex-col">
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Timeline Aktivitas</h3>
+                      <div className="relative border-l border-slate-200 pl-4 ml-2 space-y-4 max-h-[220px] overflow-y-auto">
+                        <div className="relative">
+                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-[#0F4C81] border-2 border-white ring-2 ring-[#0F4C81]/20" />
+                          <time className="text-[9px] font-bold text-slate-400 block">Hari ini, 09:20 WIB</time>
+                          <h4 className="text-xs font-bold text-slate-900 mt-0.5 font-sans">42 Jamaah Berhasil Diberangkatkan</h4>
+                        </div>
+
+                        <div className="relative">
+                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-white" />
+                          <time className="text-[9px] font-bold text-slate-400 block">Kemarin</time>
+                          <h4 className="text-xs font-bold text-slate-900 mt-0.5">Paket Baru Ditambahkan</h4>
+                        </div>
+
+                        <div className="relative">
+                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+                          <time className="text-[9px] font-bold text-slate-400 block">27 Mei 2026</time>
+                          <h4 className="text-xs font-bold text-slate-900 mt-0.5">Validasi & Verifikasi NIB selesai</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'galeri' && (
+                <div className="bg-white rounded-2xl border border-slate-200/50 p-6 shadow-sm space-y-5">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 select-none">
+                    {['Semua', 'Keberangkatan', 'Manasik', 'City Tour', 'Hotel', 'Pesawat', 'Kantor'].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setGalleryFilter(cat)}
+                        className={`py-1.5 px-3 rounded-full text-[10px] font-black tracking-tight border shrink-0 transition-all cursor-pointer ${
+                          galleryFilter === cat
+                            ? 'bg-[#0F4C81] text-white border-transparent'
+                            : 'bg-white text-slate-500 border-slate-200/80 hover:bg-slate-50'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {profile.gallery
+                      .filter(img => galleryFilter === 'Semua' || img.category === galleryFilter)
+                      .map((img) => (
+                        <div 
+                          key={img.id}
+                          onClick={() => setSelectedImage({ url: img.url, title: img.title })}
+                          className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-95"
+                        >
+                          <div className="aspect-[4/3] bg-slate-50 overflow-hidden relative">
+                            <img 
+                              src={img.url} 
+                              alt={img.title} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+                              <span className="text-[10px] text-white font-bold block truncate">{img.title}</span>
+                            </div>
+                          </div>
+                          <div className="p-2.5 bg-slate-50 flex justify-between items-center border-t border-slate-100">
+                            <span className="text-[9px] font-bold text-slate-900 truncate pr-2">{img.title}</span>
+                            <span className="text-[8px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-md font-bold text-right shrink-0">{img.category}</span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'testimoni' && (
+                <div className="bg-white rounded-2xl border border-slate-200/50 p-6 shadow-sm space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1 bg-slate-50 rounded-2xl p-5 border border-slate-100/80 flex flex-col justify-center items-center text-center">
+                      <strong className="text-4xl font-black text-slate-900 leading-none">4.9</strong>
+                      <div className="flex gap-1 justify-center py-2">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} className="fill-[#F5B800] stroke-amber-500" size={16} />
+                        ))}
+                      </div>
+                      <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide">Berdasarkan 156 Review</span>
+                    </div>
+
+                    <div className="md:col-span-2 space-y-2.5 flex flex-col justify-center animate-in fade-in-50 duration-200">
+                      <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
+                        <span className="w-6 font-extrabold text-slate-750 font-sans">5 ★</span>
+                        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="bg-[#F5B800] h-full rounded-full" style={{ width: '90%' }} />
+                        </div>
+                        <span className="w-8 text-right font-sans">90%</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
+                        <span className="w-6 font-extrabold text-slate-755 font-sans">4 ★</span>
+                        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="bg-amber-400 h-full rounded-full" style={{ width: '8%' }} />
+                        </div>
+                        <span className="w-8 text-right font-medium font-sans">8%</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
+                        <span className="w-6 font-extrabold text-slate-755 font-sans">3 ★</span>
+                        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="bg-slate-300 h-full rounded-full" style={{ width: '2%' }} />
+                        </div>
+                        <span className="w-8 text-right font-semibold text-slate-800 font-sans">2%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {profile.testimonials.map((t) => (
+                      <div key={t.id} className="bg-slate-50 hover:bg-slate-100/40 border border-slate-100 rounded-2xl p-4 transition-all space-y-3 font-sans">
+                        <div className="flex items-center gap-2.5">
+                          <img 
+                            src={t.avatar} 
+                            alt={t.name} 
+                            className="w-10 h-10 rounded-full object-cover border border-slate-150 shadow-sm"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="flex-1 min-w-0 font-sans">
+                            <h4 className="text-xs md:text-sm font-black text-slate-950 truncate leading-tight font-sans">{t.name}</h4>
+                            <span className="text-[9px] text-slate-400 font-bold block mt-0.5">{t.date}</span>
+                          </div>
+                          <div className="flex gap-0.5 bg-white border border-slate-150 px-2 py-1 rounded-lg shrink-0 shadow-2xs">
+                            {[...Array(t.rating).keys()].map((star) => (
+                              <Star key={star} className="fill-[#F5B800] stroke-amber-500" size={11} />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed font-semibold italic">
+                          "{t.text}"
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* SOCIAL MEDIA BAR */}
+            <div className="bg-slate-900 border border-slate-850 rounded-2xl p-6 text-white text-center space-y-4 shadow-md max-w-3xl mx-auto font-sans">
+              <h4 className="text-xs font-black uppercase tracking-widest text-[#F5B800]">
+                Hubungkan Media Sosial Travel Anda
+              </h4>
+              <div className="flex flex-col items-center gap-3">
+                <span className="text-xs text-slate-400 font-mono tracking-wider bg-slate-850 py-1.5 px-3 rounded-lg border border-slate-800">
+                  🌐 Website Mitra: {profile.socialMedia.website || 'Belum Diatur'}
+                </span>
+                <div className="flex gap-4">
+                  <a 
+                    href={profile.socialMedia.instagram ? `https://instagram.com/${profile.socialMedia.instagram.replace('@', '')}` : 'https://instagram.com'} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-3 bg-white/10 hover:bg-white/20 hover:scale-110 rounded-xl transition-all text-white active:scale-95 text-center shadow" 
+                    title="Instagram"
+                  >
+                    <Instagram size={20} />
+                  </a>
+                  <a 
+                    href={profile.socialMedia.facebook ? `https://facebook.com/${encodeURIComponent(profile.socialMedia.facebook)}` : 'https://facebook.com'} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-3 bg-white/10 hover:bg-white/20 hover:scale-110 rounded-xl transition-all text-white active:scale-95 text-center shadow font-sans" 
+                    title="Facebook"
+                  >
+                    <Facebook size={20} />
+                  </a>
+                  <a 
+                    href={profile.socialMedia.youtube ? `https://youtube.com/${profile.socialMedia.youtube.startsWith('@') ? profile.socialMedia.youtube : '@' + profile.socialMedia.youtube}` : 'https://youtube.com'} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-3 bg-white/10 hover:bg-white/20 hover:scale-110 rounded-xl transition-all text-white active:scale-95 text-center shadow font-sans" 
+                    title="Youtube"
+                  >
+                    <Youtube size={20} />
+                  </a>
+                  <a 
+                    href={profile.socialMedia.website ? `https://${profile.socialMedia.website.replace('https://', '').replace('http://', '')}` : '#'} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="p-3 bg-white/10 hover:bg-white/20 hover:scale-110 rounded-xl transition-all text-white active:scale-95 text-center shadow font-sans" 
+                    title="Website Resmi"
+                  >
+                    <Globe size={20} />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* SIGN OUT */}
+            <div className="pt-6 pb-2 text-center border-t border-slate-100 flex justify-center items-center font-sans">
+              <button 
+                onClick={handleLogout}
+                className="px-8 py-3 border border-red-200 bg-red-50 text-red-650 hover:bg-red-100 active:scale-95 cursor-pointer font-extrabold text-xs rounded-xl shadow-xs transition-transform tracking-wider"
+              >
+                ✕ KELUAR DARI AKUN TRAVEL
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --- MODAL DIALOGS OVERLAYS (DESKTOP NATIVE PORTAL VIEW) --- */}
+        <AnimatePresence>
+          {selectedImage && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedImage(null)}
+              className="fixed inset-0 z-50 bg-black/92 flex flex-col justify-center items-center p-4 cursor-zoom-out"
+            >
+              <button 
+                className="absolute top-6 right-6 p-2 bg-white/10 text-white rounded-full hover:bg-white/20 transition-all cursor-pointer"
+                onClick={() => setSelectedImage(null)}
+              >
+                <X size={22} />
+              </button>
+              <img 
+                src={selectedImage.url} 
+                alt={selectedImage.title} 
+                className="max-w-full max-h-[80%] object-contain rounded-xl shadow-2xl border border-white/5"
+              />
+              <p className="text-white text-xs font-black mt-4 bg-black/50 px-4 py-1.5 rounded-full select-none text-center">
+                {selectedImage.title}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showShareModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 select-none">
+              <div 
+                className="absolute inset-0 cursor-pointer" 
+                onClick={() => setShowShareModal(false)} 
+              />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="w-full max-w-sm bg-white rounded-3xl p-6 relative z-10 shadow-2xl border border-slate-100 space-y-4"
+              >
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <h3 className="font-extrabold text-xs uppercase tracking-tight text-slate-800">
+                    Bagikan Profil Travel
+                  </h3>
+                  <button onClick={() => setShowShareModal(false)} className="p-1.5 hover:bg-slate-50 rounded-full transition-colors cursor-pointer">
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-4 gap-3 text-center py-2">
+                  <a 
+                    href={`https://wa.me/?text=Mari%20lihat%20Kredibilitas%20Profil%20Travel%20Umroh%20Terpercaya%20${encodeURIComponent(profile.travelName)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-center gap-1.5"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                      <MessageCircle size={18} />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 font-sans">WhatsApp</span>
+                  </a>
+
+                  <a 
+                    href="https://t.me/share/url?url=https://umaroh.com&text=Umaroh"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-center gap-1.5"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center font-sans">
+                      <Send size={16} />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500">Telegram</span>
+                  </a>
+
+                  <a 
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-center gap-1.5"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-indigo-100 text-[#0F4C81] flex items-center justify-center font-sans">
+                      <Facebook size={16} />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500">Facebook</span>
+                  </a>
+
+                  <button 
+                    onClick={handleCopyLink}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer"
+                  >
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                      {copied ? <Check size={16} /> : <Share2 size={16} />}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-505">{copied ? 'Salin!' : 'Copy Link'}</span>
+                  </button>
+                </div>
+
+                <div className="text-center pt-2 select-all font-mono text-[9px] text-slate-400 bg-slate-50 py-1.5 px-2.5 rounded-xl border border-slate-100 font-sans">
+                  https://umaroh.com/mitra/{profile.id}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showLegalModal && (
+            <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+              <div 
+                className="absolute inset-0 cursor-pointer" 
+                onClick={() => setShowLegalModal(false)} 
+              />
+              <motion.div 
+                initial={{ scale: 0.94, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.94, opacity: 0 }}
+                className="w-full max-w-sm bg-gradient-to-b from-amber-50 to-white border-[4px] border-amber-400 rounded-3xl p-6 relative z-10 shadow-2xl flex flex-col justify-between items-center text-center select-text font-sans font-sans"
+              >
+                <button 
+                  onClick={() => setShowLegalModal(false)}
+                  className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-slate-655 rounded-full cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+
+                <div className="w-14 h-14 bg-amber-400 rounded-full flex items-center justify-center shadow-lg text-white font-extrabold text-lg mb-3">
+                  🏆
+                </div>
+
+                <div className="space-y-3 font-sans">
+                  <h3 className="font-extrabold text-amber-900 border-b border-amber-200 pb-2 text-sm uppercase tracking-widest font-sans">
+                    PIAGAM LEGALITAS RESMI
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mb-1 font-sans">
+                    Kementerian Agama Republik Indonesia
+                  </p>
+                  <p className="text-xs text-slate-800 font-extrabold tracking-tight">
+                    Mitra Penyelenggara Perjalanan Ibadah Umrah (PPIU)
+                  </p>
+                  
+                  <div className="py-3 px-3 bg-white/90 border border-amber-200 rounded-2xl shadow-inner font-serif text-slate-850 leading-relaxed text-[11px] font-semibold font-sans">
+                    Sertifikat ini menerangkan bahwa <br />
+                    <strong className="text-xs font-black text-[#0F4C81]">{profile.travelName}</strong> <br />
+                    ({profile.companyName}) <br />
+                    terdaftar secara sah dan legal sebagai PPIU Nasional dengan nomor sertifikat resmi:
+                    <div className="my-2.5 border-t border-b border-amber-200/50 py-1 text-center font-mono text-xs font-black text-amber-800 bg-amber-50">
+                      {profile.ppiu}
+                    </div>
+                    dan berizin NIB <strong className="font-mono">{profile.nib}</strong> dengan performa kepatuhan terverifikasi.
+                  </div>
+                </div>
+
+                <div className="mt-4 w-full flex gap-2 font-sans">
+                  <button 
+                    onClick={handlePdfDownload}
+                    className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 font-black text-slate-950 rounded-xl text-xs active:scale-95 transition-transform cursor-pointer"
+                  >
+                    Format PDF
+                  </button>
+                  <button 
+                    onClick={() => setShowLegalModal(false)}
+                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs active:scale-95 transition-transform cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }

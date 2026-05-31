@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight } from 'lucide-react';
+import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight, Building2 } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc } from '../firebase';
 import { syncBookingToTracker } from '../utils/firebaseSync';
 import { PaketMaster, Maskapai, Hotel } from '../types';
@@ -35,10 +35,15 @@ interface DisplayPaket {
   status?: string;
 }
 
-export const KatalogPaketView = () => {
+interface KatalogPaketViewProps {
+  initialSearch?: string;
+}
+
+export const KatalogPaketView = ({ initialSearch = '' }: KatalogPaketViewProps) => {
   const [paketMasters, setPaketMasters] = React.useState<PaketMaster[]>([]);
   const [paketMitras, setPaketMitras] = React.useState<PaketMitra[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const [agencies, setAgencies] = React.useState<Record<string, string>>({});
+  const [searchTerm, setSearchTerm] = React.useState(initialSearch);
   const [showExpired, setShowExpired] = React.useState(false);
   const [selectedPaket, setSelectedPaket] = React.useState<DisplayPaket | null>(null);
   const [bookingSuccess, setBookingSuccess] = React.useState(false);
@@ -49,6 +54,20 @@ export const KatalogPaketView = () => {
   const userId = auth.currentUser?.uid;
 
   React.useEffect(() => {
+    setSearchTerm(initialSearch);
+  }, [initialSearch]);
+
+  React.useEffect(() => {
+    // Fetch users for mitra/partner agency mapping
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const agencyMap: Record<string, string> = {};
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        agencyMap[docSnap.id] = data.brandName || data.namaLengkap || data.nama || 'Umaroh';
+      });
+      setAgencies(agencyMap);
+    });
+
     // Fetch published & archived Paket Master
     const qMaster = query(collection(db, 'paket_master'));
     const unsubMaster = onSnapshot(qMaster, (snapshot) => {
@@ -75,6 +94,7 @@ export const KatalogPaketView = () => {
     });
 
     return () => {
+      unsubUsers();
       unsubMaster();
       unsubMitra();
       unsubHotels();
@@ -86,16 +106,19 @@ export const KatalogPaketView = () => {
     if (!selectedPaket || !userId) return;
 
     try {
-      const isMitraPaket = !!selectedPaket.paketMasterId;
-      
+      const isMitraPaket = !!selectedPaket.paketMasterId || selectedPaket.type === 'mitra';
+      const fallbackPrice = selectedPaket.hargaJualQuad || selectedPaket.displayPrice || 0;
+      const calculatedPrice = (isMitraPaket ? selectedPaket.hargaJual : selectedPaket.hargaDasar) ?? fallbackPrice;
+
       const bookingData = {
         jamaahId: userId,
         paketId: selectedPaket.id,
         jenisPaket: isMitraPaket ? 'mitra' : 'master',
-        mitraId: isMitraPaket ? selectedPaket.mitraId : null,
+        mitraId: isMitraPaket ? (selectedPaket.mitraId || null) : null,
+        paketLabel: selectedPaket.displayName || 'Paket Pilihan',
         statusPembayaran: 'pending',
         statusKeberangkatan: 'menunggu',
-        totalHarga: isMitraPaket ? selectedPaket.hargaJual : selectedPaket.hargaDasar,
+        totalHarga: calculatedPrice,
         createdAt: serverTimestamp()
       };
 
@@ -316,9 +339,17 @@ export const KatalogPaketView = () => {
 
             <div className="p-5 flex-grow flex flex-col">
               {/* Title */}
-              <h3 className="text-gray-900 font-black text-sm md:text-base leading-tight uppercase italic tracking-tight mb-3">
+              <h3 className="text-gray-900 font-black text-sm md:text-base leading-tight uppercase italic tracking-tight mb-1">
                 {paket.displayName}
               </h3>
+              
+              {/* Mitra info */}
+              <div className="flex items-center gap-1.5 mb-3 text-[10px] font-black text-indigo-700/90 whitespace-nowrap overflow-hidden text-ellipsis">
+                <Building2 className="w-3.5 h-3.5 flex-shrink-0 text-indigo-500" />
+                <span className="uppercase tracking-wide">
+                  {agencies[paket.mitraId || ''] || 'Umaroh Pusat'}
+                </span>
+              </div>
               
               {/* Icon Info Row */}
               <div className="flex items-center gap-4 mb-5 pb-4 border-b border-gray-50">

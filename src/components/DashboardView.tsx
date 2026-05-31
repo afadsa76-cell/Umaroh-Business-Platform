@@ -3,19 +3,47 @@ import { LayoutDashboard, TrendingUp, Users, Package, AlertCircle, ArrowRight, M
 import { TabType } from './Navbar';
 import { format, differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import { db, collection, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
+import { db, collection, onSnapshot, handleFirestoreError, OperationType, doc, updateDoc } from '../firebase';
 import { getTransactions } from '../data/transactions';
 import { PaketTracker, JamaahTracker } from './tracker/types';
 import { openWhatsApp } from '../utils/whatsapp';
+import { syncBookingToTracker } from '../utils/firebaseSync';
+import { ShopOrder } from '../types';
+
+interface PilgrimBooking {
+  id: string;
+  jamaahId?: string;
+  jenisPaket?: string;
+  paketLabel?: string;
+  totalHarga?: number;
+  statusPembayaran?: string;
+  createdAt?: { seconds: number; nanoseconds: number } | null;
+}
 
 interface DashboardViewProps {
   onNavigate?: (tab: TabType) => void;
+}
+
+interface DisplayFlight {
+  id: string;
+  airline: string;
+  departure: string;
+  return: string;
+  availableSeats: number;
+  totalSeats: number;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [pakets, setPakets] = useState<PaketTracker[]>([]);
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
   const [totalOmzet, setTotalOmzet] = useState(0);
+  const [airlineInfo, setAirlineInfo] = useState<DisplayFlight[]>([]);
+  
+  // Real-time Pilgrim bookings & Merchandise shop orders
+  const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
+  const [rawBookings, setRawBookings] = useState<PilgrimBooking[]>([]);
+  const [resiInputs, setResiInputs] = useState<Record<string, string>>({});
+  const [internalTab, setInternalTab] = useState<'bookings' | 'shop'>('bookings');
 
   useEffect(() => {
     const unsubPaket = onSnapshot(collection(db, 'tracker_paket'), (snapshot) => {
@@ -23,17 +51,105 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'tracker_paket');
     });
+    
     const unsubJamaah = onSnapshot(collection(db, 'tracker_jamaah'), (snapshot) => {
       setJamaahs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JamaahTracker)));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'tracker_jamaah');
     });
 
+    const unsubShopOrders = onSnapshot(collection(db, 'shop_orders'), (snapshot) => {
+      setShopOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShopOrder)));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'shop_orders');
+    });
+
+    const unsubRawBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
+      setRawBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PilgrimBooking)));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'bookings');
+    });
+
+    const unsubAirlines = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
+      interface TempFlight {
+        id: string;
+        airline: string;
+        rawDept: string;
+        rawReturn: string;
+        availableSeats: number;
+        totalSeats: number;
+      }
+      const list: TempFlight[] = [];
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        list.push({
+          id: docSnap.id,
+          airline: d.name || 'Maskapai',
+          rawDept: d.tanggalKeberangkatan || '',
+          rawReturn: d.tanggalKepulangan || '',
+          availableSeats: Number(d.availableSeats || 0),
+          totalSeats: Number(d.totalSeats || 0),
+        });
+      });
+      // Sort and take top 4
+      const todayStr = new Date().toISOString().split('T')[0];
+      const active = list
+        .filter(f => f.rawDept >= todayStr)
+        .sort((a,b) => a.rawDept.localeCompare(b.rawDept))
+        .slice(0, 4);
+
+      const targetList = active.length === 0 ? list.slice(0, 4) : active;
+
+      const formatted = targetList.map(f => {
+        let deptText = f.rawDept;
+        let retText = f.rawReturn;
+        try {
+          if (f.rawDept) {
+            const parsed = parseISO(f.rawDept);
+            if (!isNaN(parsed.getTime())) {
+              deptText = format(parsed, 'dd MMM yyyy', { locale: idLocale });
+            }
+          }
+        } catch {
+          // Keep raw date text if parsing fails
+        }
+        try {
+          if (f.rawReturn) {
+            const parsed = parseISO(f.rawReturn);
+            if (!isNaN(parsed.getTime())) {
+              retText = format(parsed, 'dd MMM yyyy', { locale: idLocale });
+            }
+          }
+        } catch {
+          // Keep raw date text if parsing fails
+        }
+
+        return {
+          id: f.id,
+          airline: f.airline,
+          departure: deptText,
+          return: retText,
+          availableSeats: f.availableSeats,
+          totalSeats: f.totalSeats,
+        };
+      });
+
+      setAirlineInfo(formatted);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'maskapai');
+    });
+
     const transactions = getTransactions();
     const omzet = transactions.reduce((sum, t) => sum + t.totalOmzet, 0);
     setTotalOmzet(omzet);
 
-    return () => { unsubPaket(); unsubJamaah(); };
+    return () => { 
+      unsubPaket(); 
+      unsubJamaah(); 
+      unsubAirlines();
+      unsubShopOrders();
+      unsubRawBookings();
+    };
   }, []);
 
   const activePakets = pakets.filter(p => p.status !== 'Selesai').length;
@@ -45,13 +161,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     { label: 'Paket Umroh Aktif', value: activePakets.toString(), icon: Package, color: 'text-amber-600', bg: 'bg-amber-50', tab: 'tracker' as TabType },
     { label: 'Total Jamaah', value: totalJamaah.toString(), icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', tab: 'tracker' as TabType },
     { label: 'Pending Payments', value: `${pendingJamaahPayments} Jamaah`, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-50', tab: 'tracker' as TabType },
-  ];
-
-  // We can keep airlineInfo and vendorServices static for now, or remove them if not needed.
-  // Let's keep them static as placeholders for future development.
-  const airlineInfo = [
-    { id: 'promo-ga-1', airline: 'Garuda (Promo Juli)', departure: '12 Jul 2026', return: '19 Jul 2026', availableSeats: 80, totalSeats: 80 },
-    { id: 'promo-sv-1', airline: 'Saudia (Promo Juli)', departure: '09 Jul 2026', return: '18 Jul 2026', availableSeats: 40, totalSeats: 40 },
   ];
 
   interface VendorInvoice {
@@ -112,6 +221,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     const encodedMessage = encodeURIComponent(message);
     const waUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
     openWhatsApp(waUrl);
+  };
+
+  // Update Shop Order Status/Resi
+  const handleUpdateShopOrderStatus = async (orderId: string, newStatus: string, customResi?: string) => {
+    try {
+      const payload: { status: string; noResi?: string } = { status: newStatus };
+      if (customResi !== undefined) {
+        payload.noResi = customResi;
+      }
+      await updateDoc(doc(db, 'shop_orders', orderId), payload);
+      alert(`Status pesanan berhasil diperbarui ke: ${newStatus}`);
+    } catch (err) {
+      console.error("Gagal update status pesanan belanja:", err);
+    }
+  };
+
+  // Confirm Pilgrim Package Booking payment
+  const handleConfirmBookingPayment = async (bookingId: string) => {
+    try {
+      await updateDoc(doc(db, 'bookings', bookingId), {
+        statusPembayaran: 'lunas'
+      });
+      // Retrieve booking to re-sync
+      const targetBooking = rawBookings.find(b => b.id === bookingId);
+      if (targetBooking) {
+        await syncBookingToTracker(bookingId, {
+          ...targetBooking,
+          statusPembayaran: 'lunas'
+        });
+      }
+      alert("Pembayaran pendaftaran umroh berhasil dikonfirmasi LUNAS!");
+    } catch (err) {
+      console.error("Gagal konfirmasi pembayaran:", err);
+    }
   };
 
   const getStatusColor = (days: number) => {
@@ -442,6 +585,221 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* NEW: Pilgrim Bookings & Shop Items Dispatch Panels */}
+      <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 mb-8 font-sans">
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-150 pb-4 mb-6 gap-4">
+          <div>
+            <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
+              🕋 Kelola Transaksi Baru Jamaah
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">Proses pendaftaran paket umroh dan pengiriman belanjaan perlengkapan jamaah Anda secara real-time.</p>
+          </div>
+          
+          <div className="flex bg-slate-100 p-1 rounded-xl shrink-0 gap-1 self-start md:self-auto">
+            <button
+              onClick={() => setInternalTab('bookings')}
+              className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${
+                internalTab === 'bookings' 
+                  ? 'bg-white text-emerald-800 shadow-sm' 
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Pendaftaran Paket ({rawBookings.filter(b => b.statusPembayaran === 'pending').length})
+            </button>
+            <button
+              onClick={() => setInternalTab('shop')}
+              className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${
+                internalTab === 'shop' 
+                  ? 'bg-white text-emerald-800 shadow-sm' 
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Belanja Perlengkapan ({shopOrders.length})
+            </button>
+          </div>
+        </div>
+
+        {internalTab === 'bookings' ? (
+          <div>
+            {rawBookings.filter(b => b.statusPembayaran === 'pending').length === 0 ? (
+              <div className="p-10 text-center bg-slate-50 rounded-2xl border border-dashed border-gray-200">
+                <span className="text-3xl block mb-2">🎉</span>
+                <p className="text-gray-600 font-bold text-xs">Mantap! Semua pendaftaran paket umroh jamaah baru sudah lunas atau diverifikasi.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 text-gray-500 uppercase tracking-wider font-bold border-b border-gray-100 text-[10px]">
+                      <th className="p-3.5">ID / Waktu</th>
+                      <th className="p-3.5">Nama Jamaah</th>
+                      <th className="p-3.5">Paket Pilihan</th>
+                      <th className="p-3.5 text-right">Nilai Tagihan</th>
+                      <th className="p-3.5 text-center">Aksi Verifikasi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 font-medium">
+                    {rawBookings.filter(b => b.statusPembayaran === 'pending').map((booking) => (
+                      <tr key={booking.id} className="hover:bg-slate-50/50">
+                        <td className="p-3.5">
+                          <span className="font-mono font-bold text-gray-800 block text-xs">#{booking.id.substring(0, 8).toUpperCase()}</span>
+                          <span className="text-[10px] text-gray-400 block mt-0.5">
+                            {booking.createdAt ? (booking.createdAt.seconds ? new Date(booking.createdAt.seconds * 1000).toLocaleString('id-ID') : 'Baru saja') : 'Baru saja'}
+                          </span>
+                        </td>
+                        <td className="p-3.5">
+                          <span className="font-extrabold text-gray-800 block text-xs">
+                            {jamaahs.find(j => j.id === booking.id)?.nama_paspor || booking.jamaahId?.substring(0, 8)}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-mono">ID: {booking.jamaahId}</span>
+                        </td>
+                        <td className="p-3.5">
+                          <span className="bg-emerald-55 text-emerald-75 font-extrabold px-2 py-0.5 rounded-full text-[10px] uppercase">
+                            {booking.jenisPaket || 'Master'}
+                          </span>
+                          <span className="text-gray-600 block text-[11px] mt-1 font-bold">
+                            {booking.paketLabel || 'Paket Pilihan Program'}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right font-sans">
+                          <strong className="text-amber-600 font-black text-sm block">
+                            Rp {(booking.totalHarga || 0).toLocaleString('id-ID')}
+                          </strong>
+                          <span className="text-[10px] bg-amber-105 text-amber-85 px-1.5 py-0.5 rounded-full font-bold inline-block mt-1 uppercase">
+                            Pending Payment
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <button
+                            onClick={() => handleConfirmBookingPayment(booking.id)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer text-[10px]"
+                          >
+                            KONFIRMASI LUNAS
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {shopOrders.length === 0 ? (
+              <div className="p-10 text-center bg-slate-50 rounded-2xl border border-dashed border-gray-200">
+                <span className="text-3xl block mb-2">🛍️</span>
+                <p className="text-gray-600 font-bold text-xs">Belum ada jamaah yang memesan pakaian/ihram tambahan di shop market.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 text-gray-500 uppercase tracking-wider font-bold border-b border-gray-100 text-[10px]">
+                      <th className="p-3.5">ID / Detail Item</th>
+                      <th className="p-3.5">Nama Pembeli & Alamat Kirim</th>
+                      <th className="p-3.5 text-right">Pembayaran</th>
+                      <th className="p-3.5 text-center">Status Kirim</th>
+                      <th className="p-3.5 text-center">Kontrol Seller</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 font-medium">
+                    {shopOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-slate-50/50 font-sans">
+                        <td className="p-3.5 max-w-[200px]">
+                          <span className="font-mono text-gray-400 text-[10px] block font-bold">ID: #{order.id.substring(0, 8).toUpperCase()}</span>
+                          <span className="font-extrabold text-xs text-gray-800 block mt-1">{order.productName}</span>
+                          <span className="text-gray-500 text-[10px] block mt-0.5">
+                            Jumlah: <strong className="text-gray-800">{order.quantity || 1} Pcs</strong> | Satuan: Rp {(order.productPrice || 0).toLocaleString('id-ID')}
+                          </span>
+                        </td>
+                        <td className="p-3.5 max-w-[240px]">
+                          <strong className="text-gray-800 block font-extrabold text-[12px]">{order.jamaahName || 'Jamaah Marawa'}</strong>
+                          <p className="text-gray-500 leading-relaxed text-[11px] bg-slate-50 p-2 rounded-xl mt-1.5 border border-slate-100">
+                            📍 Alamat: {order.shippingAddress || '-'}
+                          </p>
+                          <span className="text-[10px] font-bold text-gray-400 block mt-1 font-mono">
+                            Kurir: <strong className="text-gray-700 uppercase">{order.shippingVendor || 'Reguler'}</strong>
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <strong className="text-amber-600 font-black text-sm block">Rp {(order.totalCost || 0).toLocaleString('id-ID')}</strong>
+                          <span className="text-[10px] text-gray-400 font-bold block mt-1 font-mono">Metode: {order.paymentMethod || 'Manual'}</span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            order.status === 'Selesai' ? 'bg-emerald-100 text-emerald-800' :
+                            order.status === 'Dibatalkan' ? 'bg-red-150 text-red-75 border border-red-200' :
+                            order.status?.startsWith('Dikirim') ? 'bg-indigo-100 text-indigo-800' :
+                            'bg-amber-100 text-amber-800'
+                          }`}>
+                            {order.status || 'Diproses Seller'}
+                          </span>
+                          {order.noResi && (
+                            <span className="font-mono text-[9px] block text-indigo-600 font-bold mt-1.5 bg-indigo-50 px-1 py-0.5 rounded">
+                              RESI: {order.noResi}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3.5 text-center space-y-2">
+                          {order.status !== 'Selesai' && order.status !== 'Dibatalkan' && (
+                            <div className="flex flex-col gap-1.5 max-w-[150px] mx-auto">
+                              {!order.noResi && (
+                                <div className="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
+                                  <input
+                                    type="text"
+                                    placeholder="Input No. Resi..."
+                                    value={resiInputs[order.id] || ''}
+                                    onChange={(e) => setResiInputs(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                    className="bg-transparent text-[10px] outline-none border-none py-1 px-1.5 w-full font-bold"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      const r = resiInputs[order.id]?.trim();
+                                      if (!r) {
+                                        alert("Mohon ketikkan nomor resi kurir pengiriman.");
+                                        return;
+                                      }
+                                      handleUpdateShopOrderStatus(order.id, 'Dikirim', r);
+                                    }}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-2 py-1 rounded font-sans text-[8px]"
+                                  >
+                                    KIRIM
+                                  </button>
+                                </div>
+                              )}
+                              
+                              {order.noResi && order.status !== 'Selesai' && (
+                                <button
+                                  onClick={() => handleUpdateShopOrderStatus(order.id, 'Selesai')}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-2.5 py-1 text-[10px] rounded-xl cursor-pointer"
+                                >
+                                  ✓ SELESAIKAN PESANAN
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => handleUpdateShopOrderStatus(order.id, 'Dibatalkan')}
+                                className="text-red-500 hover:text-red-700 font-black text-[10px] py-1 underline cursor-pointer"
+                              >
+                                BATALKAN
+                              </button>
+                            </div>
+                          )}
+                          {(order.status === 'Selesai' || order.status === 'Dibatalkan') && (
+                            <span className="text-gray-400 font-bold text-[10px]">TUNTAS</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8">

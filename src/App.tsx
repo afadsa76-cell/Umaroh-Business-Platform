@@ -69,9 +69,34 @@ function App() {
         
         // Fetch user role from Firestore
         try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
+          let data: { role?: string; subRole?: string | null; [key: string]: unknown } | null = null;
+          try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+              data = userDoc.data() as { role?: string; subRole?: string | null; [key: string]: unknown };
+              // Cache values in localStorage for safety & offline robustness
+              localStorage.setItem(`marawa_cached_user_${user.uid}`, JSON.stringify(data));
+              if (data.role) localStorage.setItem(`marawa_cached_role_${user.uid}`, data.role);
+              if (data.subRole) {
+                localStorage.setItem(`marawa_cached_subrole_${user.uid}`, data.subRole);
+              } else {
+                localStorage.removeItem(`marawa_cached_subrole_${user.uid}`);
+              }
+            }
+          } catch (fetchErr) {
+            console.warn("Failed fetching user role from network, trying cache:", fetchErr);
+            const cachedDataStr = localStorage.getItem(`marawa_cached_user_${user.uid}`);
+            if (cachedDataStr) {
+              data = JSON.parse(cachedDataStr);
+            } else {
+              // Create a minimal fake data based on fallback stored values
+              const cachedRole = localStorage.getItem(`marawa_cached_role_${user.uid}`) || 'jamaah';
+              const cachedSubRole = localStorage.getItem(`marawa_cached_subrole_${user.uid}`) || null;
+              data = { role: cachedRole, subRole: cachedSubRole };
+            }
+          }
+
+          if (data) {
             setUserRole(isMA ? 'admin' : (data.role as Role));
             setSubRole(isMA ? null : (data.subRole || null));
             
@@ -110,12 +135,18 @@ function App() {
             const isErrorOffline = error instanceof Error && (
               error.message.includes('offline') || 
               error.message.includes('Could not reach Cloud Firestore backend') ||
-              error.message.includes('timeout')
+              error.message.includes('timeout') ||
+              error.message.includes('unavailable')
             );
             if (isErrorOffline) {
               setIsOffline(true);
-              // Standby / offline fallback for existing session info if accessible
-              console.warn("Firestore client is offline. App is operating in offline mode.");
+              // Fallback default role for offline mode to prevent blank screen
+              const cachedRole = localStorage.getItem(`marawa_cached_role_${user.uid}`) as Role || 'jamaah';
+              const cachedSubRole = localStorage.getItem(`marawa_cached_subrole_${user.uid}`) || null;
+              setUserRole(cachedRole);
+              setSubRole(cachedSubRole);
+              setActiveTab('dashboard');
+              console.warn("Firestore client is offline. App is operating in offline mode with cached role:", cachedRole);
             } else if (error instanceof Error && !error.message.includes('permission-denied')) {
                // We don't throw on permission-denied here because it might happen before user registers
                handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
