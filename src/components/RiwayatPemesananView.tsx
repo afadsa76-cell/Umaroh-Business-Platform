@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Clock, ArrowRight } from 'lucide-react';
-import { db, auth, collection, onSnapshot, query, where } from '../firebase';
+import { db, auth, collection, onSnapshot, query, where, doc, handleFirestoreError, OperationType } from '../firebase';
 
 interface Booking {
   id: string;
@@ -27,31 +27,50 @@ export const RiwayatPemesananView: React.FC = () => {
   useEffect(() => {
     if (!userId) return;
 
+    const unsubs: (() => void)[] = [];
+
     const q = query(collection(db, 'bookings'), where('jamaahId', '==', userId));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
       setBookings(data);
       setLoading(false);
       
-      // Fetch related package info
+      // Clean up previous sub-listeners
+      while (unsubs.length > 0) {
+        const unsub = unsubs.pop();
+        if (unsub) unsub();
+      }
+
+      // Fetch related package info using direct document listeners for efficiency
       data.forEach(booking => {
+        if (!booking.paketId) return;
         const collectionName = booking.jenisPaket === 'mitra' ? 'paket_mitra' : 'paket_master';
-        onSnapshot(collection(db, collectionName), (paketSnap) => {
-          const paketData = paketSnap.docs.find(d => d.id === booking.paketId)?.data();
-          if (paketData) {
+        const docRef = doc(db, collectionName, booking.paketId);
+        
+        const unsubDoc = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const paketData = docSnap.data();
             setPaketInfo(prev => ({
               ...prev,
               [booking.paketId]: {
                 id: booking.paketId,
-                nama: booking.jenisPaket === 'mitra' ? paketData.namaPaketMitra : paketData.nama,
+                nama: booking.jenisPaket === 'mitra' ? (paketData.namaPaketMitra || paketData.nama || '') : (paketData.nama || ''),
               }
             }));
           }
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, `${collectionName}/${booking.paketId}`);
         });
+        unsubs.push(unsubDoc);
       });
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'bookings');
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubs.forEach(unsub => unsub());
+    };
   }, [userId]);
 
   const formatCurrency = (amount: number) => {

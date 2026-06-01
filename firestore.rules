@@ -67,9 +67,9 @@ service cloud.firestore {
     // ===============================================================
     
     function isValidUserProfile(data) {
-      return data.name is string && data.name.size() <= 255 &&
-             data.email is string && data.email.size() <= 255 &&
-             data.role in ['operasional', 'mitra', 'jamaah', 'admin'];
+      return (data.get('name', '') is string || data.get('namaLengkap', '') is string || data.get('brandName', '') is string) &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 255)) &&
+             (!('role' in data) || (data.role in ['operasional', 'mitra', 'jamaah', 'admin']));
     }
 
     function isValidWallet(data) {
@@ -125,16 +125,14 @@ service cloud.firestore {
                   (isSignedIn() && (resource.data.get('email', '') == request.auth.token.email)) ||
                   (resource.data.get('role', '') == 'mitra') || 
                   (resource.data.get('uplineId', '') == request.auth.uid);
-      allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming()) && 
-                    (incoming().role in ['mitra', 'jamaah'] || (incoming().email == request.auth.token.email)) &&
-                    incoming().uid == request.auth.uid) || isOperasional() || isAdmin();
+      allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin();
       allow update: if (isAdmin() || isOperasional() || isOwner(userId)) && 
                     isValidUserProfile(incoming()) && (
-                      isAdmin() || isOperasional() ||
-                      (incoming().diff(existing()).affectedKeys().hasOnly(['name', 'subRole', 'uplineId', 'createdAt', 'kota', 'brandName', 'passwordAwal']) &&
-                       incoming().uid == existing().uid &&
-                       incoming().role == existing().role &&
-                       incoming().email == existing().email)
+                      isAdmin() || isOperasional() || (
+                        (!('role' in incoming()) || !('role' in existing()) || incoming().role == existing().role) &&
+                        (!('email' in incoming()) || !('email' in existing()) || incoming().email == existing().email) &&
+                        (!('uid' in incoming()) || !('uid' in existing()) || incoming().get('uid', '') == existing().get('uid', ''))
+                      )
                     );
       allow delete: if isAdmin() || isOperasional() || (isSignedIn() && (resource.data.email == request.auth.token.email || resource.data.get('email', '') == request.auth.token.email));
     }

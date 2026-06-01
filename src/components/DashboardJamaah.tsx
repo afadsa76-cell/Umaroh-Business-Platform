@@ -52,6 +52,7 @@ interface ChatMessage {
 export const DashboardJamaah = () => {
   const [activeTab, setActiveTab] = useState<JamaahTab>('overview');
   const [katalogSearch, setKatalogSearch] = useState<string>('');
+  const [selectedMitraId, setSelectedMitraId] = useState<string | null>(null);
   const userId = auth.currentUser?.uid;
 
   // Real-time Database state
@@ -1036,105 +1037,112 @@ export const DashboardJamaah = () => {
 
       {/* Main Container Area */}
       <div className="flex-grow">
-        {activeTab === 'overview' && renderOverview()}
-        {activeTab === 'katalog' && (
+        {selectedMitraId ? (
           <div className="p-6 max-w-7xl mx-auto w-full">
-            <KatalogPaketView initialSearch={katalogSearch} />
+            <ProfileView isDesktop={true} mitraId={selectedMitraId} onBack={() => setSelectedMitraId(null)} />
           </div>
-        )}
-        
-        {/* Riwayat Tab (Enhanced with Shopee Physical Shop orders) */}
-        {activeTab === 'riwayat' && (
-          <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
+        ) : (
+          <>
+            {activeTab === 'overview' && renderOverview()}
+            {activeTab === 'katalog' && (
+              <div className="p-6 max-w-7xl mx-auto w-full">
+                <KatalogPaketView initialSearch={katalogSearch} onViewMitra={(mitraId) => setSelectedMitraId(mitraId)} />
+              </div>
+            )}
             
-            {/* Split Screen Tabs */}
-            <div className="flex border-b border-gray-150 gap-2">
-              <button
-                onClick={() => setHistoryTab('paket')}
-                className={`pb-3 text-sm font-black px-4 relative ${
-                  historyTab === 'paket' 
-                    ? 'text-emerald-700' 
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                Paket Umroh & Haji Saya
-                {historyTab === 'paket' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-700 rounded"></div>
-                )}
-              </button>
-              
-              <button
-                onClick={() => setHistoryTab('perlengkapan')}
-                className={`pb-3 text-sm font-black px-4 relative flex items-center gap-2 ${
-                  historyTab === 'perlengkapan' 
-                    ? 'text-emerald-700' 
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                Belanjaan Perlengkapan Saya
-                {shopOrders.length > 0 && (
-                  <span className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
-                    {shopOrders.length}
-                  </span>
-                )}
-                {historyTab === 'perlengkapan' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-700 rounded"></div>
-                )}
-              </button>
-            </div>
+            {/* Riwayat Tab (Enhanced with Shopee Physical Shop orders) */}
+            {activeTab === 'riwayat' && (
+              <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
+                
+                {/* Split Screen Tabs */}
+                <div className="flex border-b border-gray-150 gap-2">
+                  <button
+                    onClick={() => setHistoryTab('paket')}
+                    className={`pb-3 text-sm font-black px-4 relative ${
+                      historyTab === 'paket' 
+                        ? 'text-emerald-700' 
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    Paket Umroh & Haji Saya
+                    {historyTab === 'paket' && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-700 rounded"></div>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={() => setHistoryTab('perlengkapan')}
+                    className={`pb-3 text-sm font-black px-4 relative flex items-center gap-2 ${
+                      historyTab === 'perlengkapan' 
+                        ? 'text-emerald-700' 
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    Belanjaan Perlengkapan Saya
+                    {shopOrders.length > 0 && (
+                      <span className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                        {shopOrders.length}
+                      </span>
+                    )}
+                    {historyTab === 'perlengkapan' && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-700 rounded"></div>
+                    )}
+                  </button>
+                </div>
 
-            {historyTab === 'paket' ? (
-              <RiwayatPemesananView />
-            ) : (
-              <div className="space-y-4">
-                <h2 className="text-lg font-black text-gray-900">Riwayat Pembelian Perlengkapan</h2>
-                {shopOrders.length === 0 ? (
-                  <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-                    <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">Belum ada pemesanan perlengkapan saku Kak. Belanja kebutuhan Ihram sekarang di Beranda.</p>
-                  </div>
+                {historyTab === 'paket' ? (
+                  <RiwayatPemesananView />
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {shopOrders.map((order) => (
-                      <div key={order.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-                        <div>
-                          <div className="flex items-center justify-between mb-3 text-[10px]">
-                            <span className="text-gray-400 font-mono font-bold">ID: #{order.id.substring(0, 8)}</span>
-                            <span className="bg-emerald-55 text-emerald-75 font-black px-2 py-0.5 rounded-full uppercase scale-95">
-                              {order.status}
-                            </span>
-                          </div>
-
-                          <h3 className="font-extrabold text-xs text-gray-900">{order.productName}</h3>
-                          <p className="text-[10px] text-gray-400 mt-0.5">Jumlah: {order.quantity} Pcs | Harga: Rp {order.productPrice.toLocaleString('id-ID')}</p>
-                          
-                          <div className="bg-gray-50 p-2.5 rounded-xl text-[10px] text-gray-500 mt-3 space-y-1">
-                            <p><strong>Kurir:</strong> {order.shippingVendor}</p>
-                            {order.noResi && <p className="text-emerald-700"><strong>No. Resi:</strong> {order.noResi} 📋</p>}
-                            <p className="line-clamp-2"><strong>Alamat:</strong> {order.shippingAddress}</p>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between">
-                          <span className="text-[10px] text-gray-400">Total Pembayaran ({order.paymentMethod})</span>
-                          <span className="font-black text-amber-600 text-sm">Rp {order.totalCost.toLocaleString('id-ID')}</span>
-                        </div>
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-black text-gray-900">Riwayat Pembelian Perlengkapan</h2>
+                    {shopOrders.length === 0 ? (
+                      <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
+                        <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 text-sm">Belum ada pemesanan perlengkapan saku Kak. Belanja kebutuhan Ihram sekarang di Beranda.</p>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {shopOrders.map((order) => (
+                          <div key={order.id} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                            <div>
+                              <div className="flex items-center justify-between mb-3 text-[10px]">
+                                <span className="text-gray-400 font-mono font-bold">ID: #{order.id.substring(0, 8)}</span>
+                                <span className="bg-emerald-55 text-emerald-75 font-black px-2 py-0.5 rounded-full uppercase scale-95">
+                                  {order.status}
+                                </span>
+                              </div>
+
+                              <h3 className="font-extrabold text-xs text-gray-900">{order.productName}</h3>
+                              <p className="text-[10px] text-gray-400 mt-0.5">Jumlah: {order.quantity} Pcs | Harga: Rp {order.productPrice.toLocaleString('id-ID')}</p>
+                              
+                              <div className="bg-gray-50 p-2.5 rounded-xl text-[10px] text-gray-500 mt-3 space-y-1">
+                                <p><strong>Kurir:</strong> {order.shippingVendor}</p>
+                                {order.noResi && <p className="text-emerald-700"><strong>No. Resi:</strong> {order.noResi} 📋</p>}
+                                <p className="line-clamp-2"><strong>Alamat:</strong> {order.shippingAddress}</p>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between">
+                              <span className="text-[10px] text-gray-400">Total Pembayaran ({order.paymentMethod})</span>
+                              <span className="font-black text-amber-600 text-sm">Rp {order.totalCost.toLocaleString('id-ID')}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
+
               </div>
             )}
 
-          </div>
+            {activeTab === 'profile' && (
+              <div className="p-6 max-w-7xl mx-auto w-full">
+                <ProfileView forceRole="jamaah" />
+              </div>
+            )}
+          </>
         )}
-
-        {activeTab === 'profile' && (
-          <div className="p-6 max-w-7xl mx-auto w-full">
-            <ProfileView />
-          </div>
-        )}
-
       </div>
 
       {/* Toast Notification for claiming voucher */}

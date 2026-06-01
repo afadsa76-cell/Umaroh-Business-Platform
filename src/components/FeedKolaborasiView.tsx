@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Clock, Plane, Users, Download, ArrowUpRight, Megaphone, Target, Zap, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, Calendar, Clock, Plane, Users, Download, ArrowUpRight, Megaphone, Target, Zap, CheckCircle2, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { db, collection, query, where, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
-import { WizardFormData } from '../types';
+import { WizardFormData, Hotel as HotelType } from '../types';
+import { hotels as staticHotels } from '../data/hotels';
 
 interface CollaborationPackage extends WizardFormData {
   id: string;
@@ -15,12 +16,20 @@ export const FeedKolaborasiView = ({ onNavigateToCatalog }: { onNavigateToCatalo
   const [packages, setPackages] = useState<CollaborationPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [agencies, setAgencies] = useState<Record<string, string>>({});
+  const [hotels, setHotels] = useState<HotelType[]>([]);
   
   const [selectedPackage, setSelectedPackage] = useState<CollaborationPackage | null>(null);
   const [isAgreed, setIsAgreed] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
+    // Fetch all hotels
+    const unsubHotels = onSnapshot(collection(db, 'master_hotels'), (snapshot) => {
+      setHotels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as HotelType));
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'master_hotels');
+    });
+
     // Fetch all users with role 'mitra' to map brand names
     const qUsers = query(collection(db, 'users'), where('role', '==', 'mitra'));
     const unsubUsers = onSnapshot(qUsers, (snapshot) => {
@@ -67,10 +76,30 @@ export const FeedKolaborasiView = ({ onNavigateToCatalog }: { onNavigateToCatalo
     });
 
     return () => {
+      unsubHotels();
       unsubUsers();
       unsubPackages();
     };
   }, []);
+
+  const getHotelObject = (id: string) => {
+    if (!id) return undefined;
+    const found = hotels?.find(item => item.id === id);
+    if (found) return found;
+    return (staticHotels as unknown as HotelType[])?.find(item => item.id === id);
+  };
+
+  const getHotelLabel = (id: string) => {
+    const h = getHotelObject(id);
+    if (!h) return 'Hotel Bintang 5';
+    return h.name || (h as unknown as Record<string, unknown>).nama as string || 'Hotel Bintang 5';
+  };
+
+  const getHotelStars = (id: string) => {
+    const h = getHotelObject(id);
+    if (!h) return 5;
+    return h.bintang || h.stars || 5;
+  };
 
   const filteredPackages = packages.filter(pkg => 
     pkg.nama?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -185,6 +214,44 @@ export const FeedKolaborasiView = ({ onNavigateToCatalog }: { onNavigateToCatalo
                 <h2 className="text-xl md:text-2xl font-black text-gray-900 italic uppercase tracking-tighter mb-4 decoration-amber-500/30 decoration-4 underline-offset-4 line-clamp-2">
                   {pkg.nama}
                 </h2>
+
+                {/* Hotel Accommodations */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6 bg-slate-50/50 p-4 rounded-2xl border border-gray-100/60">
+                  {/* Makkah Hotel */}
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 border border-indigo-100/50">
+                      <span className="text-xs font-black text-indigo-700">M</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Makkah Hotel</p>
+                      <p className="text-xs font-extrabold text-gray-800 leading-tight truncate">{getHotelLabel(pkg.hotelMakkahId || '')}</p>
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        {Array.from({ length: getHotelStars(pkg.hotelMakkahId || '') }).map((_, i) => (
+                          <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Divider line for desktop */}
+                  <div className="hidden sm:block w-px self-stretch bg-gray-200/50 my-1" />
+
+                  {/* Madinah Hotel */}
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100/50">
+                      <span className="text-xs font-black text-emerald-700">M</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-1">Madinah Hotel</p>
+                      <p className="text-xs font-extrabold text-gray-800 leading-tight truncate">{getHotelLabel(pkg.hotelMadinahId || '')}</p>
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        {Array.from({ length: getHotelStars(pkg.hotelMadinahId || '') }).map((_, i) => (
+                          <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-6">

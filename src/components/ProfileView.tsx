@@ -19,7 +19,11 @@ import {
   Check,
   Edit2,
   Instagram,
-  Globe
+  Globe,
+  Camera,
+  Upload,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { auth, db, doc, setDoc, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -79,16 +83,33 @@ interface MitraProfile {
 
 interface ProfileViewProps {
   isDesktop?: boolean;
+  mitraId?: string | null;
+  onBack?: () => void;
+  forceRole?: 'admin' | 'mitra' | 'jamaah';
 }
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) => {
-  const user = auth.currentUser;
+export const ProfileView: React.FC<ProfileViewProps> = ({ 
+  isDesktop = false,
+  mitraId = null,
+  onBack,
+  forceRole
+}) => {
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((u) => {
+      setCurrentUser(u);
+    });
+    return () => unsub();
+  }, []);
+
+  const user = currentUser;
   const [loading, setLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'profil' | 'performa' | 'galeri' | 'testimoni'>('profil');
   
   // Custom user role & profile details in real-time
-  const [role, setRole] = useState<'admin' | 'mitra' | 'jamaah'>('jamaah');
+  const [role, setRole] = useState<'admin' | 'mitra' | 'jamaah'>(forceRole || 'jamaah');
   const [userData, setUserData] = useState<{
     id: string;
     namaLengkap: string;
@@ -178,41 +199,54 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
 
   // Load real-time database updates securely if user is logged in
   useEffect(() => {
-    if (!user) {
+    const targetUid = mitraId || user?.uid;
+    if (!targetUid) {
       setLoading(false);
       return;
     }
-    const path = `users/${user.uid}`;
+    const path = `users/${targetUid}`;
     const unsub = onSnapshot(
-      doc(db, 'users', user.uid),
+      doc(db, 'users', targetUid),
       (docSnap) => {
         if (docSnap.exists()) {
           const uData = docSnap.data();
-          if (uData.role) {
+          const isMA = user?.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+          
+          if (forceRole) {
+            setRole(forceRole);
+          } else if (mitraId) {
+            setRole('mitra');
+          } else if (uData.role) {
             setRole(uData.role);
+          } else if (isMA && targetUid === user?.uid) {
+            setRole('admin');
           }
+          
           setUserData({
-            id: user.uid,
-            namaLengkap: uData.namaLengkap || uData.name || user.displayName || '',
-            email: uData.email || user.email || '',
+            id: targetUid,
+            namaLengkap: uData.namaLengkap || uData.name || (targetUid === user?.uid ? user?.displayName : '') || '',
+            email: uData.email || (targetUid === user?.uid ? user?.email : '') || '',
             phone: uData.phone || uData.telepon || uData.noHP || '',
             address: uData.alamatLengkap || uData.address || '',
             kota: uData.kota || '',
           });
 
           // Update profile options in real-time
-          if (uData.role === 'mitra' || uData.role === 'admin') {
+          const computedRole = uData.role || (isMA && targetUid === user?.uid ? 'admin' : 'jamaah');
+          if (mitraId || computedRole === 'mitra' || computedRole === 'admin') {
             setProfile(prev => {
               const updated = {
                 ...prev,
-                id: user.uid,
+                id: targetUid,
                 travelName: uData.brandName || uData.namaLengkap || uData.name || prev.travelName,
+                companyName: uData.companyName || prev.companyName,
                 ownerName: uData.namaLengkap || uData.name || prev.ownerName,
                 city: uData.kota || uData.city || prev.city,
                 address: uData.alamatLengkap || uData.address || prev.address,
                 npwp: uData.npwp || prev.npwp,
                 ppiu: uData.ppiu || prev.ppiu,
                 nib: uData.nib || prev.nib,
+                joinDate: uData.joinDate || prev.joinDate,
               };
               if (uData.customMitraProfile) {
                 Object.assign(updated, uData.customMitraProfile);
@@ -248,11 +282,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
       await setDoc(userDocRef, {
         brandName: updated.travelName,
         namaLengkap: updated.ownerName,
+        companyName: updated.companyName,
         kota: updated.city,
         alamatLengkap: updated.address,
         npwp: updated.npwp,
         ppiu: updated.ppiu,
         nib: updated.nib,
+        joinDate: updated.joinDate,
         customMitraProfile: {
           description: updated.description,
           logo: updated.logo,
@@ -442,7 +478,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
     );
   }
 
-  if (userData && role === 'jamaah' && !isDesktop) {
+  if (userData && role === 'jamaah') {
     if (isEditMode) {
       return (
         <div className="min-h-screen bg-slate-50 antialiased pb-28 md:px-4 flex justify-center">
@@ -648,12 +684,24 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ isDesktop = false }) =
       <div className="w-full bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm font-sans space-y-8">
         {/* Header Title */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-5">
-          <div>
-            <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">PROFIL TRAVEL MITRA</h2>
-            <p className="text-xs text-slate-500 mt-1">Kelola branding, informasi legalitas, deskripsi travel, dan galeri portofolio Anda.</p>
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <button 
+                onClick={onBack}
+                className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-all active:scale-95 shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            )}
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">PROFIL TRAVEL MITRA</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                {mitraId ? 'Informasi legalitas resmi, portofolio galeri, dan rincian kontak penyelenggara.' : 'Kelola branding, informasi legalitas, deskripsi travel, dan galeri portofolio Anda.'}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            {!isEditMode && (
+            {!mitraId && !isEditMode && (
               <>
                 <button 
                   onClick={() => setIsEditMode(true)}
@@ -2331,6 +2379,59 @@ interface EditProfileFormProps {
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSave, onCancel }) => {
   const [form, setForm] = useState<MitraProfile>({ ...initialProfile });
   const [newPkg, setNewPkg] = useState<PackageDetail>({ id: '', name: '', price: '', type: 'Reguler', duration: '9 Hari', hotelStar: 4 });
+  const [newGalleryPhoto, setNewGalleryPhoto] = useState({ title: '', category: 'Manasik', url: '' });
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm(prev => ({ ...prev, logo: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm(prev => ({ ...prev, coverImage: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGalleryPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewGalleryPhoto(prev => ({ ...prev, url: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAddGalleryPhoto = () => {
+    if (!newGalleryPhoto.url) return;
+    const added = {
+      id: `g_${Date.now()}`,
+      title: newGalleryPhoto.title || 'Foto Kegiatan Travel',
+      category: newGalleryPhoto.category || 'Lainnya',
+      url: newGalleryPhoto.url
+    };
+    setForm(prev => ({
+      ...prev,
+      gallery: [...(prev.gallery || []), added]
+    }));
+    setNewGalleryPhoto({ title: '', category: 'Manasik', url: '' });
+  };
+
+  const handleRemoveGalleryPhoto = (id: string) => {
+    setForm(prev => ({
+      ...prev,
+      gallery: prev.gallery.filter(item => item.id !== id)
+    }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -2585,35 +2686,287 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
         </div>
       </div>
 
-      {/* SOCIAL MEDIA & MEDIA ASSETS SETUP */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3.5">
-        <h3 className="text-xs font-black uppercase text-[#047857] tracking-widest border-b pb-2">
-          Aset Desain & Media Sosial
+      {/* MEDIA ASSETS MANAGEMENT (LOGO, BANNER, GALLERY) */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-4">
+        <h3 className="text-xs font-black uppercase text-[#047857] tracking-widest border-b pb-2 flex items-center gap-1.5">
+          <Camera size={14} /> Kelola Foto Profil & Banner
         </h3>
 
-        <div className="space-y-1.5 text-xs">
-          <label className="text-slate-400 font-extrabold uppercase text-[10px]">Gambar Sampul Banner (URL)</label>
-          <input 
-            type="text" 
-            name="coverImage" 
-            value={form.coverImage} 
-            onChange={handleChange} 
-            placeholder="https://images.unsplash.com/..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
-          />
+        {/* LOGO / FOTO PROFIL EDITING */}
+        <div className="space-y-3 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+          <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block">Foto Profil / Logo Travel</span>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            {/* Live Preview Circle */}
+            <div className="relative w-20 h-20 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden shrink-0 group flex items-center justify-center">
+              {form.logo ? (
+                <img src={form.logo} alt="Logo Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <span className="text-xs text-slate-400 font-bold p-1 text-center">No Logo</span>
+              )}
+            </div>
+
+            {/* Editing Options */}
+            <div className="flex-1 w-full space-y-2">
+              <div className="flex items-center gap-2">
+                <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-700 shadow-xs transition-colors cursor-pointer select-none active:scale-95">
+                  <Upload size={13} /> UPLOAD FOTO
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleLogoUpload} 
+                    className="hidden" 
+                  />
+                </label>
+                
+                {form.logo && (
+                  <button
+                    onClick={() => setForm(p => ({ ...p, logo: '' }))}
+                    className="p-2 text-red-500 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-xl transition-all active:scale-95 cursor-pointer"
+                    title="Hapus foto"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+              
+              {/* Preset Selectors */}
+              <div className="space-y-1">
+                <span className="text-[9px] text-slate-400 font-extrabold uppercase">Gunakan Preset Indah:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'Kaligrafi', url: 'https://images.unsplash.com/photo-1579202673506-ca3ce28943ef?w=150&auto=format&fit=crop&q=80' },
+                    { label: 'Kubah Hijau', url: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=150&auto=format&fit=crop&q=80' },
+                    { label: 'Masjid Agung', url: 'https://images.unsplash.com/photo-1542856391-010fb87dcfed?w=150&auto=format&fit=crop&q=80' }
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      onClick={() => setForm(p => ({ ...p, logo: preset.url }))}
+                      className={`text-[9px] px-2 py-1 rounded-lg font-bold border transition-all cursor-pointer ${form.logo === preset.url ? 'bg-[#047857]/10 border-[#047857] text-[#047857]' : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'}`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Raw URL Input */}
+              <input 
+                type="text" 
+                name="logo"
+                value={form.logo} 
+                onChange={handleChange}
+                placeholder="Atau tempel Link URL Gambar..."
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-[10px] font-medium text-slate-700"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-1.5 text-xs">
-          <label className="text-slate-400 font-extrabold uppercase text-[10px]">Logo Utama Mitra (URL)</label>
-          <input 
-            type="text" 
-            name="logo" 
-            value={form.logo} 
-            onChange={handleChange} 
-            placeholder="https://images.unsplash.com/..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
-          />
+        {/* COVER IMAGE / BANNER EDITING */}
+        <div className="space-y-3 bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+          <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider block">Gambar Sampul Banner Travel</span>
+          
+          <div className="space-y-3.5">
+            {/* Live Banner Preview */}
+            <div className="relative w-full h-24 rounded-xl bg-slate-900 overflow-hidden border border-slate-200 shadow-inner flex items-center justify-center">
+              {form.coverImage ? (
+                <>
+                  <img src={form.coverImage} alt="Cover Preview" className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  <span className="absolute bottom-2 left-2 text-[10px] font-black text-white drop-shadow-md uppercase tracking-widest">Live Preview</span>
+                </>
+              ) : (
+                <span className="text-xs text-slate-500 font-extrabold flex items-center gap-1"><ImageIcon size={13} /> Belum Ada Sampul</span>
+              )}
+            </div>
+
+            {/* Cover Action UI */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <label className="flex-grow flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-700 shadow-xs transition-colors cursor-pointer select-none active:scale-95">
+                  <Upload size={13} /> UPLOAD GAMBAR SAMPUL BARU
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleCoverUpload} 
+                    className="hidden" 
+                  />
+                </label>
+                
+                {form.coverImage && (
+                  <button
+                    onClick={() => setForm(p => ({ ...p, coverImage: '' }))}
+                    className="p-2 text-red-500 hover:bg-red-50 border border-slate-200 rounded-xl transition-all active:scale-95 cursor-pointer"
+                    title="Hapus sampul"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Cover Presets */}
+              <div className="space-y-1">
+                <span className="text-[9px] text-slate-400 font-extrabold uppercase">Pilih Latar Belakang Premium:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'Kaabah Klasik', url: 'https://images.unsplash.com/photo-1542856391-010fb87dcfed?w=800&auto=format&fit=crop&q=80' },
+                    { label: 'Masjidil Haram', url: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&auto=format&fit=crop&q=80' },
+                    { label: 'Nabawi Madinah', url: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800&auto=format&fit=crop&q=80' },
+                    { label: 'Siluet Masjid Sunset', url: 'https://images.unsplash.com/photo-1604999333679-b86d54738315?w=800&auto=format&fit=crop&q=80' }
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      onClick={() => setForm(p => ({ ...p, coverImage: preset.url }))}
+                      className={`text-[9px] px-2 py-1 rounded-lg font-bold border transition-all cursor-pointer ${form.coverImage === preset.url ? 'bg-[#047857]/10 border-[#047857] text-[#047857]' : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'}`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Raw URL text field */}
+              <input 
+                type="text" 
+                name="coverImage"
+                value={form.coverImage} 
+                onChange={handleChange}
+                placeholder="Atau tempel Link URL Banner..."
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-[10px] font-medium text-slate-700 animate-fade-in"
+              />
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* DETAILED TRAVEL PHOTO GALLERY MANAGER */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3.5">
+        <h3 className="text-xs font-black uppercase text-[#047857] tracking-widest border-b pb-2 flex items-center justify-between">
+          <span>📸 Kelola Galeri Kegiatan ({form.gallery?.length || 0})</span>
+        </h3>
+
+        {/* Current Gallery Grid Preview with Interactive Deleter */}
+        {form.gallery && form.gallery.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1 bg-slate-50 rounded-2xl border border-slate-100">
+            {form.gallery.map((img) => (
+              <div key={img.id} className="group relative aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shadow-xs">
+                <img 
+                  src={img.url} 
+                  alt={img.title} 
+                  className="w-full h-full object-cover opacity-90 transition-transform duration-300 group-hover:scale-110" 
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent flex flex-col justify-end p-2" />
+                
+                {/* Trash icon overlay for deletion */}
+                <button
+                  onClick={() => handleRemoveGalleryPhoto(img.id)}
+                  className="absolute top-1.5 right-1.5 p-1.5 bg-red-600 text-white hover:bg-red-700 rounded-lg active:scale-90 transition-all cursor-pointer shadow-md"
+                  title="Hapus foto dari galeri"
+                >
+                  <Trash2 size={11} />
+                </button>
+
+                {/* Metadata overlay */}
+                <div className="absolute bottom-1 left-1.5 right-1.5 min-w-0">
+                  <span className="text-[7px] font-black bg-white/20 text-white backdrop-blur-md px-1 py-0.5 rounded uppercase tracking-wider block w-max leading-none mb-0.5">
+                    {img.category}
+                  </span>
+                  <p className="text-[9px] font-black text-white truncate leading-tight drop-shadow-md">
+                    {img.title}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-6 text-center text-slate-400 text-xs border-2 border-dashed border-slate-250 rounded-2xl bg-slate-50 flex flex-col items-center gap-1.5">
+            <ImageIcon size={22} className="text-slate-350" />
+            <p className="font-bold">Belum Ada Galeri Foto Travel</p>
+            <p className="text-[9px] text-slate-400">Tambahkan foto manasik atau keberangkatan di bawah</p>
+          </div>
+        )}
+
+        {/* Add Gallery Photo panel */}
+        <div className="p-3 bg-indigo-50/40 border border-indigo-100/50 rounded-2xl space-y-2.5">
+          <span className="text-[10px] text-indigo-700 font-black uppercase tracking-wider block">Tambah Foto Kegiatan Baru:</span>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <input 
+              type="text" 
+              placeholder="Judul Foto (Cth: Pelepasan Solo)" 
+              value={newGalleryPhoto.title} 
+              onChange={(e) => setNewGalleryPhoto(p => ({ ...p, title: e.target.value }))} 
+              className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-slate-500"
+            />
+            <select
+              value={newGalleryPhoto.category}
+              onChange={(e) => setNewGalleryPhoto(p => ({ ...p, category: e.target.value }))}
+              className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 select-none"
+            >
+              <option value="Keberangkatan">🛫 Keberangkatan</option>
+              <option value="Manasik">🕋 Manasik</option>
+              <option value="City Tour">🏝️ City Tour</option>
+              <option value="Hotel">🏨 Hotel</option>
+              <option value="Pesawat">✈️ Pesawat</option>
+              <option value="Lainnya">✨ Lainnya</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            {/* Live newly selected preview if any */}
+            {newGalleryPhoto.url && (
+              <div className="w-14 h-10 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-200 relative">
+                <img src={newGalleryPhoto.url} alt="Upload preview" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => setNewGalleryPhoto(p => ({ ...p, url: '' }))}
+                  className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity text-white font-bold text-[8px]"
+                >
+                  BATAL
+                </button>
+              </div>
+            )}
+            
+            {/* Upload form trigger */}
+            <label className="flex-1 w-full flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-600 shadow-xs transition-colors cursor-pointer select-none active:scale-95">
+              <Upload size={13} className="text-slate-500" /> UPLOAD FOTO KEGIATAN
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleGalleryPhotoUpload} 
+                className="hidden" 
+              />
+            </label>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[9px] text-slate-400 font-extrabold block">Atau tempel Link URL Foto langsung:</span>
+            <input 
+              type="text" 
+              placeholder="https://images.unsplash.com/your-photo-url" 
+              value={newGalleryPhoto.url} 
+              onChange={(e) => setNewGalleryPhoto(p => ({ ...p, url: e.target.value }))} 
+              className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:outline-indigo-500"
+            />
+          </div>
+
+          <button 
+            type="button"
+            onClick={handleAddGalleryPhoto}
+            disabled={!newGalleryPhoto.url}
+            className={`w-full py-2.5 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${newGalleryPhoto.url ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+          >
+            <Plus size={14} /> SEMATKAN FOTO KE GALERI
+          </button>
+        </div>
+      </div>
+
+      {/* CUSTOM SOCIAL MEDIA CONFIG MODULE */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3.5">
+        <h3 className="text-xs font-black uppercase text-[#047857] tracking-widest border-b pb-2 flex items-center gap-1.5">
+          <Globe size={13} /> Kelola Link Media Sosial
+        </h3>
 
         <div className="grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5 text-xs">
@@ -2685,19 +3038,19 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
         </div>
       </div>
 
-      {/* STICKY BOTTOM FORM FOOTER */}
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-4 py-3 flex gap-2.5 max-w-[480px] mx-auto z-40 select-none">
+      {/* ACTION BUTTONS (INLINE FOR EXCELLENT VISIBILITY AND DEVICE COMPATIBILITY) */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex gap-3 mt-4">
         <button 
           onClick={onCancel}
-          className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-extrabold text-xs rounded-xl text-center active:scale-95 transition-transform"
+          className="flex-grow py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs rounded-xl text-center active:scale-95 transition-transform cursor-pointer"
         >
-          Batalkan
+          ✕ BATALKAN
         </button>
         <button 
           onClick={() => onSave(form)}
-          className="flex-1 py-3 bg-[#F5B800] text-slate-950 hover:bg-amber-500 font-extrabold text-xs rounded-xl text-center active:scale-95 transition-transform shadow-sm"
+          className="flex-grow py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl text-center active:scale-95 transition-transform shadow-md cursor-pointer"
         >
-          Simpan Perubahan
+          ✓ SIMPAN PERUBAHAN
         </button>
       </div>
 

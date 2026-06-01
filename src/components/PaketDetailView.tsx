@@ -2,13 +2,14 @@ import React from 'react';
 import { 
   ArrowLeft, Edit2, Trash2, Calendar, Clock, Plane, 
   TrendingUp, DollarSign, Hotel, 
-  Sparkles, FileText, Loader2, CheckCircle2, X
+  Sparkles, FileText, Loader2, CheckCircle2, X, Star, MapPin, Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PaketMaster, Hotel as HotelType, Maskapai } from '../types';
 import { generateMarketingCopy } from '../services/aiService';
-import { db, collection, onSnapshot, query, where } from '../firebase';
+import { db, collection, onSnapshot, query, where, doc } from '../firebase';
 import { JamaahTracker } from './tracker/types';
+import { hotels as staticHotels } from '../data/hotels';
 
 interface PaketDetailViewProps {
   paket: PaketMaster;
@@ -19,6 +20,16 @@ interface PaketDetailViewProps {
   onEdit?: (paket: PaketMaster) => void;
   onDelete?: (id: string) => void;
   onBook?: (paket: PaketMaster) => void;
+  onViewMitra?: (mitraId: string) => void;
+}
+
+interface HotelMetaItem {
+  id: string;
+  hotelId: string;
+  hotelName: string;
+  city: string;
+  photoUrl: string;
+  distance: string;
 }
 
 export const PaketDetailView: React.FC<PaketDetailViewProps> = ({ 
@@ -29,7 +40,8 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   onBack, 
   onEdit, 
   onDelete,
-  onBook
+  onBook,
+  onViewMitra
 }) => {
   const [aiLoading, setAiLoading] = React.useState(false);
   const [marketingCopy, setMarketingCopy] = React.useState(paket.deskripsi || "Paket umroh reguler dengan fasilitas hotel bintang 5 di Makkah and Madinah. Jarak sangat dekat dengan Masjidil Haram.");
@@ -38,6 +50,8 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   const [showManifest, setShowManifest] = React.useState(false);
   const [jamaahs, setJamaahs] = React.useState<JamaahTracker[]>([]);
   const [notification, setNotification] = React.useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [hotelMetas, setHotelMetas] = React.useState<HotelMetaItem[]>([]);
+  const [mitraDetails, setMitraDetails] = React.useState<{ brandName: string; name: string } | null>(null);
 
   const todayStr = React.useMemo(() => new Date().toISOString().split('T')[0], []);
   const isExpired = React.useMemo(() => {
@@ -53,6 +67,45 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
     return () => unsub();
   }, [paket.id]);
 
+  React.useEffect(() => {
+    const unsubMetas = onSnapshot(collection(db, 'hotel_metadata'), (snapshot) => {
+      setHotelMetas(snapshot.docs.map(doc => {
+        const data = doc.data() || {};
+        return {
+          id: doc.id,
+          hotelId: data.hotelId || '',
+          hotelName: data.hotelName || '',
+          city: data.city || '',
+          photoUrl: data.photoUrl || '',
+          distance: data.distance || ''
+        };
+      }));
+    });
+
+    let unsubMitra = () => {};
+    if (paket.mitraId) {
+      unsubMitra = onSnapshot(doc(db, 'users', paket.mitraId), (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          setMitraDetails({
+            brandName: data.brandName || data.namaLengkap || data.nama || 'Umaroh',
+            name: data.namaLengkap || data.nama || 'Umaroh'
+          });
+        }
+      });
+    } else {
+      setMitraDetails({
+        brandName: 'Umaroh Pusat',
+        name: 'Umaroh Pusat'
+      });
+    }
+
+    return () => {
+      unsubMetas();
+      unsubMitra();
+    };
+  }, [paket.mitraId]);
+
   const showMsg = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
@@ -67,10 +120,10 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
 
       const copy = await generateMarketingCopy({
         ...paket,
-        hotelMakkahNama: hotelMakkah?.name || 'Hotel Makkah',
-        hotelMadinahNama: hotelMadinah?.name || 'Hotel Madinah',
-        hotelMakkahStars: hotelMakkah?.bintang || 5,
-        hotelMadinahStars: hotelMadinah?.bintang || 5,
+        hotelMakkahNama: hotelMakkah?.name || (hotelMakkah as unknown as Record<string, unknown>)?.nama as string || 'Hotel Makkah',
+        hotelMadinahNama: hotelMadinah?.name || (hotelMadinah as unknown as Record<string, unknown>)?.nama as string || 'Hotel Madinah',
+        hotelMakkahStars: hotelMakkah?.bintang || hotelMakkah?.stars || 5,
+        hotelMadinahStars: hotelMadinah?.bintang || hotelMadinah?.stars || 5,
         maskapaiNama: maskapaiData?.name || 'Saudi Airlines',
         priceDouble: paket.hargaJualDouble || 0,
         priceTriple: paket.hargaJualTriple || 0,
@@ -116,17 +169,20 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   };
 
   const getHotelObject = (id: string) => {
-    return hotels?.find(item => item.id === id);
+    if (!id) return undefined;
+    const found = hotels?.find(item => item.id === id);
+    if (found) return found;
+    return (staticHotels as unknown as HotelType[])?.find(item => item.id === id);
   };
 
   const getHotelLabel = (id: string) => {
     const h = getHotelObject(id);
-    return h ? h.name : 'Hotel Bintang 5';
+    return h ? (h.name || (h as unknown as Record<string, unknown>).nama as string || 'Hotel Bintang 5') : 'Hotel Bintang 5';
   };
 
   const getHotelPhoto = (id: string) => {
     const h = getHotelObject(id);
-    return h?.photo || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=150&auto=format&fit=crop";
+    return h?.photo || (h as unknown as Record<string, unknown>)?.photoUrl as string || (h as unknown as Record<string, unknown>)?.foto as string || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=150&auto=format&fit=crop";
   };
 
   // Stats
@@ -150,6 +206,16 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
     { day: 5, activity: 'MENUJU ' + (paket.urutanKunjungan === 'Madinah' ? 'MAKKAH' : 'MADINAH') },
     { day: paket.durasiHari || 9, activity: 'KEPULANGAN' }
   ];
+
+  const hotelMakkahObj = getHotelObject(paket.hotelMakkahId);
+  const makkahMetaObj = hotelMetas?.find(m => m.hotelId === paket.hotelMakkahId || m.hotelName === (hotelMakkahObj?.name || (hotelMakkahObj as unknown as Record<string, unknown>)?.nama as string));
+  const makkahDistanceStr = makkahMetaObj?.distance || 'Sangat dekat dengan pelataran';
+  const makkahStarsNum = hotelMakkahObj?.stars || hotelMakkahObj?.bintang || 5;
+
+  const hotelMadinahObj = getHotelObject(paket.hotelMadinahId);
+  const madinahMetaObj = hotelMetas?.find(m => m.hotelId === paket.hotelMadinahId || m.hotelName === (hotelMadinahObj?.name || (hotelMadinahObj as unknown as Record<string, unknown>)?.nama as string));
+  const madinahDistanceStr = madinahMetaObj?.distance || 'Sangat dekat dengan pelataran';
+  const madinahStarsNum = hotelMadinahObj?.stars || hotelMadinahObj?.bintang || 5;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -218,6 +284,16 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
                 <span className="bg-white/90 backdrop-blur-md text-indigo-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">UMRAH</span>
                 <span className="bg-emerald-500/90 backdrop-blur-md text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">AKTIF</span>
               </div>
+
+              {paket.mitraId && onViewMitra && (
+                <button 
+                  onClick={() => onViewMitra(paket.mitraId!)}
+                  className="absolute top-4 right-8 bg-white/90 backdrop-blur-md text-[#047857] hover:text-emerald-700 font-extrabold px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-md cursor-pointer border border-emerald-50/50 z-20"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  {mitraDetails?.brandName || 'Mitra Travel'}
+                </button>
+              )}
               
               <h1 className="absolute bottom-16 left-8 right-8 text-white text-3xl md:text-4xl font-black italic uppercase tracking-tighter leading-tight drop-shadow-2xl">
                 {paket.nama}
@@ -271,35 +347,68 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
             {/* Akomodasi Hotel Card */}
             <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-5">
               <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                <Hotel className="w-4 h-4 text-indigo-600" />
+                <Hotel className="w-4 h-4 text-[#047857]" />
                 AKOMODASI HOTEL
               </h3>
               
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl group hover:bg-indigo-50 transition-colors">
-                  <div className="w-12 h-12 rounded-xl border-4 border-white overflow-hidden shadow-sm">
+              <div className="space-y-4">
+                {/* Makkah Hotel */}
+                <div className="flex items-start gap-3.5 p-3.5 bg-gray-50 rounded-2xl group hover:bg-slate-100/70 transition-colors">
+                  <div className="w-16 h-16 rounded-xl border-4 border-white overflow-hidden shadow-md shrink-0">
                     <img 
-                      src={getHotelPhoto(paket.hotelMakkahId)} 
+                      src={makkahMetaObj?.photoUrl || getHotelPhoto(paket.hotelMakkahId)} 
                       alt="Hotel Makkah" 
                       className="w-full h-full object-cover" 
                     />
                   </div>
-                  <div>
-                    <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-0.5">MEKKAH ({paket.durasiMakkah || 5}M)</p>
-                    <p className="text-[10px] font-black text-gray-900">{getHotelLabel(paket.hotelMakkahId)}</p>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex justify-between items-center gap-2">
+                      <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest truncate">HOTEL MEKKAH</p>
+                      <span className="text-[8px] font-extrabold uppercase bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded shrink-0">
+                        {paket.durasiMakkah || 5} Malam / {(Number(paket.durasiMakkah) || 5) + 1} Hari
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-black text-gray-900 leading-tight">{getHotelLabel(paket.hotelMakkahId)}</p>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: Number(makkahStarsNum) || 5 }).map((_, i) => (
+                        <Star key={i} className="w-3 h-3 text-yellow-450 fill-yellow-400" />
+                      ))}
+                      <span className="text-[9px] font-bold text-gray-400 ml-1">Bintang {makkahStarsNum || 5}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-slate-500 text-[10px] mt-0.5">
+                      <MapPin className="w-3 h-3 text-red-500 shrink-0" />
+                      <span className="font-semibold text-gray-600 truncate">Jarak ke Pelataran: {makkahDistanceStr}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl group hover:bg-emerald-50 transition-colors">
-                  <div className="w-12 h-12 rounded-xl border-4 border-white overflow-hidden shadow-sm">
+
+                {/* Madinah Hotel */}
+                <div className="flex items-start gap-3.5 p-3.5 bg-gray-50 rounded-2xl group hover:bg-slate-100/70 transition-colors">
+                  <div className="w-16 h-16 rounded-xl border-4 border-white overflow-hidden shadow-md shrink-0">
                     <img 
-                      src={getHotelPhoto(paket.hotelMadinahId)} 
+                      src={madinahMetaObj?.photoUrl || getHotelPhoto(paket.hotelMadinahId)} 
                       alt="Hotel Madinah" 
                       className="w-full h-full object-cover" 
                     />
                   </div>
-                  <div>
-                    <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">MADINAH ({paket.durasiMadinah || 3}M)</p>
-                    <p className="text-[10px] font-black text-gray-900">{getHotelLabel(paket.hotelMadinahId)}</p>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex justify-between items-center gap-2">
+                      <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest truncate">HOTEL MADINAH</p>
+                      <span className="text-[8px] font-extrabold uppercase bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded shrink-0">
+                        {paket.durasiMadinah || 3} Malam / {(Number(paket.durasiMadinah) || 3) + 1} Hari
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-black text-gray-900 leading-tight">{getHotelLabel(paket.hotelMadinahId)}</p>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: Number(madinahStarsNum) || 5 }).map((_, i) => (
+                        <Star key={i} className="w-3 h-3 text-yellow-450 fill-yellow-400" />
+                      ))}
+                      <span className="text-[9px] font-bold text-gray-400 ml-1">Bintang {madinahStarsNum || 5}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-slate-500 text-[10px] mt-0.5">
+                      <MapPin className="w-3 h-3 text-red-500 shrink-0" />
+                      <span className="font-semibold text-gray-600 truncate">Jarak ke Pelataran: {madinahDistanceStr}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -384,6 +493,32 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
 
         {/* Sidebar Info (Right) */}
         <div className="space-y-6">
+          {/* Mitra Penyelenggara Card */}
+          <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">MITRA PENYELENGGARA</h3>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-slate-50 text-[#047857] flex items-center justify-center font-black text-lg shadow-inner border border-gray-150 shrink-0">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-black text-gray-900 uppercase tracking-tight truncate">
+                  {mitraDetails?.brandName || 'Umaroh Pusat'}
+                </p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mt-0.5">
+                  PPIU Berizin Resmi
+                </p>
+              </div>
+            </div>
+            {paket.mitraId && onViewMitra && (
+              <button
+                onClick={() => onViewMitra(paket.mitraId!)}
+                className="w-full py-2.5 bg-slate-50 hover:bg-[#047857]/5 hover:text-[#047857] text-gray-650 font-extrabold text-[10px] tracking-widest uppercase rounded-xl border border-gray-200 transition-all active:scale-95 text-center cursor-pointer"
+              >
+                Kunjungi Profil Travel ➔
+              </button>
+            )}
+          </div>
+
           {/* Statistik Pendaftaran Card */}
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
             <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em]">STATISTIK PENDAFTARAN</h3>

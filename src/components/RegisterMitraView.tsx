@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle2, Building2, User, Mail, Phone, Lock, CreditCard, ArrowRight, MapPin, Network, Landmark, QrCode, Upload } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Building2, User, Mail, Phone, Lock, CreditCard, ArrowRight, MapPin, Network, Landmark, QrCode, Upload, Eye, EyeOff } from 'lucide-react';
 import { db, collection, getDocs, addDoc, query, where, handleFirestoreError, OperationType } from '../firebase';
 import { logoBase64 } from '../utils/logoBase64';
 
@@ -55,6 +55,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     paketId: '',
@@ -506,14 +507,21 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
                           <Lock className="h-5 w-5 text-gray-400" />
                         </div>
                         <input
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           name="password"
                           required
                           value={formData.password}
                           onChange={handleInputChange}
-                          className="focus:ring-amber-500 focus:border-amber-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-3 border"
+                          className="focus:ring-amber-500 focus:border-amber-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-lg py-3 border"
                           placeholder="Buat password untuk akun Anda"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
                       </div>
                     </div>
 

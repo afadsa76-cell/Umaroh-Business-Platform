@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight, Building2 } from 'lucide-react';
-import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc } from '../firebase';
+import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc, handleFirestoreError, OperationType } from '../firebase';
 import { syncBookingToTracker } from '../utils/firebaseSync';
 import { PaketMaster, Maskapai, Hotel } from '../types';
 import { PaketDetailView } from './PaketDetailView';
@@ -37,9 +37,10 @@ interface DisplayPaket {
 
 interface KatalogPaketViewProps {
   initialSearch?: string;
+  onViewMitra?: (mitraId: string) => void;
 }
 
-export const KatalogPaketView = ({ initialSearch = '' }: KatalogPaketViewProps) => {
+export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPaketViewProps) => {
   const [paketMasters, setPaketMasters] = React.useState<PaketMaster[]>([]);
   const [paketMitras, setPaketMitras] = React.useState<PaketMitra[]>([]);
   const [agencies, setAgencies] = React.useState<Record<string, string>>({});
@@ -58,14 +59,17 @@ export const KatalogPaketView = ({ initialSearch = '' }: KatalogPaketViewProps) 
   }, [initialSearch]);
 
   React.useEffect(() => {
-    // Fetch users for mitra/partner agency mapping
-    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+    // Fetch users for mitra/partner agency mapping (querying specifically where role == 'mitra' to avoid permission-denied for jamaah)
+    const qUsers = query(collection(db, 'users'), where('role', '==', 'mitra'));
+    const unsubUsers = onSnapshot(qUsers, (snapshot) => {
       const agencyMap: Record<string, string> = {};
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
         agencyMap[docSnap.id] = data.brandName || data.namaLengkap || data.nama || 'Umaroh';
       });
       setAgencies(agencyMap);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'users');
     });
 
     // Fetch published & archived Paket Master
@@ -75,6 +79,8 @@ export const KatalogPaketView = ({ initialSearch = '' }: KatalogPaketViewProps) 
         .map(doc => ({ id: doc.id, ...doc.data() } as PaketMaster))
         .filter(p => p.status === 'published' || p.status === 'archived');
       setPaketMasters(data);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'paket_master');
     });
 
     // Fetch active Paket Mitra
@@ -82,15 +88,21 @@ export const KatalogPaketView = ({ initialSearch = '' }: KatalogPaketViewProps) 
     const unsubMitra = onSnapshot(qMitra, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaketMitra));
       setPaketMitras(data);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'paket_mitra');
     });
 
     // Fetch Hotels & Maskapai for detail view
     const unsubHotels = onSnapshot(collection(db, 'master_hotels'), (snapshot) => {
       setHotels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as Hotel));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'master_hotels');
     });
 
     const unsubMaskapai = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
       setMaskapai(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as unknown as Maskapai));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'maskapai');
     });
 
     return () => {
@@ -229,29 +241,96 @@ export const KatalogPaketView = ({ initialSearch = '' }: KatalogPaketViewProps) 
 
   if (viewingDetail) {
     return (
-      <PaketDetailView 
-        paket={viewingDetail}
-        hotels={hotels}
-        maskapai={maskapai}
-        isMitraContext={false}
-        onBack={() => setViewingDetail(null)}
-        onBook={(p) => {
-          // Convert PaketMaster to DisplayPaket structure for booking modal
-          setSelectedPaket({
-            id: p.id,
-            type: 'master',
-            displayName: p.nama,
-            displayPrice: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
-            deskripsi: p.deskripsi || '',
-            tglBerangkat: p.tglBerangkat,
-            durasiHari: p.durasiHari,
-            maskapaiId: p.maskapaiId,
-            hargaJualQuad: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
-            hargaJualTriple: p.hargaJualTriple || (p.hargaDasar ? p.hargaDasar * 1.1 : 0),
-            hargaJualDouble: p.hargaJualDouble || (p.hargaDasar ? p.hargaDasar * 1.2 : 0)
-          });
-        }}
-      />
+      <div className="relative">
+        <PaketDetailView 
+          paket={viewingDetail}
+          hotels={hotels}
+          maskapai={maskapai}
+          isMitraContext={false}
+          onBack={() => setViewingDetail(null)}
+          onViewMitra={onViewMitra}
+          onBook={(p) => {
+            // Convert PaketMaster to DisplayPaket structure for booking modal
+            setSelectedPaket({
+              id: p.id,
+              type: 'master',
+              displayName: p.nama,
+              displayPrice: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
+              deskripsi: p.deskripsi || '',
+              tglBerangkat: p.tglBerangkat,
+              durasiHari: p.durasiHari,
+              maskapaiId: p.maskapaiId,
+              hargaJualQuad: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
+              hargaJualTriple: p.hargaJualTriple || (p.hargaDasar ? p.hargaDasar * 1.1 : 0),
+              hargaJualDouble: p.hargaJualDouble || (p.hargaDasar ? p.hargaDasar * 1.2 : 0),
+              mitraId: p.mitraId || undefined
+            });
+          }}
+        />
+
+        {/* Booking Confirmation Popup specifically active inside viewing detail too */}
+        {selectedPaket && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+              {bookingSuccess ? (
+                <div className="text-center py-8 space-y-4">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl">
+                    ✓
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-gray-950 uppercase tracking-wide">Pemesanan Sukses!</h3>
+                    <p className="text-xs text-gray-500 mt-1">Sistem sedang mendaftarkan pesanan Anda di manifest pusat.</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Konfirmasi Pemesanan</h3>
+                  <div className="bg-gray-50 rounded-xl mb-6 border border-gray-100 overflow-hidden">
+                    <div className="p-3 md:p-4 border-b border-gray-100">
+                      <h4 className="font-bold text-sm md:text-base text-gray-900 mb-1">{selectedPaket.displayName}</h4>
+                      <p className="text-[10px] md:text-xs text-gray-500 line-clamp-2">{selectedPaket.deskripsi}</p>
+                    </div>
+                    
+                    <div className="p-3 md:p-4 space-y-3 bg-white">
+                      <div className="flex justify-between items-center text-xs md:text-sm">
+                        <span className="text-gray-600 font-medium">QUAD (4 Bed)</span>
+                        <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.displayPrice || selectedPaket.hargaJualQuad)}</span>
+                      </div>
+                      {selectedPaket.hargaJualTriple ? (
+                        <div className="flex justify-between items-center text-xs md:text-sm">
+                          <span className="text-gray-650 font-medium">TRIPLE (3 Bed)</span>
+                          <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualTriple)}</span>
+                        </div>
+                      ) : null}
+                      {selectedPaket.hargaJualDouble ? (
+                        <div className="flex justify-between items-center text-xs md:text-sm">
+                          <span className="text-gray-650 font-medium">DOUBLE (2 Bed)</span>
+                          <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualDouble)}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setSelectedPaket(null)}
+                      className="flex-1 px-4 py-2.5 bg-gray-150 text-gray-700 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-200 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={handleBooking}
+                      className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-lg shadow-emerald-600/10"
+                    >
+                      Konfirmasi
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -344,8 +423,20 @@ export const KatalogPaketView = ({ initialSearch = '' }: KatalogPaketViewProps) 
               </h3>
               
               {/* Mitra info */}
-              <div className="flex items-center gap-1.5 mb-3 text-[10px] font-black text-indigo-700/90 whitespace-nowrap overflow-hidden text-ellipsis">
-                <Building2 className="w-3.5 h-3.5 flex-shrink-0 text-indigo-500" />
+              <div 
+                onClick={(e) => {
+                  if (paket.mitraId && onViewMitra) {
+                    e.stopPropagation();
+                    onViewMitra(paket.mitraId);
+                  }
+                }}
+                className={`flex items-center gap-1.5 mb-3 text-[10px] font-black whitespace-nowrap overflow-hidden text-ellipsis ${
+                  paket.mitraId && onViewMitra 
+                    ? 'text-[#047857] hover:text-[#035a41] hover:underline cursor-pointer' 
+                    : 'text-indigo-700/90'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5 flex-shrink-0 text-[#047857]" />
                 <span className="uppercase tracking-wide">
                   {agencies[paket.mitraId || ''] || 'Umaroh Pusat'}
                 </span>
