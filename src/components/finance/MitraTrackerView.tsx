@@ -1600,6 +1600,9 @@ export const MitraTrackerView: React.FC = () => {
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 font-black text-gray-400 uppercase tracking-wider text-[10px]">
                     <th className="p-4 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('nama_mitra')}>
+                      <div className="flex items-center gap-1">NAMA PEMILIK MITRA <ArrowUpDown className="w-3.5 h-3.5" /></div>
+                    </th>
+                    <th className="p-4 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('nama_brand')}>
                       <div className="flex items-center gap-1">MITRA WIBAWA <ArrowUpDown className="w-3.5 h-3.5" /></div>
                     </th>
                     <th className="p-4 cursor-pointer hover:bg-gray-100 text-center" onClick={() => requestSort('jumlah_seat')}>
@@ -1637,7 +1640,7 @@ export const MitraTrackerView: React.FC = () => {
                       <React.Fragment key={paketName}>
                         {/* Package Group Divider Row */}
                         <tr className="bg-emerald-600 text-white font-black text-xs border-y border-emerald-700 select-none">
-                          <td colSpan={currentUserRole !== 'owner' ? 10 : 9} className="p-3 bg-emerald-600 text-center uppercase tracking-widest font-black text-xs shadow-inner">
+                          <td colSpan={currentUserRole !== 'owner' ? 11 : 10} className="p-3 bg-emerald-600 text-center uppercase tracking-widest font-black text-xs shadow-inner">
                             🟢 {paketName} • KEBERANGKATAN: {firstItem?.tanggal_berangkat || '-'} ({firstItem?.hari_menuju_berangkat != null ? `${firstItem.hari_menuju_berangkat} Hari Lagi` : ''})
                           </td>
                         </tr>
@@ -1647,8 +1650,11 @@ export const MitraTrackerView: React.FC = () => {
                           const warn = getWarningState(tr.hari_menuju_berangkat, tr.persentase_bayar, tr.sisa_tagihan);
                           return (
                             <tr key={tr.id} className={`hover:bg-gray-50/80 transition-all ${warn?.level === 'CRITICAL' ? 'bg-rose-50/10' : ''}`}>
+                              <td className="p-4 font-bold text-gray-900">
+                                {tr.nama_mitra || '-'}
+                              </td>
                               <td className="p-4">
-                                <p className="font-extrabold text-gray-950 text-xs sm:text-sm">{tr.nama_brand || tr.nama_mitra}</p>
+                                <p className="font-extrabold text-indigo-700 text-xs sm:text-sm">{tr.nama_brand || tr.nama_mitra}</p>
                                 <p className="text-[10px] text-gray-400 mt-0.5">{tr.pic} • {tr.hp} • {tr.kota}</p>
                               </td>
                               <td className="p-4 text-center text-sm font-black text-gray-900 bg-gray-50/30">
@@ -1737,7 +1743,7 @@ export const MitraTrackerView: React.FC = () => {
 
                         {/* Sub-total summary row for this package group */}
                         <tr className="bg-emerald-50/70 border-b-2 border-emerald-200 text-xs font-bold text-gray-900 select-none">
-                          <td className="p-4 font-black text-emerald-950 uppercase tracking-wide">
+                          <td colSpan={2} className="p-4 font-black text-emerald-950 uppercase tracking-wide">
                             TOTAL {paketName}
                           </td>
                           <td className="p-4 text-center font-black text-sm bg-emerald-100/30 text-emerald-950">
@@ -1769,7 +1775,7 @@ export const MitraTrackerView: React.FC = () => {
                   })}
                   {filteredAndSortedTrackers.length === 0 && (
                     <tr>
-                      <td colSpan={10} className="p-12 text-center text-gray-400">Tidak ada data mitra ditemukan.</td>
+                      <td colSpan={11} className="p-12 text-center text-gray-400">Tidak ada data mitra ditemukan.</td>
                     </tr>
                   )}
                 </tbody>

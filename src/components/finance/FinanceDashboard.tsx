@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Wallet, Users, ArrowUpRight, ArrowDownRight, Cloud } from 'lucide-react';
 import { db, collection, onSnapshot, query, where, doc, updateDoc, runTransaction } from '../../firebase';
 import { syncBookingToTracker } from '../../utils/firebaseSync';
+import { AccurateIntegrationView } from './AccurateIntegrationView';
 
-type FinanceTab = 'ap' | 'ar' | 'komisi';
+type FinanceTab = 'ap' | 'ar' | 'komisi' | 'accurate';
 
 interface VendorService {
   id: string;
@@ -413,12 +414,24 @@ export const FinanceDashboard: React.FC = () => {
           <Users className="w-4 h-4" />
           Pencairan Komisi Mitra
         </button>
+        <button
+          onClick={() => setActiveTab('accurate')}
+          className={`flex items-center gap-2 px-6 py-3 font-bold text-sm transition-colors whitespace-nowrap border-b-2 ${
+            activeTab === 'accurate' 
+              ? 'border-indigo-600 text-indigo-600' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+        >
+          <Cloud className="w-4 h-4" />
+          Koneksi ERP Accurate
+        </button>
       </div>
 
       {/* Content */}
       {activeTab === 'ap' && renderAP()}
       {activeTab === 'ar' && renderAR()}
       {activeTab === 'komisi' && renderKomisi()}
+      {activeTab === 'accurate' && <AccurateIntegrationView />}
     </div>
   );
 };

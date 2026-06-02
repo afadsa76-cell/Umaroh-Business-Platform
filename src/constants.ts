@@ -35,4 +35,5 @@ export const KATEGORI_PROGRAM = [
   "UMRAH PLUS",
   "UMRAH LA",
   "WISATA HALAL",
+  "TIKET ONLY",
 ];

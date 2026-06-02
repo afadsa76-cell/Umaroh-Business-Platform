@@ -101,6 +101,16 @@ const getSteps = (kategori: string) => {
       "VALIDASI AKHIR",
     ];
   }
+  if (kategori === "TIKET ONLY") {
+    return [
+      "INFORMASI DASAR",
+      "MASKAPAI",
+      "HARGA & REVIEW",
+      "REVIEW FASILITAS",
+      "PUBLIKASI & DESKRIPSI",
+      "VALIDASI AKHIR",
+    ];
+  }
   if (kategori === "UMRAH PLUS") {
     return [
       "INFORMASI DASAR",
@@ -4316,34 +4326,48 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       <div>
                         <div className="flex justify-between items-center mb-4">
                           <h4 className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">
-                            1. HPP DASAR PER TIPE KAMAR
+                            {formData.kategori === "TIKET ONLY" ? "1. HPP DASAR TIKET PESAWAT" : "1. HPP DASAR PER TIPE KAMAR"}
                           </h4>
                           <div className="px-2 py-1 bg-gray-100 rounded text-[9px] font-bold text-gray-500">
                             BIAYA MODAL
                           </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {[
-                            { title: "HPP QUAD", val: baseQuad },
-                            { title: "HPP TRIPLE", val: baseTriple },
-                            { title: "HPP DOUBLE", val: baseDouble },
-                          ].map((item) => (
-                            <div
-                              key={item.title}
-                              className="bg-white border border-gray-100 p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]"
-                            >
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                                {item.title}
-                              </span>
-                              <span className="text-xl sm:text-2xl font-black text-gray-800 tracking-tighter">
-                                Rp {Math.round(item.val || 0).toLocaleString("id-ID")}
-                              </span>
-                              <span className="text-[9px] font-bold text-gray-300 mt-1">
-                                PER PAX
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                        {formData.kategori === "TIKET ONLY" ? (
+                          <div className="bg-white border border-gray-100 p-6 rounded-2xl flex flex-col items-center justify-center text-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] max-w-sm mx-auto">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                              HPP TIKET MASUK / MASKAPAI
+                            </span>
+                            <span className="text-xl sm:text-2xl font-black text-gray-800 tracking-tighter">
+                              Rp {Math.round(baseQuad || 0).toLocaleString("id-ID")}
+                            </span>
+                            <span className="text-[9px] font-bold text-gray-300 mt-1">
+                              PER PAX
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                              { title: "HPP QUAD", val: baseQuad },
+                              { title: "HPP TRIPLE", val: baseTriple },
+                              { title: "HPP DOUBLE", val: baseDouble },
+                            ].map((item) => (
+                              <div
+                                key={item.title}
+                                className="bg-white border border-gray-100 p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]"
+                              >
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                                  {item.title}
+                                </span>
+                                <span className="text-xl sm:text-2xl font-black text-gray-800 tracking-tighter">
+                                  Rp {Math.round(item.val || 0).toLocaleString("id-ID")}
+                                </span>
+                                <span className="text-[9px] font-bold text-gray-300 mt-1">
+                                  PER PAX
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Bagian 2: Pengaturan Profit */}
@@ -4440,69 +4464,86 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           HARGA AKHIR PER PAX YANG AKAN TAYANG DI APLIKASI JAMAAH
                         </p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 items-center">
-                          {[
-                            {
-                              title: "QUAD PACKAGE",
-                              val: finalQuad,
-                              type: "light",
-                              tagColor: "text-[#009B66]",
-                            },
-                            {
-                              title: "TRIPLE PACKAGE",
-                              val: finalTriple,
-                              type: "dark",
-                              tagColor: "text-blue-400",
-                            },
-                            {
-                              title: "DOUBLE PACKAGE",
-                              val: finalDouble,
-                              type: "light",
-                              tagColor: "text-[#009B66]",
-                            },
-                          ].map((item) => (
-                            <div
-                              key={item.title}
-                          className={
-                            item.type === "dark"
-                              ? "bg-[#111424] border border-gray-800 p-6 sm:p-8 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-2xl relative z-10 md:scale-110"
-                              : "bg-white border border-gray-100 p-6 sm:p-8 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
-                          }
-                        >
-                          <div
-                            className={`px-3 py-1 ${item.type === "dark" ? "bg-white/10 border-white/10" : "bg-[#F2FDF8] border-[#E5F9F1]"} border rounded-lg mb-4`}
-                          >
-                            <span
-                              className={`text-[8px] font-black uppercase tracking-widest ${item.tagColor}`}
-                            >
-                              {item.title}
+                        {formData.kategori === "TIKET ONLY" ? (
+                          <div className="bg-[#111424] border border-gray-800 p-8 sm:p-10 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-2xl max-w-md mx-auto w-full">
+                            <div className="px-3 py-1 bg-white/10 border border-white/10 rounded-lg mb-4">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-[#009B66]">
+                                TIKET ONLY PACKAGE
+                              </span>
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-black text-white italic mb-2 tracking-tighter">
+                              <span className="text-lg mr-1 inline-block">Rp</span>
+                              {Math.round(finalQuad || 0).toLocaleString("id-ID")}
+                            </div>
+                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">
+                              HARGA TIKET NET / PER PAX
                             </span>
                           </div>
-                          <div
-                            className={
-                              item.type === "dark"
-                                ? "text-xl sm:text-2xl font-black text-white italic mb-2 tracking-tighter"
-                                : "text-xl sm:text-2xl font-black text-gray-900 italic mb-2 tracking-tighter"
-                            }
-                          >
-                            <span className="text-sm sm:text-lg mr-1 inline-block">
-                              Rp
-                            </span>
-                            {Math.round(item.val || 0).toLocaleString("id-ID")}
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 items-center">
+                            {[
+                              {
+                                title: "QUAD PACKAGE",
+                                val: finalQuad,
+                                type: "light",
+                                tagColor: "text-[#009B66]",
+                              },
+                              {
+                                title: "TRIPLE PACKAGE",
+                                val: finalTriple,
+                                type: "dark",
+                                tagColor: "text-blue-400",
+                              },
+                              {
+                                title: "DOUBLE PACKAGE",
+                                val: finalDouble,
+                                type: "light",
+                                tagColor: "text-[#009B66]",
+                              },
+                            ].map((item) => (
+                              <div
+                                key={item.title}
+                                className={
+                                  item.type === "dark"
+                                    ? "bg-[#111424] border border-gray-800 p-6 sm:p-8 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-2xl relative z-10 md:scale-110"
+                                    : "bg-white border border-gray-100 p-6 sm:p-8 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+                                }
+                              >
+                                <div
+                                  className={`px-3 py-1 ${item.type === "dark" ? "bg-white/10 border-white/10" : "bg-[#F2FDF8] border-[#E5F9F1]"} border rounded-lg mb-4`}
+                                >
+                                  <span
+                                    className={`text-[8px] font-black uppercase tracking-widest ${item.tagColor}`}
+                                  >
+                                    {item.title}
+                                  </span>
+                                </div>
+                                <div
+                                  className={
+                                    item.type === "dark"
+                                      ? "text-xl sm:text-2xl font-black text-white italic mb-2 tracking-tighter"
+                                      : "text-xl sm:text-2xl font-black text-gray-900 italic mb-2 tracking-tighter"
+                                  }
+                                >
+                                  <span className="text-sm sm:text-lg mr-1 inline-block">
+                                    Rp
+                                  </span>
+                                  {Math.round(item.val || 0).toLocaleString("id-ID")}
+                                </div>
+                                <span
+                                  className={
+                                    item.type === "dark"
+                                      ? "text-[8px] font-bold text-gray-500 uppercase tracking-widest"
+                                      : "text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                                  }
+                                >
+                                  ALL-IN / PER PAX
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                          <span
-                            className={
-                              item.type === "dark"
-                                ? "text-[8px] font-bold text-gray-500 uppercase tracking-widest"
-                                : "text-[8px] font-bold text-gray-400 uppercase tracking-widest"
-                            }
-                          >
-                            ALL-IN / PER PAX
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                        )}
+                      </div>
                 </div>
               );
             })()}
