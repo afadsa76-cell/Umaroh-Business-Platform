@@ -1054,7 +1054,21 @@ export const MitraTrackerView: React.FC = () => {
     
     let currentY = 24;
 
-    Object.keys(groupedTrackers).forEach((paketName) => {
+    Object.keys(groupedTrackers)
+      .sort((a, b) => {
+        const itemA = groupedTrackers[a][0];
+        const itemB = groupedTrackers[b][0];
+        const daysA = itemA?.hari_menuju_berangkat ?? 9999;
+        const daysB = itemB?.hari_menuju_berangkat ?? 9999;
+        if (daysA >= 0 && daysB >= 0) {
+          return daysA - daysB;
+        }
+        if (daysA < 0 && daysB < 0) {
+          return daysB - daysA;
+        }
+        return daysA >= 0 ? -1 : 1;
+      })
+      .forEach((paketName) => {
       const items = groupedTrackers[paketName];
       if (items.length === 0) return;
       const firstItem = items[0];
@@ -1625,8 +1639,22 @@ export const MitraTrackerView: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
-                  {Object.keys(groupedTrackers).map(paketName => {
-                    const groupItems = groupedTrackers[paketName];
+                  {Object.keys(groupedTrackers)
+                    .sort((a, b) => {
+                      const itemA = groupedTrackers[a][0];
+                      const itemB = groupedTrackers[b][0];
+                      const daysA = itemA?.hari_menuju_berangkat ?? 9999;
+                      const daysB = itemB?.hari_menuju_berangkat ?? 9999;
+                      if (daysA >= 0 && daysB >= 0) {
+                        return daysA - daysB;
+                      }
+                      if (daysA < 0 && daysB < 0) {
+                        return daysB - daysA;
+                      }
+                      return daysA >= 0 ? -1 : 1;
+                    })
+                    .map(paketName => {
+                      const groupItems = groupedTrackers[paketName];
                     const firstItem = groupItems[0];
 
                     // Calculate sub-totals for this package group
