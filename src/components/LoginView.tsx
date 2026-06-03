@@ -173,10 +173,22 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         }
       }
     } catch (err: unknown) {
-      console.error(err);
       const authError = err as { code?: string, message?: string };
       const errCode = authError.code || '';
       const errMsg = authError.message || '';
+      const isExpectedAuthError = errCode === 'auth/user-not-found' || 
+                                  errCode === 'auth/wrong-password' || 
+                                  errCode === 'auth/invalid-credential' ||
+                                  errCode === 'auth/too-many-requests' ||
+                                  errMsg.includes('invalid-credential') ||
+                                  errMsg.includes('wrong-password') ||
+                                  errMsg.includes('user-not-found') ||
+                                  errMsg.includes('too-many-requests');
+      if (!isExpectedAuthError) {
+        console.error(err);
+      } else {
+        console.warn("Expected Auth validation handled gracefully:", errCode || errMsg);
+      }
       const isTargetEmail = email ? (email.trim().toLowerCase() === 'afadsa76@gmail.com') : false;
 
       const isInvalidCredOrNotFound = errCode === 'auth/user-not-found' || 
@@ -309,10 +321,25 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         setNeedsRegistration(true);
       }
     } catch (err: unknown) {
-      console.error(err);
       const authError = err as { code?: string; message?: string };
       const errCode = authError.code || '';
       const errMsg = authError.message || '';
+      const isExpectedAuthError = errCode === 'auth/user-not-found' || 
+                                  errCode === 'auth/wrong-password' || 
+                                  errCode === 'auth/invalid-credential' ||
+                                  errCode === 'auth/popup-closed-by-user' ||
+                                  errCode === 'auth/popup-blocked' ||
+                                  errCode === 'auth/too-many-requests' ||
+                                  errMsg.includes('invalid-credential') ||
+                                  errMsg.includes('wrong-password') ||
+                                  errMsg.includes('popup-closed-by-user') ||
+                                  errMsg.includes('popup-blocked') ||
+                                  errMsg.includes('too-many-requests');
+      if (!isExpectedAuthError) {
+        console.error(err);
+      } else {
+        console.warn("Expected Web Google Auth validation/popup behavior handled gracefully:", errCode || errMsg);
+      }
 
       if (errCode === 'auth/invalid-credential' || errMsg.includes('invalid-credential')) {
         setError('Google Auth Gagal (auth/invalid-credential). Hal ini sering terjadi di web preview AI Studio (iframe) karena kebijakan browser membatasi cookie/pop-up pihak ketiga. Silakan login secara manual dengan mengetik Email & Password di atas.');
