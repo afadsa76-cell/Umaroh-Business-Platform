@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShopOrder } from '../types';
-import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, PlusCircle, History, Camera } from 'lucide-react';
-import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc } from '../firebase';
+import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, PlusCircle, History, Camera, LogOut } from 'lucide-react';
+import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc, signOut } from '../firebase';
 import { PaketMitraView } from './PaketMitraView';
 import { KatalogPaketView } from './KatalogPaketView';
 import { JamaahMitraView } from './JamaahMitraView';
@@ -1081,6 +1081,22 @@ export const DashboardMitra = () => {
           >
             <User className={`w-4 h-4 ${activeTab === 'profile' ? 'text-gray-905' : 'text-gray-500'}`} />
             Profil
+          </button>
+
+          <button
+            onClick={async () => {
+              if (confirm('Apakah Anda yakin ingin keluar dari akun Mitra?')) {
+                try {
+                  await signOut(auth);
+                } catch (err) {
+                  console.error('Error signing out:', err);
+                }
+              }
+            }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <LogOut className="w-4 h-4 text-red-500" />
+            Keluar (Logout)
           </button>
         </nav>
 

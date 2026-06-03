@@ -315,46 +315,50 @@ function App() {
     return 'User';
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative pb-20">
-      {/* Hero Section */}
-      <header className="bg-white text-gray-900 py-6 md:py-12 relative overflow-hidden border-b border-gray-100">
-        <div className="absolute inset-0 opacity-5 bg-[url('https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center" />
-        
-        {/* User Info & Logout */}
-        <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex items-center gap-2 md:gap-4">
-          {isOffline && (
-            <div className="flex items-center gap-1.5 bg-amber-550/10 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold animate-pulse shadow-sm">
-              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
-              Mode Offline
-            </div>
-          )}
-          <div className="hidden sm:flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
-            <User className="w-4 h-4 text-gray-500" />
-            <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wider">
-              {getRoleDisplay()}
-            </span>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-1 md:gap-2 bg-white hover:bg-red-50 text-gray-600 hover:text-red-600 px-2 py-1 md:px-3 md:py-1.5 rounded-full border border-gray-200 shadow-sm transition-colors text-[10px] md:text-sm font-bold"
-          >
-            <LogOut className="w-3 h-3 md:w-4 md:h-4" />
-            <span className="hidden xs:inline">Logout</span>
-          </button>
-        </div>
+  const isPortalView = userRole === 'mitra' || userRole === 'jamaah' || (isMasterAdmin && (adminViewMode === 'mitra' || adminViewMode === 'jamaah'));
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col items-center text-center">
-            <div className="flex items-center gap-3 mb-2 md:mb-4">
-              <img src={logoBase64} alt="Umaroh Logo" className="h-8 md:h-12" />
+  return (
+    <div className={`min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative ${isPortalView ? '' : 'pb-20'}`}>
+      {/* Hero Section */}
+      {!isPortalView && (
+        <header className="bg-white text-gray-900 py-6 md:py-12 relative overflow-hidden border-b border-gray-100">
+          <div className="absolute inset-0 opacity-5 bg-[url('https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center" />
+          
+          {/* User Info & Logout */}
+          <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex items-center gap-2 md:gap-4">
+            {isOffline && (
+              <div className="flex items-center gap-1.5 bg-amber-550/10 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold animate-pulse shadow-sm">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                Mode Offline
+              </div>
+            )}
+            <div className="hidden sm:flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+              <User className="w-4 h-4 text-gray-500" />
+              <span className="text-[10px] md:text-xs font-bold text-gray-700 uppercase tracking-wider">
+                {getRoleDisplay()}
+              </span>
             </div>
-            <p className="text-gray-500 text-sm md:text-lg max-w-2xl font-medium px-4">
-              Platform Digital Penyedia Layanan Satu Atap Bisnis Perjalanan Umrah
-            </p>
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-1 md:gap-2 bg-white hover:bg-red-50 text-gray-600 hover:text-red-600 px-2 py-1 md:px-3 md:py-1.5 rounded-full border border-gray-200 shadow-sm transition-colors text-[10px] md:text-sm font-bold"
+            >
+              <LogOut className="w-3 h-3 md:w-4 md:h-4" />
+              <span className="hidden xs:inline">Logout</span>
+            </button>
           </div>
-        </div>
-      </header>
+
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex items-center gap-3 mb-2 md:mb-4">
+                <img src={logoBase64} alt="Umaroh Logo" className="h-8 md:h-12" />
+              </div>
+              <p className="text-gray-500 text-sm md:text-lg max-w-2xl font-medium px-4">
+                Platform Digital Penyedia Layanan Satu Atap Bisnis Perjalanan Umrah
+              </p>
+            </div>
+          </div>
+        </header>
+      )}
 
       {(userRole === 'operasional' || userRole === 'admin' || isMasterAdmin) && (!isMasterAdmin || adminViewMode === 'operasional') && (
         <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={isMasterAdmin ? 'admin' : (userRole || 'admin')} subRole={isMasterAdmin ? null : subRole} />
@@ -367,7 +371,9 @@ function App() {
         </ErrorBoundary>
       </main>
 
-      <Footer minimalOnMobile={userRole === 'mitra' || userRole === 'jamaah' || (isMasterAdmin && (adminViewMode === 'mitra' || adminViewMode === 'jamaah'))} />
+      {!isPortalView && (
+        <Footer minimalOnMobile={false} />
+      )}
 
       {/* Master Admin Switcher */}
       {isMasterAdmin && (
