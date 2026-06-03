@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShopOrder } from '../types';
-import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, PlusCircle, History } from 'lucide-react';
-import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction } from '../firebase';
+import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, PlusCircle, History, Camera } from 'lucide-react';
+import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc } from '../firebase';
 import { PaketMitraView } from './PaketMitraView';
 import { KatalogPaketView } from './KatalogPaketView';
 import { JamaahMitraView } from './JamaahMitraView';
@@ -25,6 +25,10 @@ interface CurrentUserData {
   brandName?: string;
   namaLengkap?: string;
   name?: string;
+  logo?: string;
+  customMitraProfile?: {
+    logo?: string;
+  };
 }
 
 interface WalletTransaction {
@@ -161,6 +165,47 @@ export const DashboardMitra = () => {
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSidebarLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      try {
+        const userRef = doc(db, 'users', userId);
+        
+        const profileUpdate: {
+          logo: string;
+          customMitraProfile?: {
+            logo?: string;
+            [key: string]: unknown;
+          };
+        } = {
+          logo: base64String,
+        };
+        
+        if (currentUserData?.customMitraProfile) {
+          profileUpdate.customMitraProfile = {
+            ...currentUserData.customMitraProfile,
+            logo: base64String,
+          };
+        } else {
+          profileUpdate.customMitraProfile = {
+            logo: base64String,
+          };
+        }
+        
+        await updateDoc(userRef, profileUpdate);
+        console.log("Profile logo updated successfully to Firebase.");
+      } catch (err) {
+        console.error("Error updating sidebar logo:", err);
+        alert("Gagal memperbarui foto profil mitra. Silakan coba lagi.");
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // E-Wallet actions
@@ -537,40 +582,40 @@ export const DashboardMitra = () => {
       {/* Stat Cards - Top Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Komisi Agen (Dompet Komisi) - Moved to top */}
-        <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-[#0f172a] p-6 rounded-2xl text-white shadow-md relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl -mr-8 -mt-8"></div>
+        <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 p-6 rounded-2xl text-white shadow-md relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-amber-400">
+              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white">
                 <Wallet className="w-5 h-5" />
               </div>
-              <p className="text-[10px] font-black tracking-widest text-indigo-100 uppercase">DOMPET KOMISI</p>
+              <p className="text-sm font-semibold tracking-wide text-white">Dompet Komisi</p>
             </div>
             <button 
               onClick={() => {
                 setActiveTab('wallet');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="text-[9px] font-black bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 rounded-lg uppercase tracking-wider transition-colors cursor-pointer"
+              className="text-[9px] font-bold bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded-lg uppercase tracking-wider transition-colors cursor-pointer"
             >
               BUKA DOMPET ➔
             </button>
           </div>
           <div className="mb-4">
-            <p className="text-[9px] text-indigo-300 font-black uppercase tracking-widest leading-none mb-1">SALDO AKTIF</p>
-            <h3 className="text-2xl font-black text-amber-300 tracking-tight">Rp {balance.toLocaleString('id-ID')}</h3>
+            <p className="text-[10px] text-amber-100 font-medium uppercase tracking-wider leading-none mb-1">Saldo Aktif</p>
+            <h3 className="text-2xl font-bold text-white tracking-tight">Rp {balance.toLocaleString('id-ID')}</h3>
           </div>
           <div className="flex gap-2">
             <button 
               onClick={() => setShowWithdrawModal(true)}
-              className="flex-1 bg-[#00B47A] hover:bg-[#009b66] text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              className="flex-1 bg-white hover:bg-amber-50 text-amber-600 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
             >
               <Download className="w-3.5 h-3.5" />
               TARIK
             </button>
             <button 
               onClick={() => setShowTransferModal(true)}
-              className="flex-1 bg-white/15 hover:bg-white/25 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer border border-white/10"
+              className="flex-1 bg-white/20 hover:bg-white/30 text-white py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer border border-white/20"
             >
               <Send className="w-3.5 h-3.5" />
               KIRIM
@@ -580,41 +625,47 @@ export const DashboardMitra = () => {
 
         {/* Total Omzet */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-              <TrendingUp className="w-5 h-5" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform shrink-0">
+              <TrendingUp className="w-6 h-6" />
             </div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">TOTAL OMZET</p>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Total Omzet</p>
+              <h3 className="text-xl font-bold text-gray-900 tracking-tight mt-0.5">
+                Rp {stats.totalOmzet >= 1000000000 
+                  ? `${(stats.totalOmzet / 1000000000).toFixed(1)}M` 
+                  : stats.totalOmzet >= 1000000 
+                    ? `${(stats.totalOmzet / 1000000).toFixed(1)}Jt` 
+                    : stats.totalOmzet.toLocaleString('id-ID')}
+              </h3>
+            </div>
           </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">
-            Rp {stats.totalOmzet >= 1000000000 
-              ? `${(stats.totalOmzet / 1000000000).toFixed(1)}M` 
-              : stats.totalOmzet >= 1000000 
-                ? `${(stats.totalOmzet / 1000000).toFixed(1)}Jt` 
-                : stats.totalOmzet.toLocaleString('id-ID')}
-          </h3>
         </div>
 
         {/* Paket Aktif */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-              <Package className="w-5 h-5" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shrink-0">
+              <Package className="w-6 h-6" />
             </div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking_widest">PAKET AKTIF</p>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Paket Aktif</p>
+              <h3 className="text-xl font-bold text-gray-900 tracking-tight mt-0.5">{stats.paketAktif}</h3>
+            </div>
           </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">{stats.paketAktif}</h3>
         </div>
 
         {/* Mitra/Agen */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
-              <Users className="w-5 h-5" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform shrink-0">
+              <Users className="w-6 h-6" />
             </div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">MITRA/AGEN</p>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Mitra / Agen</p>
+              <h3 className="text-xl font-bold text-gray-900 tracking-tight mt-0.5">{stats.totalJaringan}</h3>
+            </div>
           </div>
-          <h3 className="text-2xl font-black text-gray-900 tracking-tight">{stats.totalJaringan}</h3>
         </div>
       </div>
 
@@ -623,28 +674,28 @@ export const DashboardMitra = () => {
         {/* Left Column: Banner & Activities */}
         <div className="lg:col-span-2 space-y-6">
           {/* Create Packet Banner */}
-          <div className="bg-[#111827] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+          <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group shadow-lg">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
             
             <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
-              <div className="w-16 h-16 rounded-2xl bg-[#00B47A] flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
-                <PlusCircle className="w-8 h-8" strokeWidth={3} />
+              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform shrink-0 border border-white/20">
+                <PlusCircle className="w-8 h-8" strokeWidth={2.5} />
               </div>
               <div className="text-left">
-                <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tight mb-1">
-                  BUAT PAKET BARU
+                <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1">
+                  Buat Paket Baru
                 </h2>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">
-                  PILIH KATEGORI YANG SESUAI BISNIS ANDA
+                <p className="text-amber-50 text-xs md:text-sm font-medium">
+                  Pilih kategori yang sesuai dengan bisnis Anda
                 </p>
               </div>
             </div>
 
             <button 
               onClick={() => setShowWizard(true)}
-              className="w-full md:w-auto bg-[#00B47A] hover:bg-[#009B66] text-white px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl shadow-emerald-500/10 relative z-10 shrink-0"
+              className="w-full md:w-auto bg-white hover:bg-amber-50 text-amber-600 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/10 relative z-10 shrink-0 cursor-pointer"
             >
-              MULAI WIZARD
+              Mulai Wizard
             </button>
           </div>
 
@@ -856,8 +907,45 @@ export const DashboardMitra = () => {
           <h2 className="text-base font-black text-gray-900 tracking-tight italic flex items-center gap-1.5 leading-none">
             UMAROH <span className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white font-black not-italic px-1.5 py-0.5 rounded text-[10px]">CRM</span>
           </h2>
-          <div className="mt-3 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200/80 transition-all px-3 py-1.5 rounded-xl border border-gray-200/60 max-w-full truncate">
-            👤 {currentUserData?.brandName || currentUserData?.namaLengkap || currentUserData?.name || 'Mitra Agen'}
+          <div className="mt-3 relative group w-full">
+            <input
+              type="file"
+              accept="image/*"
+              id="sidebar-logo-upload"
+              className="hidden"
+              onChange={handleSidebarLogoUpload}
+            />
+            <label
+              htmlFor="sidebar-logo-upload"
+              className="flex items-center gap-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200/80 hover:border-indigo-400 hover:bg-indigo-50/20 active:scale-[0.98] transition-all p-2 rounded-xl border border-gray-200/60 max-w-full cursor-pointer duration-200"
+              title="Klik untuk mengubah foto profil"
+            >
+              <div className="relative flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200/80 overflow-hidden flex items-center justify-center">
+                {currentUserData?.logo || currentUserData?.customMitraProfile?.logo ? (
+                  <img
+                    src={currentUserData.logo || currentUserData.customMitraProfile?.logo}
+                    alt="Logo Mitra"
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="text-base">👤</span>
+                )}
+                {/* Hover overlay with Camera Icon */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5 text-white" />
+                </div>
+              </div>
+              
+              <div className="flex-1 min-w-0 flex flex-col text-left">
+                <span className="truncate leading-tight text-[11px] font-black text-gray-800">
+                  {currentUserData?.brandName || currentUserData?.namaLengkap || currentUserData?.name || 'Mitra Agen'}
+                </span>
+                <span className="text-[9px] text-gray-400 font-medium tracking-tight mt-0.5 group-hover:text-indigo-600 transition-colors">
+                  Ubah Foto Profil
+                </span>
+              </div>
+            </label>
           </div>
         </div>
 
