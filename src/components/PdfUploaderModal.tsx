@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { GoogleGenAI, Type } from '@google/genai';
 import { safeJsonParse } from '../utils/firebaseSync';
 import { Hotel, getHotels, saveHotels } from '../data/hotels';
 
@@ -52,14 +51,6 @@ export const PdfUploaderModal: React.FC<PdfUploaderModalProps> = ({ isOpen, onCl
     try {
       const base64Data = await fileToBase64(file);
       
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || '';
-      
-      if (!apiKey) {
-        throw new Error('API Key Gemini tidak ditemukan. Pastikan Anda telah mengatur GEMINI_API_KEY atau VITE_GEMINI_API_KEY.');
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-
       const prompt = `
 You are an expert data extraction assistant. I am providing a PDF document containing a hotel price list.
 Extract all hotel pricing information and return it strictly as a JSON array of objects matching this schema:
@@ -87,63 +78,76 @@ Extract all hotel pricing information and return it strictly as a JSON array of 
 Ensure the output is valid JSON and only contains the array of hotels. Do not include markdown formatting like \`\`\`json.
 `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                data: base64Data,
-                mimeType: 'application/pdf',
-              },
-            },
-            {
-              text: prompt,
-            },
-          ],
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING },
-                name: { type: Type.STRING },
-                city: { type: Type.STRING },
-                vendor: { type: Type.STRING },
-                mealPlan: { type: Type.STRING },
-                stars: { type: Type.NUMBER },
-                seasons: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      range: { type: Type.STRING },
-                      prices: {
-                        type: Type.ARRAY,
-                        items: {
-                          type: Type.OBJECT,
-                          properties: {
-                            roomType: { type: Type.STRING },
-                            price: { type: Type.NUMBER }
-                          },
-                          required: ['roomType', 'price']
-                        }
-                      }
-                    },
-                    required: ['range', 'prices']
-                  }
-                }
+        body: JSON.stringify({
+          model: 'gemini-3.5-flash',
+          contents: {
+            parts: [
+              {
+                inlineData: {
+                  data: base64Data,
+                  mimeType: 'application/pdf',
+                },
               },
-              required: ['id', 'name', 'city', 'vendor', 'mealPlan', 'seasons']
+              {
+                text: prompt,
+              },
+            ],
+          },
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  id: { type: 'STRING' },
+                  name: { type: 'STRING' },
+                  city: { type: 'STRING' },
+                  vendor: { type: 'STRING' },
+                  mealPlan: { type: 'STRING' },
+                  stars: { type: 'NUMBER' },
+                  seasons: {
+                    type: 'ARRAY',
+                    items: {
+                      type: 'OBJECT',
+                      properties: {
+                        range: { type: 'STRING' },
+                        prices: {
+                          type: 'ARRAY',
+                          items: {
+                            type: 'OBJECT',
+                            properties: {
+                              roomType: { type: 'STRING' },
+                              price: { type: 'NUMBER' }
+                            },
+                            required: ['roomType', 'price']
+                          }
+                        }
+                      },
+                      required: ['range', 'prices']
+                    }
+                  }
+                },
+                required: ['id', 'name', 'city', 'vendor', 'mealPlan', 'seasons']
+              }
             }
           }
-        }
+        })
       });
 
-      const textResponse = response.text;
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || 'Fail to call AI validation API');
+      }
+
+      const resData = await response.json();
+      const textResponse = resData.text;
+      
       if (!textResponse) {
         throw new Error('Empty response from AI');
       }

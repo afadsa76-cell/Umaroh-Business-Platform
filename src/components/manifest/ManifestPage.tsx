@@ -6,7 +6,6 @@ import {
 import { db, collection, onSnapshot, query, where, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, serverTimestamp } from '../../firebase';
 import { PaketTracker, JamaahTracker } from '../tracker/types';
 import { safeJsonParse } from '../../utils/firebaseSync';
-import { GoogleGenAI, Type } from '@google/genai';
 import * as XLSX from 'xlsx';
 
 const FIELD_ORDER = [
@@ -397,14 +396,6 @@ export const ManifestPage: React.FC = () => {
     return () => unsubJamaah();
   }, [selectedPaketId]);
 
-  const getAi = () => {
-    const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && (import.meta.env as Record<string, string>).VITE_GEMINI_API_KEY);
-    if (!apiKey) {
-      throw new Error("API Key Gemini tidak ditemukan. Atur GEMINI_API_KEY atau VITE_GEMINI_API_KEY di Settings > Secrets.");
-    }
-    return new GoogleGenAI({ apiKey });
-  };
-
   // Helper code: auto-populate seed data matching screenshots if database list is empty
   const handleResetData = async () => {
     if (!selectedPaketId) return;
@@ -562,51 +553,62 @@ export const ManifestPage: React.FC = () => {
           const base64 = (reader.result as string).split(',')[1];
           const type = file.type || 'image/jpeg';
           
-          const ai = getAi();
-          const response = await ai.models.generateContent({
-            model: "gemini-3.5-flash",
-            contents: [
-              {
-                parts: [
-                  { 
-                    text: "Ekstrak data lengkap dari KTP, KK, atau Paspor ini. Berikan hasil HANYA dalam JSON valid dengan field berikut: title (MR/MRS/MS), status_kesiapan ('READY'), namaLengkap (Nama KTP/paspor), nama_ayah, nik (16 digit NIK KTP jika ad), nama_paspor, no_paspor (jika ada), tanggal_lahir (format YYYY-MM-DD), tgl_issue_paspor (YYYY-MM-DD jika paspor), tgl_exp_paspor (YYYY-MM-DD jika paspor), kota_paspor, tempat_lahir, alamat (lengkap), kelurahan, kecamatan, kabupaten_kota, provinsi, kewarganegaraan, status_nikah, pekerjaan, telepon, emergency_contact. Jika kosong gunakan null atau kosong." 
-                  },
-                  { inlineData: { data: base64, mimeType: type } }
-                ]
-              }
-            ],
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  namaLengkap: { type: Type.STRING },
-                  nama_ayah: { type: Type.STRING },
-                  nik: { type: Type.STRING },
-                  nama_paspor: { type: Type.STRING },
-                  no_paspor: { type: Type.STRING },
-                  tanggal_lahir: { type: Type.STRING },
-                  tgl_issue_paspor: { type: Type.STRING },
-                  tgl_exp_paspor: { type: Type.STRING },
-                  kota_paspor: { type: Type.STRING },
-                  tempat_lahir: { type: Type.STRING },
-                  alamat: { type: Type.STRING },
-                  kelurahan: { type: Type.STRING },
-                  kecamatan: { type: Type.STRING },
-                  kabupaten_kota: { type: Type.STRING },
-                  provinsi: { type: Type.STRING },
-                  kewarganegaraan: { type: Type.STRING },
-                  status_nikah: { type: Type.STRING },
-                  pekerjaan: { type: Type.STRING },
-                  telepon: { type: Type.STRING },
-                  emergency_contact: { type: Type.STRING }
+          const response = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gemini-3.5-flash',
+              contents: [
+                {
+                  parts: [
+                    { 
+                      text: "Ekstrak data lengkap dari KTP, KK, atau Paspor ini. Berikan hasil HANYA dalam JSON valid dengan field berikut: title (MR/MRS/MS), status_kesiapan ('READY'), namaLengkap (Nama KTP/paspor), nama_ayah, nik (16 digit NIK KTP jika ad), nama_paspor, no_paspor (jika ada), tanggal_lahir (format YYYY-MM-DD), tgl_issue_paspor (YYYY-MM-DD jika paspor), tgl_exp_paspor (YYYY-MM-DD jika paspor), kota_paspor, tempat_lahir, alamat (lengkap), kelurahan, kecamatan, kabupaten_kota, provinsi, kewarganegaraan, status_nikah, pekerjaan, telepon, emergency_contact. Jika kosong gunakan null atau kosong." 
+                    },
+                    { inlineData: { data: base64, mimeType: type } }
+                  ]
+                }
+              ],
+              config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: 'OBJECT',
+                  properties: {
+                    title: { type: 'STRING' },
+                    namaLengkap: { type: 'STRING' },
+                    nama_ayah: { type: 'STRING' },
+                    nik: { type: 'STRING' },
+                    nama_paspor: { type: 'STRING' },
+                    no_paspor: { type: 'STRING' },
+                    tanggal_lahir: { type: 'STRING' },
+                    tgl_issue_paspor: { type: 'STRING' },
+                    tgl_exp_paspor: { type: 'STRING' },
+                    kota_paspor: { type: 'STRING' },
+                    tempat_lahir: { type: 'STRING' },
+                    alamat: { type: 'STRING' },
+                    kelurahan: { type: 'STRING' },
+                    kecamatan: { type: 'STRING' },
+                    kabupaten_kota: { type: 'STRING' },
+                    provinsi: { type: 'STRING' },
+                    kewarganegaraan: { type: 'STRING' },
+                    status_nikah: { type: 'STRING' },
+                    pekerjaan: { type: 'STRING' },
+                    telepon: { type: 'STRING' },
+                    emergency_contact: { type: 'STRING' }
+                  }
                 }
               }
-            }
+            })
           });
 
-          const rawText = response.text || '';
+          if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'AI document processing failed');
+          }
+
+          const resData = await response.json();
+          const rawText = resData.text || '';
           const parsed = safeJsonParse(rawText);
           resolve(parsed);
         } catch (e) {

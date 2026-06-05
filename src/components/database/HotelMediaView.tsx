@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { db, collection, onSnapshot, doc, setDoc, handleFirestoreError, OperationType } from '../../firebase';
 import { hotels as staticHotelsList } from '../../data/hotels';
 import { Image, MapPin, Search, Edit3, X, Save, Upload, Sparkles, Loader2 } from 'lucide-react';
-import { GoogleGenAI, Type } from '@google/genai';
 import { safeJsonParse } from '../../utils/firebaseSync';
 
 interface HotelItem {
@@ -127,35 +126,40 @@ export const HotelMediaView: React.FC = () => {
   const handleAiAssist = async (hotel: HotelItem) => {
     setIsGenerating(hotel.id);
     try {
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || '';
-
-      if (!apiKey) {
-        throw new Error('API Key Gemini tidak ditemukan.');
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
       const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              photoUrl: { type: Type.STRING, description: "Valid image URL for the hotel" },
-              distance: { type: Type.STRING, description: "Distance, e.g. '150m ke pelataran'" }
-            },
-            required: ["photoUrl", "distance"]
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gemini-3.5-flash',
+          contents: prompt,
+          config: {
+            tools: [{ googleSearch: {} }],
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'OBJECT',
+              properties: {
+                photoUrl: { type: 'STRING', description: "Valid image URL for the hotel" },
+                distance: { type: 'STRING', description: "Distance, e.g. '150m ke pelataran'" }
+              },
+              required: ["photoUrl", "distance"]
+            }
           }
-        }
+        })
       });
 
-      if (response.text) {
-        const parsed = safeJsonParse(response.text);
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || 'AI proxy call failed');
+      }
+
+      const resData = await response.json();
+      if (resData.text) {
+        const parsed = safeJsonParse(resData.text);
         setEditData({
           photoUrl: parsed.photoUrl || editData.photoUrl,
           distance: parsed.distance || editData.distance
@@ -170,17 +174,6 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
   };
 
   const handleAiAssistBulk = async () => {
-    const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || '';
-
-    if (!apiKey) {
-      try {
-        alert('API Key Gemini tidak ditemukan.');
-      } catch (err) {
-        console.log('API Key Gemini tidak ditemukan.', err);
-      }
-      return;
-    }
-
     const hotelsToProcess = allHotels.filter(hotel => {
       const media = getMediaForHotel(hotel.id, hotel.name);
       return !media?.photoUrl || !media?.distance;
@@ -203,7 +196,6 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
 
     setIsGeneratingAll(true);
     setGenerationProgress({ current: 0, total: hotelsToProcess.length });
-    const ai = new GoogleGenAI({ apiKey });
 
     let processedCount = 0;
 
@@ -213,25 +205,36 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
         const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: prompt,
-          config: {
-            tools: [{ googleSearch: {} }],
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                photoUrl: { type: Type.STRING, description: "Valid image URL for the hotel" },
-                distance: { type: Type.STRING, description: "Distance, e.g. '150m ke pelataran'" }
-              },
-              required: ["photoUrl", "distance"]
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gemini-3.5-flash',
+            contents: prompt,
+            config: {
+              tools: [{ googleSearch: {} }],
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  photoUrl: { type: 'STRING', description: "Valid image URL for the hotel" },
+                  distance: { type: 'STRING', description: "Distance, e.g. '150m ke pelataran'" }
+                },
+                required: ["photoUrl", "distance"]
+              }
             }
-          }
+          })
         });
 
-        if (response.text) {
-          const parsed = safeJsonParse(response.text);
+        if (!response.ok) {
+          throw new Error('AI proxy bulk call failed');
+        }
+
+        const resData = await response.json();
+        if (resData.text) {
+          const parsed = safeJsonParse(resData.text);
           const safeId = hotel.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
           const docRef = doc(db, 'hotel_metadata', safeId);
           

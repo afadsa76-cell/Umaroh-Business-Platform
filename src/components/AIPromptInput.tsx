@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, Paperclip, X } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 import { safeJsonParse } from '../utils/firebaseSync';
 
 interface AIPromptInputProps {
@@ -62,14 +61,6 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
     setError('');
     
     try {
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && (import.meta.env as Record<string, string>).VITE_GEMINI_API_KEY) || '';
-      
-      if (!apiKey) {
-        throw new Error('API Key Gemini tidak ditemukan. Pastikan Anda telah mengatur GEMINI_API_KEY atau VITE_GEMINI_API_KEY.');
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-      
       let finalPrompt = prompt;
       
       // Use schema to instruct the model about the expected format
@@ -81,19 +72,35 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
         finalPrompt = `${prompt}${formatInstruction}`;
       }
 
-      const parts: string[] = [finalPrompt];
+      const parts: unknown[] = [finalPrompt];
       if (selectedFile) {
-        // Correct way to handle media in @google/genai SDK
-        // This is a placeholder for actual multi-modal support in that SDK if needed
-        // For now we just send the text prompt
+        parts.unshift({
+          inlineData: {
+            data: selectedFile.base64,
+            mimeType: selectedFile.mimeType
+          }
+        });
       }
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash', 
-        contents: parts,
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gemini-3.5-flash',
+          contents: parts
+        })
       });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || 'Gagal memproses permintaan dengan AI');
+      }
+
+      const resData = await response.json();
+      const text = resData.text;
       
-      const text = response.text;
       if (text) {
         const parsedData = safeJsonParse(text);
         onDataParsed(parsedData);

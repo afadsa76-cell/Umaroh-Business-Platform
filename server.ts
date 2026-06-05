@@ -7,7 +7,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '15mb' }));
+  app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
   // Use lazy initialization for Gemini to avoid crashing when the API key is not yet set at startup
   let aiClient: GoogleGenAI | null = null;
@@ -157,6 +158,60 @@ async function startServer() {
       const err = error as Error;
       console.error('Gemini Jamaah Chat Error:', err);
       res.status(500).json({ reply: 'Maaf Kak, Sahabat Marawa saat ini sedang kesulitan terhubung dengan sistem. Silakan coba lagi sebentar ya Kak! 🙏✨' });
+    }
+  });
+
+  // API Route for general client-side Gemini requests proxying
+  app.post('/api/ai/generate', async (req, res) => {
+    try {
+      const { model, contents, config } = req.body;
+
+      if (!contents) {
+        return res.status(400).json({ error: 'Payload "contents" wajib diisi' });
+      }
+
+      // Map deprecated or legacy model names to the recommended gemini-3.5-flash
+      let targetModel = model || 'gemini-3.5-flash';
+      if (
+        targetModel.includes('1.5') || 
+        targetModel.includes('2.0') || 
+        targetModel.includes('3-flash-preview') || 
+        targetModel.includes('3.1-flash-lite')
+      ) {
+        targetModel = 'gemini-3.5-flash';
+      }
+
+      const ai = getAIClient();
+      let response;
+      try {
+        response = await ai.models.generateContent({
+          model: targetModel,
+          contents,
+          config,
+        });
+      } catch (innerError) {
+        const errMessage = (innerError as Error).message || '';
+        console.warn('First attempt failed:', errMessage);
+        // If it failed because of permission/denied access and googleSearch tools was requested, retry without tools
+        if ((errMessage.includes('PERMISSION_DENIED') || errMessage.includes('denied access') || errMessage.includes('restricted')) && config?.tools) {
+          console.warn('API key has no search grounding permission. Retrying without search tools...');
+          const fallbackConfig = { ...config };
+          delete fallbackConfig.tools;
+          response = await ai.models.generateContent({
+            model: targetModel,
+            contents,
+            config: fallbackConfig,
+          });
+        } else {
+          throw innerError;
+        }
+      }
+
+      res.json({ text: response.text || '', response });
+    } catch (error) {
+      const err = error as Error;
+      console.error('Gemini Universal Proxy Error:', err);
+      res.status(500).json({ error: err.message || 'Gagal memproses permintaan AI' });
     }
   });
 

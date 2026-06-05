@@ -4,16 +4,7 @@ import { generateWALink, getWATemplate, openWhatsApp } from '../../utils/whatsap
 import { JamaahTracker, PaketTracker } from './types';
 import { safeJsonParse } from '../../utils/firebaseSync';
 
-import { GoogleGenAI, Type } from "@google/genai";
 import { Camera, RefreshCw, Plus, MessageCircle, Package, FolderOpen, FileText, Edit2, Trash2, Save, X } from 'lucide-react';
-
-const getAi = () => {
-  const apiKey = process.env.GEMINI_API_KEY || (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY);
-  if (!apiKey) {
-    throw new Error("API Key Gemini tidak ditemukan. Silakan atur GEMINI_API_KEY atau VITE_GEMINI_API_KEY.");
-  }
-  return new GoogleGenAI({ apiKey });
-};
 
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -50,38 +41,49 @@ export const TrackerJamaah: React.FC = () => {
         type = fileOrBase64.type;
       }
 
-      const response = await getAi().models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          {
-            parts: [
-              { text: "Ekstrak data dari gambar Paspor atau KTP ini. Berikan hasil dalam format JSON dengan field: title (LAKI-LAKI/PEREMPUAN/MR/MRS/MS), nik (hanya untuk KTP), no_paspor (hanya untuk Paspor), nama_paspor, tgl_issue_paspor (YYYY-MM-DD), tgl_exp_paspor (YYYY-MM-DD), kota_paspor, tempat_lahir, tanggal_lahir (YYYY-MM-DD), kewarganegaraan. Jika field tidak ditemukan gunakan null." },
-              { inlineData: { data: base64Data, mimeType: type } }
-            ]
-          }
-        ],
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              nik: { type: Type.STRING },
-              no_paspor: { type: Type.STRING },
-              nama_paspor: { type: Type.STRING },
-              tgl_issue_paspor: { type: Type.STRING },
-              tgl_exp_paspor: { type: Type.STRING },
-              kota_paspor: { type: Type.STRING },
-              tempat_lahir: { type: Type.STRING },
-              tanggal_lahir: { type: Type.STRING },
-              kewarganegaraan: { type: Type.STRING },
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: "gemini-3.5-flash",
+          contents: [
+            {
+              parts: [
+                { text: "Ekstrak data dari gambar Paspor atau KTP ini. Berikan hasil dalam format JSON dengan field: title (LAKI-LAKI/PEREMPUAN/MR/MRS/MS), nik (hanya untuk KTP), no_paspor (hanya untuk Paspor), nama_paspor, tgl_issue_paspor (YYYY-MM-DD), tgl_exp_paspor (YYYY-MM-DD), kota_paspor, tempat_lahir, tanggal_lahir (YYYY-MM-DD), kewarganegaraan. Jika field tidak ditemukan gunakan null." },
+                { inlineData: { data: base64Data, mimeType: type } }
+              ]
+            }
+          ],
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                title: { type: "STRING" },
+                nik: { type: "STRING" },
+                no_paspor: { type: "STRING" },
+                nama_paspor: { type: "STRING" },
+                tgl_issue_paspor: { type: "STRING" },
+                tgl_exp_paspor: { type: "STRING" },
+                kota_paspor: { type: "STRING" },
+                tempat_lahir: { type: "STRING" },
+                tanggal_lahir: { type: "STRING" },
+                kewarganegaraan: { type: "STRING" },
+              }
             }
           }
-        }
+        })
       });
 
-      // Use a safe JSON parse approach
-      const rawText = response.text || '';
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Gagal memproses gambar melalui server.");
+      }
+
+      const resData = await response.json();
+      const rawText = resData.text || '';
       const result = safeJsonParse(rawText);
       
       const updateData: Partial<JamaahTracker> = {};
@@ -438,35 +440,47 @@ export const TrackerJamaah: React.FC = () => {
                                 reader.readAsDataURL(file);
                               });
 
-                              const response = await getAi().models.generateContent({
-                                model: "gemini-3-flash-preview",
-                                contents: [{
-                                  parts: [
-                                    { text: "Extract passport or ID card data. Return JSON with title (LAKI-LAKI/PEREMPUAN/MR/MRS/MS), nik, no_paspor, nama_paspor, tgl_issue_paspor, tgl_exp_paspor, kota_paspor, tempat_lahir, tanggal_lahir, kewarganegaraan." },
-                                    { inlineData: { data: base64Data, mimeType: file.type } }
-                                  ]
-                                }],
-                                config: {
-                                  responseMimeType: "application/json",
-                                  responseSchema: {
-                                    type: Type.OBJECT,
-                                    properties: {
-                                      title: { type: Type.STRING },
-                                      nik: { type: Type.STRING },
-                                      no_paspor: { type: Type.STRING },
-                                      nama_paspor: { type: Type.STRING },
-                                      tgl_issue_paspor: { type: Type.STRING },
-                                      tgl_exp_paspor: { type: Type.STRING },
-                                      kota_paspor: { type: Type.STRING },
-                                      tempat_lahir: { type: Type.STRING },
-                                      tanggal_lahir: { type: Type.STRING },
-                                      kewarganegaraan: { type: Type.STRING },
+                              const response = await fetch('/api/ai/generate', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  model: "gemini-3.5-flash",
+                                  contents: [{
+                                    parts: [
+                                      { text: "Extract passport or ID card data. Return JSON with title (LAKI-LAKI/PEREMPUAN/MR/MRS/MS), nik, no_paspor, nama_paspor, tgl_issue_paspor, tgl_exp_paspor, kota_paspor, tempat_lahir, tanggal_lahir, kewarganegaraan." },
+                                      { inlineData: { data: base64Data, mimeType: file.type } }
+                                    ]
+                                  }],
+                                  config: {
+                                    responseMimeType: "application/json",
+                                    responseSchema: {
+                                      type: "OBJECT",
+                                      properties: {
+                                        title: { type: "STRING" },
+                                        nik: { type: "STRING" },
+                                        no_paspor: { type: "STRING" },
+                                        nama_paspor: { type: "STRING" },
+                                        tgl_issue_paspor: { type: "STRING" },
+                                        tgl_exp_paspor: { type: "STRING" },
+                                        kota_paspor: { type: "STRING" },
+                                        tempat_lahir: { type: "STRING" },
+                                        tanggal_lahir: { type: "STRING" },
+                                        kewarganegaraan: { type: "STRING" },
+                                      }
                                     }
                                   }
-                                }
+                                })
                               });
 
-                              const rawText = response.text || '';
+                              if (!response.ok) {
+                                const errorText = await response.text();
+                                throw new Error(errorText || "Gagal memproses gambar melalui server.");
+                              }
+
+                              const resData = await response.json();
+                              const rawText = resData.text || '';
                               const result = safeJsonParse(rawText);
 
                               setFormData(prev => {

@@ -1,21 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { GoogleGenAI } from "@google/genai";
-
-let aiInstance: GoogleGenAI | null = null;
-
-export const getAi = () => {
-  if (!aiInstance) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is not defined in the environment.");
-    }
-    aiInstance = new GoogleGenAI({ apiKey });
-  }
-  return aiInstance;
-};
 
 export const generateItinerary = async (packageData: any) => {
-  const ai = getAi();
   const prompt = `Generate a detailed day-by-day itinerary for an Umrah package with the following details:
   Package Name: ${packageData.nama}
   Duration: ${packageData.durasiHari} days
@@ -28,11 +13,23 @@ export const generateItinerary = async (packageData: any) => {
   Include religious activities (Umrah, Ziarah), travel days, and leisure time.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
+    const response = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gemini-3.5-flash',
+        contents: prompt
+      })
     });
-    return response.text;
+    
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || 'Fail to call AI API');
+    }
+    const data = await response.json();
+    return data.text;
   } catch (error) {
     console.error("AI Generation Error:", error);
     throw error;
@@ -40,7 +37,6 @@ export const generateItinerary = async (packageData: any) => {
 };
 
 export const generateMarketingCopy = async (packageData: any) => {
-  const ai = getAi();
   const prompt = `Create a marketing social media post and a persuasive description for this Umrah package:
   Package Name: ${packageData.nama}
   Duration: ${packageData.durasiHari} days
@@ -54,11 +50,23 @@ export const generateMarketingCopy = async (packageData: any) => {
   Format the output in Markdown.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
+    const response = await fetch('/api/ai/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gemini-3.5-flash',
+        contents: prompt
+      })
     });
-    return response.text;
+    
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || 'Fail to call AI API');
+    }
+    const data = await response.json();
+    return data.text;
   } catch (error) {
     console.error("AI Generation Error:", error);
     throw error;
