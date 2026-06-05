@@ -4,7 +4,15 @@ const STORAGE_KEY = 'umrah_transactions';
 
 export const getTransactions = (): Transaction[] => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (err) {
+      console.warn(`Failed parsing transactions from locale, clearing corrupted storage key:`, err);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }
+  return [];
 };
 
 export const saveTransaction = (transaction: Transaction) => {

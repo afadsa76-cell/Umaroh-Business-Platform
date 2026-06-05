@@ -3,7 +3,7 @@ import {
   FileText, Search, Plus, Trash2, Sparkles, Loader2, HelpCircle, RefreshCw, 
   CheckCircle2, Printer, Info, X, FileSpreadsheet, Upload, Check, BookOpen, Zap, Monitor, UserPlus
 } from 'lucide-react';
-import { db, collection, onSnapshot, query, where, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from '../../firebase';
+import { db, collection, onSnapshot, query, where, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, serverTimestamp } from '../../firebase';
 import { PaketTracker, JamaahTracker } from '../tracker/types';
 import { safeJsonParse } from '../../utils/firebaseSync';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -266,6 +266,54 @@ export const ManifestPage: React.FC = () => {
   const [selectedPaketId, setSelectedPaketId] = useState<string>('');
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
   const [selectedTab, setSelectedTab] = useState<'manifest' | 'ai'>('manifest');
+
+  // Custom non-blocking popups / toasts states
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Manual package input states
+  const [showManualPacketForm, setShowManualPacketForm] = useState(false);
+  const [newPacketName, setNewPacketName] = useState('');
+  const [newPacketDate, setNewPacketDate] = useState('');
+  const [newPacketTarget, setNewPacketTarget] = useState('45');
+
+  const handleCreateManualPacket = async () => {
+    if (!newPacketName.trim()) {
+      showToast('Nama paket tidak boleh kosong', 'error');
+      return;
+    }
+    if (!newPacketDate.trim()) {
+      showToast('Tanggal keberangkatan tidak boleh kosong', 'error');
+      return;
+    }
+
+    try {
+      const docRef = await addDoc(collection(db, 'tracker_paket'), {
+        namaPaket: newPacketName,
+        tanggalBerangkat: newPacketDate,
+        status: 'Persiapan',
+        targetJamaah: Number(newPacketTarget) || 45,
+        terdaftar: 0,
+        createdAt: serverTimestamp()
+      });
+      
+      setSelectedPaketId(docRef.id);
+      setShowManualPacketForm(false);
+      showToast('Paket baru berhasil dibuat, silakan isi data manifest secara manual!', 'success');
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      console.error(e);
+      showToast('Gagal membuat paket baru: ' + errMsg, 'error');
+    }
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
   
   // Spreadsheet States
   const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
@@ -360,30 +408,48 @@ export const ManifestPage: React.FC = () => {
   // Helper code: auto-populate seed data matching screenshots if database list is empty
   const handleResetData = async () => {
     if (!selectedPaketId) return;
-    if (!confirm('Apakah Anda yakin ingin memuat kembali data manifest standard (14 jamaah dummy)? Menghapus data saat ini.')) return;
     
     try {
-      // 1. Delete currently present jamaah for this package
-      for (const j of jamaahs) {
-        await deleteDoc(doc(db, 'tracker_jamaah', j.id));
-      }
+      // 1. Delete currently present jamaah for this package in parallel
+      const deletePromises = jamaahs.map(j => deleteDoc(doc(db, 'tracker_jamaah', j.id)));
+      await Promise.all(deletePromises);
       
-      // 2. Add standard seed data
-      for (const item of SEED_DATA) {
-        await addDoc(collection(db, 'tracker_jamaah'), {
+      // 2. Add standard seed data in parallel
+      const addPromises = SEED_DATA.map(item => 
+        addDoc(collection(db, 'tracker_jamaah'), {
           ...item,
           paketId: selectedPaketId
-        });
-      }
+        })
+      );
+      await Promise.all(addPromises);
+      
+      showToast('Data manifest berhasil di-reset dengan 14 jamaah dummy standard!', 'success');
     } catch (e) {
       console.error(e);
-      alert('Gagal me-reset data');
+      showToast('Gagal me-reset data', 'error');
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!selectedPaketId) return;
+    if (jamaahs.length === 0) {
+      showToast('Data manifest sudah kosong.', 'info');
+      return;
+    }
+    
+    try {
+      const deletePromises = jamaahs.map(j => deleteDoc(doc(db, 'tracker_jamaah', j.id)));
+      await Promise.all(deletePromises);
+      showToast('Semua data manifest berhasil dikosongkan.', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal mengosongkan data', 'error');
     }
   };
 
   const handleAddNewRow = async () => {
     if (!selectedPaketId) {
-      alert('Pilih Paket Keberangkatan terlebih dahulu.');
+      showToast('Pilih Paket Keberangkatan terlebih dahulu.', 'info');
       return;
     }
     try {
@@ -407,20 +473,21 @@ export const ManifestPage: React.FC = () => {
       // edit the name of the new row right away
       setEditingCell({ id: docRef.id, field: 'namaLengkap' });
       setInputValue('BARIS JAMAAH BARU');
+      showToast('Berhasil menambahkan baris baru!', 'success');
     } catch (e) {
       console.error(e);
-      alert('Gagal menambah baris baru');
+      showToast('Gagal menambah baris baru', 'error');
     }
   };
 
   const handleDeleteRow = async (id: string) => {
-    if (!confirm('Hapus baris jamaah ini?')) return;
     try {
       await deleteDoc(doc(db, 'tracker_jamaah', id));
       if (editingCell?.id === id) setEditingCell(null);
+      showToast('Baris jamaah berhasil dihapus.', 'success');
     } catch (e) {
       console.error(e);
-      alert('Gagal menghapus baris');
+      showToast('Gagal menghapus baris', 'error');
     }
   };
 
@@ -849,7 +916,7 @@ export const ManifestPage: React.FC = () => {
       setIsReviewModalOpen(true);
     } catch (err: unknown) {
       console.error(err);
-      alert(err instanceof Error ? err.message : 'Gagal mengekstrak data');
+      showToast(err instanceof Error ? err.message : 'Gagal mengekstrak data', 'error');
     } finally {
       setActiveAiTargetId(null);
     }
@@ -858,7 +925,7 @@ export const ManifestPage: React.FC = () => {
   const handleApplyExtractedData = async () => {
     const checkedItems = extractedReviewList.filter(item => item.checked);
     if (checkedItems.length === 0) {
-      alert("Silakan pilih minimal 1 data untuk disimpan.");
+      showToast("Silakan pilih minimal 1 data untuk disimpan.", "info");
       return;
     }
 
@@ -912,10 +979,10 @@ export const ManifestPage: React.FC = () => {
       }
       setIsReviewModalOpen(false);
       setExtractedReviewList([]);
-      alert(`Berhasil menyimpan ${checkedItems.length} data manifest!`);
+      showToast(`Berhasil menyimpan ${checkedItems.length} data manifest!`, 'success');
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan saat menyimpan data.");
+      showToast("Terjadi kesalahan saat menyimpan data.", 'error');
     }
   };
 
@@ -1000,7 +1067,7 @@ export const ManifestPage: React.FC = () => {
   // Excel Export
   const handleExportExcelAll = () => {
     if (filteredJamaahs.length === 0) {
-      alert("Tidak ada data untuk diexport.");
+      showToast("Tidak ada data untuk diexport.", "info");
       return;
     }
 
@@ -1086,8 +1153,9 @@ export const ManifestPage: React.FC = () => {
               <RefreshCw className="w-4 h-4 animate-spin-hover" />
             </button>
             <button 
-              onClick={handleResetData}
-              className="flex items-center gap-1.5 bg-[#de4545]/20 hover:bg-[#de4545]/30 border border-[#de4545]/40 text-[#fca5a5] px-4 py-2 rounded-xl text-xs font-bold transition-all"
+              onClick={() => setShowResetConfirmModal(true)}
+              className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-4 py-2 rounded-xl text-xs shadow-md transition-all uppercase"
+              title="Reset data ke data standard default"
             >
               <RefreshCw className="w-4 h-4" /> Reset Data
             </button>
@@ -1450,13 +1518,32 @@ export const ManifestPage: React.FC = () => {
                                     />
                                   </>
                                 )}
-                                <button
-                                  onClick={() => handleDeleteRow(item.id)}
-                                  className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                  title="Hapus baris"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                {deleteConfirmId === item.id ? (
+                                  <div className="flex items-center gap-1 bg-red-50 border border-red-200 p-0.5 rounded shrink-0">
+                                    <button
+                                      onClick={() => handleDeleteRow(item.id)}
+                                      className="px-1.5 py-0.5 bg-rose-600 text-white text-[9px] font-black rounded uppercase hover:bg-rose-700 active:scale-95 transition-all text-[8px]"
+                                      title="Yakin hapus?"
+                                    >
+                                      Ya
+                                    </button>
+                                    <button
+                                      onClick={() => setDeleteConfirmId(null)}
+                                      className="px-1.5 py-0.5 bg-slate-200 text-slate-700 text-[9px] font-black rounded uppercase hover:bg-slate-300 transition-all text-[8px]"
+                                      title="Batal"
+                                    >
+                                      B
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setDeleteConfirmId(item.id)}
+                                    className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="Hapus baris"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             </td>
                             {/* NO */}
@@ -1700,14 +1787,118 @@ export const ManifestPage: React.FC = () => {
             )}
           </>
         ) : (
-          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 flex flex-col items-center justify-center gap-4 text-slate-400">
-            <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200">
-              <Plus className="w-8 h-8 text-slate-400" />
-            </div>
-            <div>
-              <p className="font-bold text-lg text-slate-800">Belum ada paket keberangkatan terpilih</p>
-              <p className="text-sm text-slate-400 mt-1">Silakan pilih paket keberangkatan di atas untuk mengaktifkan spreadsheet manifest!</p>
-            </div>
+          <div className="bg-white p-10 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-6 max-w-2xl mx-auto my-4 text-center">
+            {!showManualPacketForm ? (
+              <>
+                <button
+                  onClick={() => {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    setNewPacketName(`Paket Manual ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`);
+                    setNewPacketDate(todayStr);
+                    setShowManualPacketForm(true);
+                  }}
+                  className="w-20 h-20 rounded-full bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center border-2 border-dashed border-emerald-300 text-emerald-600 transition-all hover:scale-105 hover:border-emerald-400 cursor-pointer shadow-sm"
+                  title="Klik untuk membuat paket manual"
+                >
+                  <Plus className="w-10 h-10 animate-pulse" />
+                </button>
+                <div className="space-y-2">
+                  <h3 className="font-extrabold text-xl text-slate-800">Belum ada paket keberangkatan terpilih</h3>
+                  <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Silakan pilih paket keberangkatan aktif melalui dropdown di atas, atau klik tombol di bawah ini untuk membuat paket baru secara manual agar bisa mengisi spreadsheet manifest!
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    setNewPacketName(`Paket Manual ${new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`);
+                    setNewPacketDate(todayStr);
+                    setShowManualPacketForm(true);
+                  }}
+                  className="flex items-center gap-2 bg-[#01413a] hover:bg-[#025a50] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer hover:shadow-lg"
+                >
+                  <Plus className="w-4 h-4 text-amber-400" /> Buat Paket Baru & Isi Manual
+                </button>
+              </>
+            ) : (
+              <div className="w-full space-y-5 text-left">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="w-5 h-5 text-emerald-600" />
+                    <h3 className="font-extrabold text-lg text-slate-800">Buat Paket Keberangkatan Baru</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowManualPacketForm(false)}
+                    className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                      Nama Paket Keberangkatan *
+                    </label>
+                    <input
+                      type="text"
+                      value={newPacketName}
+                      onChange={(e) => setNewPacketName(e.target.value)}
+                      placeholder="Contoh: Umrah Syawal 9 Hari"
+                      className="w-full px-4 py-2.5 border border-slate-300 text-slate-900 bg-white rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none focus:border-amber-500 font-semibold shadow-inner"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                        Tanggal Keberangkatan *
+                      </label>
+                      <input
+                        type="date"
+                        value={newPacketDate}
+                        onChange={(e) => setNewPacketDate(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-slate-300 text-slate-900 bg-white rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none focus:border-amber-500 font-semibold shadow-inner"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                        Target / Kuota Jamaah
+                      </label>
+                      <input
+                        type="number"
+                        value={newPacketTarget}
+                        onChange={(e) => setNewPacketTarget(e.target.value)}
+                        min="1"
+                        placeholder="45"
+                        className="w-full px-4 py-2.5 border border-slate-300 text-slate-900 bg-white rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none focus:border-amber-500 font-semibold shadow-inner"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualPacketForm(false)}
+                    className="px-4.5 py-2 border border-slate-300 text-slate-600 bg-white rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateManualPacket}
+                    className="flex items-center gap-1.5 bg-[#01413a] hover:bg-[#025a50] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    disabled={!newPacketName.trim() || !newPacketDate.trim()}
+                  >
+                    <Check className="w-4 h-4 text-amber-400" /> Simpan & Mulai Isi
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -2155,6 +2346,70 @@ export const ManifestPage: React.FC = () => {
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Modern custom confirmation modal for Reset Data */}
+      {showResetConfirmModal && (
+        <div className="fixed inset-0 bg-black/65 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200 print:hidden">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform animate-in zoom-in-95 duration-150">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto text-3xl font-extrabold animate-pulse">
+                ⚠️
+              </div>
+              <h3 className="text-base font-black text-slate-800 uppercase tracking-tight">Kelola Seluruh Data Manifest Ini</h3>
+              <p className="text-xs text-slate-500 font-bold leading-relaxed max-w-md mx-auto">
+                Silakan pilih tindakan yang ingin Anda lakukan terhadap seluruh data manifest pada paket keberangkatan terpilih saat ini. Tindakan ini bersifat permanen.
+              </p>
+            </div>
+            
+            <div className="border-t border-slate-100 px-6 py-4 space-y-3 bg-slate-50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={async () => {
+                    setShowResetConfirmModal(false);
+                    await handleClearData();
+                  }}
+                  className="w-full flex flex-col items-center justify-center gap-1 p-4 bg-white hover:bg-rose-50 border border-slate-250 hover:border-rose-300 rounded-2xl transition-all cursor-pointer group"
+                >
+                  <span className="text-xs font-black text-rose-600 uppercase tracking-wider group-hover:scale-105 transition-transform">❌ Kosongkan Data</span>
+                  <span className="text-[10px] text-slate-400 font-semibold text-center mt-0.5 leading-snug">Menghapus seluruh baris jamaah (mulai dari nol)</span>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    setShowResetConfirmModal(false);
+                    await handleResetData();
+                  }}
+                  className="w-full flex flex-col items-center justify-center gap-1 p-4 bg-[#01413a] hover:bg-[#025a50] border border-transparent rounded-2xl transition-all cursor-pointer group text-[#fbbf24] shadow-md"
+                >
+                  <span className="text-xs font-black uppercase tracking-wider group-hover:scale-105 transition-transform text-[#fbbf24]">🔄 Reset ke Default</span>
+                  <span className="text-[10px] text-teal-100/80 font-bold text-center mt-0.5 leading-snug">Muat ulang 14 data jamaah dummy standard</span>
+                </button>
+              </div>
+
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => setShowResetConfirmModal(false)}
+                  className="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-black rounded-xl transition-all uppercase tracking-wider cursor-pointer"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modern toast popup notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[100] bg-slate-900 border border-slate-850 text-white px-5 py-3.5 rounded-xl shadow-2xl max-w-sm animate-in slide-in-from-bottom duration-305 print:hidden">
+          <div className="flex items-center gap-3">
+            <span className="text-lg">
+              {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}
+            </span>
+            <p className="text-xs font-extrabold text-slate-100">{toast.message}</p>
           </div>
         </div>
       )}

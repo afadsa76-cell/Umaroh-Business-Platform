@@ -5,7 +5,12 @@ const STORAGE_KEY = 'maskapai_flights';
 export const getFlights = (): Flight[] => {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
-    return JSON.parse(stored);
+    try {
+      return JSON.parse(stored);
+    } catch (err) {
+      console.warn(`Failed parsing flight data from locale, removing corrupted entry:`, err);
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }
   return [
     {

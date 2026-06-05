@@ -298,12 +298,54 @@ export const PerlengkapanView: React.FC = () => {
     const lKomplain = localStorage.getItem('perlengkapan_komplain');
     const lAudit = localStorage.getItem('perlengkapan_audit');
 
-    if (lMaster) setMasterBarang(JSON.parse(lMaster));
-    if (lPacking) setPackingList(JSON.parse(lPacking));
-    if (lPengiriman) setPengirimanList(JSON.parse(lPengiriman));
-    if (lPenerimaan) setPenerimaanList(JSON.parse(lPenerimaan));
-    if (lKomplain) setKomplainList(JSON.parse(lKomplain));
-    if (lAudit) setAuditLogs(JSON.parse(lAudit));
+    if (lMaster) {
+      try {
+        setMasterBarang(JSON.parse(lMaster));
+      } catch (e) {
+        console.warn('Failed parsing perlengkapan_master:', e);
+        localStorage.removeItem('perlengkapan_master');
+      }
+    }
+    if (lPacking) {
+      try {
+        setPackingList(JSON.parse(lPacking));
+      } catch (e) {
+        console.warn('Failed parsing perlengkapan_packing:', e);
+        localStorage.removeItem('perlengkapan_packing');
+      }
+    }
+    if (lPengiriman) {
+      try {
+        setPengirimanList(JSON.parse(lPengiriman));
+      } catch (e) {
+        console.warn('Failed parsing perlengkapan_pengiriman:', e);
+        localStorage.removeItem('perlengkapan_pengiriman');
+      }
+    }
+    if (lPenerimaan) {
+      try {
+        setPenerimaanList(JSON.parse(lPenerimaan));
+      } catch (e) {
+        console.warn('Failed parsing perlengkapan_penerimaan:', e);
+        localStorage.removeItem('perlengkapan_penerimaan');
+      }
+    }
+    if (lKomplain) {
+      try {
+        setKomplainList(JSON.parse(lKomplain));
+      } catch (e) {
+        console.warn('Failed parsing perlengkapan_komplain:', e);
+        localStorage.removeItem('perlengkapan_komplain');
+      }
+    }
+    if (lAudit) {
+      try {
+        setAuditLogs(JSON.parse(lAudit));
+      } catch (e) {
+        console.warn('Failed parsing perlengkapan_audit:', e);
+        localStorage.removeItem('perlengkapan_audit');
+      }
+    }
 
     if (!lMaster && !lPacking && !lPengiriman) {
       applySeedData();

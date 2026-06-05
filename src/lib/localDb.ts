@@ -32,7 +32,14 @@ function notifyListeners(collectionName: string) {
 
 function getCollectionData(collectionName: string): DocumentData[] {
   const data = localStorage.getItem(`db_${collectionName}`);
-  return data ? JSON.parse(data) : [];
+  if (!data) return [];
+  try {
+    return JSON.parse(data);
+  } catch (err) {
+    console.warn(`Failed parsing JSON for local database collection '${collectionName}', clearing corrupted key:`, err);
+    localStorage.removeItem(`db_${collectionName}`);
+    return [];
+  }
 }
 
 function saveCollectionData(collectionName: string, data: DocumentData[]) {

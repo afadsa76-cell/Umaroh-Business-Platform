@@ -73,7 +73,13 @@ export const AdManagementView: React.FC = () => {
         arr.push(d.data() as AdPerformanceLogStructure);
       });
       // Merge with local storage
-      const local = JSON.parse(localStorage.getItem('ad_performance_data') || '[]');
+      let local = [];
+      try {
+        local = JSON.parse(localStorage.getItem('ad_performance_data') || '[]');
+      } catch (e) {
+        console.warn('Failed to parse ad performance data:', e);
+        localStorage.removeItem('ad_performance_data');
+      }
       const combined = [...arr, ...local].filter((v, i, self) => 
         self.findIndex(t => t.id === v.id) === i
       );

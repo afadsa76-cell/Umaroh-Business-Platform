@@ -25,20 +25,29 @@ export const InventoryView: React.FC = () => {
   useEffect(() => {
     const saved = localStorage.getItem('inventory_items');
     if (saved) {
-      setItems(JSON.parse(saved));
+      try {
+        setItems(JSON.parse(saved));
+      } catch (e) {
+        console.warn('Failed parsing inventory_items:', e);
+        localStorage.removeItem('inventory_items');
+        loadFallbackItems();
+      }
     } else {
-      // Initial dummy data
-      const initial: InventoryItem[] = [
-        { id: '1', name: 'Koper Bagasi 24 Inch', category: 'Koper', totalStock: 150, allocated: 45, minStockAlert: 20 },
-        { id: '2', name: 'Koper Kabin 20 Inch', category: 'Koper', totalStock: 150, allocated: 45, minStockAlert: 20 },
-        { id: '3', name: 'Kain Ihram Pria', category: 'Kain Ihram', totalStock: 80, allocated: 20, minStockAlert: 15 },
-        { id: '4', name: 'Mukena Wanita', category: 'Mukena', totalStock: 100, allocated: 25, minStockAlert: 15 },
-        { id: '5', name: 'Buku Panduan Doa', category: 'Buku Panduan', totalStock: 200, allocated: 45, minStockAlert: 30 },
-      ];
-      setItems(initial);
-      localStorage.setItem('inventory_items', JSON.stringify(initial));
+      loadFallbackItems();
     }
   }, []);
+
+  const loadFallbackItems = () => {
+    const initial: InventoryItem[] = [
+      { id: '1', name: 'Koper Bagasi 24 Inch', category: 'Koper', totalStock: 150, allocated: 45, minStockAlert: 20 },
+      { id: '2', name: 'Koper Kabin 20 Inch', category: 'Koper', totalStock: 150, allocated: 45, minStockAlert: 20 },
+      { id: '3', name: 'Kain Ihram Pria', category: 'Kain Ihram', totalStock: 80, allocated: 20, minStockAlert: 15 },
+      { id: '4', name: 'Mukena Wanita', category: 'Mukena', totalStock: 100, allocated: 25, minStockAlert: 15 },
+      { id: '5', name: 'Buku Panduan Doa', category: 'Buku Panduan', totalStock: 200, allocated: 45, minStockAlert: 30 },
+    ];
+    setItems(initial);
+    localStorage.setItem('inventory_items', JSON.stringify(initial));
+  };
 
   const saveItems = (newItems: InventoryItem[]) => {
     setItems(newItems);

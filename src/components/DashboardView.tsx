@@ -179,7 +179,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   useEffect(() => {
     const savedInvoices = localStorage.getItem('vendor_invoices');
     if (savedInvoices) {
-      setVendorInvoices(JSON.parse(savedInvoices));
+      try {
+        setVendorInvoices(JSON.parse(savedInvoices));
+      } catch (err) {
+        console.warn('Failed to parse vendor invoices from storage, resetting key:', err);
+        localStorage.removeItem('vendor_invoices');
+      }
     }
   }, []);
 

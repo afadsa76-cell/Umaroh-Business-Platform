@@ -237,7 +237,13 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
       await addDoc(collection(db, 'ad_performance_logs'), log);
       
       // Keep state locally
-      const stored = JSON.parse(localStorage.getItem('ad_performance_data') || '[]');
+      let stored = [];
+      try {
+        stored = JSON.parse(localStorage.getItem('ad_performance_data') || '[]');
+      } catch (e) {
+        console.warn('Failed parsing ad_performance_data:', e);
+        localStorage.removeItem('ad_performance_data');
+      }
       localStorage.setItem('ad_performance_data', JSON.stringify([log, ...stored]));
     } catch {
       // Offline fallback silent
@@ -249,7 +255,13 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
         type: type,
         timestamp: new Date().toISOString()
       };
-      const stored = JSON.parse(localStorage.getItem('ad_performance_data') || '[]');
+      let stored = [];
+      try {
+        stored = JSON.parse(localStorage.getItem('ad_performance_data') || '[]');
+      } catch (e) {
+        console.warn('Failed parsing ad_performance_data in offline branch:', e);
+        localStorage.removeItem('ad_performance_data');
+      }
       localStorage.setItem('ad_performance_data', JSON.stringify([log, ...stored]));
     }
   };
