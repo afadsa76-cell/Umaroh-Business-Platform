@@ -79,7 +79,14 @@ export const TrackerJamaah: React.FC = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "Gagal memproses gambar melalui server.");
+        let parsedMessage = "Gagal memproses gambar melalui server.";
+        try {
+          const parsedJson = JSON.parse(errorText);
+          parsedMessage = parsedJson.error || parsedJson.message || errorText;
+        } catch {
+          parsedMessage = errorText || parsedMessage;
+        }
+        throw new Error(parsedMessage);
       }
 
       const resData = await response.json();
@@ -476,7 +483,14 @@ export const TrackerJamaah: React.FC = () => {
 
                               if (!response.ok) {
                                 const errorText = await response.text();
-                                throw new Error(errorText || "Gagal memproses gambar melalui server.");
+                                let parsedMessage = "Gagal memproses gambar melalui server.";
+                                try {
+                                  const parsedJson = JSON.parse(errorText);
+                                  parsedMessage = parsedJson.error || parsedJson.message || errorText;
+                                } catch {
+                                  parsedMessage = errorText || parsedMessage;
+                                }
+                                throw new Error(parsedMessage);
                               }
 
                               const resData = await response.json();

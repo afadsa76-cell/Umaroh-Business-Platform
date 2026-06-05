@@ -233,6 +233,9 @@ export const OwnerKpiDashboard: React.FC = () => {
           packagesData: filteredData.pakets.slice(0, 10)
         })
       });
+      if (!response.ok) {
+        throw new Error('Gagal memuat analitik strategis real-time');
+      }
       const data = await response.json();
       
       // Formatting fallback string nicely

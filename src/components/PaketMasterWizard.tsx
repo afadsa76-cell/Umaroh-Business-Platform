@@ -864,7 +864,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     if (formData.wisataAddon_merch_topi) wisataAddonsTotal += 35000;
     if (formData.wisataAddon_merch_spanduk) wisataAddonsTotal += 150000;
 
-    const wisataMargin = formData.wisataMargin !== undefined ? formData.wisataMargin : 100000;
+    const wisataMargin = formData.wisataMargin !== undefined ? formData.wisataMargin : 1000000;
     const wisataAdminFee = Math.round(wisataMargin * 0.1);
     const finalWisataPrice = Math.round(baseIDR + wisataAddonsTotal + wisataMargin + wisataAdminFee);
 
@@ -2794,7 +2794,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             const currentMargin =
               formData.wisataMargin !== undefined
                 ? formData.wisataMargin
-                : 100000;
+                : 1000000;
             const adminFee = Math.round(currentMargin * 0.1);
             const totalMarkup = Math.round(currentMargin + adminFee);
             const finalPrice = Math.round(hppTotal + totalMarkup);
@@ -2853,15 +2853,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
                   <div className="bg-white rounded-[2rem] p-6 sm:p-10 shadow-xl shadow-gray-200/40 border border-gray-100 flex flex-col items-center">
                     {/* Kontrol Margin */}
-                    <div className="bg-gray-50 rounded-full p-2 flex items-center justify-between gap-4 sm:gap-8 min-w-[280px] sm:min-w-[320px] mb-8">
+                    <div className="bg-gray-50 rounded-full p-2 flex items-center justify-between gap-4 sm:gap-8 min-w-[280px] sm:min-w-[320px] mb-6">
                       <button
                         onClick={() =>
                           setFormData({
                             ...formData,
-                            wisataMargin: Math.max(0, currentMargin - 50000),
+                            wisataMargin: Math.max(0, currentMargin - 500000),
                           })
                         }
-                        className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors cursor-pointer z-10"
+                        className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors cursor-pointer z-10"
                       >
                         <Minus className="w-5 h-5 pointer-events-none" />
                       </button>
@@ -2879,7 +2879,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         onClick={() =>
                           setFormData({
                             ...formData,
-                            wisataMargin: currentMargin + 50000,
+                            wisataMargin: currentMargin + 500000,
                           })
                         }
                         className="w-12 h-12 rounded-full bg-blue-600 shadow-lg shadow-blue-500/40 flex items-center justify-center text-white hover:bg-blue-700 transition-colors cursor-pointer z-10"
@@ -2888,8 +2888,40 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       </button>
                     </div>
 
+                    {/* Slider Margin */}
+                    <div className="w-full max-w-md mb-8 px-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                          GESER MARGIN (KELIPATAN 500RB)
+                        </span>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase">
+                          Rp {(currentMargin / 1000000).toFixed(1)} JT
+                        </span>
+                      </div>
+                      <div className="pt-2 pb-1 relative group">
+                        <input
+                          type="range"
+                          min="0"
+                          max="15000000"
+                          step="500000"
+                          value={currentMargin}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              wisataMargin: parseInt(e.target.value),
+                            })
+                          }
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        />
+                        <div className="flex justify-between text-[9px] font-bold text-blue-300 mt-2">
+                          <span>Rp 0</span>
+                          <span>Rp 15.000.000</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Breakdown Card */}
-                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                       <div className="flex-1 bg-gray-50 border border-gray-100 p-4 rounded-2xl relative overflow-hidden">
                         <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex justify-between">
                           ADMIN FEE (10%) <ArrowRightLeft className="w-3 h-3" />
@@ -4377,13 +4409,13 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         </h4>
 
                         <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 text-center relative overflow-hidden">
-                          <div className="inline-block relative z-10 w-full max-w-sm mx-auto">
-                            <div className="flex items-center justify-between mb-2">
+                          <div className="inline-block relative z-10 w-full max-w-md mx-auto">
+                            <div className="flex items-center justify-between mb-6 gap-2 sm:gap-4">
                               <button
                                 onClick={() =>
                                   setFormData({
                                     ...formData,
-                                    [isMitraContext ? "markup" : "marginBersih"]: Math.max(0, currentMarkup - 50000),
+                                    [isMitraContext ? "markup" : "marginBersih"]: Math.max(0, currentMarkup - 500000),
                                   })
                                 }
                                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-colors bg-white shadow-sm shrink-0"
@@ -4391,19 +4423,25 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
                               </button>
 
-                              <div className="flex-1 flex flex-col items-center px-2 sm:px-4 min-w-0">
+                              <div className="flex-1 flex flex-col items-center px-1 sm:px-3 min-w-0">
                                 <div className="flex items-start text-blue-600">
-                                  <span className="text-sm sm:text-2xl font-black mt-1 sm:mt-2 italic mr-0.5 sm:mr-1">
+                                  <span className="text-xs sm:text-xl font-black mt-1 sm:mt-2 italic mr-0.5 sm:mr-1">
                                     Rp
                                   </span>
                                   <span
-                                    className="text-2xl sm:text-6xl font-black italic tracking-tighter truncate"
+                                    className={`${
+                                      currentMarkup >= 10000000
+                                        ? "text-xl sm:text-3xl md:text-4xl"
+                                        : currentMarkup >= 5000000
+                                        ? "text-2xl sm:text-4xl md:text-[2.75rem]"
+                                        : "text-2xl sm:text-4xl md:text-[3.25rem]"
+                                    } font-black italic tracking-tight leading-none`}
                                     style={{ fontFamily: "Impact, sans-serif" }}
                                   >
                                     {Math.round(currentMarkup || 0).toLocaleString("id-ID")}
                                   </span>
                                 </div>
-                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-50 text-blue-600 rounded-full text-[8px] sm:text-[9px] font-bold uppercase tracking-widest mt-1 sm:mt-2 whitespace-nowrap">
+                                <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-blue-50 text-blue-600 rounded-full text-[8px] sm:text-[9px] font-bold uppercase tracking-widest mt-1.5 sm:mt-2 whitespace-nowrap">
                                   MARGIN BERSIH
                                 </span>
                               </div>
@@ -4412,13 +4450,45 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 onClick={() =>
                                   setFormData({
                                     ...formData,
-                                    [isMitraContext ? "markup" : "marginBersih"]: currentMarkup + 50000,
+                                    [isMitraContext ? "markup" : "marginBersih"]: currentMarkup + 500000,
                                   })
                                 }
                                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition-colors shrink-0"
                               >
                                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                               </button>
+                            </div>
+
+                            {/* Slider Margin */}
+                            <div className="w-full max-w-md mx-auto mb-6 px-1 sm:px-2">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                  GESER MARGIN (KELIPATAN 500RB)
+                                </span>
+                                <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-[9px] font-black uppercase">
+                                  Rp {(currentMarkup / 1000000).toFixed(1)} JT
+                                </span>
+                              </div>
+                              <div className="pt-2 pb-1 relative group">
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="15000000"
+                                  step="500000"
+                                  value={currentMarkup || 0}
+                                  onChange={(e) =>
+                                    setFormData({
+                                      ...formData,
+                                      [isMitraContext ? "markup" : "marginBersih"]: parseInt(e.target.value),
+                                    })
+                                  }
+                                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                />
+                                <div className="flex justify-between text-[9px] font-bold text-blue-300 mt-2">
+                                  <span>Rp 0</span>
+                                  <span>Rp 15.000.000</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
 

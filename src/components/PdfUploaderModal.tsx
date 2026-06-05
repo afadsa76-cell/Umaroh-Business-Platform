@@ -142,7 +142,14 @@ Ensure the output is valid JSON and only contains the array of hotels. Do not in
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(errText || 'Fail to call AI validation API');
+        let parsedMessage = 'Fail to call AI validation API';
+        try {
+          const parsedJson = JSON.parse(errText);
+          parsedMessage = parsedJson.error || parsedJson.message || errText;
+        } catch {
+          parsedMessage = errText || parsedMessage;
+        }
+        throw new Error(parsedMessage);
       }
 
       const resData = await response.json();

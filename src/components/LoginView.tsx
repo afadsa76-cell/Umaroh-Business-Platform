@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Code2, ArrowRight, User as UserIcon } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
 import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, handleFirestoreError, OperationType } from '../firebase';
-import { signInWithCredential, GoogleAuthProvider, User } from 'firebase/auth';
+import { signInWithCredential, GoogleAuthProvider, User, sendPasswordResetEmail, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
@@ -33,7 +33,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
     setError('');
     setIsLoading(true);
     try {
-      const { sendPasswordResetEmail } = await import('firebase/auth');
       await sendPasswordResetEmail(auth, email);
       alert('Email pengaturan ulang password telah dikirim ke ' + email + '. Silakan cek inbox/spam Anda.');
     } catch (err: unknown) {
@@ -56,7 +55,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       let user;
       if (isSignUp) {
         // Create new account
-        const { createUserWithEmailAndPassword } = await import('firebase/auth');
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         user = userCredential.user;
       } else {
@@ -77,7 +75,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
             try {
               // Try to automatically register them under the hood. Since their profile is already in Firestore, 
               // they can transition seamlessly by typing their email and password and clicking Login.
-              const { createUserWithEmailAndPassword } = await import('firebase/auth');
               const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
               user = userCredential.user;
             } catch {
@@ -236,7 +233,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else {
         // Standard Web Google Sign-In with popup. signInWithPopup automatically logs the user in.
         const provider = new GoogleAuthProvider();
-        const { signInWithPopup } = await import('firebase/auth');
         const result = await signInWithPopup(auth, provider);
         user = result.user;
       }

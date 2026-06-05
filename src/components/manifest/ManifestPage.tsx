@@ -604,7 +604,14 @@ export const ManifestPage: React.FC = () => {
 
           if (!response.ok) {
             const errText = await response.text();
-            throw new Error(errText || 'AI document processing failed');
+            let parsedMessage = 'AI document processing failed';
+            try {
+              const parsedJson = JSON.parse(errText);
+              parsedMessage = parsedJson.error || parsedJson.message || errText;
+            } catch {
+              parsedMessage = errText || parsedMessage;
+            }
+            throw new Error(parsedMessage);
           }
 
           const resData = await response.json();

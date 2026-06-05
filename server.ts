@@ -14,9 +14,9 @@ async function startServer() {
   let aiClient: GoogleGenAI | null = null;
   const getAIClient = (): GoogleGenAI => {
     if (!aiClient) {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
       if (!apiKey) {
-        throw new Error('GEMINI_API_KEY is not defined. Please configure it in your Secrets/Settings panel.');
+        throw new Error('GEMINI_API_KEY is not defined. Please configure it in your Secrets/Settings panel or as an environment variable (VITE_GEMINI_API_KEY / GEMINI_API_KEY).');
       }
       aiClient = new GoogleGenAI({
         apiKey,
@@ -61,7 +61,11 @@ async function startServer() {
     } catch (error) {
       const err = error as Error;
       console.error('Gemini Marketing Assistant Error:', err);
-      res.status(500).json({ error: err.message || 'Gagal generate copywriting pemasaran' });
+      let errMsg = err.message || '';
+      if (errMsg.includes('PERMISSION_DENIED') || errMsg.includes('denied access') || errMsg.includes('restricted')) {
+        errMsg = 'Akses API Key Gemini ditolak (PERMISSION_DENIED). Hal ini biasanya terjadi jika kuota habis, kartu kredit kedaluwarsa pada billing Google Cloud, atau API Key ditangguhkan. Silakan periksa keaktifan Key di Google AI Studio.';
+      }
+      res.status(500).json({ error: errMsg || 'Gagal generate copywriting pemasaran' });
     }
   });
 
@@ -112,7 +116,11 @@ async function startServer() {
     } catch (error) {
       const err = error as Error;
       console.error('Gemini Smart Analytics Error:', err);
-      res.status(500).json({ error: err.message || 'Gagal memuat analisis cerdas' });
+      let errMsg = err.message || '';
+      if (errMsg.includes('PERMISSION_DENIED') || errMsg.includes('denied access') || errMsg.includes('restricted')) {
+        errMsg = 'Akses API Key Gemini ditolak (PERMISSION_DENIED). Hal ini biasanya terjadi jika kuota habis, kartu kredit kedaluwarsa pada billing Google Cloud, atau API Key ditangguhkan. Silakan periksa keaktifan Key di Google AI Studio.';
+      }
+      res.status(500).json({ error: errMsg || 'Gagal memuat analisis cerdas' });
     }
   });
 
@@ -157,7 +165,12 @@ async function startServer() {
     } catch (error) {
       const err = error as Error;
       console.error('Gemini Jamaah Chat Error:', err);
-      res.status(500).json({ reply: 'Maaf Kak, Sahabat Marawa saat ini sedang kesulitan terhubung dengan sistem. Silakan coba lagi sebentar ya Kak! 🙏✨' });
+      const errMsg = err.message || '';
+      if (errMsg.includes('PERMISSION_DENIED') || errMsg.includes('denied access') || errMsg.includes('restricted')) {
+        res.status(500).json({ reply: 'Maaf Kak, Akses API Key Gemini Sahabat Marawa saat ini sedang ditolak (PERMISSION_DENIED). Silakan hubungi admin untuk memeriksa limit kuota & billing di Google AI Studio! 🙏✨' });
+      } else {
+        res.status(500).json({ reply: 'Maaf Kak, Sahabat Marawa saat ini sedang kesulitan terhubung dengan sistem. Silakan coba lagi sebentar ya Kak! 🙏✨' });
+      }
     }
   });
 
@@ -211,7 +224,11 @@ async function startServer() {
     } catch (error) {
       const err = error as Error;
       console.error('Gemini Universal Proxy Error:', err);
-      res.status(500).json({ error: err.message || 'Gagal memproses permintaan AI' });
+      let errMsg = err.message || '';
+      if (errMsg.includes('PERMISSION_DENIED') || errMsg.includes('denied access') || errMsg.includes('restricted')) {
+        errMsg = 'Akses API Key Gemini ditolak (PERMISSION_DENIED). Hal ini biasanya terjadi jika kuota habis, kartu kredit kedaluwarsa pada billing Google Cloud, atau API Key ditangguhkan. Silakan periksa keaktifan Key di Google AI Studio.';
+      }
+      res.status(500).json({ error: errMsg || 'Gagal memproses permintaan AI' });
     }
   });
 

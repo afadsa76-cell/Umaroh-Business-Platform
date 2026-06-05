@@ -95,7 +95,14 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(errText || 'Gagal memproses permintaan dengan AI');
+        let parsedMessage = 'Gagal memproses permintaan dengan AI';
+        try {
+          const parsedJson = JSON.parse(errText);
+          parsedMessage = parsedJson.error || parsedJson.message || errText;
+        } catch {
+          parsedMessage = errText || parsedMessage;
+        }
+        throw new Error(parsedMessage);
       }
 
       const resData = await response.json();

@@ -140,7 +140,8 @@ export const AISmartAnalyticsView: React.FC = () => {
       });
 
       if (!res.ok) {
-        throw new Error('Gagal menghubungi motor analitik AI server.');
+        const bodyObj = await res.json().catch(() => ({}));
+        throw new Error(bodyObj.error || 'Gagal menghubungi motor analitik AI server.');
       }
 
       const body = await res.json();

@@ -105,10 +105,11 @@ export const AIMarketingView: React.FC = () => {
       });
 
       if (!respond.ok) {
-        throw new Error('Gagal menghubungi asisten AI di server');
+        const bodyObj = await respond.json().catch(() => ({}));
+        throw new Error(bodyObj.error || 'Gagal menghubungi asisten AI di server');
       }
 
-      const body = await respond.json();
+      const body = await respond.json().catch(() => ({}));
       if (body.error) {
         throw new Error(body.error);
       }

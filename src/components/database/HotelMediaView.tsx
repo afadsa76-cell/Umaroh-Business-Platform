@@ -154,7 +154,14 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
 
       if (!response.ok) {
         const errText = await response.text();
-        throw new Error(errText || 'AI proxy call failed');
+        let parsedMessage = 'AI proxy call failed';
+        try {
+          const parsedJson = JSON.parse(errText);
+          parsedMessage = parsedJson.error || parsedJson.message || errText;
+        } catch {
+          parsedMessage = errText || parsedMessage;
+        }
+        throw new Error(parsedMessage);
       }
 
       const resData = await response.json();
@@ -229,7 +236,15 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
         });
 
         if (!response.ok) {
-          throw new Error('AI proxy bulk call failed');
+          const errText = await response.text();
+          let parsedMessage = 'AI proxy bulk call failed';
+          try {
+            const parsedJson = JSON.parse(errText);
+            parsedMessage = parsedJson.error || parsedJson.message || errText;
+          } catch {
+            parsedMessage = errText || parsedMessage;
+          }
+          throw new Error(parsedMessage);
         }
 
         const resData = await response.json();
