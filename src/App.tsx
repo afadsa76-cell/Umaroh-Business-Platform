@@ -321,7 +321,7 @@ function App() {
     <div className={`min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative ${isPortalView ? '' : 'pb-20'}`}>
       {/* Hero Section */}
       {!isPortalView && (
-        <header className="bg-white text-gray-900 py-6 md:py-12 relative overflow-hidden border-b border-gray-100">
+        <header className="bg-white text-gray-900 py-6 md:py-12 relative overflow-hidden border-b border-gray-100 lg:hidden">
           <div className="absolute inset-0 opacity-5 bg-[url('https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center" />
           
           {/* User Info & Logout */}
@@ -361,18 +361,20 @@ function App() {
       )}
 
       {(userRole === 'operasional' || userRole === 'admin' || isMasterAdmin) && (!isMasterAdmin || adminViewMode === 'operasional') && (
-        <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={isMasterAdmin ? 'admin' : (userRole || 'admin')} subRole={isMasterAdmin ? null : subRole} />
+        <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={isMasterAdmin ? 'admin' : (userRole || 'admin')} subRole={isMasterAdmin ? null : subRole} onLogout={handleLogout} />
       )}
 
       {/* Main Content */}
-      <main className="flex-grow bg-gray-50 pb-24 lg:pb-0">
+      <main className={`flex-grow bg-gray-50 pb-24 lg:pb-0 ${isPortalView ? '' : 'lg:pl-72'}`}>
         <ErrorBoundary>
           {renderContent()}
         </ErrorBoundary>
       </main>
 
       {!isPortalView && (
-        <Footer minimalOnMobile={false} />
+        <div className="lg:pl-72">
+          <Footer minimalOnMobile={false} />
+        </div>
       )}
 
       {/* Master Admin Switcher */}

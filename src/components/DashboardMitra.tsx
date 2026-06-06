@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShopOrder } from '../types';
-import { Wallet, Users, Package, Link as LinkIcon, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, PlusCircle, History, Camera, LogOut } from 'lucide-react';
+import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell } from 'lucide-react';
 import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc, signOut } from '../firebase';
 import { PaketMitraView } from './PaketMitraView';
 import { KatalogPaketView } from './KatalogPaketView';
@@ -10,9 +9,59 @@ import { ProfileView } from './ProfileView';
 import { ValidasiPaketMitraView } from './ValidasiPaketMitraView';
 import { PaketMasterWizard } from './PaketMasterWizard';
 import { FeedKolaborasiView } from './FeedKolaborasiView';
-import { FlightTrackerWidget } from './FlightTrackerWidget';
 import { AIMarketingView } from './AIMarketingView';
 import { AISmartAnalyticsView } from './AISmartAnalyticsView';
+import { FlightTrackerWidget } from './FlightTrackerWidget';
+
+interface MitraBooking {
+  id: string;
+  namaJamaah?: string;
+  nama?: string;
+  mitraId?: string;
+  paketId?: string;
+  paketNama?: string;
+  totalHarga?: number;
+  harga?: number;
+  jumlahBayar?: number;
+  total_bayar?: number;
+  totalPaid?: number;
+  statusPembayaran?: string;
+  status?: string;
+  docPassport?: boolean;
+  docKtp?: boolean;
+  docVaccine?: boolean;
+  docFoto?: boolean;
+}
+
+interface MitraPaketMaster {
+  id: string;
+  nama: string;
+  tglBerangkat?: string;
+  tglKepulangan?: string;
+  durasiHari?: number;
+  maskapaiId: string;
+  hotelMakkahId: string;
+  hotelMadinahId: string;
+  hargaJualQuad?: number;
+  hargaDasar?: number;
+  kuota?: number;
+  sisaKuota?: number;
+  targetJamaah?: number;
+  photoUtama?: string;
+  alurPerjalanan?: string;
+  kotaKeberangkatan?: string;
+}
+
+interface MitraHotel {
+  id: string;
+  name: string;
+  city?: string;
+}
+
+interface MitraMaskapai {
+  id: string;
+  name: string;
+}
 
 interface RecipientUser {
   id: string;
@@ -51,6 +100,7 @@ type MitraTab = 'overview' | 'feed' | 'katalog' | 'paket' | 'validasi' | 'jamaah
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
+  const [globalSearch, setGlobalSearch] = useState('');
   const [balance, setBalance] = useState(0);
   const [copied, setCopied] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -83,7 +133,12 @@ export const DashboardMitra = () => {
   const [currentUserData, setCurrentUserData] = useState<CurrentUserData | null>(null);
   const [sentTransactions, setSentTransactions] = useState<WalletTransaction[]>([]);
   const [recvTransactions, setRecvTransactions] = useState<WalletTransaction[]>([]);
-  const [mitraShopOrders, setMitraShopOrders] = useState<ShopOrder[]>([]);
+  
+  // Real-time collections for dynamic dashboard
+  const [bookings, setBookings] = useState<MitraBooking[]>([]);
+  const [paketMasters, setPaketMasters] = useState<MitraPaketMaster[]>([]);
+  const [hotels, setHotels] = useState<MitraHotel[]>([]);
+  const [maskapais, setMaskapais] = useState<MitraMaskapai[]>([]);
   
   const userId = auth.currentUser?.uid;
   const referralLink = `https://umaroh.com/register?ref=${userId}`;
@@ -135,19 +190,31 @@ export const DashboardMitra = () => {
     const qBookings = query(collection(db, 'bookings'), where('mitraId', '==', userId));
     const unsubscribeBookings = onSnapshot(qBookings, (snapshot) => {
       let sum = 0;
+      const bks: MitraBooking[] = [];
       snapshot.docs.forEach(docSnap => {
         const d = docSnap.data();
+        bks.push({ id: docSnap.id, ...d } as MitraBooking);
         const price = Number(d.totalHarga || d.harga || 0);
         sum += price;
       });
+      setBookings(bks);
       setStats(prev => ({ ...prev, totalOmzet: sum }));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'bookings'));
 
-    // Real-time Mitra Network Shop Orders
-    const qShop = query(collection(db, 'shop_orders'), where('mitraId', '==', userId));
-    const unsubscribeShop = onSnapshot(qShop, (snapshot) => {
-      setMitraShopOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShopOrder)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'shop_orders'));
+    // Real-time Paket Masters
+    const unsubscribeMasters = onSnapshot(collection(db, 'paket_master'), (snapshot) => {
+      setPaketMasters(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MitraPaketMaster)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'paket_master'));
+
+    // Real-time Master Hotels
+    const unsubscribeHotels = onSnapshot(collection(db, 'master_hotels'), (snapshot) => {
+      setHotels(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MitraHotel)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'master_hotels'));
+
+    // Real-time Maskapai
+    const unsubscribeMaskapai = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
+      setMaskapais(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MitraMaskapai)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'maskapai'));
 
     return () => {
       unsubscribeUser();
@@ -157,7 +224,9 @@ export const DashboardMitra = () => {
       unsubscribePaket();
       unsubscribeJaringan();
       unsubscribeBookings();
-      unsubscribeShop();
+      unsubscribeMasters();
+      unsubscribeHotels();
+      unsubscribeMaskapai();
     };
   }, [userId]);
 
@@ -577,325 +646,688 @@ export const DashboardMitra = () => {
     );
   };
 
-  const renderOverview = () => (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Stat Cards - Top Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Komisi Agen (Dompet Komisi) - Moved to top */}
-        <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 p-6 rounded-2xl text-white shadow-md relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white">
-                <Wallet className="w-5 h-5" />
+  const renderOverview = () => {
+    // 1. Calculations from Real Data
+    const totalJamaah = bookings.length;
+    const totalPaketMitra = stats.paketAktif;
+
+    // Financial calculations
+    const totalPaidAmount = bookings.reduce((sum, b) => sum + (Number(b.jumlahBayar || b.total_bayar || b.totalPaid || 0) || 0), 0);
+    const totalReceivableAmount = bookings.reduce((sum, b) => sum + (Number(b.totalHarga || b.harga || 0) || 0), 0);
+    const totalUnpaidAmount = Math.max(0, totalReceivableAmount - totalPaidAmount);
+    const billingPercent = totalReceivableAmount > 0 ? Math.round((totalPaidAmount / totalReceivableAmount) * 100) : 0;
+
+    // Document checklist counts
+    const completedPassport = bookings.filter(b => b.docPassport).length;
+    const completedKtp = bookings.filter(b => b.docKtp).length;
+    const completedVaccine = bookings.filter(b => b.docVaccine).length;
+    const completedFoto = bookings.filter(b => b.docFoto).length;
+
+    const passportPct = totalJamaah > 0 ? Math.round((completedPassport / totalJamaah) * 100) : 0;
+    const ktpPct = totalJamaah > 0 ? Math.round((completedKtp / totalJamaah) * 100) : 0;
+    const vaccinePct = totalJamaah > 0 ? Math.round((completedVaccine / totalJamaah) * 100) : 0;
+    const fotoPct = totalJamaah > 0 ? Math.round((completedFoto / totalJamaah) * 100) : 0;
+
+    // Nearest departure calculation
+    let nearestDepartureStr = "Belum Ada Jadwal";
+    const sortedUpcomingBookings = [...bookings]
+      .filter(b => b.paketId)
+      .map(b => {
+        const pMaster = paketMasters.find(pm => pm.id === b.paketId);
+        return {
+          ...b,
+          tglBerangkat: pMaster?.tglBerangkat || null
+        };
+      })
+      .filter(b => b.tglBerangkat)
+      .sort((a, b) => new Date(a.tglBerangkat).getTime() - new Date(b.tglBerangkat).getTime());
+
+    if (sortedUpcomingBookings.length > 0 && sortedUpcomingBookings[0].tglBerangkat) {
+      nearestDepartureStr = new Date(sortedUpcomingBookings[0].tglBerangkat).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } else if (paketMasters.length > 0) {
+      const activePms = [...paketMasters]
+        .filter(p => p.tglBerangkat)
+        .sort((a, b) => new Date(a.tglBerangkat).getTime() - new Date(b.tglBerangkat).getTime());
+      if (activePms.length > 0 && activePms[0].tglBerangkat) {
+        nearestDepartureStr = new Date(activePms[0].tglBerangkat).toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+      }
+    }
+
+    const formatCurrencyMilyar = (num: number) => {
+      if (num >= 1000000000) {
+        return `Rp ${(num / 1000000000).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} M`;
+      } else if (num >= 1000000) {
+        return `Rp ${(num / 1000000).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} Jt`;
+      } else {
+        return `Rp ${num.toLocaleString('id-ID')}`;
+      }
+    };
+
+    // Helper to resolve airline & hotel names
+    const getAirlineName = (id: string) => {
+      const found = maskapais.find(m => m.id === id);
+      return found ? found.name : id || "Saudia";
+    };
+
+    const getHotelName = (id: string) => {
+      const found = hotels.find(h => h.id === id);
+      return found ? found.name : id || "Anjum Makkah (⭐️5)";
+    };
+
+    // Select recommended/featured package for display
+    const featuredPaket = paketMasters.length > 0 
+      ? paketMasters[0] 
+      : {
+          id: 'default-featured',
+          nama: 'Umrah Signature 9 Hari Al-Rayyan',
+          hargaJualQuad: 32500000,
+          hargaDasar: 32500000,
+          tglBerangkat: '2026-10-15',
+          durasiHari: 9,
+          alurPerjalanan: 'Jakarta - Jeddah - Makkah - Madinah',
+          kotaKeberangkatan: 'Jakarta',
+          maskapaiId: 'Saudi Arabian Airlines',
+          photoUtama: 'https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?auto=format&fit=crop&w=800&q=80',
+          kuota: 45,
+          sisaKuota: 12
+        };
+
+    const upcomingSchedules = [...paketMasters]
+      .filter(p => p.tglBerangkat)
+      .sort((a, b) => new Date(a.tglBerangkat).getTime() - new Date(b.tglBerangkat).getTime())
+      .slice(0, 4);
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        {/* Welcome Area */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+              Selamat datang, {currentUserData?.brandName || currentUserData?.namaLengkap || currentUserData?.name || 'Mitra Umaroh'} 👋
+            </h1>
+            <p className="text-xs text-gray-500 mt-1">
+              Kelola perjalanan ibadah tamu Allah dengan amanah, transparan, dan profesional melalui Umaroh CRM.
+            </p>
+          </div>
+          <button 
+            onClick={() => setShowWizard(true)}
+            className="bg-indigo-600 hover:bg-slate-900 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl shadow-sm transition-colors cursor-pointer shrink-0"
+          >
+            + BUAT PAKET BARU
+          </button>
+        </div>
+
+        {/* 4 Core Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Dompet Komisi (Interactive card) */}
+          <div className="bg-gradient-to-br from-[#004B87] via-[#0066A6] to-[#007AC2] p-6 rounded-2xl text-white shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <p className="text-xs font-semibold tracking-wide text-white">Dompet Komisi</p>
               </div>
-              <p className="text-sm font-semibold tracking-wide text-white">Dompet Komisi</p>
+              <button 
+                onClick={() => {
+                  setActiveTab('wallet');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="text-[9px] font-bold bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded-md uppercase tracking-wide transition-colors cursor-pointer"
+              >
+                DOMPET ➔
+              </button>
             </div>
-            <button 
-              onClick={() => {
-                setActiveTab('wallet');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="text-[9px] font-bold bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded-lg uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              BUKA DOMPET ➔
-            </button>
+            <div className="mb-3">
+              <p className="text-[10px] text-sky-100 font-medium uppercase tracking-wider leading-none mb-1">Saldo Aktif</p>
+              <h3 className="text-2xl font-bold text-white tracking-tight">Rp {balance.toLocaleString('id-ID')}</h3>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowWithdrawModal(true)}
+                className="flex-1 bg-white hover:bg-sky-50 text-indigo-700 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1 cursor-pointer shadow-sm"
+              >
+                <Download className="w-3 h-3" />
+                TARIK
+              </button>
+              <button 
+                onClick={() => setShowTransferModal(true)}
+                className="flex-1 bg-white/20 hover:bg-white/30 text-white py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1 cursor-pointer border border-white/15"
+              >
+                <Send className="w-3 h-3" />
+                TRANSFER
+              </button>
+            </div>
           </div>
-          <div className="mb-4">
-            <p className="text-[10px] text-amber-100 font-medium uppercase tracking-wider leading-none mb-1">Saldo Aktif</p>
-            <h3 className="text-2xl font-bold text-white tracking-tight">Rp {balance.toLocaleString('id-ID')}</h3>
-          </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setShowWithdrawModal(true)}
-              className="flex-1 bg-white hover:bg-amber-50 text-amber-600 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
-            >
-              <Download className="w-3.5 h-3.5" />
-              TARIK
-            </button>
-            <button 
-              onClick={() => setShowTransferModal(true)}
-              className="flex-1 bg-white/20 hover:bg-white/30 text-white py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer border border-white/20"
-            >
-              <Send className="w-3.5 h-3.5" />
-              KIRIM
-            </button>
-          </div>
-        </div>
 
-        {/* Total Omzet */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform shrink-0">
-              <TrendingUp className="w-6 h-6" />
+          {/* Total Jamaah */}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-xs text-gray-500 font-medium block">Total Jamaah</span>
+              <h3 className="text-2xl font-black text-gray-900">{totalJamaah.toLocaleString('id-ID')}</h3>
+              <span className="text-[10px] text-emerald-600 font-bold block">
+                +{(totalJamaah > 0 ? Math.ceil(totalJamaah / 5) : 0)} Jamaah Aktif
+              </span>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Total Omzet</p>
-              <h3 className="text-xl font-bold text-gray-900 tracking-tight mt-0.5">
-                Rp {stats.totalOmzet >= 1000000000 
-                  ? `${(stats.totalOmzet / 1000000000).toFixed(1)}M` 
-                  : stats.totalOmzet >= 1000000 
-                    ? `${(stats.totalOmzet / 1000000).toFixed(1)}Jt` 
-                    : stats.totalOmzet.toLocaleString('id-ID')}
-              </h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Paket Aktif */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shrink-0">
-              <Package className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Paket Aktif</p>
-              <h3 className="text-xl font-bold text-gray-900 tracking-tight mt-0.5">{stats.paketAktif}</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Mitra/Agen */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Users className="w-6 h-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Mitra / Agen</p>
-              <h3 className="text-xl font-bold text-gray-900 tracking-tight mt-0.5">{stats.totalJaringan}</h3>
+          </div>
+
+          {/* Paket Aktif */}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-xs text-gray-500 font-medium block">Paket Aktif</span>
+              <h3 className="text-2xl font-black text-gray-900">{totalPaketMitra}</h3>
+              <span className="text-[10px] text-blue-600 font-semibold block">Paket Terdaftar</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Package className="w-6 h-6" />
+            </div>
+          </div>
+
+          {/* Keberangkatan Terdekat */}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-xs text-gray-500 font-medium block">Keberangkatan Terdekat</span>
+              <h3 className="text-sm font-black text-gray-900 mt-2 truncate max-w-[140px]" title={nearestDepartureStr}>
+                {nearestDepartureStr}
+              </h3>
+              <span className="text-[10px] text-indigo-600 font-semibold block">Rencana Terdekat</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Plane className="w-6 h-6" />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Banner & Activities */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Create Packet Banner */}
-          <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group shadow-lg">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-            
-            <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform shrink-0 border border-white/20">
-                <PlusCircle className="w-8 h-8" strokeWidth={2.5} />
+        {/* 2nd Row: Jadwal Keberangkatan Terdekat (Left) & Paket Pilihan & Quick Actions (Right) */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Jadwal Keberangkatan Terdekat Table */}
+          <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="text-sm font-black uppercase text-gray-800 tracking-wider">
+                  Jadwal Keberangkatan Terdekat
+                </h3>
+                <p className="text-[10px] text-gray-500">Daftar paket aktif dan status operasional terbaru.</p>
               </div>
-              <div className="text-left">
-                <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1">
-                  Buat Paket Baru
-                </h2>
-                <p className="text-amber-50 text-xs md:text-sm font-medium">
-                  Pilih kategori yang sesuai dengan bisnis Anda
-                </p>
+              <button 
+                onClick={() => setActiveTab('katalog')} 
+                className="text-xs text-indigo-600 font-bold hover:underline"
+              >
+                Lihat Semua ➔
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-gray-600">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                    <th className="py-2.5 px-3">NAMA PAKET</th>
+                    <th className="py-2.5 px-3">TANGGAL</th>
+                    <th className="py-2.5 px-3">MASKAPAI</th>
+                    <th className="py-2.5 px-3">HOTEL</th>
+                    <th className="py-2.5 px-3 text-center">KUOTA</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {upcomingSchedules.map((paket) => {
+                    const planeName = getAirlineName(paket.maskapaiId);
+                    const hotMakkah = getHotelName(paket.hotelMakkahId);
+                    const terdaftar = Number(paket.targetJamaah - (paket.sisaKuota ?? paket.kuota ?? 45));
+                    const progress = Math.min(100, Math.round((terdaftar / (paket.targetJamaah || 45)) * 100));
+
+                    return (
+                      <tr key={paket.id} className="hover:bg-gray-50/50">
+                        <td className="py-3 px-3 font-semibold text-gray-900 max-w-[200px] truncate">
+                          {paket.nama}
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          {paket.tglBerangkat ? new Date(paket.tglBerangkat).toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'short'
+                          }) : '-'}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="inline-flex items-center gap-1 font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px]">
+                            <Plane className="w-3 h-3" />
+                            {planeName.split(' ')[0]}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-[11px] max-w-[120px] truncate" title={hotMakkah}>
+                          Makkah: {hotMakkah}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="space-y-1 max-w-[70px] mx-auto">
+                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                            </div>
+                            <span className="text-[10px] text-gray-500 font-bold block text-center leading-none">
+                              {terdaftar || 0} / {paket.targetJamaah || 45}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {upcomingSchedules.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-gray-400 font-bold uppercase tracking-wider text-[10px]">
+                        Belum ada jadwal keberangkatan paket master.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Right Column Core: Quick Actions (Aksi Cepat) */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="border-b border-gray-100 pb-3">
+                <h3 className="text-sm font-black uppercase text-gray-800 tracking-wider">Aksi Cepat</h3>
+                <p className="text-[10px] text-gray-500">Alerter pintasan menu operasional Anda.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  onClick={() => setActiveTab('jamaah')}
+                  className="p-3 text-left rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all flex flex-col gap-2 group cursor-pointer"
+                >
+                  <UserCheck className="w-5 h-5 text-emerald-500 group-hover:text-emerald-300" />
+                  <span className="text-[11px] font-black uppercase tracking-wider">Tambah Jamaah</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    setActiveTab('jamaah');
+                    setTimeout(() => {
+                      const el = document.getElementById('cetak-invoice-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 500);
+                  }}
+                  className="p-3 text-left rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all flex flex-col gap-2 group cursor-pointer"
+                >
+                  <FileText className="w-5 h-5 text-blue-500 group-hover:text-blue-200" />
+                  <span className="text-[11px] font-black uppercase tracking-wider">Cetak Invoice</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('jamaah')}
+                  className="p-3 text-left rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all flex flex-col gap-2 group cursor-pointer"
+                >
+                  <CheckSquare className="w-5 h-5 text-indigo-500 group-hover:text-indigo-300" />
+                  <span className="text-[11px] font-black uppercase tracking-wider">Upload Dokumen</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('wallet')}
+                  className="p-3 text-left rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all flex flex-col gap-2 group cursor-pointer"
+                >
+                  <TrendingUp className="w-5 h-5 text-amber-500 group-hover:text-amber-300" />
+                  <span className="text-[11px] font-black uppercase tracking-wider">Data Keuangan</span>
+                </button>
               </div>
             </div>
 
-            <button 
-              onClick={() => setShowWizard(true)}
-              className="w-full md:w-auto bg-white hover:bg-amber-50 text-amber-600 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/10 relative z-10 shrink-0 cursor-pointer"
-            >
-              Mulai Wizard
-            </button>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <span className="text-[10px] font-mono text-gray-400 block font-bold uppercase tracking-wider leading-none mb-1">
+                Link Pendaftaran Mandiri
+              </span>
+              <div className="flex items-center gap-1">
+                <input 
+                  type="text" 
+                  readOnly 
+                  value={referralLink}
+                  className="bg-gray-50 font-mono text-[9px] font-bold border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none flex-grow"
+                />
+                <button 
+                  onClick={copyToClipboard}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white p-1.5 rounded-lg shrink-0 transition-transform active:scale-95 cursor-pointer"
+                  title="Salin Link"
+                >
+                  {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* Activities Section */}
-          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm min-h-[150px]">
-             <div className="flex items-center justify-between mb-8">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">AKTIVITAS PAKET TERBARU</p>
-                <div className="h-[2px] flex-grow mx-6 bg-gray-50"></div>
-             </div>
-             <div className="flex flex-col items-center justify-center py-8 text-gray-300">
-                <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-                  <History className="w-8 h-8 opacity-20" />
+        {/* 3rd Row: Featured Package Poster (Left 2/3) & Payment Pizza Donut Chart (Right 1/3) */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Featured Package Showcase Poster */}
+          <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-5">
+            <div className="md:col-span-2 h-48 md:h-full relative overflow-hidden bg-slate-900">
+              <img 
+                src={featuredPaket.photoUtama || 'https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?auto=format&fit=crop&w=800&q=80'} 
+                alt="Kaaba Mecca" 
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover opacity-80"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent"></div>
+              <div className="absolute bottom-4 left-4 text-white">
+                <span className="inline-block px-2 py-0.5 rounded bg-amber-500 font-bold text-[9px] uppercase tracking-wider mb-1">
+                  Katalog Unggulan
+                </span>
+                <p className="text-xs font-mono font-bold leading-none">Mulai {formatCurrencyMilyar(featuredPaket.hargaJualQuad ?? featuredPaket.hargaDasar ?? 32000000)}</p>
+              </div>
+            </div>
+
+            <div className="md:col-span-3 p-5 flex flex-col justify-between">
+              <div className="space-y-2">
+                <span className="text-[10px] font-mono text-indigo-600 block font-bold uppercase tracking-widest">
+                  PRODUK PAKET REKOMENDASI
+                </span>
+                <h4 className="text-base font-black text-gray-900 leading-snug">
+                  {featuredPaket.nama}
+                </h4>
+                <p className="text-xs text-gray-500 line-clamp-2">
+                  Nikmati layanan premium, hotel setaraf bintang 5, dengan penerbangan langsung Jakarta - Jeddah bersama Umaroh.com.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-600 py-1">
+                  <span className="flex items-center gap-1 font-medium">
+                    <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    Durasi: {featuredPaket.durasiHari || 9} Hari
+                  </span>
+                  <span className="flex items-center gap-1 font-medium truncate">
+                    <Plane className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    Penerbangan Direct
+                  </span>
                 </div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Belum ada aktivitas terbaru</p>
-             </div>
+              </div>
+
+              <div className="flex gap-2.5 mt-4 pt-3 border-t border-gray-100">
+                <button 
+                  onClick={() => setActiveTab('katalog')}
+                  className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 py-2 rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  Lihat Detail
+                </button>
+                <button 
+                  onClick={() => setActiveTab('katalog')}
+                  className="flex-1 bg-indigo-600 hover:bg-slate-900 text-white py-2 rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer shadow-sm"
+                >
+                  Daftar Sekarang
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* NEW: Network Shop Orders section */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
-             <div className="flex items-center justify-between mb-6">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Belanja Perlengkapan Jamaah Anda ({mitraShopOrders.length})</p>
-                <div className="h-[2px] flex-grow mx-6 bg-gray-50"></div>
-             </div>
-             {mitraShopOrders.length === 0 ? (
-               <div className="flex flex-col items-center justify-center py-8 text-gray-300">
-                 <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
-                   <History className="w-6 h-6 opacity-20" strokeWidth={2} />
-                 </div>
-                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Belum ada pesanan belanja perlengkapan</p>
-               </div>
-             ) : (
-               <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
-                 {mitraShopOrders.map((order) => (
-                   <div key={order.id} className="p-4 rounded-2xl bg-gray-50/50 border border-gray-100 flex items-center justify-between text-xs font-sans hover:shadow-sm transition-shadow">
-                     <div className="space-y-1">
-                       <span className="font-mono text-[9px] text-gray-400 font-bold block">ID: #{order.id.substring(0, 8).toUpperCase()}</span>
-                       <strong className="text-gray-900 block text-[11px]">{order.productName || 'Perlengkapan'}</strong>
-                       <p className="text-[10px] text-gray-500">
-                         Kuantitas: <span className="font-bold text-gray-800">{order.quantity || 1} Pcs</span> | Pembeli: <span className="font-bold text-gray-800">{order.jamaahName || 'Jamaah Anda'}</span>
-                       </p>
-                       <p className="text-[9px] text-gray-400 line-clamp-1">Kirim: {order.shippingAddress}</p>
-                     </div>
-                     <div className="text-right shrink-0 ml-4 font-sans">
-                       <span className="font-black text-emerald-600 block text-xs">Rp {(order.totalCost || 0).toLocaleString('id-ID')}</span>
-                       <span className={`inline-block px-2 py-0.5 mt-1 rounded-full text-[8px] font-black uppercase tracking-wider ${
-                         order.status === 'Selesai' ? 'bg-emerald-100 text-emerald-800' :
-                         order.status === 'Dibatalkan' ? 'bg-red-100 text-red-800' :
-                         order.status?.startsWith('Dikirim') ? 'bg-indigo-100 text-indigo-800' :
-                         'bg-amber-100 text-amber-800'
-                       }`}>
-                         {order.status || 'Diproses'}
-                       </span>
-                       {order.noResi && (
-                         <span className="text-[8px] font-mono text-indigo-600 block font-bold mt-1">Resi: {order.noResi}</span>
-                       )}
-                     </div>
-                   </div>
-                 ))}
-               </div>
-             )}
+          {/* Payment Donut Chart Widget (Ringkasan Pembayaran) */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4">
+            <div className="border-b border-gray-100 pb-2">
+              <h3 className="text-sm font-black uppercase text-gray-800 tracking-wider">
+                Omzet & Pembayaran
+              </h3>
+              <p className="text-[10px] text-gray-500">Peta pelunasan piutang jamaah Anda.</p>
+            </div>
+
+            <div className="flex items-center justify-around py-2">
+              {/* Circular SVG Donut */}
+              <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  {/* Empty base circle */}
+                  <circle 
+                    cx="18" 
+                    cy="18" 
+                    r="15.915" 
+                    fill="none" 
+                    stroke="#F1F5F9" 
+                    strokeWidth="3.5" 
+                  />
+                  {/* Filled active circle */}
+                  <circle 
+                    cx="18" 
+                    cy="18" 
+                    r="15.915" 
+                    fill="none" 
+                    stroke="#3B82F6" 
+                    strokeWidth="3.5" 
+                    strokeDasharray={`${billingPercent} ${100 - billingPercent}`} 
+                    strokeDashoffset="0"
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                {/* Text inside */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-sm font-black text-gray-900 leading-none">{billingPercent}%</span>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">TERBAYAR</span>
+                </div>
+              </div>
+
+              {/* Legends labels */}
+              <div className="space-y-2 text-xs">
+                <div>
+                  <span className="text-[9px] font-bold text-gray-400 block uppercase">TOTAL OMZET</span>
+                  <strong className="text-gray-900 text-sm">{formatCurrencyMilyar(totalReceivableAmount)}</strong>
+                </div>
+                <div>
+                  <span className="flex items-center gap-1.5 text-[10px] text-gray-600 font-medium">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                    Lunas: <b className="text-gray-950">{formatCurrencyMilyar(totalPaidAmount)}</b>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] text-gray-600 font-medium mt-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200 shrink-0"></span>
+                    Piutang: <b className="text-gray-950">{formatCurrencyMilyar(totalUnpaidAmount)}</b>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4th Row: Doc Checklist (1/3) & Flight Carrier info (1/3) & Bulletin Boards (1/3) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Document Checklist Status of Jamaah */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4">
+            <div className="border-b border-gray-100 pb-2 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black uppercase text-gray-800 tracking-wider">
+                  Checklist Dokumen Jamaah
+                </h3>
+                <p className="text-[10px] text-gray-500">Persentase kelengkapan berkas paspor & identitas.</p>
+              </div>
+              <span className="text-[10px] font-mono font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded">
+                REAL-TIME
+              </span>
+            </div>
+
+            <div className="space-y-3 font-sans text-xs">
+              {/* Paspor */}
+              <div className="space-y-1">
+                <div className="flex justify-between font-bold text-[10px] text-gray-700 uppercase">
+                  <span>Paspor Terkumpul</span>
+                  <span>{passportPct}% ({completedPassport}/{totalJamaah})</span>
+                </div>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${passportPct}%` }}></div>
+                </div>
+              </div>
+
+              {/* KTP */}
+              <div className="space-y-1">
+                <div className="flex justify-between font-bold text-[10px] text-gray-700 uppercase">
+                  <span>KTP & KK Tercatat</span>
+                  <span>{ktpPct}% ({completedKtp}/{totalJamaah})</span>
+                </div>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${ktpPct}%` }}></div>
+                </div>
+              </div>
+
+              {/* Buku Kuning / Meningitis */}
+              <div className="space-y-1">
+                <div className="flex justify-between font-bold text-[10px] text-gray-700 uppercase">
+                  <span>Buku Vaksin Meningitis</span>
+                  <span>{vaccinePct}% ({completedVaccine}/{totalJamaah})</span>
+                </div>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#EAB308] h-1.5 rounded-full" style={{ width: `${vaccinePct}%` }}></div>
+                </div>
+              </div>
+
+              {/* Foto Background Putih */}
+              <div className="space-y-1">
+                <div className="flex justify-between font-bold text-[10px] text-gray-700 uppercase">
+                  <span>Foto Background Putih</span>
+                  <span>{fotoPct}% ({completedFoto}/{totalJamaah})</span>
+                </div>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${fotoPct}%` }}></div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Real-Time Flight Tracker Section */}
+          {/* Flight Carrier & Quality Standard Info */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4">
+            <div className="border-b border-gray-100 pb-2">
+              <h3 className="text-sm font-black uppercase text-gray-800 tracking-wider">
+                Informasi Hotel & Transportasi
+              </h3>
+              <p className="text-[10px] text-gray-500">Standar kualitas akomodasi Umaroh CRM.</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex gap-2 p-2.5 rounded-xl border border-gray-100 bg-gray-50/50">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="text-gray-900 block text-[11px] font-bold">Makkah Hotel Standard</strong>
+                  <p className="text-[10px] text-gray-500 leading-tight">Anjum Makkah / Dar Al Ghufran Setaraf (Bintang 5, Jarak Dekat Masjidil Haram)</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 p-2.5 rounded-xl border border-gray-100 bg-gray-50/50">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="text-gray-900 block text-[11px] font-bold">Madinah Hotel Standard</strong>
+                  <p className="text-[10px] text-gray-500 leading-tight">Taiba Front / Pullman Zamzam Setaraf (Bintang 250m dari Masjid Nabawi)</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 p-2.5 rounded-xl border border-gray-100 bg-gray-50/50">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <Plane className="w-4 h-4" />
+                </div>
+                <div>
+                  <strong className="text-gray-900 block text-[11px] font-bold">Flight Carriers</strong>
+                  <p className="text-[10px] text-gray-500 leading-tight">Saudi Arabian Airlines / Garuda Indonesia (Direct Route, No Transit)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bulletin Board Updates */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4">
+            <div className="border-b border-gray-100 pb-2">
+              <h3 className="text-sm font-black uppercase text-gray-800 tracking-wider">
+                Pengumuman Terbaru
+              </h3>
+              <p className="text-[10px] text-gray-500">Informasi internal dilingkungan Umaroh.</p>
+            </div>
+
+            <div className="divide-y divide-gray-100 overflow-y-auto max-h-[190px] pr-1 space-y-2.5">
+              <div className="pt-2 first:pt-0">
+                <span className="flex items-center gap-1.5 text-[8px] font-bold text-indigo-600 uppercase mb-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 block"></span>
+                  OPERASIONAL
+                </span>
+                <strong className="text-gray-900 block text-[11px] font-bold leading-none">Manasik Umrah Akbar Regional Jakarta</strong>
+                <p className="text-[10px] text-gray-500 mt-1 leading-snug">Jadwal manasik keberangkatan Syawal akan dilaksanakan pada Ahad di Hotel Sultan.</p>
+              </div>
+
+              <div className="pt-2">
+                <span className="flex items-center gap-1.5 text-[8px] font-bold text-[#EAB308] uppercase mb-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#EAB308] block"></span>
+                  KEBIJAKAN
+                </span>
+                <strong className="text-gray-900 block text-[11px] font-bold leading-none">Syarat Penguncian Visa Umrah Sesuai Aturan Terbaru</strong>
+                <p className="text-[10px] text-gray-500 mt-1 leading-snug">Pastikan sisa masa aktif Paspor jamaah minimal 6 bulan per tanggal kepulangan.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Smart Features Bento Grid Launcher */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
+          {/* Card 1: AI Copywriter */}
+          <div className="bg-gradient-to-br from-indigo-950 to-slate-900 rounded-3xl p-6 text-white flex flex-col justify-between border border-indigo-500/20 shadow-lg relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/20 flex items-center justify-center text-indigo-300 mb-4 group-hover:scale-110 transition-transform">
+                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+              </div>
+              <h4 className="text-lg font-black uppercase tracking-tight mb-1 italic">Asisten Pemasaran AI</h4>
+              <p className="text-[10px] text-indigo-200/80 font-bold uppercase tracking-wider mb-5 leading-relaxed">
+                Tulis salinan promo WhatsApp Broadcast, Caption Instagram, & flyer dalam sekejap berdasarkan informasi paket kustom Anda.
+              </p>
+            </div>
+            <div>
+              <button 
+                onClick={() => setActiveTab('marketing')}
+                className="bg-indigo-600 hover:bg-slate-900 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md cursor-pointer"
+              >
+                Buka Copywriter AI
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: AI Smart Analytics */}
+          <div className="bg-gradient-to-br from-slate-950 to-emerald-950 rounded-3xl p-6 text-white flex flex-col justify-between border border-emerald-500/20 shadow-lg relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/20 flex items-center justify-center text-emerald-300 mb-4 group-hover:scale-110 transition-transform">
+                <BarChart2 className="w-5 h-5 text-emerald-300" />
+              </div>
+              <h4 className="text-lg font-black uppercase tracking-tight mb-1 italic">Mesin Analitik Cerdas</h4>
+              <p className="text-[10px] text-emerald-200/80 font-bold uppercase tracking-wider mb-5 leading-relaxed">
+                Audit kepatuhan berkas paspor jamaah, pantau sisa pelunasan piutang, mitigasi anomali data, & forekasting omset.
+              </p>
+            </div>
+            <div>
+              <button 
+                onClick={() => setActiveTab('analytics')}
+                className="bg-emerald-600 hover:bg-slate-900 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md cursor-pointer"
+              >
+                Auditing Sistem AI
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Real-time Flight Tracker */}
+        <div className="mt-2 mb-4">
           <FlightTrackerWidget />
         </div>
 
-        {/* Right Column: Chart */}
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between mb-8">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">GRAFIK PENJUALAN</h4>
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+        {showWizard && (
+          <div className="fixed inset-0 z-[60] bg-white overflow-y-auto">
+            <PaketMasterWizard 
+              onCancel={() => setShowWizard(false)} 
+              onSuccess={() => {
+                setShowWizard(false);
+              }}
+              isMitraContext={true}
+            />
           </div>
-          
-          <div className="flex items-end justify-between gap-2 h-64 mb-8">
-            {[
-              { label: 'Jan', value: 40, active: false },
-              { label: 'Feb', value: 30, active: false },
-              { label: 'Mar', value: 65, active: false },
-              { label: 'Apr', value: 45, active: false },
-              { label: 'May', value: 90, active: true },
-              { label: 'Jun', value: 55, active: false },
-            ].map((bar, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-3 group">
-                <div className="w-full relative bg-gray-50 rounded-lg overflow-hidden h-48">
-                  <div 
-                    className={`absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-out rounded-t-lg ${
-                      bar.active 
-                        ? 'bg-[#3B82F6] h-[90%] shadow-[0_0_20px_rgba(59,130,246,0.3)]' 
-                        : 'bg-[#F1F5F9] group-hover:bg-gray-200'
-                    }`}
-                    style={{ height: `${bar.value}%` }}
-                  ></div>
-                </div>
-                <span className={`text-[10px] font-bold tracking-tight ${bar.active ? 'text-blue-500' : 'text-gray-400'}`}>
-                  {bar.label}
-                </span>
-              </div>
-            ))}
-          </div>
-          
-          <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-             <div>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">TOTAL SALES MEI</p>
-                <p className="text-xl font-black text-gray-900 tracking-tight uppercase">Rp128.4M</p>
-             </div>
-             <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 shadow-inner">
-                <TrendingUp className="w-6 h-6" />
-             </div>
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* AI Smart Features Bento Grid Launcher */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card 1: AI Copywriter */}
-        <div className="bg-gradient-to-br from-indigo-950 to-slate-900 rounded-3xl p-6 text-white flex flex-col justify-between border border-indigo-500/20 shadow-lg relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
-          <div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/20 flex items-center justify-center text-indigo-300 mb-4 group-hover:scale-110 transition-transform">
-              <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-            </div>
-            <h4 className="text-lg font-black uppercase tracking-tight mb-1 italic">Asisten Pemasaran AI</h4>
-            <p className="text-[10px] text-indigo-200/80 font-bold uppercase tracking-wider mb-5 leading-relaxed">
-              Tulis salinan promo WhatsApp Broadcast, Caption Instagram, & flyer dalam sekejap berdasarkan informasi paket kustom Anda.
-            </p>
-          </div>
-          <div>
-            <button 
-              onClick={() => setActiveTab('marketing')}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md cursor-pointer"
-            >
-              Buka Copywriter AI
-            </button>
-          </div>
-        </div>
-
-        {/* Card 2: AI Smart Analytics */}
-        <div className="bg-gradient-to-br from-slate-950 to-emerald-950 rounded-3xl p-6 text-white flex flex-col justify-between border border-emerald-500/20 shadow-lg relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
-          <div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/20 flex items-center justify-center text-emerald-300 mb-4 group-hover:scale-110 transition-transform">
-              <BarChart2 className="w-5 h-5 text-emerald-300" />
-            </div>
-            <h4 className="text-lg font-black uppercase tracking-tight mb-1 italic">Mesin Analitik Cerdas</h4>
-            <p className="text-[10px] text-emerald-200/80 font-bold uppercase tracking-wider mb-5 leading-relaxed">
-              Audit kepatuhan berkas paspor jamaah, pantau sisa pelunasan piutang, mitigasi anomali data, & forekasting omset.
-            </p>
-          </div>
-          <div>
-            <button 
-              onClick={() => setActiveTab('analytics')}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md cursor-pointer"
-            >
-              Auditing Sistem AI
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Referral Link - Moved to bottom or can be kept as per existing design but stylized */}
-      <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100">
-        <div className="flex flex-col md:flex-row items-center gap-6">
-           <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-indigo-500 shadow-sm">
-              <LinkIcon className="w-5 h-5" />
-           </div>
-           <div className="flex-grow text-center md:text-left">
-              <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider mb-1">Link Referral Anda</h3>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Bagikan link ini untuk mencari jamaah.</p>
-           </div>
-           <div className="flex items-center gap-2 w-full md:w-auto">
-              <input 
-                type="text" 
-                readOnly 
-                value={referralLink}
-                className="flex-1 md:w-64 bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-600 text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
-              <button 
-                onClick={copyToClipboard}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl transition-all active:scale-95"
-              >
-                {copied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              </button>
-           </div>
-        </div>
-      </div>
-
-      {showWizard && (
-        <div className="fixed inset-0 z-[60] bg-white overflow-y-auto">
-          <PaketMasterWizard 
-            onCancel={() => setShowWizard(false)} 
-            onSuccess={() => {
-              setShowWizard(false);
-              // Refresh logic if needed
-            }}
-            isMitraContext={true}
-          />
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50/20">
@@ -903,10 +1335,14 @@ export const DashboardMitra = () => {
       <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:left-0 lg:bg-white lg:border-r lg:border-gray-200 lg:z-30 lg:overflow-y-auto">
         {/* Sidebar Brand Header */}
         <div className="p-6 border-b border-gray-150 flex flex-col gap-1 items-start bg-indigo-50/10">
-          <span className="text-[9px] font-black tracking-widest text-indigo-600 uppercase">PORTAL MITRA AGEN</span>
-          <h2 className="text-base font-black text-gray-900 tracking-tight italic flex items-center gap-1.5 leading-none">
-            UMAROH <span className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white font-black not-italic px-1.5 py-0.5 rounded text-[10px]">CRM</span>
-          </h2>
+          <div className="bg-white py-2 px-4 rounded-xl flex items-center justify-center border border-gray-200 shadow-sm w-full mb-1">
+            <img 
+              src="https://umaroh.com/assets/logo-light-D4UzTX0_.png" 
+              alt="Logo Umaroh" 
+              className="h-7 object-contain max-w-full" 
+              referrerPolicy="no-referrer"
+            />
+          </div>
           <div className="mt-3 relative group w-full">
             <input
               type="file"
@@ -1175,6 +1611,46 @@ export const DashboardMitra = () => {
 
         {/* Content Wrapper */}
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 lg:pb-8 flex-grow">
+          {/* Top Premium Header Bar */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-row items-center justify-between gap-4 mb-6 shadow-sm">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <input 
+                type="text" 
+                placeholder="Cari paket, jamaah, Invoice, dll..." 
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl py-2 px-4 pr-10 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100/50 focus:border-indigo-500 transition-all font-medium"
+              />
+              <Search className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            {/* Quick Badges in Dark Green */}
+            <div className="flex items-center gap-3">
+              {/* Notifications */}
+              <button 
+                title="Pemberitahuan resmi" 
+                className="relative p-2 hover:bg-gray-50 active:scale-95 transition-all text-gray-500 rounded-xl cursor-pointer"
+              >
+                <Bell className="w-5 h-5 text-gray-600" />
+                <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm font-sans">
+                  5
+                </span>
+              </button>
+
+              {/* Chat Messages */}
+              <button 
+                title="Diskusi / Chat Mitra & Admin" 
+                className="relative p-2 hover:bg-gray-50 active:scale-95 transition-all text-gray-500 rounded-xl cursor-pointer"
+              >
+                <MessageSquare className="w-5 h-5 text-gray-600" />
+                <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm font-sans">
+                  2
+                </span>
+              </button>
+            </div>
+          </div>
+
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'feed' && <FeedKolaborasiView onNavigateToCatalog={() => setActiveTab('katalog')} />}
           {activeTab === 'katalog' && <KatalogPaketView />}

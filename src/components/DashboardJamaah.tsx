@@ -403,7 +403,7 @@ export const DashboardJamaah = () => {
           <div className="relative z-10 flex flex-col justify-between h-full flex-grow">
             <div className="max-w-xl space-y-2">
               <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">
-                PROMO EKSKLUSIF MARAWA
+                PROMO EKSKLUSIF UMAROH
               </span>
               <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight drop-shadow-sm leading-tight">
                 {promoBanners[currentBanner].title}
@@ -567,17 +567,17 @@ export const DashboardJamaah = () => {
             <div className="flex-1 pl-4">
               <h3 className="font-extrabold text-gray-900 text-sm leading-tight">POTONGAN LANGSUNG 1.5 JUTA</h3>
               <p className="text-[10px] text-gray-400 font-medium">Min. Pembelian Paket Umroh Quad</p>
-              <div className="mt-2 text-[10px] font-mono text-orange-600 bg-orange-50 inline-block px-1.5 py-0.5 rounded font-black border border-orange-100">KODE: MARAWA15</div>
+              <div className="mt-2 text-[10px] font-mono text-orange-600 bg-orange-50 inline-block px-1.5 py-0.5 rounded font-black border border-orange-100">KODE: UMAROH15</div>
             </div>
             <button
-              onClick={() => handleClaimVoucher('MARAWA15')}
+              onClick={() => handleClaimVoucher('UMAROH15')}
               className={`px-4 py-2 rounded-xl text-xs font-black transition-colors ${
-                claimedVouchers.includes('MARAWA15')
+                claimedVouchers.includes('UMAROH15')
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-orange-600 hover:bg-orange-700 text-white cursor-pointer'
               }`}
             >
-              {claimedVouchers.includes('MARAWA15') ? '✓ CLAIMED' : 'KLAIM'}
+              {claimedVouchers.includes('UMAROH15') ? '✓ CLAIMED' : 'KLAIM'}
             </button>
           </div>
 
@@ -605,17 +605,17 @@ export const DashboardJamaah = () => {
             <div className="flex-1 pl-4">
               <h3 className="font-extrabold text-gray-900 text-sm leading-tight">CASHBACK PANDUAN PENGINAPAN</h3>
               <p className="text-[10px] text-gray-400 font-medium">Bebas Pajak & Diskon Porter Bandara</p>
-              <div className="mt-2 text-[10px] font-mono text-emerald-600 bg-emerald-50 inline-block px-1.5 py-0.5 rounded font-black border border-emerald-100">KODE: MARAWAPORTER</div>
+              <div className="mt-2 text-[10px] font-mono text-emerald-600 bg-emerald-50 inline-block px-1.5 py-0.5 rounded font-black border border-emerald-100">KODE: UMAROHPORTER</div>
             </div>
             <button
-              onClick={() => handleClaimVoucher('MARAWAPORTER')}
+              onClick={() => handleClaimVoucher('UMAROHPORTER')}
               className={`px-4 py-2 rounded-xl text-xs font-black transition-colors ${
-                claimedVouchers.includes('MARAWAPORTER')
+                claimedVouchers.includes('UMAROHPORTER')
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
               }`}
             >
-              {claimedVouchers.includes('MARAWAPORTER') ? '✓ CLAIMED' : 'KLAIM'}
+              {claimedVouchers.includes('UMAROHPORTER') ? '✓ CLAIMED' : 'KLAIM'}
             </button>
           </div>
 
@@ -628,7 +628,7 @@ export const DashboardJamaah = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
               <span className="text-xl md:text-2xl font-black italic tracking-wider flex items-center gap-1">
-                ⚡ FLASH SALE MARAWA
+                ⚡ FLASH SALE UMAROH
               </span>
               <div className="flex items-center gap-1 text-xs font-mono font-black text-gray-900">
                 <span className="bg-amber-400 px-2.5 py-1 rounded-lg shadow-sm">
@@ -755,7 +755,7 @@ export const DashboardJamaah = () => {
             <ShoppingCart className="w-5 h-5 text-emerald-600" />
             <h2 className="text-base font-black text-gray-800 uppercase tracking-tight">TOKO PERLENGKAPAN PERSIAPAN HAJI & UMROH</h2>
           </div>
-          <span className="text-xs text-emerald-600 font-extrabold bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-wider">MARAWA SHOP</span>
+          <span className="text-xs text-emerald-600 font-extrabold bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-wider">UMAROH SHOP</span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -972,22 +972,113 @@ export const DashboardJamaah = () => {
   );
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="min-h-screen bg-slate-50/50 flex flex-col lg:flex-row relative w-full">
       
-      {/* Search Header (Shopee Style) */}
+      {/* Desktop Sidebar (lg Screen) */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:left-0 lg:bg-white lg:border-r lg:border-gray-200 lg:z-30 lg:overflow-y-auto print:hidden">
+        {/* Sidebar Brand Header */}
+        <div className="p-6 border-b border-gray-150 flex flex-col gap-1 items-start bg-emerald-50/10">
+          <div className="bg-[#055734] py-2.5 px-4 rounded-xl flex items-center justify-center border border-emerald-800 shadow-sm w-full mb-1">
+            <img 
+              src="https://umaroh.com/assets/logo-light-D4UzTX0_.png" 
+              alt="Logo Umaroh" 
+              className="h-7 object-contain max-w-full" 
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="mt-2 w-full text-center">
+            <span className="text-[10px] text-emerald-800 font-extrabold tracking-widest uppercase block font-sans">PORTAL JAMAAH SAHABAT</span>
+          </div>
+        </div>
+
+        {/* Sidebar Navigation Items */}
+        <nav className="flex-1 p-4 space-y-1">
+          <button
+            onClick={() => {
+              setActiveTab('overview');
+              setKatalogSearch('');
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+              activeTab === 'overview' 
+                ? 'bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-600/10' 
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <LayoutDashboard className={`w-4 h-4 ${activeTab === 'overview' ? 'text-emerald-700' : 'text-gray-500'}`} />
+            Rekomendasi
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('katalog');
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+              activeTab === 'katalog' 
+                ? 'bg-orange-50 text-orange-950 shadow-sm ring-1 ring-orange-600/10' 
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <Package className={`w-4 h-4 ${activeTab === 'katalog' ? 'text-orange-600' : 'text-gray-500'}`} />
+            Katalog Paket
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('riwayat');
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer relative ${
+              activeTab === 'riwayat' 
+                ? 'bg-blue-50 text-blue-800 shadow-sm ring-1 ring-blue-600/10' 
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <History className={`w-4 h-4 ${activeTab === 'riwayat' ? 'text-blue-700' : 'text-gray-500'}`} />
+            Pesanan Saya
+            {shopOrders.length > 0 && (
+              <span className="absolute right-4 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                {shopOrders.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('profile');
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+              activeTab === 'profile' 
+                ? 'bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-650/10' 
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <User className={`w-4 h-4 ${activeTab === 'profile' ? 'text-emerald-700' : 'text-gray-500'}`} />
+            ProfilKu
+          </button>
+        </nav>
+
+        {/* Sidebar Footer Ask AI */}
+        <div className="p-4 border-t border-gray-150">
+          <button 
+            onClick={() => setShowAiChat(true)}
+            className="w-full flex items-center justify-center gap-2 text-xs font-black bg-amber-500 hover:bg-amber-600 text-gray-950 py-3 rounded-xl transition-all cursor-pointer shadow-sm"
+          >
+            <Sparkles className="w-4 h-4" />
+            TANYA SAHABAT AI
+          </button>
+        </div>
+      </aside>
+
+      {/* Right-side Main Content Pane */}
+      <div className="flex-1 lg:pl-72 flex flex-col min-h-screen w-full">
+        
+        {/* Search Header (Shopee Style) */}
       <div className="bg-emerald-800 text-white pt-4 pb-5 px-4 md:px-6 sticky top-0 z-40 shadow-md">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-4">
           
           {/* Logo Brand Brand */}
           <div className="flex items-center justify-between w-full md:w-auto">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🕋</span>
-              <div>
-                <h1 className="text-base font-black tracking-tight flex items-center gap-1.5 leading-none">
-                  MARAWA <span className="text-[9px] bg-red-600 px-1.5 py-0.5 rounded font-bold">MARKET</span>
-                </h1>
-                <p className="text-[7px] text-emerald-200 tracking-widest font-black uppercase">UMRAH & HAJJ CENTER</p>
-              </div>
+              <span className="text-[11px] bg-amber-500 text-slate-950 font-black px-2 py-1 rounded">MARKET</span>
             </div>
 
             {/* Shopee Smart AI bubble indicator */}
@@ -1172,7 +1263,7 @@ export const DashboardJamaah = () => {
                   ✨
                 </div>
                 <div>
-                  <h3 className="font-black text-xs">SAHABAT MARAWA AI</h3>
+                  <h3 className="font-black text-xs">SAHABAT UMAROH AI</h3>
                   <p className="text-[8px] text-emerald-25 tracking-wide flex items-center gap-1.5 mt-0.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE CS PINTAR
                   </p>
@@ -1453,8 +1544,8 @@ export const DashboardJamaah = () => {
         </div>
       </div>
 
-      {/* Sub-navigation (Desktop Only) */}
-      <div className="hidden lg:block bg-white border-b border-gray-200 px-4 py-3 print:hidden shadow-sm sticky top-[72px] z-35">
+      {/* Sub-navigation (Desktop Only) - Hidden now that left sidebar is active */}
+      <div className="hidden bg-white border-b border-gray-200 px-4 py-3 print:hidden shadow-sm sticky top-[72px] z-35">
         <div className="container mx-auto">
           <div className="flex overflow-x-auto md:overflow-x-visible md:flex-wrap no-scrollbar gap-2 pb-1 -mb-1 md:justify-center">
             
@@ -1520,6 +1611,7 @@ export const DashboardJamaah = () => {
         </div>
       </div>
 
+      </div>
     </div>
   );
 };

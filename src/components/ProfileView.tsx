@@ -590,7 +590,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <span className="text-[10px] bg-white/20 text-white font-black uppercase tracking-wider px-2 py-0.5 rounded-full backdrop-blur-md">
                     KARTU IDENTITAS DIGITAL
                   </span>
-                  <h3 className="text-sm font-black tracking-tight mt-1">SAHABAT MARAWA EMERALD</h3>
+                  <h3 className="text-sm font-black tracking-tight mt-1">UMAROH</h3>
                 </div>
                 <span className="text-2xl">💚</span>
               </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, ArrowUpRight, ArrowDownRight, Cloud } from 'lucide-react';
-import { db, collection, onSnapshot, query, where, doc, updateDoc, runTransaction } from '../../firebase';
+import { Wallet, Users, ArrowUpRight, ArrowDownRight, Cloud, Printer, X, FileText } from 'lucide-react';
+import { db, collection, onSnapshot, query, where, doc, updateDoc, runTransaction, auth } from '../../firebase';
 import { syncBookingToTracker } from '../../utils/firebaseSync';
 import { AccurateIntegrationView } from './AccurateIntegrationView';
 
@@ -22,6 +22,11 @@ interface Booking {
   jamaahId: string;
   totalHarga?: number;
   statusPembayaran?: string;
+  paketLabel?: string;
+  createdAt?: {
+    seconds?: number;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -31,6 +36,8 @@ interface Transaction {
   userId: string;
   amount: number;
   status: string;
+  description?: string;
+  type?: string;
   [key: string]: unknown;
 }
 
@@ -41,6 +48,71 @@ export const FinanceDashboard: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Invoice state variables inside FinanceDashboard.tsx
+  interface FinancialJamaah {
+    id: string;
+    nama_paspor?: string;
+    [key: string]: unknown;
+  }
+
+  interface FinanceUserData {
+    logo?: string;
+    brandName?: string;
+    alamat?: string;
+    noHp?: string;
+    phone?: string;
+    namaLengkap?: string;
+    name?: string;
+    customMitraProfile?: {
+      logo?: string;
+    };
+  }
+
+  const [jamaahs, setJamaahs] = useState<FinancialJamaah[]>([]);
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<Booking | null>(null);
+  const [invoiceTxs, setInvoiceTxs] = useState<Transaction[]>([]);
+  const [currentUserData, setCurrentUserData] = useState<FinanceUserData | null>(null);
+  const [invoiceNote, setInvoiceNote] = useState('Pembayaran sah dilakukan melalui Kasir Kantor Pusat atau via Transfer Bank Resmi Agent. Harap simpan invoice ini sebagai bukti administrasi resmi untuk pengurusan keberangkatan.');
+  const [invoiceCustomNum, setInvoiceCustomNum] = useState('');
+  const [showInvoiceStamp, setShowInvoiceStamp] = useState(true);
+  const [cashierName, setCashierName] = useState('');
+
+  // Load current user profile for invoice branding
+  useEffect(() => {
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (!user) return;
+      const userRef = doc(db, 'users', user.uid);
+      const unsubscribeSnap = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const uData = docSnap.data();
+          setCurrentUserData(uData);
+          setCashierName(uData.namaLengkap || uData.name || 'Petugas Administrasi Pusat');
+        }
+      });
+      return () => unsubscribeSnap();
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Load transactions for the selected invoice booking
+  useEffect(() => {
+    if (!selectedInvoiceBooking) return;
+    const q = query(collection(db, 'transactions'), where('bookingId', '==', selectedInvoiceBooking.id));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+      txs.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+      });
+      setInvoiceTxs(txs);
+    }, (error) => {
+      console.error("Error loading transactions for booking invoice:", error);
+    });
+    return () => unsubscribe();
+  }, [selectedInvoiceBooking]);
+
   useEffect(() => {
     // Fetch Vendor Services (AP)
     const unsubAP = onSnapshot(collection(db, 'vendor_services'), (snapshot) => {
@@ -50,6 +122,11 @@ export const FinanceDashboard: React.FC = () => {
     // Fetch Bookings (AR)
     const unsubAR = onSnapshot(collection(db, 'bookings'), (snapshot) => {
       setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
+    });
+
+    // Fetch Tracker Jamaah for human readable pilgrim names
+    const unsubJamaah = onSnapshot(collection(db, 'tracker_jamaah'), (snapshot) => {
+      setJamaahs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     // Fetch Transactions (Komisi/Withdrawals)
@@ -63,6 +140,7 @@ export const FinanceDashboard: React.FC = () => {
     return () => {
       unsubAP();
       unsubAR();
+      unsubJamaah();
       unsubTrans();
     };
   }, []);
@@ -248,27 +326,43 @@ export const FinanceDashboard: React.FC = () => {
                       <p className="text-xs text-gray-500">{booking.jenisPaket}</p>
                     </td>
                     <td className="p-4">
-                      <p className="text-sm font-medium text-gray-700">{booking.jamaahId.substring(0, 8)}...</p>
+                      <p className="text-sm font-bold text-gray-800">
+                        {jamaahs.find(j => j.id === booking.id)?.nama_paspor || jamaahs.find(j => j.id === booking.jamaahId)?.nama_paspor || `Jamaah ${booking.jamaahId.substring(0, 8)}`}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-mono">ID: {booking.jamaahId}</p>
                     </td>
-                    <td className="p-4 text-right font-black text-gray-900">
-                      {formatCurrency(booking.totalHarga)}
+                    <td className="p-4 text-right font-black text-slate-900 font-sans">
+                      {formatCurrency(booking.totalHarga || 0)}
                     </td>
                     <td className="p-4 text-center">
                       <select 
                         value={booking.statusPembayaran}
                         onChange={(e) => updateBookingStatus(booking.id, e.target.value)}
-                        className={`text-xs font-bold rounded-full px-3 py-1 border-0 cursor-pointer outline-none
-                          ${booking.statusPembayaran === 'lunas' ? 'bg-emerald-100 text-emerald-700' : 
-                            booking.statusPembayaran === 'dp' ? 'bg-blue-100 text-blue-700' : 
-                            'bg-amber-100 text-amber-700'}`}
+                        className={`text-xs font-bold rounded-lg px-2.5 py-1 border border-slate-200 cursor-pointer outline-none
+                          ${booking.statusPembayaran === 'lunas' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 
+                            booking.statusPembayaran === 'dp' ? 'bg-blue-50 text-blue-800 border-blue-100' : 
+                            'bg-amber-50 text-amber-800 border-amber-100'}`}
                       >
                         <option value="pending">Pending</option>
                         <option value="dp">DP</option>
                         <option value="lunas">Lunas</option>
                       </select>
                     </td>
-                    <td className="p-4 text-right">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button>
+                    <td className="p-4 text-center">
+                      <div className="flex items-center justify-end gap-2.5">
+                        <button 
+                          onClick={() => {
+                            setSelectedInvoiceBooking(booking);
+                            setInvoiceCustomNum(`INV/${new Date().getFullYear()}/UMR/${booking.id.substring(0, 6).toUpperCase()}`);
+                            setIsInvoiceOpen(true);
+                          }}
+                          className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm border border-indigo-100"
+                          title="Cetak Faktur Administrasi Keuangan"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          Invoice
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -432,6 +526,401 @@ export const FinanceDashboard: React.FC = () => {
       {activeTab === 'ar' && renderAR()}
       {activeTab === 'komisi' && renderKomisi()}
       {activeTab === 'accurate' && <AccurateIntegrationView />}
+
+      {/* ================= INVOICE GENERATOR & PRINTER MODAL (ACCURATE ERP INSPIRED) ================= */}
+      {isInvoiceOpen && selectedInvoiceBooking && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 overflow-y-auto p-4 md:p-8 flex items-center justify-center font-sans no-print animate-in fadeIn duration-150">
+          <div className="bg-slate-50 border border-slate-200 rounded-3xl shadow-2xl max-w-5xl w-full overflow-hidden flex flex-col md:flex-row h-[90vh] max-h-[850px] animate-in zoom-in-95 duration-200">
+            
+            {/* Left Panel: Invoice Configurator Controls */}
+            <div className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-slate-100 p-5 flex flex-col justify-between overflow-y-auto select-none font-sans">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <span className="flex items-center gap-1.5 text-indigo-700 font-extrabold text-xs tracking-wider uppercase">
+                    <FileText className="w-4 h-4" />
+                    Set Invoicing ERP
+                  </span>
+                  <button 
+                    onClick={() => {
+                      setIsInvoiceOpen(false);
+                      setSelectedInvoiceBooking(null);
+                    }}
+                    className="p-1 rounded-lg hover:bg-slate-100 text-gray-400 hover:text-gray-900 transition"
+                  >
+                    <X className="w-4.5 h-4.5" />
+                  </button>
+                </div>
+
+                <div className="space-y-3.5 pt-1">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">No. Invoice Resmi</label>
+                    <input 
+                      type="text" 
+                      value={invoiceCustomNum} 
+                      onChange={(e) => setInvoiceCustomNum(e.target.value)}
+                      placeholder="Contoh: INV/2026/UMR-001"
+                      className="w-full text-xs font-bold px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Staf Kasir/Penerima</label>
+                    <input 
+                      type="text" 
+                      value={cashierName} 
+                      onChange={(e) => setCashierName(e.target.value)}
+                      placeholder="Ketik nama pemeriksa"
+                      className="w-full text-xs font-bold px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Catatan Syarat & Ketentuan</label>
+                    <textarea 
+                      value={invoiceNote} 
+                      onChange={(e) => setInvoiceNote(e.target.value)}
+                      rows={5}
+                      className="w-full text-xs font-semibold px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none resize-none leading-relaxed"
+                    />
+                  </div>
+
+                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-gray-600 font-bold">Tampilkan Stamp Lunas</span>
+                      <button
+                        onClick={() => setShowInvoiceStamp(!showInvoiceStamp)}
+                        className={`text-[10px] px-2.5 py-1 rounded-md font-black transition-colors ${
+                          showInvoiceStamp ? 'bg-emerald-105 text-emerald-800' : 'bg-gray-100 text-gray-400'
+                        }`}
+                      >
+                        {showInvoiceStamp ? 'AKTIF' : 'NON-AKTIF'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 space-y-2">
+                <button
+                  onClick={() => window.print()}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                >
+                  <Printer className="w-4 h-4" />
+                  CETAK / PRINT KERTAS A4
+                </button>
+                <button
+                  onClick={() => {
+                    setIsInvoiceOpen(false);
+                    setSelectedInvoiceBooking(null);
+                  }}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-705 font-bold text-xs py-2.5 rounded-xl transition"
+                >
+                  Selesai & Keluar
+                </button>
+              </div>
+            </div>
+
+            {/* Right Panel: Invoice A4 Preview Frame */}
+            <div className="flex-1 bg-slate-100 p-4 md:p-6 overflow-y-auto flex justify-center items-start">
+              {/* Printable Area Starts */}
+              <div className="bg-white max-w-[760px] w-full border border-slate-200 rounded-2xl shadow-lg p-6 md:p-10 font-sans relative overflow-hidden invoice-print-area text-[11px] leading-relaxed text-gray-800">
+                
+                {/* Standard Invoice Watermark Stamp */}
+                {showInvoiceStamp && (
+                  <div className="absolute right-12 top-40 rotate-[12deg] pointer-events-none select-none z-10 font-sans">
+                    <div className={`border-4 ${
+                      selectedInvoiceBooking.statusPembayaran === 'lunas'
+                        ? 'border-emerald-500 text-emerald-650 bg-emerald-50/70'
+                        : 'border-amber-500 text-amber-655 bg-amber-50/70'
+                    } font-black px-4 py-2 text-center rounded-2xl tracking-widest text-[16px] uppercase shadow-sm border-dashed`}>
+                      {selectedInvoiceBooking.statusPembayaran === 'lunas' ? 'LUNAS • PAID' : 'DP RECEIVED'}
+                      <div className="text-[8px] font-mono tracking-normal font-bold mt-0.5">
+                        UMAROH ACCOUNTING DEPT.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Left Top Brand / Enterprise Information */}
+                <div className="flex justify-between items-start border-b-2 border-slate-850 pb-5 mb-5 gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 font-sans">
+                      {currentUserData?.logo || currentUserData?.customMitraProfile?.logo ? (
+                        <img 
+                          src={currentUserData?.logo || currentUserData?.customMitraProfile?.logo} 
+                          alt="Company Logo" 
+                          className="w-12 h-12 object-contain"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-emerald-700 leading-10 text-center rounded-xl text-white font-black text-sm shadow">
+                          M
+                        </div>
+                      )}
+                      <div>
+                        <strong className="text-[14px] text-gray-900 font-extrabold uppercase tracking-wide">
+                          {currentUserData?.brandName || 'UMAROH EXECUTIVE TRAVEL'}
+                        </strong>
+                        <p className="text-[9px] text-gray-500 font-bold block">
+                          Sistem ERP Keagenan & Kemitraan Umrah Digital Terintegrasi
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-gray-500 leading-relaxed max-w-sm pt-1 font-sans">
+                      {currentUserData?.alamat || 'Pusat Niaga Kav. 12, Area Bandara Internasional, Jakarta, Indonesia.'}
+                      <span className="block mt-0.5">Mobile/WA: {currentUserData?.noHp || currentUserData?.phone || '+62 822-1234-5678'}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right space-y-1 font-sans">
+                    <span className="bg-indigo-100 text-indigo-800 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider border border-indigo-200">
+                      FAKTUR PENJUALAN
+                    </span>
+                    <h3 className="text-lg font-black font-mono text-gray-900 pt-1">
+                      {invoiceCustomNum}
+                    </h3>
+                    <p className="text-[10px] text-gray-500">
+                      Tanggal: <span className="font-bold text-gray-800">
+                        {selectedInvoiceBooking.createdAt 
+                          ? (selectedInvoiceBooking.createdAt.seconds 
+                            ? new Date(selectedInvoiceBooking.createdAt.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                            : 'Baru saja')
+                          : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                        }
+                      </span>
+                    </p>
+                    <p className="text-[10px] bg-slate-50 px-2 py-0.5 border border-slate-100 rounded inline-block text-gray-500 mt-1">
+                      Termin: <strong className="text-gray-800">Full Payment / Tabungan</strong>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Billing Info Grid Segment */}
+                <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 p-4 rounded-xl border border-slate-205/60 grid grid-cols-2 gap-4 mb-5 font-sans">
+                  <div>
+                    <h4 className="text-[9px] text-gray-400 font-black uppercase tracking-wider mb-1">DITAGIHKAN KEPADA:</h4>
+                    <strong className="text-sm text-indigo-900 block font-black">
+                      {jamaahs.find(j => j.id === selectedInvoiceBooking.id)?.nama_paspor || jamaahs.find(j => j.id === selectedInvoiceBooking.jamaahId)?.nama_paspor || selectedInvoiceBooking.jamaahId?.substring(0, 8)}
+                    </strong>
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      ID Pelanggan: <span className="font-mono text-gray-700 font-semibold">{selectedInvoiceBooking.jamaahId || '-'}</span>
+                    </p>
+                    <p className="text-[10px] text-gray-500">
+                      Status Jamaah: <span className="font-bold text-emerald-700">Terdaftar Aktif (Sutera Web)</span>
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-[9px] text-gray-400 font-black uppercase tracking-wider mb-1">PROGRAM DETAIL & HARGA:</h4>
+                    <p className="text-[11px] text-gray-800 font-extrabold leading-normal">
+                      📦 Paket: {selectedInvoiceBooking.paketLabel || 'Paket Pilihan Umrah Program'}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="bg-amber-100 text-amber-850 px-2 py-0.5 border border-amber-200 rounded font-black text-[9px] uppercase">
+                        {selectedInvoiceBooking.jenisPaket || 'Master'} Room
+                      </span>
+                      <strong className="text-slate-900 font-mono">
+                        {formatCurrency(selectedInvoiceBooking.totalHarga || 0)}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ledger Items Table (Standard Invoice Accurate) */}
+                <div className="mb-5 font-sans">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-800 text-white font-bold uppercase tracking-wider text-[9px] border border-slate-800">
+                        <th className="p-2.5">Deskripsi Layanan / Item Paket</th>
+                        <th className="p-2.5 text-center w-16">Jumlah</th>
+                        <th className="p-2.5 text-right w-28">Harga Satuan</th>
+                        <th className="p-2.5 text-right w-32">Total Harga</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 font-medium border border-slate-200">
+                      <tr className="hover:bg-slate-50/50">
+                        <td className="p-2.5">
+                          <strong className="text-gray-900 block font-extrabold text-[12px]">
+                            {selectedInvoiceBooking.paketLabel || 'Paket Pilihan Umrah Program'}
+                          </strong>
+                          <span className="text-[10px] text-gray-500">
+                            Pendaftaran Seat Umroh Program Kamar {selectedInvoiceBooking.jenisPaket || 'QUAD ROOM'} (All In Standard Accurate)
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-center text-gray-900 font-extrabold">1 Pack</td>
+                        <td className="p-2.5 text-right font-mono text-gray-800">
+                          {formatCurrency(selectedInvoiceBooking.totalHarga || 0)}
+                        </td>
+                        <td className="p-2.5 text-right font-mono text-gray-900 font-bold">
+                          {formatCurrency(selectedInvoiceBooking.totalHarga || 0)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Sub-Table Block: Real Payments Ledger (Integrated from Firestore Collection - No Dummy) */}
+                <div className="mb-5 font-sans">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-slate-50 px-3 py-2 border-b border-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-wider flex items-center justify-between">
+                      <span>Rincian Pembayaran & Riwayat Ledger Akuntansi (Real-time Firestore)</span>
+                      <span className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded font-bold text-[9px]">
+                        {invoiceTxs.length} Transaksi Terverifikasi
+                      </span>
+                    </div>
+                    <table className="w-full text-left text-[10px] leading-relaxed">
+                      <thead>
+                        <tr className="bg-slate-100/50 text-gray-500 font-bold uppercase tracking-wider text-[9px] border-b border-slate-200">
+                          <th className="p-2">Kode Referensi</th>
+                          <th className="p-2">Tanggal Terima</th>
+                          <th className="p-2">Metode Penerimaan</th>
+                          <th className="p-2 text-right">Nilai Nominal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-150 font-medium whitespace-nowrap">
+                        {invoiceTxs.map((tx) => (
+                          <tr key={tx.id} className="hover:bg-slate-50/30">
+                            <td className="p-2 font-mono text-gray-800">#{tx.id.substring(0, 8).toUpperCase()}</td>
+                            <td className="p-2 text-gray-600">
+                              {tx.createdAt 
+                                ? new Date(tx.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                : 'Baru saja'
+                              }
+                            </td>
+                            <td className="p-2 uppercase text-gray-650 max-w-[120px] overflow-hidden text-ellipsis">
+                              {tx.description || `Kasir Penerimaan (${tx.type || 'Pendaftaran'})`}
+                            </td>
+                            <td className="p-2 text-right font-mono text-indigo-700 font-black">
+                              {formatCurrency(tx.amount)}
+                            </td>
+                          </tr>
+                        ))}
+                        {invoiceTxs.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="p-3 text-center text-gray-400 italic">
+                              Belum ada rincian transaksi pembayaran yang tercatat di sistem (Menunggu Verifikasi Deposit).
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Sub-Totals Calculation Box Frame */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5 items-start font-sans">
+                  
+                  {/* Financial Terms Guidelines Disclaimer */}
+                  <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-200/50 text-[10px] text-amber-950 font-medium text-justify">
+                    <span className="font-extrabold uppercase tracking-wide block text-amber-900 border-b border-amber-200/50 pb-1 mb-1 font-sans">
+                      Catatan Legalitas Administrasi:
+                    </span>
+                    {invoiceNote}
+                  </div>
+
+                  {/* Pricing Arithmetic Block */}
+                  <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2 select-none font-sans">
+                    <div className="flex justify-between items-center text-[10.5px]">
+                      <span className="text-gray-500 font-semibold font-sans">Total Nilai Tagihan Paket:</span>
+                      <strong className="font-mono text-gray-900">
+                        {formatCurrency(selectedInvoiceBooking.totalHarga || 0)}
+                      </strong>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-[10.5px]">
+                      <span className="text-emerald-700 font-extrabold">Dana Terverifikasi Masuk:</span>
+                      <strong className="font-mono text-emerald-800 font-black font-sans">
+                        {formatCurrency(
+                          invoiceTxs
+                            .filter(tx => tx.status?.toLowerCase() === 'success' || tx.status?.toLowerCase() === 'lunas' || tx.status === undefined)
+                            .reduce((sum, tx) => sum + (tx.amount || 0), 0)
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-xs font-sans">
+                      <span className="text-indigo-855 font-black uppercase tracking-wider font-sans">SISA TAGIHAN MANDIRI (AR):</span>
+                      <strong className="font-mono text-indigo-900 font-black text-[13px] bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                        {formatCurrency(
+                          Math.max(0, (selectedInvoiceBooking.totalHarga || 0) - invoiceTxs
+                            .filter(tx => tx.status?.toLowerCase() === 'success' || tx.status?.toLowerCase() === 'lunas' || tx.status === undefined)
+                            .reduce((sum, tx) => sum + (tx.amount || 0), 0))
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="mt-1.5 pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[9px] text-gray-500 dark:border-dashed font-sans">
+                      <span>Progres Pelunasan Dana:</span>
+                      <strong className="text-indigo-700 font-black">
+                        {Math.min(100, Math.round((
+                          invoiceTxs
+                            .filter(tx => tx.status?.toLowerCase() === 'success' || tx.status?.toLowerCase() === 'lunas' || tx.status === undefined)
+                            .reduce((sum, tx) => sum + (tx.amount || 0), 0) / (selectedInvoiceBooking.totalHarga || 1)
+                        ) * 100))}% Lunas
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Official Indonesian Corporate Footer & Signatures Block */}
+                <div className="pt-4 border-t border-slate-200 grid grid-cols-2 text-center text-[10px] tracking-wide text-gray-600 gap-4 mt-6">
+                  <div>
+                    <h5 className="font-black text-gray-400 mb-10 text-[9px] uppercase tracking-wider">Hormat Kami, Calon Jamaah</h5>
+                    <div className="h-[1px] bg-gray-300 w-36 mx-auto mb-1"></div>
+                    <span className="text-gray-800 font-bold block text-[11px]">
+                      {jamaahs.find(j => j.id === selectedInvoiceBooking.id)?.nama_paspor || jamaahs.find(j => j.id === selectedInvoiceBooking.jamaahId)?.nama_paspor || 'Jamaah Pembeli'}
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-bold block mt-0.5">Tandatangan & Nama Terang</span>
+                  </div>
+
+                  <div>
+                     <h5 className="font-black text-gray-400 mb-10 text-[9px] uppercase tracking-wider">Pemeriksa Administrasi Keuangan</h5>
+                    <div className="h-[1px] bg-gray-300 w-36 mx-auto mb-1"></div>
+                    <span className="text-gray-800 font-bold block text-[11px]">
+                      {cashierName}
+                    </span>
+                    <span className="text-[9px] text-gray-400 font-bold block mt-0.5">Kasir Keuangan Marawa</span>
+                  </div>
+                </div>
+
+                {/* Print Sheet stylesheet block overrides */}
+                <style dangerouslySetInnerHTML={{__html: `
+                  @media print {
+                    @page {
+                      size: A4;
+                      margin: 15mm;
+                    }
+                    body * {
+                      visibility: hidden;
+                    }
+                    .invoice-print-area, .invoice-print-area * {
+                      visibility: visible;
+                    }
+                    .invoice-print-area {
+                      position: absolute;
+                      left: 0;
+                      top: 0;
+                      width: 100%;
+                      max-width: 100% !important;
+                      margin: 0 !important;
+                      padding: 0 !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      background: white !important;
+                    }
+                    .no-print {
+                      display: none !important;
+                    }
+                  }
+                `}} />
+
+              </div>
+              {/* Printable Area Ends */}
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -120,11 +120,11 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin() || (isSignedIn() && (resource.data.get('email', '') == request.auth.token.email));
+      allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email));
       allow list: if isOperasional() || isAdmin() || 
-                  (isSignedIn() && (resource.data.get('email', '') == request.auth.token.email)) ||
-                  (resource.data.get('role', '') == 'mitra') || 
-                  (resource.data.get('uplineId', '') == request.auth.uid);
+                  (isSignedIn() && (resource.data.email == request.auth.token.email)) ||
+                  (resource.data.role == 'mitra') || 
+                  (resource.data.uplineId == request.auth.uid);
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin();
       allow update: if (isAdmin() || isOperasional() || isOwner(userId)) && 
                     isValidUserProfile(incoming()) && (
@@ -149,8 +149,8 @@ service cloud.firestore {
     }
 
     match /transactions/{transactionId} {
-      allow get: if isOwner(resource.data.userId) || isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.get('recipientId', '') == request.auth.uid));
-      allow list: if isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.get('recipientId', '') == request.auth.uid));
+      allow get: if isOwner(resource.data.userId) || isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
+      allow list: if isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
       allow create: if isSignedIn() && 
                     incoming().userId == request.auth.uid && 
                     isValidTransaction(incoming());
@@ -182,29 +182,29 @@ service cloud.firestore {
 
     match /bookings/{bookingId} {
       allow get: if isSignedIn() && (
-                    resource.data.get('jamaahId', '') == request.auth.uid || 
-                    resource.data.get('mitraId', '') == request.auth.uid || 
-                    isOperasional()
+                    resource.data.jamaahId == request.auth.uid || 
+                    resource.data.mitraId == request.auth.uid || 
+                    isOperasional() || isAdmin()
                   );
       allow list: if isSignedIn() && (
-                    resource.data.get('jamaahId', '') == request.auth.uid || 
-                    resource.data.get('mitraId', '') == request.auth.uid || 
-                    isOperasional()
+                    resource.data.jamaahId == request.auth.uid || 
+                    resource.data.mitraId == request.auth.uid || 
+                    isOperasional() || isAdmin()
                   );
       allow create: if isSignedIn() && 
-                    (incoming().get('jamaahId', '') == request.auth.uid || 
-                     incoming().get('mitraId', '') == request.auth.uid || 
-                     isOperasional()) &&
+                    (('jamaahId' in incoming() && incoming().jamaahId == request.auth.uid) || 
+                     ('mitraId' in incoming() && incoming().mitraId == request.auth.uid) || 
+                     isOperasional() || isAdmin()) &&
                     isValidBooking(incoming());
-      allow update: if isOperasional() || 
+      allow update: if isOperasional() || isAdmin() || 
                     (isSignedIn() && (
-                      existing().get('jamaahId', '') == request.auth.uid || 
-                      existing().get('mitraId', '') == request.auth.uid
+                      ('jamaahId' in existing() && existing().jamaahId == request.auth.uid) || 
+                      ('mitraId' in existing() && existing().mitraId == request.auth.uid)
                     ) && isValidBooking(incoming()));
-      allow delete: if isOperasional() || 
+      allow delete: if isOperasional() || isAdmin() || 
                     (isSignedIn() && (
-                      existing().get('jamaahId', '') == request.auth.uid || 
-                      existing().get('mitraId', '') == request.auth.uid
+                      ('jamaahId' in existing() && existing().jamaahId == request.auth.uid) || 
+                      ('mitraId' in existing() && existing().mitraId == request.auth.uid)
                     ));
     }
 
@@ -254,8 +254,8 @@ service cloud.firestore {
     }
 
     match /pendaftaran_mitra/{pendaftaranId} {
-      allow get: if isOperasional() || (isSignedIn() && resource.data.get('email', '') == request.auth.token.email);
-      allow list: if isOperasional() || (isSignedIn() && resource.data.get('uplineId', '') == request.auth.uid);
+      allow get: if isOperasional() || isAdmin() || (isSignedIn() && resource.data.email == request.auth.token.email);
+      allow list: if isOperasional() || isAdmin() || (isSignedIn() && resource.data.uplineId == request.auth.uid);
       allow create: if isValidPendaftaranMitra(incoming()); 
       allow update: if isOperasional() && 
                     incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
@@ -354,8 +354,8 @@ service cloud.firestore {
     }
 
     match /shop_orders/{orderId} {
-      allow get, list: if isSignedIn() && (resource.data.jamaahId == request.auth.uid || isOperasional() || isAdmin());
-      allow create: if isSignedIn() && incoming().jamaahId == request.auth.uid && isValidShopOrder(incoming());
+      allow get, list: if isSignedIn() && (resource.data.jamaahId == request.auth.uid || resource.data.mitraId == request.auth.uid || isOperasional() || isAdmin());
+      allow create: if isSignedIn() && (incoming().jamaahId == request.auth.uid || incoming().mitraId == request.auth.uid) && isValidShopOrder(incoming());
       allow update: if isOperasional() || isAdmin();
       allow delete: if isAdmin();
     }

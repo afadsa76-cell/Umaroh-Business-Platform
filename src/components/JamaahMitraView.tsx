@@ -4,9 +4,36 @@ import { syncBookingToTracker, deleteBookingFromTracker } from '../utils/firebas
 import { 
   Search, User, CheckCircle2, Clock, 
   Plus, Edit2, Trash2, X, DollarSign, 
-  Calendar, AlertCircle, CheckSquare, RefreshCw, Eye, Upload
+  Calendar, AlertCircle, CheckSquare, RefreshCw, Eye, Upload,
+  Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+interface InvoiceTransaction {
+  id: string;
+  userId?: string;
+  bookingId?: string;
+  namaJamaah?: string;
+  type?: string;
+  amount: number;
+  status?: string;
+  description?: string;
+  createdAt?: string;
+}
+
+interface CurrentUserInvoiceData {
+  id?: string;
+  name?: string;
+  namaLengkap?: string;
+  brandName?: string;
+  logo?: string;
+  customMitraProfile?: {
+    logo?: string;
+  };
+  alamat?: string;
+  noHp?: string;
+  phone?: string;
+}
 
 interface Jamaah {
   id: string;
@@ -109,7 +136,47 @@ export const JamaahMitraView: React.FC = () => {
   // Fast Payment dialog fields
   const [quickPayAmount, setQuickPayAmount] = useState<number>(0);
 
+  // Invoice state variables
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [selectedInvoiceJamaah, setSelectedInvoiceJamaah] = useState<Jamaah | null>(null);
+  const [invoiceTxs, setInvoiceTxs] = useState<InvoiceTransaction[]>([]);
+  const [currentUserData, setCurrentUserData] = useState<CurrentUserInvoiceData | null>(null);
+  const [invoiceNote, setInvoiceNote] = useState('Pembayaran sah dilakukan melalui transfer Bank resmi Mitra atau Kantor Agen pusat. Harap simpan invoice dan kwitansi ini sebagai syarat pengambilan kelengkapan koper, seragam dan keberangkatan.');
+  const [invoiceCustomNum, setInvoiceCustomNum] = useState('');
+  const [showInvoiceStamp, setShowInvoiceStamp] = useState(true);
+  const [cashierName, setCashierName] = useState('');
+
   const userId = auth.currentUser?.uid;
+
+  // Load current user profile for invoice branding
+  useEffect(() => {
+    if (!userId) return;
+    const userRef = doc(db, 'users', userId);
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const uData = docSnap.data() as CurrentUserInvoiceData;
+        setCurrentUserData(uData);
+        setCashierName(uData.namaLengkap || uData.name || 'Petugas Administrasi');
+      }
+    });
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Load transactions for the selected invoice jamaah
+  useEffect(() => {
+    if (!selectedInvoiceJamaah) return;
+    const q = query(collection(db, 'transactions'), where('bookingId', '==', selectedInvoiceJamaah.id));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InvoiceTransaction));
+      txs.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+      });
+      setInvoiceTxs(txs);
+    });
+    return () => unsubscribe();
+  }, [selectedInvoiceJamaah]);
 
   // Real-Time snapshot for bookings under this Mitra
   useEffect(() => {
@@ -934,7 +1001,19 @@ export const JamaahMitraView: React.FC = () => {
 
                       {/* Row Actions Menu */}
                       <td className="p-5 text-right relative">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5 font-sans">
+                          <button
+                            onClick={() => {
+                              setSelectedInvoiceJamaah(jamaah);
+                              setInvoiceCustomNum(`INV/${new Date().getFullYear()}/UMR/${jamaah.id.substring(0, 6).toUpperCase()}`);
+                              setIsInvoiceOpen(true);
+                            }}
+                            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-2 rounded-xl transition cursor-pointer"
+                            title="Cetak Invoice & Administrasi Kwitansi"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+
                           <button
                             onClick={() => handleOpenPayment(jamaah)}
                             className="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 rounded-xl transition"
@@ -1623,6 +1702,393 @@ export const JamaahMitraView: React.FC = () => {
                   >
                     Terapkan & Cetak Kwitansi
                   </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* PRINT INVOICE & ADMINISTRATIVE HUB MODAL */}
+      <AnimatePresence>
+        {isInvoiceOpen && selectedInvoiceJamaah && (
+          <div className="fixed inset-0 bg-[#0f172a]/70 backdrop-blur-md flex items-center justify-center p-4 lg:p-8 z-50 overflow-y-auto print:bg-white print:p-0 print:static print:overflow-visible">
+            {/* INJECT PRINT SPECIFIC STYLES DYNAMICALLY */}
+            <style dangerouslySetInnerHTML={{ __html: `
+              @media print {
+                /* Hide everything by default */
+                body * {
+                  visibility: hidden !important;
+                }
+                /* Only show the invoice container and its contents */
+                #print-invoice-area, #print-invoice-area * {
+                  visibility: visible !important;
+                }
+                #print-invoice-area {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 210mm !important;
+                  height: 297mm !important;
+                  padding: 20mm !important;
+                  margin: 0 !important;
+                  background-color: white !important;
+                  color: black !important;
+                  box-shadow: none !important;
+                  border: none !important;
+                  font-size: 11pt !important;
+                  line-height: 1.5 !important;
+                }
+                /* Override absolute layout positioning on print */
+                .print-fixed-layout {
+                  display: block !important;
+                  width: 100% !important;
+                }
+                /* Hide screen-only interactive states */
+                .screen-only {
+                  display: none !important;
+                }
+              }
+            ` }} />
+
+            <motion.div 
+              initial={{ scale: 0.98, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.98, opacity: 0 }}
+              className="bg-gray-100 rounded-3xl w-full max-w-6xl h-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-gray-150 screen-only print:hidden print:static print:h-auto print:max-h-none print:shadow-none print:border-none print:bg-white"
+            >
+              {/* Dynamic Header */}
+              <div className="bg-white p-6 border-b border-gray-200 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                    <Printer className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black tracking-widest text-indigo-600 uppercase">ADMINISTRASI KEUANGAN & INVOICING</span>
+                    <h3 className="text-base font-black text-gray-900 leading-tight flex items-center gap-2">
+                      Faktur Tagihan & Kwitansi Resmi: <span className="text-gray-500 font-mono text-sm">{selectedInvoiceJamaah.namaJamaah}</span>
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      window.print();
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Cetak Sekarang / Save PDF
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setIsInvoiceOpen(false);
+                      setSelectedInvoiceJamaah(null);
+                    }}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2.5 rounded-xl transition cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Workspace Body */}
+              <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-gray-50/50">
+                {/* Left Panel: Configuration Parameters */}
+                <div className="w-full md:w-80 border-r border-gray-200/60 p-6 space-y-5 overflow-y-auto shrink-0 bg-white">
+                  <h4 className="text-[10px] font-black tracking-wider uppercase text-gray-400">Parameter Administrasi</h4>
+                  
+                  {/* Invoice custom numbering */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-wider">Nomor Invoice</label>
+                    <input 
+                      type="text"
+                      placeholder="e.g. INV/2026/UMR/12"
+                      value={invoiceCustomNum}
+                      onChange={(e) => setInvoiceCustomNum(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-black text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-505 focus:bg-white transition"
+                    />
+                  </div>
+
+                  {/* Cashier name customized */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-wider">Nama Petugas Kasir</label>
+                    <input 
+                      type="text"
+                      placeholder="Petugas Administrasi"
+                      value={cashierName}
+                      onChange={(e) => setCashierName(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-505 focus:bg-white transition"
+                    />
+                  </div>
+
+                  {/* Stamp toggle */}
+                  <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-150 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-gray-800 uppercase tracking-wider">Stempel Lunas Resmi</p>
+                      <p className="text-[9px] text-gray-400 font-bold leading-normal">Tampilkan cap cap "PAID APPROVED" berwarna</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={showInvoiceStamp}
+                        onChange={(e) => setShowInvoiceStamp(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-305 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-550"></div>
+                    </label>
+                  </div>
+
+                  {/* Invoice Terms / Note text box */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-wider">Catatan Tambahan Ketentuan</label>
+                    <textarea 
+                      rows={4}
+                      value={invoiceNote}
+                      onChange={(e) => setInvoiceNote(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs leading-normal text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-505 focus:bg-white transition resize-none"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        window.print();
+                      }}
+                      className="w-full bg-emerald-550 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4" />
+                      CETAK / SIMPAN PDF
+                    </button>
+                    <p className="text-[8.5px] text-gray-400 font-semibold leading-normal text-center mt-2">
+                      Gunakan browser print untuk menyimpan file PDF atau mencetak langsung ke Printer kertas thermal/A4.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Panel: High-fidelity Live A4 Preview */}
+                <div className="flex-1 p-6 md:p-10 overflow-y-auto flex items-start justify-center">
+                  <div 
+                    id="print-invoice-area"
+                    className="bg-white w-[210mm] min-h-[297mm] p-12 border border-gray-200 shadow-xl relative text-black print:shadow-none print:border-none print:p-0 flex flex-col justify-between"
+                  >
+                    {/* TOP SECTION: Letterhead & Invoice Metadata */}
+                    <div className="space-y-8 flex-grow">
+                      <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6">
+                        {/* Partner Logo & Brand */}
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-2xl bg-indigo-550/10 border border-indigo-400 flex items-center justify-center overflow-hidden shrink-0">
+                            {currentUserData?.logo || currentUserData?.customMitraProfile?.logo ? (
+                              <img 
+                                src={currentUserData.logo || currentUserData.customMitraProfile?.logo} 
+                                alt="Mitra" 
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <span className="text-2xl font-black italic text-indigo-700">U</span>
+                            )}
+                          </div>
+                          <div>
+                            <h2 className="text-lg font-black tracking-tight text-gray-900 uppercase">
+                              {currentUserData?.brandName || currentUserData?.namaLengkap || currentUserData?.name || 'UMAROH CRM PARTNER'}
+                            </h2>
+                            <p className="text-[9px] font-black text-indigo-700 uppercase tracking-widest leading-none mt-0.5">REKANAN RESMI AGEN PERJALANAN UMAROH ERP</p>
+                            <p className="text-[10px] text-gray-500 font-bold leading-normal mt-1 max-w-[280px]">
+                              📍 {currentUserData?.alamat || 'Partner Wilayah Resmi Indonesia'}
+                              <br />
+                              📞 {currentUserData?.noHp || currentUserData?.phone || '-'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Document Meta */}
+                        <div className="text-right">
+                          <span className="bg-gray-900 text-white px-2.5 py-0.5 rounded text-[8px] font-black tracking-widest uppercase">
+                            FAKTUR KWITANSI RESMI
+                          </span>
+                          <h1 className="text-xl font-black text-gray-900 tracking-tight italic mt-2">INVOICE PEMBAYARAN</h1>
+                          <p className="text-xs font-bold text-gray-500 font-mono mt-1">
+                            No: <span className="text-gray-900 font-black">{invoiceCustomNum}</span>
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-bold mt-1">
+                            Tanggal Terbit: <span className="text-gray-700">{new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* CLIENT BILL TO INFO AREA */}
+                      <div className="grid grid-cols-2 gap-8 bg-gray-50/70 p-5 rounded-2xl border border-gray-150">
+                        <div>
+                          <p className="text-[8px] font-black tracking-wider text-gray-400 uppercase">DITAGIHKAN KEPADA JAMAAH:</p>
+                          <p className="text-sm font-black text-gray-900 mt-1">{selectedInvoiceJamaah.namaJamaah}</p>
+                          <p className="text-[10px] text-gray-600 font-semibold mt-1">
+                            HP/Whatsapp: <span className="font-bold text-gray-900 font-mono">{selectedInvoiceJamaah.noHp || '-'}</span>
+                          </p>
+                          {selectedInvoiceJamaah.nomorPassport && (
+                            <p className="text-[10px] text-gray-600 font-semibold mt-0.5">
+                              Nomor Paspor: <span className="font-bold text-gray-900 font-mono">{selectedInvoiceJamaah.nomorPassport}</span>
+                            </p>
+                          )}
+                          <p className="text-[10px] text-gray-600 font-semibold mt-0.5">
+                            Kewarganegaraan: <span className="font-bold text-gray-900">{selectedInvoiceJamaah.kewarganegaraan || 'INDONESIA'}</span>
+                          </p>
+                        </div>
+
+                        <div className="border-l border-gray-200/70 pl-8">
+                          <p className="text-[8px] font-black tracking-wider text-gray-400 uppercase">DETAIL PAKET PERJALANAN:</p>
+                          <p className="text-[11px] font-black text-gray-800 mt-1 uppercase line-clamp-2 leading-tight">{selectedInvoiceJamaah.paketNama}</p>
+                          <p className="text-[10px] text-gray-600 font-bold mt-1.5 flex items-center gap-1">
+                            <span>Tipe Pilihan Room:</span>
+                            <span className="font-black text-indigo-750 bg-indigo-50 border border-indigo-100/50 px-1 py-0.1 rounded text-[9.5px]">
+                              🛏️ {selectedInvoiceJamaah.roomType} Room
+                            </span>
+                          </p>
+                          <p className="text-[10px] text-gray-600 font-bold mt-1 flex items-center gap-1">
+                            <span>Status Persiapan:</span>
+                            <span className="text-gray-900 uppercase font-black">{selectedInvoiceJamaah.statusKeberangkatan}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* MAIN BREAKDOWN TABLE */}
+                      <div className="space-y-4">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="border-b-2 border-gray-800 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              <th className="py-2.5">RINCIAN ADMINISTRASI KEAGENAN</th>
+                              <th className="py-2.5 text-center w-28">TIPE RUANG</th>
+                              <th className="py-2.5 text-right w-40">HARGA SATUAN (IDR)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-150">
+                            {/* Line item 1: Package cost */}
+                            <tr>
+                              <td className="py-3.5">
+                                <p className="text-xs font-black text-gray-900">Pendaftaran Seat & Perlengkapan Travel Paket Umroh</p>
+                                <p className="text-[10px] text-gray-400 font-semibold leading-normal mt-0.5">
+                                  Menjamin slot seat jamaah, siskopatuh visa, tiket PP, hotel madinah mekkah, muthawif, dan koper kustom exclusive.
+                                </p>
+                              </td>
+                              <td className="py-3.5 text-center text-xs font-mono font-black text-gray-700">
+                                {selectedInvoiceJamaah.roomType}
+                              </td>
+                              <td className="py-3.5 text-right text-xs font-bold font-mono text-gray-900">
+                                {formatCurrency(selectedInvoiceJamaah.totalHarga)}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* SUB LEDGER PROGRESS TRANSACTIONS (ADMINISTRASI NEAT) */}
+                      {invoiceTxs.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                          <h4 className="text-[9px] font-black uppercase text-gray-400 tracking-wider">Histori Alur Setoran Masuk Real-Time</h4>
+                          <div className="border border-gray-200 rounded-xl overflow-hidden">
+                            <table className="w-full text-left border-collapse text-[10px]">
+                              <thead>
+                                <tr className="bg-gray-550/5 text-gray-500 font-extrabold border-b border-gray-200">
+                                  <th className="p-2.5 uppercase text-[8.5px]">No Referensi Log</th>
+                                  <th className="p-2.5 uppercase text-[8.5px]">Waktu Setoran</th>
+                                  <th className="p-2.5 uppercase text-[8.5px]">Keterangan Deposit</th>
+                                  <th className="p-2.5 text-right uppercase text-[8.5px] w-36">Jumlah Dana (IDR)</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-150 bg-white">
+                                {invoiceTxs.map((tx, idx) => (
+                                  <tr key={tx.id} className="hover:bg-gray-50/50">
+                                    <td className="p-2.5 font-mono text-gray-400 font-bold shrink-0">{tx.id.substring(0, 10).toUpperCase()}</td>
+                                    <td className="p-2.5 text-gray-550 font-bold">
+                                      {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
+                                    </td>
+                                    <td className="p-2.5 text-gray-700 truncate max-w-[200px]" title={tx.description || `Deposit Ke-${idx+1}`}>
+                                      {tx.description || `Deposit Setoran Ke-${idx+1}`}
+                                    </td>
+                                    <td className="p-2.5 text-right font-bold text-emerald-600 font-mono">
+                                      +{formatCurrency(tx.amount)}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SUMMARY BILLING CONTROLS */}
+                      <div className="flex justify-end pt-2 border-t border-gray-200">
+                        <div className="w-80 space-y-2 text-xs">
+                          <div className="flex justify-between items-center text-gray-450">
+                            <span className="font-bold">Total Nilai Tagihan Paket:</span>
+                            <span className="font-mono text-gray-900 font-black">{formatCurrency(selectedInvoiceJamaah.totalHarga)}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center bg-emerald-50/55 p-2 rounded-xl text-emerald-700 border border-emerald-100">
+                            <span className="font-black uppercase tracking-wider text-[9.5px]">Total Setor Deposit Masuk:</span>
+                            <span className="font-mono text-emerald-800 font-extrabold">{formatCurrency(selectedInvoiceJamaah.jumlahBayar)}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center bg-gray-50 p-2 rounded-xl border border-gray-150">
+                            <span className="font-black text-gray-400 uppercase tracking-wider text-[9.5px]">Sisa Kurang Selesai Bagian:</span>
+                            <span className={`font-mono font-black ${selectedInvoiceJamaah.totalHarga - selectedInvoiceJamaah.jumlahBayar <= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {selectedInvoiceJamaah.totalHarga - selectedInvoiceJamaah.jumlahBayar <= 0 ? 'LUNAS' : formatCurrency(selectedInvoiceJamaah.totalHarga - selectedInvoiceJamaah.jumlahBayar)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* BOTTOM SECTION: Footer, Stamp & Signature controls */}
+                    <div className="space-y-12">
+                      <div className="border-t border-gray-200 pt-6 grid grid-cols-12 gap-8 items-end">
+                        {/* Note area */}
+                        <div className="col-span-7 space-y-1.5 text-left">
+                          <span className="text-[8px] font-black tracking-wider text-gray-400 uppercase">CATATAN & KETENTUAN HUKUM:</span>
+                          <p className="text-[9.5px] text-gray-500 leading-relaxed font-medium">
+                            {invoiceNote}
+                          </p>
+                        </div>
+
+                        {/* Signatures & Stamp area */}
+                        <div className="col-span-5 relative flex items-center justify-between pl-8 border-l border-gray-200/60 min-h-[90px]">
+                          {/* PAID Stamp overlay */}
+                          {showInvoiceStamp && selectedInvoiceJamaah.statusPembayaran === 'Lunas' && (
+                            <div className="absolute -left-2 top-0 border-4 border-dashed border-emerald-500 text-emerald-500 font-black tracking-widest text-[14px] uppercase p-2 rounded-2xl rotate-[-12deg] select-none bg-white/90 z-10 shadow-md">
+                              PAID AT APPROVED
+                              <br />
+                              <span className="text-[9px] font-mono tracking-tight block text-center mt-1 leading-none">{new Date().toLocaleDateString('id-ID')}</span>
+                            </div>
+                          )}
+
+                          {showInvoiceStamp && selectedInvoiceJamaah.statusPembayaran === 'DP' && (
+                            <div className="absolute -left-2 top-0 border-4 border-dashed border-amber-500 text-amber-500 font-black tracking-widest text-[14px] uppercase p-2 rounded-2xl rotate-[-12deg] select-none bg-white/90 z-10 shadow-md">
+                              DP RECEIVED
+                              <br />
+                              <span className="text-[9px] font-mono tracking-tight block text-center mt-1 leading-none">AKTIF PROSES</span>
+                            </div>
+                          )}
+
+                          {/* Cashier signature section */}
+                          <div className="text-center ml-auto">
+                            <span className="text-[8px] font-black tracking-wider text-gray-400 uppercase block mb-12">Penerima Administrasi Kasir</span>
+                            <div className="border-t border-gray-900 pt-1.5 w-36 mx-auto">
+                              <p className="text-[10px] font-black text-gray-900 leading-none">{cashierName}</p>
+                              <p className="text-[8px] font-bold text-gray-400 uppercase mt-1">{currentUserData?.brandName || 'Official Partner'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tiny corporate copyright */}
+                      <div className="text-center text-[7.5px] font-extrabold uppercase text-gray-400 tracking-widest">
+                        DIKELUARKAN SECARA RESMI MELALUI PLATFORM ERP INTEGRASI - UMAROH CRM COOPERATIVE SYSTEM
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </motion.div>

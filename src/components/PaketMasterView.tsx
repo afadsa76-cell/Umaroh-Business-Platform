@@ -7,6 +7,17 @@ import { PaketMasterWizard } from './PaketMasterWizard';
 import { ChecklistOperasional } from './tracker/ChecklistOperasional';
 import { PaketTracker } from './tracker/types';
 
+interface UserRecord {
+  id: string;
+  role?: string;
+  status?: string;
+  namaLengkap?: string;
+  name?: string;
+  brandName?: string;
+  jenisMitra?: string;
+  kota?: string;
+}
+
 interface PaketMaster {
   id: string;
   requestId?: string;
@@ -20,6 +31,7 @@ interface PaketMaster {
   status: 'draft' | 'published' | 'closed' | 'pending_validation' | 'expired' | 'archived';
   createdAt?: { toDate: () => Date };
   tglBerangkat?: string;
+  mitraId?: string;
 }
 
 export const PaketMasterView: React.FC = () => {
@@ -37,6 +49,7 @@ export const PaketMasterView: React.FC = () => {
 
   const [viewingTrackerPaket, setViewingTrackerPaket] = useState<PaketTracker | null>(null);
   const [allTrackers, setAllTrackers] = useState<PaketTracker[]>([]);
+  const [users, setUsers] = useState<UserRecord[]>([]);
 
   const showNotification = (type: 'success'|'error', message: string) => {
     setNotification({ type, message });
@@ -72,10 +85,18 @@ export const PaketMasterView: React.FC = () => {
       handleFirestoreError(error, OperationType.GET, 'tracker_paket');
     });
 
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(data);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'users');
+    });
+
     return () => {
       unsubPaket();
       unsubMaskapai();
       unsubTracker();
+      unsubUsers();
     };
   }, [viewingTrackerPaket?.id]);
 
@@ -404,6 +425,7 @@ export const PaketMasterView: React.FC = () => {
               <tr>
                 <th className="px-6 py-4">Kode Paket</th>
                 <th className="px-6 py-4">Nama Paket & Deskripsi</th>
+                <th className="px-6 py-4">Nama Mitra / Brand</th>
                 <th className="px-6 py-4">Maskapai & Jadwal</th>
                 <th className="px-6 py-4 text-right">Harga Jual (Quad)</th>
                 <th className="px-6 py-4 text-center">Kuota (Sisa)</th>
@@ -456,6 +478,24 @@ export const PaketMasterView: React.FC = () => {
                           })()}
                         </div>
                       )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {(() => {
+                        const mId = paket.mitraId;
+                        if (!mId) {
+                          return <span className="bg-amber-50 text-amber-700 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded border border-amber-200 tracking-wider">Umaroh Pusat</span>;
+                        }
+                        const u = users.find(user => user.id === mId);
+                        if (!u) return <span className="text-xs text-gray-450 font-bold italic">Mitra Tidak Ditemukan</span>;
+                        return (
+                          <div>
+                            <p className="font-extrabold text-gray-900 text-xs uppercase leading-tight">{u.namaLengkap || u.name || 'Mitra'}</p>
+                            {u.brandName && (
+                              <p className="text-[9px] text-indigo-600 font-black uppercase mt-0.5 tracking-tight">💼 {u.brandName}</p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs font-bold text-gray-700 uppercase">{getMaskapaiName(paket.maskapaiId)}</div>
@@ -532,7 +572,7 @@ export const PaketMasterView: React.FC = () => {
 
               {filteredPakets.length === 0 && !loading && !isAdding && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-gray-500 font-bold uppercase tracking-wider text-xs">
+                  <td colSpan={8} className="p-8 text-center text-gray-500 font-bold uppercase tracking-wider text-xs">
                     Belum ada data Paket Master untuk kriteria filter ini.
                   </td>
                 </tr>
