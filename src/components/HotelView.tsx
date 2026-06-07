@@ -37,7 +37,12 @@ const getMatchedPeriodName = (rangeStr: string): string => {
   return match.hijri;
 };
 
-export const HotelView: React.FC = () => {
+interface HotelViewProps {
+  isVendorMode?: boolean;
+  vendorName?: string;
+}
+
+export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vendorName = '' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [mealFilter, setMealFilter] = useState('ALL');
   const [vendorFilter, setVendorFilter] = useState('ALL');
@@ -54,7 +59,9 @@ export const HotelView: React.FC = () => {
     return hotels.filter((hotel) => {
       const matchesSearch = hotel.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesMeal = mealFilter === 'ALL' || hotel.mealPlan === mealFilter;
-      const matchesVendor = vendorFilter === 'ALL' || hotel.vendor === vendorFilter;
+      const matchesVendor = isVendorMode 
+        ? hotel.vendor.toLowerCase() === vendorName.toLowerCase()
+        : (vendorFilter === 'ALL' || hotel.vendor === vendorFilter);
       const matchesCity = cityFilter === 'ALL' || hotel.city === cityFilter;
       
       let matchesDate = true;
@@ -66,7 +73,7 @@ export const HotelView: React.FC = () => {
 
       return matchesSearch && matchesMeal && matchesVendor && matchesCity && matchesDate;
     });
-  }, [searchTerm, mealFilter, vendorFilter, cityFilter, dateFilter]);
+  }, [searchTerm, mealFilter, vendorFilter, cityFilter, dateFilter, isVendorMode, vendorName]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -198,6 +205,7 @@ export const HotelView: React.FC = () => {
         onDateFilterChange={setDateFilter}
         onResetFilters={handleResetFilters}
         vendors={vendors}
+        isVendorMode={isVendorMode}
       />
 
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

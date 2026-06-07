@@ -8,8 +8,8 @@
         "uid": { "type": "string" },
         "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
-        "role": { "type": "string", "enum": ["operasional", "mitra", "jamaah", "admin"] },
-        "subRole": { "type": "string", "enum": ["development", "operasional", "finance", "marketing", ""] },
+        "role": { "type": "string", "enum": ["operasional", "mitra", "jamaah", "admin", "vendor"] },
+        "subRole": { "type": "string", "enum": ["development", "operasional", "finance", "marketing", "vendor_maskapai", "vendor_hotel", ""] },
         "uplineId": { "type": "string", "description": "UID mitra yang merekrut (jika ada)" },
         "createdAt": { "type": "string", "format": "date-time" }
       },

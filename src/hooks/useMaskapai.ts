@@ -16,9 +16,26 @@ export const useMaskapai = () => {
         id: doc.id
       })) as Maskapai[];
       
-      // Filter out expired flights (tanggalKepulangan < today)
+      // Filter out expired flights (tanggalKepulangan < today or stale for > 3 days)
       const today = new Date().toISOString().split('T')[0];
-      const activeFlights = data.filter(flight => flight.tanggalKepulangan >= today);
+      const activeFlights = data.filter(flight => {
+        const isPast = flight.tanggalKepulangan < today;
+        if (isPast) return false;
+
+        if (flight.updatedAt) {
+          try {
+            const updatedDate = new Date(flight.updatedAt);
+            if (!isNaN(updatedDate.getTime())) {
+              const diffTime = Math.abs(new Date().getTime() - updatedDate.getTime());
+              const diffDays = diffTime / (1000 * 60 * 60 * 24);
+              if (diffDays > 3) return false; // Filter out stale flights (>3 days)
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        return true;
+      });
       
       setMaskapai(activeFlights);
       setLoading(false);

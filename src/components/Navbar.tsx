@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management';
+export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
@@ -57,6 +57,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'tracker-vendor', label: 'Cost Component Tracker (ERP)', icon: Layers },
     { id: 'ad-management', label: 'Iklan & Ad Management (Ads)', icon: Megaphone },
     { id: 'profile', label: 'Profil Saya', icon: Users },
+    { id: 'vendor-maskapai', label: 'Update Data Maskapai', icon: Plane },
+    { id: 'vendor-hotel', label: 'Update Data Hotel', icon: Database },
   ];
 
   const CATEGORIES: {
@@ -93,7 +95,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
 
   const navItems = userRole === 'mitra' 
     ? allNavItems.filter(item => item.id === 'templates' || item.id === 'flights')
-    : allNavItems;
+    : userRole === 'vendor'
+      ? allNavItems.filter(item => 
+          item.id === 'dashboard' || 
+          item.id === 'profile' || 
+          (subRole === 'vendor_maskapai' && item.id === 'vendor-maskapai') || 
+          (subRole === 'vendor_hotel' && item.id === 'vendor-hotel')
+        )
+      : allNavItems;
 
   const handleTabClick = (id: TabType) => {
     onTabChange(id);
@@ -128,7 +137,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
           </div>
           <div className="mt-2 w-full text-center">
             <span className="text-[10px] text-indigo-800 font-extrabold tracking-widest uppercase block font-sans">
-              PORTAL ADMIN UMAROH
+              {userRole === 'vendor' ? 'PORTAL VENDOR' : 'PORTAL ADMIN UMAROH'}
             </span>
           </div>
         </div>
@@ -136,14 +145,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
         {/* User Info Card in Sidebar */}
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-750 font-black flex items-center justify-center text-xs uppercase shadow-sm shrink-0">
-            {userRole === 'admin' ? 'AD' : 'OP'}
+            {userRole === 'vendor' ? 'VD' : (userRole === 'admin' ? 'AD' : 'OP')}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] font-black text-gray-800 truncate uppercase mt-0.5 leading-none">
-              {userRole === 'admin' ? 'Administrator' : (subRole ? `Ops - ${subRole}` : 'Operasional')}
+              {userRole === 'vendor' ? (subRole === 'vendor_maskapai' ? 'Vendor Maskapai' : 'Vendor Hotel') : (userRole === 'admin' ? 'Administrator' : (subRole ? `Ops - ${subRole}` : 'Operasional'))}
             </p>
             <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap block mt-1">
-              SYSTEM LEVEL ACCESS
+              {userRole === 'vendor' ? 'VENDOR LIMITED ACCESS' : 'SYSTEM LEVEL ACCESS'}
             </span>
           </div>
         </div>
@@ -166,6 +175,37 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
               <span className="truncate text-left leading-tight py-0.5 uppercase tracking-wide">Dashboard</span>
             </button>
           </div>
+
+          {userRole === 'vendor' && (
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-black tracking-wider text-indigo-700 uppercase flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50/50 rounded-lg">
+                <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+                MENU UTAMA VENDOR
+              </div>
+              <div className="flex flex-col gap-0.5 pl-1">
+                {navItems.filter(item => item.id !== 'dashboard').map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleTabClick(item.id)}
+                      className={`
+                        w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer justify-start
+                        ${isActive 
+                          ? 'bg-indigo-600 text-white shadow-md' 
+                          : 'text-gray-650 hover:bg-gray-50 hover:text-gray-900'
+                        }
+                      `}
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-indigo-600/70'}`} />
+                      <span className="truncate text-left leading-tight py-0.5">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {visibleCategories.map((cat) => {
             const CatIcon = cat.icon;

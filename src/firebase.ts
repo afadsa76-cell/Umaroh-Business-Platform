@@ -424,39 +424,54 @@ export function onSnapshot(ref: any, ...args: any[]): any {
       unsubOrig = origOnSnapshot(
         ref,
         (snap: any) => {
-          const list: any[] = [];
-          let isDocDeletion = false;
-          let docIdToDelete = '';
-
           if (typeof snap.forEach === 'function') {
-            snap.forEach((doc: any) => {
-              list.push({ ...doc.data(), id: doc.id });
-            });
+            const currentLocal = getLocalCollection(path);
+            let updatedLocal = [...currentLocal];
+
+            if (typeof snap.docChanges === 'function') {
+              const changes = snap.docChanges();
+              changes.forEach((change: any) => {
+                const docItem = { ...change.doc.data(), id: change.doc.id };
+                if (change.type === 'added' || change.type === 'modified') {
+                  const idx = updatedLocal.findIndex(item => item.id === docItem.id);
+                  if (idx >= 0) {
+                    updatedLocal[idx] = docItem;
+                  } else {
+                    updatedLocal.push(docItem);
+                  }
+                } else if (change.type === 'removed') {
+                  updatedLocal = updatedLocal.filter(item => item.id !== docItem.id);
+                }
+              });
+            } else {
+              if (meta?.hybridType === 'collection') {
+                const fullList: any[] = [];
+                snap.forEach((doc: any) => {
+                  fullList.push({ ...doc.data(), id: doc.id });
+                });
+                updatedLocal = fullList;
+              } else {
+                const list: any[] = [];
+                snap.forEach((doc: any) => {
+                  list.push({ ...doc.data(), id: doc.id });
+                });
+                list.forEach(docItem => {
+                  const idx = updatedLocal.findIndex(item => item.id === docItem.id);
+                  if (idx >= 0) {
+                    updatedLocal[idx] = docItem;
+                  } else {
+                    updatedLocal.push(docItem);
+                  }
+                });
+              }
+            }
+            saveLocalCollection(path, updatedLocal);
           } else {
             if (snap.exists && snap.exists()) {
-              list.push({ ...snap.data(), id: snap.id });
+              writeLocalDoc(path, snap.id, snap.data(), 'set');
             } else {
-              isDocDeletion = true;
-              docIdToDelete = snap.id;
+              deleteLocalDoc(path, snap.id);
             }
-          }
-
-          if (list.length > 0) {
-            const currentLocal = getLocalCollection(path);
-            const updatedLocal = [...currentLocal];
-            list.forEach(docItem => {
-              const idx = updatedLocal.findIndex(item => item.id === docItem.id);
-              if (idx >= 0) {
-                updatedLocal[idx] = docItem;
-              } else {
-                updatedLocal.push(docItem);
-              }
-            });
-            saveLocalCollection(path, updatedLocal);
-          } else if (isDocDeletion && docIdToDelete) {
-            const currentLocal = getLocalCollection(path);
-            const updatedLocal = currentLocal.filter(item => item.id !== docIdToDelete);
-            saveLocalCollection(path, updatedLocal);
           }
 
           onNext(snap);

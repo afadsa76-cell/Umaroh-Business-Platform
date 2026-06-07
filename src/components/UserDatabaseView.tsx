@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, auth, collection, onSnapshot, doc, deleteDoc, handleFirestoreError, OperationType, setDoc, getDocs, query, where } from '../firebase';
 import { Users, Shield, User, Search, Edit2, Trash2, Mail, Phone, MapPin, Plus, X, CheckCircle2, Building2 } from 'lucide-react';
 
-type UserRole = 'admin' | 'mitra' | 'jamaah';
+type UserRole = 'admin' | 'mitra' | 'jamaah' | 'vendor';
 
 interface UserData {
   id: string;
@@ -20,6 +20,7 @@ interface UserData {
   } | string | Date;
   status?: string;
   brandName?: string;
+  namaVendor?: string;
   passwordAwal?: string;
   updatedAt?: string;
   kota?: string;
@@ -183,10 +184,11 @@ export const UserDatabaseView: React.FC = () => {
         phone: phone.trim(),
         address: address.trim(),
         status,
-        brandName: roleOption === 'mitra' ? brandName.trim() : '',
+        brandName: (roleOption === 'mitra' || roleOption === 'vendor') ? brandName.trim() : '',
+        namaVendor: roleOption === 'vendor' ? brandName.trim() : '',
         passwordAwal: passwordAwal.trim(),
         kota: roleOption === 'mitra' ? kota.trim() : '',
-        subRole: roleOption === 'admin' ? subRole : '',
+        subRole: (roleOption === 'admin' || roleOption === 'vendor') ? subRole : '',
         jenisMitra: roleOption === 'mitra' ? jenisMitra : '',
         updatedAt: new Date().toISOString()
       };
@@ -241,6 +243,7 @@ export const UserDatabaseView: React.FC = () => {
       case 'admin': return <Shield className="w-4 h-4 text-rose-600" />;
       case 'mitra': return <Users className="w-4 h-4 text-blue-600" />;
       case 'jamaah': return <User className="w-4 h-4 text-emerald-600" />;
+      case 'vendor': return <Building2 className="w-4 h-4 text-amber-600" />;
     }
   };
 
@@ -249,6 +252,7 @@ export const UserDatabaseView: React.FC = () => {
       case 'admin': return 'bg-rose-50 text-rose-700 ring-rose-600/20';
       case 'mitra': return 'bg-blue-50 text-blue-700 ring-blue-600/20';
       case 'jamaah': return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
+      case 'vendor': return 'bg-amber-50 text-amber-700 ring-amber-600/20';
       default: return 'bg-gray-50 text-gray-700 ring-gray-600/20';
     }
   };
@@ -289,7 +293,7 @@ export const UserDatabaseView: React.FC = () => {
 
       {/* Role Tabs */}
       <div className="flex bg-gray-100 p-1 rounded-2xl mb-8 w-full sm:w-fit overflow-x-auto no-scrollbar">
-        {((isMasterAdmin ? ['admin', 'mitra', 'jamaah'] : ['mitra', 'jamaah']) as UserRole[]).map((role) => (
+        {((isMasterAdmin ? ['admin', 'mitra', 'jamaah', 'vendor'] : ['mitra', 'jamaah', 'vendor']) as UserRole[]).map((role) => (
           <button
             key={role}
             onClick={() => setActiveRole(role)}
@@ -326,11 +330,11 @@ export const UserDatabaseView: React.FC = () => {
                     )}
                     <div>
                       <h3 className="font-bold text-gray-900 truncate max-w-[150px]" title={user.brandName || user.namaLengkap || user.mitraName || 'Tanpa Nama'}>
-                        {user.role === 'mitra' && user.brandName ? user.brandName : (user.namaLengkap || user.mitraName || 'Tanpa Nama')}
+                        {(user.role === 'mitra' || user.role === 'vendor') && user.brandName ? user.brandName : (user.namaLengkap || user.mitraName || 'Tanpa Nama')}
                       </h3>
-                      {user.role === 'mitra' && user.brandName && (
+                      {(user.role === 'mitra' || user.role === 'vendor') && user.brandName && (
                         <p className="text-[10px] text-gray-500 font-semibold truncate max-w-[150px] mb-1">
-                          Owner: {user.namaLengkap || user.mitraName || 'Tanpa Nama'}
+                          PIC: {user.namaLengkap || user.mitraName || 'Tanpa Nama'}
                         </p>
                       )}
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase ring-1 ${getRoleBadgeColor(user.role)}`}>
@@ -340,6 +344,13 @@ export const UserDatabaseView: React.FC = () => {
                         <div className="mt-1">
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
                             {user.jenisMitra}
+                          </span>
+                        </div>
+                      )}
+                      {user.role === 'vendor' && user.subRole && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
+                            {user.subRole === 'vendor_maskapai' ? 'VENDOR MASKAPAI' : 'VENDOR HOTEL'}
                           </span>
                         </div>
                       )}
@@ -482,12 +493,17 @@ export const UserDatabaseView: React.FC = () => {
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Role / Hak Akses</label>
                   <select
                     value={roleOption}
-                    onChange={(e) => setRoleOption(e.target.value as UserRole)}
+                    onChange={(e) => {
+                      const sel = e.target.value as UserRole;
+                      setRoleOption(sel);
+                      if (sel === 'vendor') setSubRole('vendor_maskapai');
+                    }}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium text-gray-800"
                   >
                     {isMasterAdmin && <option value="admin">Admin</option>}
                     <option value="mitra">Mitra</option>
                     <option value="jamaah">Jamaah</option>
+                    <option value="vendor">Vendor</option>
                   </select>
                 </div>
 
@@ -503,6 +519,36 @@ export const UserDatabaseView: React.FC = () => {
                   </select>
                 </div>
               </div>
+
+              {roleOption === 'vendor' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-200/50 p-4 rounded-2xl transition-all duration-200">
+                  <div>
+                    <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1.5">Tipe Vendor</label>
+                    <select
+                      value={subRole}
+                      onChange={(e) => setSubRole(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium text-gray-800"
+                    >
+                      <option value="vendor_maskapai">VENDOR MASKAPAI (AIRLINE)</option>
+                      <option value="vendor_hotel">VENDOR HOTEL</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1.5">Nama Vendor Resmi</label>
+                    <input
+                      type="text"
+                      required
+                      value={brandName}
+                      onChange={(e) => setBrandName(e.target.value)}
+                      placeholder="Contoh: OMAN AIR / Alharmain"
+                      className="w-full px-4 py-2.5 bg-white border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium text-gray-850"
+                    />
+                  </div>
+                  <p className="sm:col-span-2 text-[10px] text-amber-800/80 font-sans mt-1">
+                    *Penting: Nama Vendor Resmi harus sesuai dengan isian nama vendor di maskapai/hotel agar datanya sinkron.
+                  </p>
+                </div>
+              )}
 
               {roleOption === 'admin' && (
                 <div className="animate-in slide-in-from-top-2 duration-200 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-200/50 p-4 rounded-2xl transition-all duration-200">

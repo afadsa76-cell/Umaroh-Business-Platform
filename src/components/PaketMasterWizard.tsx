@@ -2879,7 +2879,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         onClick={() =>
                           setFormData({
                             ...formData,
-                            wisataMargin: currentMargin + 500000,
+                            wisataMargin: Math.min(10000000, currentMargin + 500000),
                           })
                         }
                         className="w-12 h-12 rounded-full bg-blue-600 shadow-lg shadow-blue-500/40 flex items-center justify-center text-white hover:bg-blue-700 transition-colors cursor-pointer z-10"
@@ -2902,7 +2902,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         <input
                           type="range"
                           min="0"
-                          max="15000000"
+                          max="10000000"
                           step="500000"
                           value={currentMargin}
                           onChange={(e) =>
@@ -2915,7 +2915,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         />
                         <div className="flex justify-between text-[9px] font-bold text-blue-300 mt-2">
                           <span>Rp 0</span>
-                          <span>Rp 15.000.000</span>
+                          <span>Rp 10.000.000</span>
                         </div>
                       </div>
                     </div>
@@ -3010,6 +3010,21 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </div>
             ) : (
               <>
+                {/* Info Card: Sinkronisasi Otomatis Jadwal */}
+                <div className="p-4 bg-emerald-50 border border-emerald-100/60 rounded-2xl flex gap-3.5 items-start text-emerald-950 shadow-sm animate-in fade-in duration-300">
+                  <div className="p-2 bg-emerald-100/80 rounded-xl text-emerald-700 shrink-0">
+                    <Calendar className="w-5 h-5" strokeWidth={2.5} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold tracking-tight text-emerald-950">
+                      Sinkronisasi Jadwal Penerbangan Otomatis
+                    </h4>
+                    <p className="text-xs text-emerald-800/90 leading-relaxed font-semibold" id="flight-sync-info-p">
+                      Memilih maskapai di bawah ini akan menyinkronkan <strong className="text-emerald-950">Tanggal Keberangkatan</strong> dan <strong className="text-emerald-950">Tanggal Kepulangan</strong> program paket Anda secara otomatis sesuai dengan jadwal penerbangan yang telah terdaftar.
+                    </p>
+                  </div>
+                </div>
+
                 {/* Tipe Penerbangan */}
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">
@@ -3431,188 +3446,302 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             </div>
 
             {/* Dark Blue Date Box */}
-            <div className="bg-[#1e2336] rounded-xl p-4 flex flex-col md:flex-row gap-4 mb-6">
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
-                  Check In
-                </label>
-                <input
-                  type="date"
-                  value={
-                    hotelStep === "madinah"
-                      ? formData.chkInMadinah
-                      : formData.chkInMakkah
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const dateVal = new Date(val);
-                    if (hotelStep === "madinah") {
-                      if (!isNaN(dateVal.getTime())) {
-                        const outDate = new Date(dateVal);
-                        outDate.setDate(
-                          outDate.getDate() + (formData.durasiMadinah || 3),
-                        );
-                        setFormData({
-                          ...formData,
-                          chkInMadinah: val,
-                          chkOutMadinah: outDate.toISOString().split("T")[0],
-                        });
-                      } else {
-                        setFormData({ ...formData, chkInMadinah: val });
-                      }
-                    } else {
-                      if (!isNaN(dateVal.getTime())) {
-                        const outDate = new Date(dateVal);
-                        outDate.setDate(
-                          outDate.getDate() + (formData.durasiMakkah || 4),
-                        );
-                        setFormData({
-                          ...formData,
-                          chkInMakkah: val,
-                          chkOutMakkah: outDate.toISOString().split("T")[0],
-                        });
-                      } else {
-                        setFormData({ ...formData, chkInMakkah: val });
-                      }
-                    }
-                  }}
-                  className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-emerald-500"
-                />
+            <div className="bg-[#1e2336] rounded-xl p-4 mb-6">
+              {/* Info Program Card */}
+              <div className="flex items-center justify-between bg-[#151928] border border-blue-500/20 px-3 py-2 rounded-xl mb-4 text-xs font-semibold text-blue-200">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                  <span>Program Terpilih (Tahap 1):</span>
+                  <strong className="text-white text-sm bg-blue-600/30 px-2.5 py-0.5 rounded font-bold font-mono">
+                    {formData.durasiHari || 9} HARI
+                  </strong>
+                </div>
+                <span className="hidden sm:inline text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-mono uppercase tracking-wider">
+                  Batasan Aktif
+                </span>
               </div>
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
-                  Durasi Malam
-                </label>
-                <div className="flex items-center bg-[#151928] rounded-lg border border-gray-700 py-1.5 px-1">
-                  <button
-                    onClick={() => {
-                      if (hotelStep === "madinah" && (Number(formData.durasiMadinah) || 0) > 1)
-                        setFormData({
-                          ...formData,
-                          durasiMadinah: (Number(formData.durasiMadinah) || 0) - 1,
-                        });
-                      if (hotelStep === "makkah" && (Number(formData.durasiMakkah) || 0) > 1)
-                        setFormData({
-                          ...formData,
-                          durasiMakkah: (Number(formData.durasiMakkah) || 0) - 1,
-                        });
-                    }}
-                    className="px-3 text-gray-400 hover:text-white"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
+
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
+                    Check In
+                  </label>
                   <input
-                    type="text"
+                    type="date"
                     value={
                       hotelStep === "madinah"
-                        ? formData.durasiMadinah
-                        : formData.durasiMakkah
+                        ? formData.chkInMadinah
+                        : formData.chkInMakkah
                     }
-                    className="w-full bg-transparent text-center text-white font-bold text-sm outline-none"
-                    readOnly
-                  />
-                  <button
-                    onClick={() => {
-                      if (hotelStep === "madinah")
-                        setFormData({
-                          ...formData,
-                          durasiMadinah: (Number(formData.durasiMadinah) || 0) + 1,
-                        });
-                      if (hotelStep === "makkah")
-                        setFormData({
-                          ...formData,
-                          durasiMakkah: (Number(formData.durasiMakkah) || 0) + 1,
-                        });
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const dateVal = new Date(val);
+                      if (hotelStep === "madinah") {
+                        if (!isNaN(dateVal.getTime())) {
+                          const outDate = new Date(dateVal);
+                          outDate.setDate(
+                            outDate.getDate() + (formData.durasiMadinah || 3),
+                          );
+                          setFormData({
+                            ...formData,
+                            chkInMadinah: val,
+                            chkOutMadinah: outDate.toISOString().split("T")[0],
+                          });
+                        } else {
+                          setFormData({ ...formData, chkInMadinah: val });
+                        }
+                      } else {
+                        if (!isNaN(dateVal.getTime())) {
+                          const outDate = new Date(dateVal);
+                          outDate.setDate(
+                            outDate.getDate() + (formData.durasiMakkah || 4),
+                          );
+                          setFormData({
+                            ...formData,
+                            chkInMakkah: val,
+                            chkOutMakkah: outDate.toISOString().split("T")[0],
+                          });
+                        } else {
+                          setFormData({ ...formData, chkInMakkah: val });
+                        }
+                      }
                     }}
-                    className="px-3 text-gray-400 hover:text-white"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                    className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-emerald-500"
+                  />
                 </div>
-              </div>
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
-                  Check Out
-                </label>
-                <input
-                  type="date"
-                  min={
-                    hotelStep === "madinah"
-                      ? formData.chkInMadinah
-                      : formData.chkInMakkah
-                  }
-                  max={formData.tglKepulangan || undefined}
-                  value={
-                    hotelStep === "madinah"
-                      ? formData.chkOutMadinah
-                      : formData.chkOutMakkah
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const dateVal = new Date(val);
-                    if (hotelStep === "madinah") {
-                      const inDate = new Date(
-                        formData.chkInMadinah || formData.tglBerangkat,
-                      );
-                      if (
-                        !isNaN(dateVal.getTime()) &&
-                        !isNaN(inDate.getTime())
-                      ) {
-                        const diff = Math.ceil(
-                          (dateVal.getTime() - inDate.getTime()) /
-                            (1000 * 3600 * 24),
-                        );
-                        setFormData({
-                          ...formData,
-                          chkOutMadinah: val,
-                          durasiMadinah: Math.max(1, diff),
-                        });
-                      } else {
-                        setFormData({ ...formData, chkOutMadinah: val });
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
+                    Durasi Malam
+                  </label>
+                  <div className="flex items-center bg-[#151928] rounded-lg border border-gray-700 py-1.5 px-1">
+                    <button
+                      onClick={() => {
+                        if (hotelStep === "madinah" && (Number(formData.durasiMadinah) || 3) > 1) {
+                          const newDur = (Number(formData.durasiMadinah) || 3) - 1;
+                          const inDateStr = formData.chkInMadinah || formData.tglBerangkat;
+                          let newOut = formData.chkOutMadinah;
+                          if (inDateStr) {
+                            const dateVal = new Date(inDateStr);
+                            if (!isNaN(dateVal.getTime())) {
+                              dateVal.setDate(dateVal.getDate() + newDur);
+                              newOut = dateVal.toISOString().split("T")[0];
+                            }
+                          }
+                          setFormData({
+                            ...formData,
+                            durasiMadinah: newDur,
+                            chkOutMadinah: newOut,
+                          });
+                        }
+                        if (hotelStep === "makkah" && (Number(formData.durasiMakkah) || 4) > 1) {
+                          const newDur = (Number(formData.durasiMakkah) || 4) - 1;
+                          const inDateStr = formData.chkInMakkah || formData.tglBerangkat;
+                          let newOut = formData.chkOutMakkah;
+                          if (inDateStr) {
+                            const dateVal = new Date(inDateStr);
+                            if (!isNaN(dateVal.getTime())) {
+                              dateVal.setDate(dateVal.getDate() + newDur);
+                              newOut = dateVal.toISOString().split("T")[0];
+                            }
+                          }
+                          setFormData({
+                            ...formData,
+                            durasiMakkah: newDur,
+                            chkOutMakkah: newOut,
+                          });
+                        }
+                      }}
+                      className="px-3 text-gray-400 hover:text-white"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="text"
+                      value={
+                        hotelStep === "madinah"
+                          ? formData.durasiMadinah
+                          : formData.durasiMakkah
                       }
-                    } else {
-                      const inDate = new Date(
-                        formData.chkInMakkah ||
-                          formData.chkOutMadinah ||
-                          formData.tglBerangkat,
-                      );
-                      if (
-                        !isNaN(dateVal.getTime()) &&
-                        !isNaN(inDate.getTime())
-                      ) {
-                        const diff = Math.ceil(
-                          (dateVal.getTime() - inDate.getTime()) /
-                            (1000 * 3600 * 24),
-                        );
-                        setFormData({
-                          ...formData,
-                          chkOutMakkah: val,
-                          durasiMakkah: Math.max(1, diff),
-                        });
-                      } else {
-                        setFormData({ ...formData, chkOutMakkah: val });
-                      }
+                      className="w-full bg-transparent text-center text-white font-bold text-sm outline-none"
+                      readOnly
+                    />
+                    <button
+                      onClick={() => {
+                        const programDays = Number(formData.durasiHari) || 9;
+                        const maxAllowedCombined = programDays - 1;
+
+                        if (hotelStep === "madinah") {
+                          const currentDur = Number(formData.durasiMadinah) || 3;
+                          const inDateStr = formData.chkInMadinah || formData.tglBerangkat;
+                          
+                          let maxN = maxAllowedCombined;
+                          if (inDateStr && formData.tglKepulangan) {
+                            const dIn = new Date(inDateStr);
+                            const dOutLimit = new Date(formData.tglKepulangan);
+                            if (!isNaN(dIn.getTime()) && !isNaN(dOutLimit.getTime())) {
+                              const diffDays = Math.floor((dOutLimit.getTime() - dIn.getTime()) / (1000 * 3600 * 24));
+                              if (diffDays > 0) {
+                                maxN = Math.min(maxN, diffDays);
+                              }
+                            }
+                          }
+                          maxN = Math.max(1, maxN);
+
+                          if (currentDur < maxN) {
+                            const newDur = currentDur + 1;
+                            let newOut = formData.chkOutMadinah;
+                            if (inDateStr) {
+                              const dateVal = new Date(inDateStr);
+                              if (!isNaN(dateVal.getTime())) {
+                                dateVal.setDate(dateVal.getDate() + newDur);
+                                newOut = dateVal.toISOString().split("T")[0];
+                              }
+                            }
+                            setFormData({
+                              ...formData,
+                              durasiMadinah: newDur,
+                              chkOutMadinah: newOut,
+                            });
+                          }
+                        }
+
+                        if (hotelStep === "makkah") {
+                          const currentDur = Number(formData.durasiMakkah) || 4;
+                          const inDateStr = formData.chkInMakkah || formData.tglBerangkat;
+                          
+                          let maxN = maxAllowedCombined;
+                          if (inDateStr && formData.tglKepulangan) {
+                            const dIn = new Date(inDateStr);
+                            const dOutLimit = new Date(formData.tglKepulangan);
+                            if (!isNaN(dIn.getTime()) && !isNaN(dOutLimit.getTime())) {
+                              const diffDays = Math.floor((dOutLimit.getTime() - dIn.getTime()) / (1000 * 3600 * 24));
+                              if (diffDays > 0) {
+                                maxN = Math.min(maxN, diffDays);
+                              }
+                            }
+                          }
+                          maxN = Math.max(1, maxN);
+
+                          if (currentDur < maxN) {
+                            const newDur = currentDur + 1;
+                            let newOut = formData.chkOutMakkah;
+                            if (inDateStr) {
+                              const dateVal = new Date(inDateStr);
+                              if (!isNaN(dateVal.getTime())) {
+                                dateVal.setDate(dateVal.getDate() + newDur);
+                                newOut = dateVal.toISOString().split("T")[0];
+                              }
+                            }
+                            setFormData({
+                              ...formData,
+                              durasiMakkah: newDur,
+                              chkOutMakkah: newOut,
+                            });
+                          }
+                        }
+                      }}
+                      className="px-3 text-gray-400 hover:text-white"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
+                    Check Out
+                  </label>
+                  <input
+                    type="date"
+                    min={
+                      hotelStep === "madinah"
+                        ? formData.chkInMadinah
+                        : formData.chkInMakkah
                     }
-                  }}
-                  className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-              <div className="flex-1 flex items-end">
-                <div className="w-full bg-[#0d4a3e] border border-[#166554] text-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[42px]">
-                  <span className="text-[10px] font-bold text-emerald-200">
-                    PERJALANAN HARI
-                  </span>
-                  <span className="text-sm font-black text-white flex items-center gap-1">
-                    <User className="w-3 h-3" />{" "}
-                    {hotelStep === "madinah"
-                      ? (formData.durasiMadinah || 3) + 1
-                      : (formData.durasiMakkah || 4) + 1}{" "}
-                    Hari /{" "}
-                    {hotelStep === "madinah"
-                      ? formData.durasiMadinah
-                      : formData.durasiMakkah}{" "}
-                    Malam
-                  </span>
+                    max={formData.tglKepulangan || undefined}
+                    value={
+                      hotelStep === "madinah"
+                        ? formData.chkOutMadinah
+                        : formData.chkOutMakkah
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const dateVal = new Date(val);
+                      const maxAllowedCombined = (Number(formData.durasiHari) || 9) - 1;
+
+                      if (hotelStep === "madinah") {
+                        const inDate = new Date(
+                          formData.chkInMadinah || formData.tglBerangkat,
+                        );
+                        if (
+                          !isNaN(dateVal.getTime()) &&
+                          !isNaN(inDate.getTime())
+                        ) {
+                          const rawDiff = Math.ceil(
+                            (dateVal.getTime() - inDate.getTime()) /
+                              (1000 * 3600 * 24),
+                          );
+                          const diff = Math.min(maxAllowedCombined, Math.max(1, rawDiff));
+                          const finalDate = new Date(inDate);
+                          finalDate.setDate(finalDate.getDate() + diff);
+                          const finalDateStr = finalDate.toISOString().split("T")[0];
+
+                          setFormData({
+                            ...formData,
+                            chkOutMadinah: finalDateStr,
+                            durasiMadinah: diff,
+                          });
+                        } else {
+                          setFormData({ ...formData, chkOutMadinah: val });
+                        }
+                      } else {
+                        const inDate = new Date(
+                          formData.chkInMakkah ||
+                            formData.chkOutMadinah ||
+                            formData.tglBerangkat,
+                        );
+                        if (
+                          !isNaN(dateVal.getTime()) &&
+                          !isNaN(inDate.getTime())
+                        ) {
+                          const rawDiff = Math.ceil(
+                            (dateVal.getTime() - inDate.getTime()) /
+                              (1000 * 3600 * 24),
+                          );
+                          const diff = Math.min(maxAllowedCombined, Math.max(1, rawDiff));
+                          const finalDate = new Date(inDate);
+                          finalDate.setDate(finalDate.getDate() + diff);
+                          const finalDateStr = finalDate.toISOString().split("T")[0];
+
+                          setFormData({
+                            ...formData,
+                            chkOutMakkah: finalDateStr,
+                            durasiMakkah: diff,
+                          });
+                        } else {
+                          setFormData({ ...formData, chkOutMakkah: val });
+                        }
+                      }
+                    }}
+                    className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div className="flex-1 flex items-end">
+                  <div className="w-full bg-[#0d4a3e] border border-[#166554] text-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[42px]">
+                    <span className="text-[10px] font-bold text-emerald-200">
+                      PERJALANAN HARI
+                    </span>
+                    <span className="text-sm font-black text-white flex items-center gap-1">
+                      <User className="w-3 h-3" />{" "}
+                      {hotelStep === "madinah"
+                        ? (formData.durasiMadinah || 3) + 1
+                        : (formData.durasiMakkah || 4) + 1}{" "}
+                      Hari /{" "}
+                      {hotelStep === "madinah"
+                        ? formData.durasiMadinah
+                        : formData.durasiMakkah}{" "}
+                      Malam
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4450,7 +4579,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 onClick={() =>
                                   setFormData({
                                     ...formData,
-                                    [isMitraContext ? "markup" : "marginBersih"]: currentMarkup + 500000,
+                                    [isMitraContext ? "markup" : "marginBersih"]: Math.min(10000000, currentMarkup + 500000),
                                   })
                                 }
                                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition-colors shrink-0"
@@ -4473,7 +4602,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 <input
                                   type="range"
                                   min="0"
-                                  max="15000000"
+                                  max="10000000"
                                   step="500000"
                                   value={currentMarkup || 0}
                                   onChange={(e) =>
@@ -4486,7 +4615,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 />
                                 <div className="flex justify-between text-[9px] font-bold text-blue-300 mt-2">
                                   <span>Rp 0</span>
-                                  <span>Rp 15.000.000</span>
+                                  <span>Rp 10.000.000</span>
                                 </div>
                               </div>
                             </div>
@@ -4555,14 +4684,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                               {
                                 title: "QUAD PACKAGE",
                                 val: finalQuad,
-                                type: "light",
-                                tagColor: "text-[#009B66]",
+                                type: "dark",
+                                tagColor: "text-blue-400",
                               },
                               {
                                 title: "TRIPLE PACKAGE",
                                 val: finalTriple,
-                                type: "dark",
-                                tagColor: "text-blue-400",
+                                type: "light",
+                                tagColor: "text-[#009B66]",
                               },
                               {
                                 title: "DOUBLE PACKAGE",

@@ -14,6 +14,7 @@ interface FilterBarProps {
   onDateFilterChange: (value: string) => void;
   onResetFilters: () => void;
   vendors: string[];
+  isVendorMode?: boolean;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -29,6 +30,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onDateFilterChange,
   onResetFilters,
   vendors,
+  isVendorMode = false,
 }) => {
   return (
     <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 mb-6 md:mb-8">
@@ -81,21 +83,23 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </select>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto flex-1 min-w-[160px]">
-          <Building className="text-gray-400 w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-          <select
-            value={vendorFilter}
-            onChange={(e) => onVendorFilterChange(e.target.value)}
-            className="w-full p-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
-          >
-            <option value="ALL">All Vendors</option>
-            {vendors.map((vendor) => (
-              <option key={vendor} value={vendor}>
-                {vendor}
-              </option>
-            ))}
-          </select>
-        </div>
+        {!isVendorMode && (
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-1 min-w-[160px]">
+            <Building className="text-gray-400 w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+            <select
+              value={vendorFilter}
+              onChange={(e) => onVendorFilterChange(e.target.value)}
+              className="w-full p-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+            >
+              <option value="ALL">All Vendors</option>
+              {vendors.map((vendor) => (
+                <option key={vendor} value={vendor}>
+                  {vendor}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button
           onClick={onResetFilters}

@@ -123,22 +123,19 @@ export const HotelMediaView: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleAiAssist = async (hotel: HotelItem) => {
-    setIsGenerating(hotel.id);
-    try {
-      const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
-Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
-
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+  const fetchWithRetryAndFallback = async (
+    prompt: string, 
+    useSearch = true, 
+    maxRetries = 2, 
+    delayMs = 4000
+  ): Promise<{ text?: string; response?: unknown }> => {
+    let retries = 0;
+    while (true) {
+      try {
+        const bodyObj = {
           model: 'gemini-3.5-flash',
           contents: prompt,
           config: {
-            tools: [{ googleSearch: {} }],
             responseMimeType: 'application/json',
             responseSchema: {
               type: 'OBJECT',
@@ -147,25 +144,78 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
                 distance: { type: 'STRING', description: "Distance, e.g. '150m ke pelataran'" }
               },
               required: ["photoUrl", "distance"]
-            }
+            },
+            tools: useSearch ? [{ googleSearch: {} }] : undefined
           }
-        })
-      });
+        };
 
-      if (!response.ok) {
-        const errText = await response.text();
-        let parsedMessage = 'AI proxy call failed';
-        try {
-          const parsedJson = JSON.parse(errText);
-          parsedMessage = parsedJson.error || parsedJson.message || errText;
-        } catch {
-          parsedMessage = errText || parsedMessage;
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bodyObj)
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          let parsedMessage = '';
+          try {
+            const parsedJson = JSON.parse(errText);
+            parsedMessage = parsedJson.error || parsedJson.message || errText;
+          } catch {
+            parsedMessage = errText;
+          }
+
+          const isRateLimit = response.status === 429 || 
+                              parsedMessage.includes('429') || 
+                              parsedMessage.toLowerCase().includes('quota') || 
+                              parsedMessage.toLowerCase().includes('rate limit') || 
+                              parsedMessage.toLowerCase().includes('exhausted');
+
+          if (isRateLimit && retries < maxRetries) {
+            retries++;
+            const backoffDelay = delayMs * Math.pow(2, retries - 1);
+            console.warn(`Gemini rate limited/quota exhausted. Retrying in ${backoffDelay}ms... (Attempt ${retries}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, backoffDelay));
+            continue;
+          }
+
+          if (useSearch) {
+            console.warn('Failing with search grounding. Trying fallback without googleSearch tool...');
+            return fetchWithRetryAndFallback(prompt, false, maxRetries, delayMs);
+          }
+
+          throw new Error(parsedMessage);
         }
-        throw new Error(parsedMessage);
-      }
 
-      const resData = await response.json();
-      if (resData.text) {
+        const resData = await response.json();
+        return resData;
+      } catch (error) {
+        if (retries < maxRetries) {
+          retries++;
+          const backoffDelay = delayMs * Math.pow(2, retries - 1);
+          console.warn(`Request failed: ${(error as Error).message}. Retrying in ${backoffDelay}ms... (Attempt ${retries}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          continue;
+        }
+        if (useSearch) {
+          console.warn('Request failed with search. Trying fallback without googleSearch tool...');
+          return fetchWithRetryAndFallback(prompt, false, maxRetries, delayMs);
+        }
+        throw error;
+      }
+    }
+  };
+
+  const handleAiAssist = async (hotel: HotelItem) => {
+    setIsGenerating(hotel.id);
+    try {
+      const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
+Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
+
+      const resData = await fetchWithRetryAndFallback(prompt, true);
+      if (resData && resData.text) {
         const parsed = safeJsonParse(resData.text);
         setEditData({
           photoUrl: parsed.photoUrl || editData.photoUrl,
@@ -212,43 +262,8 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
         const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
-        const response = await fetch('/api/ai/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gemini-3.5-flash',
-            contents: prompt,
-            config: {
-              tools: [{ googleSearch: {} }],
-              responseMimeType: 'application/json',
-              responseSchema: {
-                type: 'OBJECT',
-                properties: {
-                  photoUrl: { type: 'STRING', description: "Valid image URL for the hotel" },
-                  distance: { type: 'STRING', description: "Distance, e.g. '150m ke pelataran'" }
-                },
-                required: ["photoUrl", "distance"]
-              }
-            }
-          })
-        });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          let parsedMessage = 'AI proxy bulk call failed';
-          try {
-            const parsedJson = JSON.parse(errText);
-            parsedMessage = parsedJson.error || parsedJson.message || errText;
-          } catch {
-            parsedMessage = errText || parsedMessage;
-          }
-          throw new Error(parsedMessage);
-        }
-
-        const resData = await response.json();
-        if (resData.text) {
+        const resData = await fetchWithRetryAndFallback(prompt, true);
+        if (resData && resData.text) {
           const parsed = safeJsonParse(resData.text);
           const safeId = hotel.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
           const docRef = doc(db, 'hotel_metadata', safeId);
@@ -273,6 +288,11 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
       }
       processedCount++;
       setGenerationProgress({ current: processedCount, total: hotelsToProcess.length });
+
+      // Add a 3-second delay between iterations to prevent hitting API limits
+      if (processedCount < hotelsToProcess.length) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
     }
 
     setIsGenerating(null);

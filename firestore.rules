@@ -69,7 +69,7 @@ service cloud.firestore {
     function isValidUserProfile(data) {
       return (data.get('name', '') is string || data.get('namaLengkap', '') is string || data.get('brandName', '') is string) &&
              (!('email' in data) || (data.email is string && data.email.size() <= 255)) &&
-             (!('role' in data) || (data.role in ['operasional', 'mitra', 'jamaah', 'admin']));
+             (!('role' in data) || (data.role in ['operasional', 'mitra', 'jamaah', 'admin', 'vendor']));
     }
 
     function isValidWallet(data) {

@@ -7,7 +7,7 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 
-export type Role = 'operasional' | 'mitra' | 'jamaah' | 'admin';
+export type Role = 'operasional' | 'mitra' | 'jamaah' | 'admin' | 'vendor';
 
 interface LoginViewProps {
   onLogin: (role: Role, subRole?: string) => void;

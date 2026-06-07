@@ -30,6 +30,9 @@ import { UserDatabaseView } from './components/UserDatabaseView';
 import { ProfileView } from './components/ProfileView';
 import { AdManagementView } from './components/AdManagementView';
 import { OwnerKpiDashboard } from './components/OwnerKpiDashboard';
+import { MaskapaiView } from './components/MaskapaiView';
+import { HotelView } from './components/HotelView';
+import { DashboardVendor } from './components/DashboardVendor';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType, updateDoc, setDoc } from './firebase';
@@ -47,6 +50,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [subRole, setSubRole] = useState<string | null>(null);
+  const [vendorName, setVendorName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [adminViewMode, setAdminViewMode] = useState<'operasional' | 'mitra' | 'jamaah'>('operasional');
@@ -113,6 +117,7 @@ function App() {
           if (data) {
             setUserRole(isMA ? 'admin' : (data.role as Role));
             setSubRole(isMA ? null : (data.subRole || null));
+            setVendorName(isMA ? null : ((data.namaVendor || data.brandName || null) as string | null));
             
             // Set initial tab based on role and subRole
             if (isMA) {
@@ -120,6 +125,8 @@ function App() {
             } else if (data.role === 'mitra') {
               setActiveTab('dashboard' as TabType);
             } else if (data.role === 'jamaah') {
+              setActiveTab('dashboard' as TabType);
+            } else if (data.role === 'vendor') {
               setActiveTab('dashboard' as TabType);
             } else {
               if (data.subRole && categoryItems[data.subRole]) {
@@ -274,6 +281,7 @@ function App() {
       await signOut(auth);
       setUserRole(null);
       setSubRole(null);
+      setVendorName(null);
       setUserEmail(null);
     } catch (error) {
       console.error('Error signing out:', error);
@@ -335,6 +343,21 @@ function App() {
       // Route based on role first
       if (userRole === 'mitra') return <DashboardMitra />;
       if (userRole === 'jamaah') return <DashboardJamaah />;
+      if (userRole === 'vendor') {
+        if (activeTab === 'dashboard') {
+          return <DashboardVendor vendorName={vendorName || userEmail?.split('@')[0] || 'Vendor'} vendorType={subRole || ''} onNavigate={handleTabChange} />;
+        }
+        if (activeTab === 'vendor-maskapai') {
+          return <MaskapaiView isVendorMode={true} vendorName={vendorName || ''} />;
+        }
+        if (activeTab === 'vendor-hotel') {
+          return <HotelView isVendorMode={true} vendorName={vendorName || ''} />;
+        }
+        if (activeTab === 'profile') {
+          return <ProfileView />;
+        }
+        return <DashboardVendor vendorName={vendorName || userEmail?.split('@')[0] || 'Vendor'} vendorType={subRole || ''} onNavigate={handleTabChange} />;
+      }
     }
 
     // Operasional / Admin routes
@@ -446,7 +469,7 @@ function App() {
         </header>
       )}
 
-      {(userRole === 'operasional' || userRole === 'admin' || isMasterAdmin) && (!isMasterAdmin || adminViewMode === 'operasional') && (
+      {(userRole === 'operasional' || userRole === 'admin' || userRole === 'vendor' || isMasterAdmin) && (!isMasterAdmin || adminViewMode === 'operasional') && (
         <Navbar activeTab={activeTab} onTabChange={handleTabChange} userRole={isMasterAdmin ? 'admin' : (userRole || 'admin')} subRole={isMasterAdmin ? null : subRole} onLogout={handleLogout} />
       )}
 

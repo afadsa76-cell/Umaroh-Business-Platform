@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download } from 'lucide-react';
 import { Maskapai, maskapaiData as initialData } from '../data/maskapai';
 import * as XLSX from 'xlsx';
-import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, query, where } from '../firebase';
 
-export const MaskapaiView: React.FC = () => {
+interface MaskapaiViewProps {
+  isVendorMode?: boolean;
+  vendorName?: string;
+}
+
+export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false, vendorName = '' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<Maskapai[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +19,15 @@ export const MaskapaiView: React.FC = () => {
   const [filterKeberangkatan, setFilterKeberangkatan] = useState<'future' | 'past' | 'all'>('future');
   const [filterMinSeats, setFilterMinSeats] = useState<number>(10);
   const [isCleaning, setIsCleaning] = useState(false);
+
+  // Custom interactive modal states (fixes blockages & security errors in sandboxed iframes)
+  const [showCleanupModal, setShowCleanupModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<Maskapai | null>(null);
+  const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToastMsg = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ text, type });
+  };
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -31,7 +45,12 @@ export const MaskapaiView: React.FC = () => {
   });
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
+    const colRef = collection(db, 'maskapai');
+    const q = isVendorMode && vendorName
+      ? query(colRef, where('namaVendor', '==', vendorName))
+      : colRef;
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const maskapaiList: Maskapai[] = [];
       
       snapshot.forEach((doc) => {
@@ -48,7 +67,7 @@ export const MaskapaiView: React.FC = () => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isVendorMode, vendorName]);
 
   const handleOpenForm = (item?: Maskapai) => {
     if (item) {
@@ -61,9 +80,12 @@ export const MaskapaiView: React.FC = () => {
         tanggalKeberangkatan: item.tanggalKeberangkatan,
         tanggalKepulangan: item.tanggalKepulangan,
         hargaSetoran: item.hargaSetoran,
+        hargaBeli: item.hargaBeli || item.hargaSetoran,
         hargaJual: item.hargaJual,
         availableSeats: item.availableSeats,
-        namaVendor: item.namaVendor
+        namaVendor: isVendorMode ? vendorName : item.namaVendor,
+        margin: item.margin || 0,
+        persen: item.persen || 0
       });
     } else {
       setEditingId(null);
@@ -75,9 +97,12 @@ export const MaskapaiView: React.FC = () => {
         tanggalKeberangkatan: '',
         tanggalKepulangan: '',
         hargaSetoran: 0,
+        hargaBeli: 0,
         hargaJual: 0,
         availableSeats: 45,
-        namaVendor: ''
+        namaVendor: isVendorMode ? vendorName : '',
+        margin: 0,
+        persen: 0
       });
     }
     setIsFormOpen(true);
@@ -104,7 +129,7 @@ export const MaskapaiView: React.FC = () => {
     } catch (error) {
       console.error("Error saving maskapai:", error);
       handleFirestoreError(error, OperationType.WRITE, 'maskapai');
-      alert('Gagal menyimpan data maskapai.');
+      showToastMsg('Gagal menyimpan data maskapai.', 'error');
     }
   };
 
@@ -182,6 +207,36 @@ export const MaskapaiView: React.FC = () => {
     }).format(amount);
   };
 
+  const getUpdateStatusText = (item: Maskapai) => {
+    if (!item.updatedAt) {
+      return { text: 'Belum pernah diupdate', days: 999, isStale: true };
+    }
+    try {
+      const updatedDate = new Date(item.updatedAt);
+      if (isNaN(updatedDate.getTime())) {
+        return { text: 'Format tanggal salah', days: 999, isStale: true };
+      }
+      const diffTime = new Date().getTime() - updatedDate.getTime();
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+      
+      if (diffDays < 1 / 24) {
+        return { text: 'Baru saja', days: diffDays, isStale: false };
+      }
+      if (diffDays < 1) {
+        const hours = Math.round(diffDays * 24);
+        return { text: `${hours} jam yang lalu`, days: diffDays, isStale: false };
+      }
+      const roundedDays = Math.floor(diffDays);
+      return { 
+        text: `${roundedDays} hari yang lalu`, 
+        days: diffDays, 
+        isStale: roundedDays > 3 
+      };
+    } catch {
+      return { text: 'Gagal parse', days: 999, isStale: true };
+    }
+  };
+
   const todayStr = new Date().toISOString().split('T')[0];
 
   const filteredData = data.filter(item => {
@@ -195,11 +250,15 @@ export const MaskapaiView: React.FC = () => {
     
     if (!matchesSearch) return false;
 
-    // Departure Date Filter
+    const staleInfo = getUpdateStatusText(item);
+
+    // Departure Date / Vendor Update Filter
     if (filterKeberangkatan === 'future') {
       if (item.tanggalKeberangkatan < todayStr) return false;
+      if (staleInfo.isStale) return false;
     } else if (filterKeberangkatan === 'past') {
-      if (item.tanggalKeberangkatan >= todayStr) return false;
+      const isPast = item.tanggalKeberangkatan < todayStr;
+      if (!isPast && !staleInfo.isStale) return false;
     }
 
     // Minimum Seats Filter
@@ -211,19 +270,37 @@ export const MaskapaiView: React.FC = () => {
   // Database maintenance counters
   const expiredCount = data.filter(item => item.tanggalKeberangkatan < todayStr).length;
   const zeroSeatCount = data.filter(item => item.availableSeats <= 0).length;
-  const outdatedCount = data.filter(item => item.tanggalKeberangkatan < todayStr || item.availableSeats <= 0).length;
+  const staleCount = data.filter(item => getUpdateStatusText(item).isStale).length;
+  const outdatedCount = data.filter(item => {
+    const isPast = item.tanggalKeberangkatan < todayStr;
+    const isSeatsEmpty = item.availableSeats <= 0;
+    const isStaleItem = getUpdateStatusText(item).isStale;
+    return isPast || isSeatsEmpty || isStaleItem;
+  }).length;
 
   const handleCleanupDatabase = async () => {
-    const outdated = data.filter(item => item.tanggalKeberangkatan < todayStr || item.availableSeats <= 0);
+    const outdated = data.filter(item => {
+      const isPast = item.tanggalKeberangkatan < todayStr;
+      const isSeatsEmpty = item.availableSeats <= 0;
+      const isStaleItem = getUpdateStatusText(item).isStale;
+      return isPast || isSeatsEmpty || isStaleItem;
+    });
     if (outdated.length === 0) {
-      alert("Tidak ada jadwal kedaluwarsa atau habis bangku yang perlu dibersihkan saat ini.");
+      showToastMsg("Tidak ada jadwal kedaluwarsa, habis bangku, atau vendor tidak aktif (>3 hari) yang perlu dibersihkan saat ini.", "info");
       return;
     }
+    setShowCleanupModal(true);
+  };
 
-    const confirmMsg = `⚠️ PEMBERSIHAN DATABASE MASTER\n\nSistem menemukan ${outdated.length} data maskapai tidak aktif:\n• ${expiredCount} Penerbangan masa lampau (sudah berangkat)\n• ${zeroSeatCount} Tiket dengan sisa 0 bangku\n\nApakah Anda yakin ingin MENGHAPUS PERMANEN dari Firestore? Tindakan ini tidak bisa dibatalkan.`;
-    const confirmed = window.confirm ? window.confirm(confirmMsg) : true;
-    if (!confirmed) return;
+  const executeCleanupDatabase = async () => {
+    const outdated = data.filter(item => {
+      const isPast = item.tanggalKeberangkatan < todayStr;
+      const isSeatsEmpty = item.availableSeats <= 0;
+      const isStaleItem = getUpdateStatusText(item).isStale;
+      return isPast || isSeatsEmpty || isStaleItem;
+    });
 
+    setShowCleanupModal(false);
     setIsCleaning(true);
     try {
       const batchLength = 100;
@@ -235,10 +312,10 @@ export const MaskapaiView: React.FC = () => {
         });
         await batch.commit();
       }
-      alert(`Berhasil! ${outdated.length} data maskapai kedaluwarsa telah dihapus dari database.`);
+      showToastMsg(`Berhasil! ${outdated.length} data maskapai tidak aktif telah dihapus dari database.`, "success");
     } catch (err) {
       console.error("Gagal melakukan pembersihan:", err);
-      alert("Gagal melakukan pembersihan database.");
+      showToastMsg("Gagal melakukan pembersihan database.", "error");
     } finally {
       setIsCleaning(false);
     }
@@ -330,6 +407,10 @@ export const MaskapaiView: React.FC = () => {
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-rose-500 rounded-full"></span> 
               Berangkat Lampau: <strong className="text-rose-400 font-bold">{expiredCount}</strong>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-orange-400 rounded-full"></span> 
+              Tidak Diupdate (&gt;3 Hari): <strong className="text-orange-400 font-bold">{staleCount}</strong>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-yellow-400 rounded-full"></span> 
@@ -428,10 +509,10 @@ export const MaskapaiView: React.FC = () => {
                   <tr>
                     <th className="px-4 py-3 font-semibold">Maskapai & Rute</th>
                     <th className="px-4 py-3 font-semibold text-center">Seats</th>
-                    <th className="px-4 py-3 font-semibold">Harga Jual</th>
+                    {!isVendorMode && <th className="px-4 py-3 font-semibold">Harga Jual</th>}
                     <th className="px-4 py-3 font-semibold">Harga Beli</th>
-                    <th className="px-4 py-3 font-semibold">Margin</th>
-                    <th className="px-4 py-3 font-semibold">Persen</th>
+                    {!isVendorMode && <th className="px-4 py-3 font-semibold">Margin</th>}
+                    {!isVendorMode && <th className="px-4 py-3 font-semibold">Persen</th>}
                     <th className="px-4 py-3 font-semibold">Program Days</th>
                     <th className="px-4 py-3 font-semibold">Tgl Berangkat</th>
                     <th className="px-4 py-3 font-semibold">Tgl Pulang</th>
@@ -442,95 +523,122 @@ export const MaskapaiView: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((item) => (
-                    <tr 
-                      key={item.id} 
-                      className={`border-b border-gray-100 transition-colors ${
-                        item.tanggalKeberangkatan < todayStr 
-                          ? 'bg-rose-50/25 hover:bg-rose-50/40 opacity-70' 
-                          : item.availableSeats <= 0
-                            ? 'bg-gray-50/40 hover:bg-gray-50/60 opacity-80'
-                            : 'hover:bg-gray-55/50'
-                      }`}
-                    >
-                      <td className="px-4 py-3 font-medium text-gray-900">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-gray-950">{item.name}</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {item.tanggalKeberangkatan < todayStr && (
-                              <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
-                                Kedaluwarsa
-                              </span>
-                            )}
-                            {item.availableSeats <= 0 && (
-                              <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
-                                Habis Seat
-                              </span>
-                            )}
-                            {item.availableSeats > 0 && item.availableSeats < 10 && (
-                              <span className="bg-yellow-105 text-yellow-800 border border-yellow-250 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
-                                Sisa Menipis
-                              </span>
-                            )}
+                  {filteredData.map((item) => {
+                    const staleInfo = getUpdateStatusText(item);
+                    return (
+                      <tr 
+                        key={item.id} 
+                        className={`border-b border-gray-100 transition-colors ${
+                          item.tanggalKeberangkatan < todayStr 
+                            ? 'bg-rose-50/25 hover:bg-rose-50/40 opacity-70' 
+                            : staleInfo.isStale
+                              ? 'bg-orange-50/20 hover:bg-orange-50/35 opacity-80 border-l-2 border-l-orange-400'
+                              : item.availableSeats <= 0
+                                ? 'bg-gray-50/40 hover:bg-gray-50/60 opacity-80'
+                                : 'hover:bg-gray-55/50'
+                        }`}
+                      >
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-950">{item.name}</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.tanggalKeberangkatan < todayStr && (
+                                <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                  Kedaluwarsa
+                                </span>
+                              )}
+                              {staleInfo.isStale ? (
+                                <span className="bg-orange-100 text-orange-850 border border-orange-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                  Mati (&gt;3 Hari No Update)
+                                </span>
+                              ) : (
+                                <span className="bg-emerald-105 text-emerald-800 border border-emerald-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                  Aktif: {staleInfo.text}
+                                </span>
+                              )}
+                              {item.availableSeats <= 0 && (
+                                <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                  Habis Seat
+                                </span>
+                              )}
+                              {item.availableSeats > 0 && item.availableSeats < 10 && (
+                                <span className="bg-yellow-105 text-yellow-800 border border-yellow-250 text-[9px] font-black px-1.5 py-0.5 rounded tracking-wide uppercase">
+                                  Sisa Menipis
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex flex-col items-center">
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${
-                            item.availableSeats === 0 ? 'bg-red-100 text-red-700' :
-                            item.availableSeats <= 5 ? 'bg-orange-100 text-orange-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {item.availableSeats} / {item.totalSeats}
-                          </span>
-                          <div className="w-16 h-1 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                            <div 
-                              className={`h-full ${
-                                item.availableSeats === 0 ? 'bg-red-500' :
-                                item.availableSeats <= 5 ? 'bg-orange-500' :
-                                'bg-blue-500'
-                              }`}
-                              style={{ width: `${(item.availableSeats / item.totalSeats) * 100}%` }}
-                            />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex flex-col items-center">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${
+                              item.availableSeats === 0 ? 'bg-red-100 text-red-700' :
+                              item.availableSeats <= 5 ? 'bg-orange-100 text-orange-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {item.availableSeats} / {item.totalSeats}
+                            </span>
+                            <div className="w-16 h-1 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                              <div 
+                                className={`h-full ${
+                                  item.availableSeats === 0 ? 'bg-red-500' :
+                                  item.availableSeats <= 5 ? 'bg-orange-500' :
+                                  'bg-blue-500'
+                                }`}
+                                style={{ width: `${(item.availableSeats / item.totalSeats) * 100}%` }}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-emerald-600 font-semibold">{formatCurrency(item.hargaJual)}</td>
-                      <td className="px-4 py-3 text-gray-600">{formatCurrency(item.hargaBeli)}</td>
-                      <td className="px-4 py-3 text-gray-600">{formatCurrency(item.margin)}</td>
-                      <td className="px-4 py-3">
-                        <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-medium">
-                          {item.persen}%
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">{item.programDays}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.tanggalKeberangkatan}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.tanggalKepulangan}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.namaVendor}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.originCityName}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.destinationCityName}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <button className="p-1 text-blue-600 hover:bg-blue-50 rounded" onClick={() => handleOpenForm(item)}>
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button className="p-1 text-red-600 hover:bg-red-50 rounded" onClick={async () => {
-                            const confirmed = window.confirm ? window.confirm('Yakin ingin menghapus data ini?') : true;
-                            if(confirmed) {
-                              try {
-                                await deleteDoc(doc(db, 'maskapai', item.id));
-                              } catch (err) {
-                                handleFirestoreError(err, OperationType.DELETE, `maskapai/${item.id}`);
-                              }
-                            }
-                          }}>
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        {!isVendorMode && <td className="px-4 py-3 text-emerald-600 font-semibold">{formatCurrency(item.hargaJual)}</td>}
+                        <td className="px-4 py-3 text-gray-600">{formatCurrency(item.hargaBeli)}</td>
+                        {!isVendorMode && <td className="px-4 py-3 text-gray-600">{formatCurrency(item.margin)}</td>}
+                        {!isVendorMode && (
+                          <td className="px-4 py-3">
+                            <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-medium">
+                              {item.persen}%
+                            </span>
+                          </td>
+                        )}
+                        <td className="px-4 py-3 text-center">{item.programDays}</td>
+                        <td className="px-4 py-3 text-gray-600">{item.tanggalKeberangkatan}</td>
+                        <td className="px-4 py-3 text-gray-600">{item.tanggalKepulangan}</td>
+                        <td className="px-4 py-3 text-gray-600">
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{item.namaVendor}</span>
+                            <span className="text-[10px] text-gray-400">Update: {staleInfo.text}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{item.originCityName}</td>
+                        <td className="px-4 py-3 text-gray-600">{item.destinationCityName}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <button 
+                              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors" 
+                              title="Tandai Diperbarui (Aktifkan)"
+                              onClick={async () => {
+                                try {
+                                  await updateDoc(doc(db, 'maskapai', item.id), {
+                                    updatedAt: new Date().toISOString()
+                                  });
+                                } catch (err) {
+                                  handleFirestoreError(err, OperationType.WRITE, `maskapai/${item.id}`);
+                                }
+                              }}
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                            <button className="p-1 text-blue-600 hover:bg-blue-50 rounded" onClick={() => handleOpenForm(item)}>
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button className="p-1 text-red-600 hover:bg-red-50 rounded" onClick={() => setItemToDelete(item)}>
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               {filteredData.length === 0 && (
@@ -542,105 +650,132 @@ export const MaskapaiView: React.FC = () => {
 
             {/* Mobile/Tablet Card View */}
             <div className="xl:hidden divide-y divide-gray-100">
-              {filteredData.map((item) => (
-                <div 
-                  key={item.id} 
-                  className={`p-4 transition-colors ${
-                    item.tanggalKeberangkatan < todayStr 
-                      ? 'bg-rose-50/15 border-l-4 border-rose-500 opacity-75 animate-pulse-slow' 
-                      : item.availableSeats <= 0
-                        ? 'bg-gray-50/40 border-l-4 border-gray-400 opacity-80'
-                        : 'hover:bg-gray-50 border-l-4 border-transparent'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-bold text-gray-950 text-base">{item.name}</h3>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {item.tanggalKeberangkatan < todayStr && (
-                          <span className="bg-rose-150 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
-                            Kedaluwarsa
-                          </span>
-                        )}
-                        {item.availableSeats <= 0 && (
-                          <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
-                            Habis Seat
-                          </span>
-                        )}
-                        {item.availableSeats > 0 && item.availableSeats < 10 && (
-                          <span className="bg-yellow-105 text-yellow-800 border border-yellow-250 text-[9px] font-black px-1.5 py-0.5 rounded uppercase font-bold">
-                            Sisa Menipis
-                          </span>
-                        )}
+              {filteredData.map((item) => {
+                const staleInfo = getUpdateStatusText(item);
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`p-4 transition-colors ${
+                      item.tanggalKeberangkatan < todayStr 
+                        ? 'bg-rose-50/15 border-l-4 border-rose-500 opacity-75' 
+                        : staleInfo.isStale
+                          ? 'bg-orange-50/15 border-l-4 border-orange-500 opacity-80'
+                          : item.availableSeats <= 0
+                            ? 'bg-gray-50/40 border-l-4 border-gray-400 opacity-80'
+                            : 'hover:bg-gray-50 border-l-4 border-transparent'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-bold text-gray-950 text-base">{item.name}</h3>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.tanggalKeberangkatan < todayStr && (
+                            <span className="bg-rose-150 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
+                              Kedaluwarsa
+                            </span>
+                          )}
+                          {staleInfo.isStale ? (
+                            <span className="bg-orange-150 text-orange-850 border border-orange-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
+                              Mati (&gt;3 Hari No Update)
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-105 text-emerald-850 border border-emerald-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
+                              Aktif: {staleInfo.text}
+                            </span>
+                          )}
+                          {item.availableSeats <= 0 && (
+                            <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
+                              Habis Seat
+                            </span>
+                          )}
+                          {item.availableSeats > 0 && item.availableSeats < 10 && (
+                            <span className="bg-yellow-105 text-yellow-800 border border-yellow-250 text-[9px] font-black px-1.5 py-0.5 rounded uppercase font-bold">
+                              Sisa Menipis
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-2.5">
+                          <span className="font-medium text-emerald-600">{item.originCityName}</span>
+                          <span>→</span>
+                          <span className="font-medium text-emerald-600">{item.destinationCityName}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-2.5">
-                        <span className="font-medium text-emerald-600">{item.originCityName}</span>
-                        <span>→</span>
-                        <span className="font-medium text-emerald-600">{item.destinationCityName}</span>
+                      <div className="flex flex-col items-end">
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${
+                          item.availableSeats === 0 ? 'bg-red-100 text-red-700' :
+                          item.availableSeats <= 5 ? 'bg-orange-100 text-orange-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {item.availableSeats} / {item.totalSeats} Seats
+                        </span>
+                        {!isVendorMode && (
+                          <div className="text-emerald-600 font-bold mt-1">
+                            {formatCurrency(item.hargaJual)}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        item.availableSeats === 0 ? 'bg-red-100 text-red-700' :
-                        item.availableSeats <= 5 ? 'bg-orange-100 text-orange-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {item.availableSeats} / {item.totalSeats} Seats
-                      </span>
-                      <div className="text-emerald-600 font-bold mt-1">
-                        {formatCurrency(item.hargaJual)}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm mb-4">
-                    <div>
-                      <div className="text-gray-500 text-xs uppercase font-semibold">Tgl Berangkat</div>
-                      <div className="text-gray-900">{item.tanggalKeberangkatan}</div>
+                    <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm mb-4">
+                      <div>
+                        <div className="text-gray-500 text-xs uppercase font-semibold">Tgl Berangkat</div>
+                        <div className="text-gray-900">{item.tanggalKeberangkatan}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 text-xs uppercase font-semibold">Tgl Pulang</div>
+                        <div className="text-gray-900">{item.tanggalKepulangan}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 text-xs uppercase font-semibold">Vendor</div>
+                        <div className="text-gray-900">
+                          <div>{item.namaVendor}</div>
+                          <div className="text-[10px] text-gray-400">Update: {staleInfo.text}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 text-xs uppercase font-semibold">Program</div>
+                        <div className="text-gray-900">{item.programDays} Days</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 text-xs uppercase font-semibold">Harga Beli</div>
+                        <div className="text-gray-700">{formatCurrency(item.hargaBeli)}</div>
+                      </div>
+                      {!isVendorMode && (
+                        <div>
+                          <div className="text-gray-500 text-xs uppercase font-semibold">Margin</div>
+                          <div className="text-emerald-700 font-medium">{formatCurrency(item.margin)} ({item.persen}%)</div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <div className="text-gray-500 text-xs uppercase font-semibold">Tgl Pulang</div>
-                      <div className="text-gray-900">{item.tanggalKepulangan}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500 text-xs uppercase font-semibold">Vendor</div>
-                      <div className="text-gray-900">{item.namaVendor}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500 text-xs uppercase font-semibold">Program</div>
-                      <div className="text-gray-900">{item.programDays} Days</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500 text-xs uppercase font-semibold">Harga Beli</div>
-                      <div className="text-gray-700">{formatCurrency(item.hargaBeli)}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500 text-xs uppercase font-semibold">Margin</div>
-                      <div className="text-emerald-700 font-medium">{formatCurrency(item.margin)} ({item.persen}%)</div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-50">
-                    <button className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" onClick={() => handleOpenForm(item)}>
-                      <Edit2 className="w-4 h-4" />
-                      Edit
-                    </button>
-                    <button className="flex items-center gap-1 text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" onClick={async () => {
-                      const confirmed = window.confirm ? window.confirm('Yakin ingin menghapus data ini?') : true;
-                      if(confirmed) {
-                        try {
-                          await deleteDoc(doc(db, 'maskapai', item.id));
-                        } catch (err) {
-                          handleFirestoreError(err, OperationType.DELETE, `maskapai/${item.id}`);
-                        }
-                      }
-                    }}>
-                      <Trash2 className="w-4 h-4" />
-                      Hapus
-                    </button>
+                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-50">
+                      <button 
+                        className="flex items-center gap-1 text-emerald-600 hover:bg-emerald-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" 
+                        onClick={async () => {
+                          try {
+                            await updateDoc(doc(db, 'maskapai', item.id), {
+                              updatedAt: new Date().toISOString()
+                            });
+                          } catch (err) {
+                            handleFirestoreError(err, OperationType.WRITE, `maskapai/${item.id}`);
+                          }
+                        }}
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Reaktifkan
+                      </button>
+                      <button className="flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" onClick={() => handleOpenForm(item)}>
+                        <Edit2 className="w-4 h-4" />
+                        Edit
+                      </button>
+                      <button className="flex items-center gap-1 text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" onClick={() => setItemToDelete(item)}>
+                        <Trash2 className="w-4 h-4" />
+                        Hapus
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {filteredData.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   Tidak ada data maskapai yang ditemukan.
@@ -767,9 +902,7 @@ export const MaskapaiView: React.FC = () => {
                     onChange={(e) => setFormData({...formData, programDays: parseInt(e.target.value) || 9})}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-gray-50"
                   />
-                </div>
-
-                <div>
+                </div>                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Beli (Modal/Setoran)</label>
                   <input 
                     type="number" 
@@ -778,37 +911,48 @@ export const MaskapaiView: React.FC = () => {
                     value={formData.hargaBeli || formData.hargaSetoran}
                     onChange={(e) => {
                       const beli = parseFloat(e.target.value) || 0;
-                      const jual = formData.hargaJual || 0;
-                      const margin = jual - beli;
-                      const persen = beli > 0 ? Number(((margin / beli) * 100).toFixed(1)) : 0;
-                      setFormData({...formData, hargaBeli: beli, hargaSetoran: beli, margin, persen});
+                      if (isVendorMode) {
+                        const existingMargin = formData.margin || 0;
+                        const jual = beli + existingMargin;
+                        const persen = beli > 0 ? Number(((existingMargin / beli) * 100).toFixed(1)) : 0;
+                        setFormData({...formData, hargaBeli: beli, hargaSetoran: beli, hargaJual: jual, margin: existingMargin, persen});
+                      } else {
+                        const jual = formData.hargaJual || 0;
+                        const margin = jual - beli;
+                        const persen = beli > 0 ? Number(((margin / beli) * 100).toFixed(1)) : 0;
+                        setFormData({...formData, hargaBeli: beli, hargaSetoran: beli, margin, persen});
+                      }
                     }}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual</label>
-                  <input 
-                    type="number" 
-                    required
-                    min={0}
-                    value={formData.hargaJual}
-                    onChange={(e) => {
-                      const jual = parseFloat(e.target.value) || 0;
-                      const beli = formData.hargaBeli || formData.hargaSetoran || 0;
-                      const margin = jual - beli;
-                      const persen = beli > 0 ? Number(((margin / beli) * 100).toFixed(1)) : 0;
-                      setFormData({...formData, hargaJual: jual, margin, persen});
-                    }}
-                    className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-emerald-600"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Preview Margin</label>
-                  <div className="w-full p-2.5 border border-gray-200 bg-gray-50 rounded-xl outline-none font-medium text-gray-500">
-                    Rp {(formData.margin || 0).toLocaleString('id-ID')} ({formData.persen || 0}%)
-                  </div>
-                </div>
+                {!isVendorMode && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual</label>
+                      <input 
+                        type="number" 
+                        required
+                        min={0}
+                        value={formData.hargaJual}
+                        onChange={(e) => {
+                          const jual = parseFloat(e.target.value) || 0;
+                          const beli = formData.hargaBeli || formData.hargaSetoran || 0;
+                          const margin = jual - beli;
+                          const persen = beli > 0 ? Number(((margin / beli) * 100).toFixed(1)) : 0;
+                          setFormData({...formData, hargaJual: jual, margin, persen});
+                        }}
+                        className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-emerald-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Preview Margin</label>
+                      <div className="w-full p-2.5 border border-gray-200 bg-gray-50 rounded-xl outline-none font-medium text-gray-500">
+                        Rp {(formData.margin || 0).toLocaleString('id-ID')} ({formData.persen || 0}%)
+                      </div>
+                    </div>
+                  </>
+                )}
 
               </div>
 
@@ -828,6 +972,107 @@ export const MaskapaiView: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Item Deletion Confirmation Modal */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 overflow-hidden animate-in zoom-in-95 duration-200 text-gray-950">
+            <h3 className="text-lg font-bold flex items-center gap-2 mb-2 text-rose-600">
+              <Trash2 className="w-5 h-5" />
+              Hapus Data Maskapai?
+            </h3>
+            <p className="text-gray-650 text-sm mb-6 leading-relaxed">
+              Apakah Anda yakin ingin menghapus data maskapai <strong className="text-gray-950">{itemToDelete.name}</strong> ({itemToDelete.tanggalKeberangkatan})? Tindakan ini tidak bisa dibatalkan.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setItemToDelete(null)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={async () => {
+                  const targetItem = itemToDelete;
+                  setItemToDelete(null);
+                  try {
+                    await deleteDoc(doc(db, 'maskapai', targetItem.id));
+                    showToastMsg("Berhasil menghapus data maskapai", "success");
+                  } catch (err) {
+                    handleFirestoreError(err, OperationType.DELETE, `maskapai/${targetItem.id}`);
+                    showToastMsg("Gagal menghapus data maskapai", "error");
+                  }
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md shadow-rose-200"
+              >
+                Hapus Permanen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Database Optimization/Auto-Hapus Confirmation Modal */}
+      {showCleanupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 overflow-hidden animate-in zoom-in-95 duration-200 text-white">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded text-[10px] tracking-wider uppercase">PEMBERSIHAN</span>
+              <h3 className="text-lg font-black tracking-wide text-amber-400 font-sans">OPTIMALISASI DATABASE MASTER</h3>
+            </div>
+            
+            <p className="text-slate-300 text-sm leading-relaxed mb-6 font-sans">
+              Sistem akan menghapus permanen <span className="font-extrabold text-amber-400 font-mono text-base">{outdatedCount} rute tidak aktif / mati</span> dari Firestore. Tindakan ini memperkecil beban database dan tidak bisa dibatalkan.
+            </p>
+
+            <div className="bg-slate-950/80 rounded-xl p-4 mb-6 border border-slate-800/60 font-mono text-xs space-y-2 text-slate-400">
+              <div className="flex justify-between items-center pb-1 border-b border-slate-800/50">
+                <span>Penerbangan Masa Lampau:</span>
+                <strong className="text-rose-400 text-right">{expiredCount} rute</strong>
+              </div>
+              <div className="flex justify-between items-center pb-1 border-b border-slate-800/50">
+                <span>Vendor Tidak Aktif (&gt;3 hari):</span>
+                <strong className="text-orange-400 text-right">{staleCount} rute</strong>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Sisa 0 Bangku (Habis):</span>
+                <strong className="text-yellow-400 text-right">{zeroSeatCount} rute</strong>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 text-xs font-bold font-sans">
+              <button
+                onClick={() => setShowCleanupModal(false)}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors uppercase tracking-wider"
+              >
+                Batal
+              </button>
+              <button
+                onClick={executeCleanupDatabase}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white rounded-xl shadow-lg shadow-rose-950/45 transition-colors uppercase tracking-wider"
+              >
+                Mulai Pembersihan Permanen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification Container */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-[9999] animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-sm font-semibold text-white ${
+            toast.type === 'success' ? 'bg-emerald-600 border-emerald-500' :
+            toast.type === 'error' ? 'bg-rose-600 border-rose-500' :
+            'bg-slate-800 border-slate-700'
+          }`}>
+            <span>{toast.text}</span>
+            <button onClick={() => setToast(null)} className="hover:opacity-80 p-0.5 rounded-full bg-white/10 text-white transition-opacity">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
