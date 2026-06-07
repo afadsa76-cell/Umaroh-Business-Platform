@@ -10,6 +10,10 @@ interface UserRecord {
   brandName?: string;
   jenisMitra?: string;
   kota?: string;
+  phone?: string;
+  whatsapp?: string;
+  lastActiveAt?: string;
+  updatedAt?: string;
 }
 
 interface MitraLiveMapProps {
@@ -25,6 +29,7 @@ interface StylizedMitra {
   coords: { x: number; y: number };
   isActiveNow: boolean;
   minutesAgo: number;
+  activeStatusText: string;
 }
 
 export const CITY_COORDINATES: Record<string, { x: number; y: number }> = {
@@ -120,103 +125,74 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pulseKey, setPulseKey] = useState(0);
 
-  // Generate beautiful stable active statuses using hashing to avoid wild flickering
-  const mapMitras = (): StylizedMitra[] => {
-    // 1. Core default partners to match standard premium widget
-    const defaults: StylizedMitra[] = [
-      {
-        id: 'def-freshnel-1',
-        brandName: 'FRESHNEL',
-        name: 'Ridho',
-        city: 'Jakarta',
-        whatsapp: '6282228939996',
-        coords: CITY_COORDINATES.jakarta,
-        isActiveNow: true,
-        minutesAgo: 0
-      },
-      {
-        id: 'def-freshnel-2',
-        brandName: 'FRESHNEL',
-        name: 'Umar',
-        city: 'Surabaya',
-        whatsapp: '628233344936',
-        coords: CITY_COORDINATES.surabaya,
-        isActiveNow: false,
-        minutesAgo: 3
-      },
-      {
-        id: 'def-abm-1',
-        brandName: 'ABM',
-        name: 'Selvi',
-        city: 'Pekanbaru',
-        whatsapp: '6281320002218',
-        coords: CITY_COORDINATES.pekanbaru,
-        isActiveNow: false,
-        minutesAgo: 4
-      },
-      {
-        id: 'def-abm-2',
-        brandName: 'ABM',
-        name: 'Nina',
-        city: 'Bandung',
-        whatsapp: '6281320002219',
-        coords: CITY_COORDINATES.bandung,
-        isActiveNow: true,
-        minutesAgo: 0
-      },
-      {
-        id: 'def-azzahra-1',
-        brandName: 'AZZAHRA',
-        name: 'Astrie',
-        city: 'Medan',
-        whatsapp: '6289531820777',
-        coords: CITY_COORDINATES.medan,
-        isActiveNow: true,
-        minutesAgo: 0
-      },
-      {
-        id: 'def-azzahra-2',
-        brandName: 'AZZAHRA',
-        name: 'Ali',
-        city: 'Makassar',
-        whatsapp: '628971799215',
-        coords: CITY_COORDINATES.makassar,
-        isActiveNow: false,
-        minutesAgo: 14
-      },
-      {
-        id: 'def-nqh-1',
-        brandName: 'NQH',
-        name: 'Marni',
-        city: 'Yogyakarta',
-        whatsapp: '628123456789',
-        coords: CITY_COORDINATES.yogyakarta,
-        isActiveNow: false,
-        minutesAgo: 8
-      }
-    ];
+  const normalizeWA = (phone?: string): string | undefined => {
+    if (!phone) return undefined;
+    const clean = phone.replace(/[^0-9]/g, '');
+    if (clean.startsWith('0')) {
+      return '62' + clean.slice(1);
+    }
+    return clean;
+  };
 
-    // Filter database users with role === 'mitra'
-    const dbMitras = users
-      .filter(u => u.role === 'mitra')
+  // Generate real-time active statuses based on last active heartbeat time
+  const mapMitras = (): StylizedMitra[] => {
+    const now = new Date();
+    
+    return users
+      .filter(u => u.role === 'mitra' || u.role === 'admin')
       .map((u, i) => {
-        // Hash IDs to stable random minutes
-        const minutes = (u.id.charCodeAt(0) + (u.id.charCodeAt(1) || 0) + i) % 45;
-        const active = minutes < 5; // <5 mins is active now
+        let active = false;
+        let minutesAgo = 99999;
+        let activeStatusText = "Offline";
+
+        const activityTimeStr = u.lastActiveAt || u.updatedAt;
+        if (activityTimeStr) {
+          try {
+            const actTime = new Date(activityTimeStr);
+            const diffMs = now.getTime() - actTime.getTime();
+            if (!isNaN(diffMs)) {
+              const diffMins = Math.floor(diffMs / 60000);
+              minutesAgo = Math.max(0, diffMins);
+              
+              if (diffMins < 5) {
+                active = true;
+                activeStatusText = "Aktif Sekarang";
+              } else if (diffMins < 60) {
+                activeStatusText = `${diffMins}m Lalu`;
+              } else if (diffMins < 1440) {
+                const hours = Math.floor(diffMins / 60);
+                activeStatusText = `${hours}j Lalu`;
+              } else {
+                const days = Math.floor(diffMins / 1440);
+                activeStatusText = `${days}h Lalu`;
+              }
+            }
+          } catch (e) {
+            console.warn("Error parsing activity timestamp for user", u.id, e);
+          }
+        } else {
+          // If no timestamp exists, fallback
+          activeStatusText = "Belum Aktif";
+        }
+
         const resolvedCity = u.kota || 'Jakarta';
+        const displayBrand = u.brandName || (u.role === 'admin' ? 'ADMIN PUSAT' : 'MITRA MANDIRI');
+
+        // Normalize whatsapp
+        const waNum = normalizeWA(u.phone || u.whatsapp);
+
         return {
           id: u.id,
-          brandName: u.brandName || 'MITRA MANDIRI',
-          name: u.namaLengkap || u.name || 'Mitra',
+          brandName: displayBrand,
+          name: u.namaLengkap || u.name || (u.role === 'admin' ? 'Administrator' : 'Mitra'),
           city: resolvedCity,
+          whatsapp: waNum,
           coords: getCityCoords(resolvedCity, i),
           isActiveNow: active,
-          minutesAgo: active ? 0 : minutes
+          minutesAgo: minutesAgo,
+          activeStatusText: activeStatusText
         } as StylizedMitra;
       });
-
-    // Merge them together cleanly
-    return [...defaults, ...dbMitras];
   };
 
   const mitras = mapMitras();
@@ -322,8 +298,28 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
               <div className="min-w-[650px] w-full relative">
                 <svg viewBox="0 0 1000 340" className="w-full h-auto select-none" key={pulseKey}>
                   
+                  <defs>
+                    {/* Glowing effect for active connections and elements */}
+                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#6366f1" floodOpacity="0.35" />
+                    </filter>
+                    
+                    {/* Modern high-contrast gradient fill for the islands */}
+                    <linearGradient id="islandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#1e1b4b" stopOpacity="0.9" />
+                      <stop offset="50%" stopColor="#2e2a72" stopOpacity="0.95" />
+                      <stop offset="100%" stopColor="#111827" stopOpacity="0.9" />
+                    </linearGradient>
+
+                    {/* Gradient for hover effects */}
+                    <linearGradient id="islandGradHover" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#312e81" />
+                      <stop offset="100%" stopColor="#4f46e5" />
+                    </linearGradient>
+                  </defs>
+
                   {/* Subtle Grid Coordinates Background lines */}
-                  <g stroke="#ffffff" strokeWidth="0.5" strokeDasharray="3 9" opacity="0.04">
+                  <g stroke="#ffffff" strokeWidth="0.5" strokeDasharray="3 9" opacity="0.06">
                     <line x1="100" y1="0" x2="100" y2="340" />
                     <line x1="200" y1="0" x2="200" y2="340" />
                     <line x1="300" y1="0" x2="300" y2="340" />
@@ -338,37 +334,99 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
                     <line x1="0" y1="300" x2="1000" y2="300" />
                   </g>
 
+                  {/* Dynamic pulse link curves from partner cities to Jakarta (HQ) */}
+                  {mitras.filter(m => m.city.toLowerCase() !== 'jakarta').map((m) => {
+                    const dx = m.coords.x - 350;
+                    const dy = m.coords.y - 245;
+                    const cx = 350 + dx / 2 - dy / 4;
+                    const cy = 245 + dy / 2 + dx / 4;
+                    return (
+                      <path 
+                        key={`link-${m.id}`}
+                        d={`M 350 245 Q ${cx} ${cy} ${m.coords.x} ${m.coords.y}`}
+                        fill="none" 
+                        stroke={m.isActiveNow ? "#10b981" : "#4f46e5"} 
+                        strokeWidth={m.isActiveNow ? "1.5" : "0.75"} 
+                        strokeDasharray={m.isActiveNow ? "4 4" : "3 6"}
+                        opacity={m.isActiveNow ? "0.6" : "0.25"} 
+                        className="transition-all"
+                      />
+                    );
+                  })}
+
                   {/* Stylized Island Connection Underlay Glow lines */}
                   <path d="M 60 50 L 290 215 L 530 258 L 680 270 M 500 100 L 520 254 M 680 155 L 680 190" 
-                    fill="none" stroke="#6366f1" strokeWidth="1" strokeDasharray="4 6" opacity="0.1" />
+                    fill="none" stroke="#6366f1" strokeWidth="1" strokeDasharray="4 6" opacity="0.15" />
 
-                  {/* SVG stylized outline shapes for islands */}
-                  <g fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.3">
-                    {/* Sumatra Nodes & Path outline */}
-                    <polyline points={SUMATRA_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#475569" strokeWidth="3" />
-                    <polyline points={SUMATRA_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#312e81" strokeWidth="1.5" />
+                  {/* Re-designed high-fidelity solid island geometries for Indonesia */}
+                  <g filter="url(#glow)" strokeLinecap="round" strokeLinejoin="round">
+                    {/* Sumatra Shape */}
+                    <polygon 
+                      points="40,30 80,45 120,70 160,100 200,130 250,160 300,200 315,225 305,230 270,210 220,170 170,145 140,135 110,105 65,70 35,40" 
+                      fill="url(#islandGrad)" 
+                      stroke="#4f46e5" 
+                      strokeWidth="1.5" 
+                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
+                    />
                     
-                    {/* Java */}
-                    <polyline points={JAVA_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#475569" strokeWidth="3" />
-                    <polyline points={JAVA_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#312e81" strokeWidth="1.5" />
+                    {/* Java Shape */}
+                    <polygon 
+                      points="330,242 360,242 390,245 430,246 470,248 510,250 562,254 565,260 515,260 460,261 410,260 365,256 340,250 330,245" 
+                      fill="url(#islandGrad)" 
+                      stroke="#4f46e5" 
+                      strokeWidth="1.5" 
+                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
+                    />
 
-                    {/* Borneo */}
-                    <polygon points={BORNEO_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#475569" strokeWidth="2" />
+                    {/* Borneo Shape */}
+                    <polygon 
+                      points="450,130 470,100 520,75 560,70 590,90 605,110 615,135 595,160 570,185 540,192 490,180 445,155 440,135" 
+                      fill="url(#islandGrad)" 
+                      stroke="#4f46e5" 
+                      strokeWidth="1.5" 
+                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
+                    />
                     
-                    {/* Sulawesi */}
-                    <polyline points={SULAWESI_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#475569" strokeWidth="2" />
+                    {/* Sulawesi Shape */}
+                    <polygon 
+                      points="635,125 670,125 720,110 755,95 750,105 715,120 700,130 735,135 740,142 695,145 715,175 710,185 685,165 675,195 665,195 670,155 640,145 635,135" 
+                      fill="url(#islandGrad)" 
+                      stroke="#4f46e5" 
+                      strokeWidth="1.5" 
+                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
+                    />
 
-                    {/* Nusa Tenggara */}
-                    <polyline points={NUSA_TENGGARA_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#475569" strokeWidth="2.5" />
+                    {/* Bali & Nusa Tenggara Peninsula Chain */}
+                    <ellipse cx="578" cy="264" rx="7" ry="4" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <ellipse cx="598" cy="265" rx="7" ry="4" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <ellipse cx="625" cy="266" rx="14" ry="5" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <ellipse cx="670" cy="267" rx="20" ry="5" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <ellipse cx="655" cy="282" rx="12" ry="6" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <ellipse cx="725" cy="275" rx="24" ry="7" transform="rotate(-10 725 275)" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
 
-                    {/* Papua */}
-                    <polygon points={PAPUA_NODES.map(p => `${p.x},${p.y}`).join(' ')} stroke="#475569" strokeWidth="2.5" />
+                    {/* Papua Shape */}
+                    <polygon 
+                      points="795,165 810,150 835,155 830,172 855,182 900,185 965,184 970,220 920,222 875,208 845,192 810,188" 
+                      fill="url(#islandGrad)" 
+                      stroke="#4f46e5" 
+                      strokeWidth="1.5" 
+                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
+                    />
+
+                    {/* Bangka Belitung */}
+                    <ellipse cx="280" cy="175" rx="8" ry="4" transform="rotate(-30 280 175)" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <ellipse cx="305" cy="180" rx="6" ry="4" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+
+                    {/* Maluku Islands Group */}
+                    <ellipse cx="800" cy="180" rx="5" ry="3.5" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <ellipse cx="818" cy="175" rx="12" ry="4" transform="rotate(15 818 175)" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
+                    <polygon points="782,120 798,120 803,110 796,130 801,145 788,135" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
                   </g>
 
-                  {/* Small Dots Map Pattern for aesthetic density */}
-                  <g fill="#475569" opacity="0.45">
+                  {/* Elegant cyan star cluster overlay on main nodes for a futuristic high-tech network coordinate look */}
+                  <g fill="#0284c7" opacity="0.65">
                     {[...SUMATRA_NODES, ...JAVA_NODES, ...BORNEO_NODES, ...SULAWESI_NODES, ...NUSA_TENGGARA_NODES, ...PAPUA_NODES].map((node, i) => (
-                      <circle key={i} cx={node.x} cy={node.y} r="2.5" className="hover:fill-indigo-400 transition" />
+                      <circle key={i} cx={node.x} cy={node.y} r="2.5" className="hover:fill-sky-400 transition cursor-pointer" />
                     ))}
                   </g>
 
@@ -497,7 +555,7 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
                           </span>
                         ) : (
                           <span className="bg-slate-850 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5" /> {mit.minutesAgo}m Lalu
+                            <Clock className="w-2.5 h-2.5" /> {mit.activeStatusText}
                           </span>
                         )}
                       </div>

@@ -195,6 +195,7 @@ export const PaketMitraView: React.FC = () => {
 
   const filteredPublishedMasters = paketMasters.filter(m => 
     m.status === 'published' &&
+    (userRole === 'admin' || userRole === 'operasional' || m.mitraId === userId) &&
     m.nama.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

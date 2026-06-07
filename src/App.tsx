@@ -32,7 +32,7 @@ import { AdManagementView } from './components/AdManagementView';
 import { OwnerKpiDashboard } from './components/OwnerKpiDashboard';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users } from 'lucide-react';
-import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, doc, getDoc, handleFirestoreError, OperationType, updateDoc, setDoc } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const categoryItems: Record<string, string[]> = {
@@ -52,6 +52,20 @@ function App() {
   const [adminViewMode, setAdminViewMode] = useState<'operasional' | 'mitra' | 'jamaah'>('operasional');
   const [showRegisterMitra, setShowRegisterMitra] = useState(false);
   const [registerPrefill, setRegisterPrefill] = useState<{ email?: string; name?: string; uid?: string } | null>(null);
+
+  const [isQuotaExhausted, setIsQuotaExhausted] = useState(() => {
+    return typeof window !== 'undefined' ? !!(window as unknown as { firestoreQuotaExhausted?: boolean }).firestoreQuotaExhausted : false;
+  });
+
+  useEffect(() => {
+    const handleQuotaExceeded = () => {
+      setIsQuotaExhausted(true);
+    };
+    window.addEventListener('firestore-quota-exceeded', handleQuotaExceeded);
+    return () => {
+      window.removeEventListener('firestore-quota-exceeded', handleQuotaExceeded);
+    };
+  }, []);
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
@@ -167,6 +181,70 @@ function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Heartbeat / Active Status Live tracker
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    
+    const updateActiveHeartbeat = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        // Enforce a strict 3-minute client-side write throttle across tabs to prevent Firestore quota exhaustion
+        const storageKey = `last_heartbeat_${user.uid}`;
+        const lastWriteTime = localStorage.getItem(storageKey);
+        const now = Date.now();
+        
+        if (lastWriteTime) {
+          const diff = now - parseInt(lastWriteTime, 10);
+          if (diff < 180000) { // 3 minutes cooldown
+            return;
+          }
+        }
+        
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          await updateDoc(userDocRef, {
+            lastActiveAt: new Date().toISOString()
+          });
+          localStorage.setItem(storageKey, now.toString());
+        } catch (err) {
+          const errorPayload = err as { code?: string };
+          // If Firestore quota is exhausted, log gracefully and temporarily suppress alerts
+          if (errorPayload?.code === 'resource-exhausted') {
+            console.warn("Firestore write quota exceeded; pausing live interactive heartbeat updates.");
+            return;
+          }
+          
+          // Fallback if document does not exist yet (e.g. freshly created master admin context)
+          try {
+            const userDocSnap = await getDoc(doc(db, 'users', user.uid));
+            if (!userDocSnap.exists()) {
+              await setDoc(doc(db, 'users', user.uid), {
+                id: user.uid,
+                email: user.email || '',
+                name: user.displayName || user.email?.split('@')[0] || 'User',
+                role: 'admin', // fallback
+                lastActiveAt: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+              }, { merge: true });
+              localStorage.setItem(storageKey, now.toString());
+            }
+          } catch (e) {
+            console.warn("Heartbeat setDoc fallback failed:", e);
+          }
+        }
+      }
+    };
+
+    if (isLoggedIn) {
+      updateActiveHeartbeat();
+      intervalId = setInterval(updateActiveHeartbeat, 180000); // Send heartbeat every 3 minutes
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isLoggedIn]);
 
   const isMasterAdmin = userEmail ? (userEmail.toLowerCase() === 'operationalumaroh@gmail.com' || userEmail.toLowerCase() === 'afadsa76@gmail.com') : false;
 
@@ -319,6 +397,14 @@ function App() {
 
   return (
     <div className={`min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative ${isPortalView ? '' : 'pb-20'}`}>
+      {isQuotaExhausted && (
+        <div className="bg-gradient-to-r from-rose-600 via-amber-600 to-red-600 text-white text-[11px] sm:text-xs text-center py-2.5 px-4 shadow-[0_2px_10px_rgba(220,38,38,0.2)] font-semibold flex items-center justify-center gap-2 z-50 animate-fade-in">
+          <span className="text-base animate-pulse">⚠️</span>
+          <span>
+            <strong className="font-extrabold uppercase tracking-wide">Batas Kuota Firestore Terlampaui (Read-Only Mode):</strong> Aplikasi berjalan dalam mode aman (hanya-baca) karena batas kuota gratis harian Firebase Firestore telah habis. Semua data Anda aman & dapat ditampilkan dengan lancar.
+          </span>
+        </div>
+      )}
       {/* Hero Section */}
       {!isPortalView && (
         <header className="bg-white text-gray-900 py-6 md:py-12 relative overflow-hidden border-b border-gray-100 lg:hidden">
