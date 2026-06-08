@@ -359,5 +359,28 @@ service cloud.firestore {
       allow update: if isOperasional() || isAdmin();
       allow delete: if isAdmin();
     }
+
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && (
+        resource == null ||
+        resource.data.targetId == request.auth.uid ||
+        resource.data.targetRole in ['all', 'broadcast', 'mitra', 'jamaah', 'admin', 'operasional'] ||
+        isOperasional() ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource == null ||
+        resource.data.targetId == request.auth.uid ||
+        resource.data.targetRole == 'all' ||
+        resource.data.targetRole == 'broadcast' ||
+        resource.data.targetRole == 'mitra' ||
+        resource.data.targetRole == 'jamaah' ||
+        resource.data.targetRole == 'admin' ||
+        resource.data.targetRole == 'operasional' ||
+        isOperasional() ||
+        isAdmin()
+      );
+      allow write: if isSignedIn() && isValidId(notificationId);
+    }
   }
 }

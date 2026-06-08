@@ -542,9 +542,27 @@
         "userEmail": { "type": "string" }
       },
       "required": ["id", "adSlot", "type", "timestamp"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Pemberitahuan atau notifikasi sistem real-time untuk admin, mitra dan jamaah",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error", "broadcast"] },
+        "targetId": { "type": "string" },
+        "targetRole": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "senderId": { "type": "string" }
+      },
+      "required": ["id", "title", "message", "type", "targetRole", "createdAt"]
     }
   },
   "firestore": {
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "Koleksi notifikasi real-time sistem" },
     "/users/{userId}": { "schema": "UserProfile", "description": "Koleksi data pengguna" },
     "/wallets/{walletId}": { "schema": "Wallet", "description": "Koleksi dompet pengguna" },
     "/transactions/{transactionId}": { "schema": "Transaction", "description": "Koleksi riwayat transaksi" },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, TrendingUp, Users, Package, ArrowRight, MessageCircle, Clock, Plane, Calendar, Printer, FileText, X, Award, ChevronRight, Shield, Landmark, Sparkles, Building } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Users, Package, ArrowRight, MessageCircle, Clock, Plane, Calendar, Printer, FileText, X, Award, ChevronRight, Shield, Landmark, Sparkles, Building, Bell, Info, AlertTriangle, Check } from 'lucide-react';
 import { TabType } from './Navbar';
 import { format, differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -8,7 +8,8 @@ import { getTransactions } from '../data/transactions';
 import { PaketTracker, JamaahTracker } from './tracker/types';
 import { openWhatsApp } from '../utils/whatsapp';
 import { syncBookingToTracker } from '../utils/firebaseSync';
-import { ShopOrder } from '../types';
+import { ShopOrder, AppNotification } from '../types';
+import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
 import { MitraLiveMap } from './dashboard/MitraLiveMap';
 
 interface InvoiceTransaction {
@@ -76,6 +77,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [jamaahs, setJamaahs] = useState<JamaahTracker[]>([]);
   const [totalOmzet, setTotalOmzet] = useState(0);
   const [airlineInfo, setAirlineInfo] = useState<DisplayFlight[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   
   // Real-time Pilgrim bookings & Merchandise shop orders
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
@@ -83,6 +86,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [resiInputs, setResiInputs] = useState<Record<string, string>>({});
   const [internalTab, setInternalTab] = useState<'bookings' | 'shop'>('bookings');
+
+  // Load real-time notifications for administration panels
+  useEffect(() => {
+    const unsubAuth = auth.onAuthStateChanged((user) => {
+      if (!user) return;
+      const unsubscribeNotifications = listenToUserNotifications(user.uid, 'admin', (notifs) => {
+        setNotifications(notifs);
+      });
+      return () => unsubscribeNotifications();
+    });
+    return () => unsubAuth();
+  }, []);
 
   // Invoice state variables inside DashboardView.tsx
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
@@ -377,16 +392,125 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Live Operational Context Area */}
-        <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl border border-gray-200 shadow-sm shrink-0">
-          <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></div>
-          <div className="text-left font-mono text-[11px] text-gray-600 leading-tight">
-            <p className="font-extrabold text-gray-900 flex items-center gap-1.5 uppercase">
-              <Clock className="w-3.5 h-3.5 text-indigo-600" /> SYSTEM ACTIVE
-            </p>
-            <p className="mt-0.5 font-semibold text-gray-500">
-              {format(new Date(), "eeee, dd MMMM yyyy", { locale: idLocale })}
-            </p>
+        {/* Live Operational Context Area + Notification Bell */}
+        <div className="flex items-center gap-3 shrink-0 relative z-50">
+          {/* Admin Real-time Notification Bell */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+              className="p-3 bg-white text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 border border-gray-200 shadow-sm rounded-2xl transition-all cursor-pointer flex items-center justify-center relative active:scale-95"
+              title="Notifikasi Masuk (Admin)"
+            >
+              <Bell className="w-5 h-5" />
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm font-sans animate-bounce">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
+
+            {showNotificationDropdown && (
+              <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-2xl border border-gray-150 shadow-xl z-50 overflow-hidden text-gray-900 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="p-4 border-b border-gray-150 flex items-center justify-between bg-gray-50/50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase text-gray-800 tracking-wider">Pemberitahuan Sistem</span>
+                    {notifications.filter(n => !n.read).length > 0 && (
+                      <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {notifications.filter(n => !n.read).length} Baru
+                      </span>
+                    )}
+                  </div>
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <button 
+                      onClick={async () => {
+                        await markAllNotificationsAsRead(notifications);
+                      }}
+                      className="text-[10px] font-extrabold text-indigo-600 hover:underline uppercase tracking-wider cursor-pointer"
+                    >
+                      Tandai Semua Dibaca
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                  {notifications.length === 0 ? (
+                    <div className="p-6 text-center text-gray-400">
+                      <Bell className="w-8 h-8 mx-auto mb-2 opacity-30 text-gray-500" />
+                      <p className="text-xs font-bold uppercase tracking-wider">Belum Ada Notifikasi</p>
+                      <p className="text-[10px] text-gray-450 mt-1">Status operasional, withdraw mitra, & pendaftaran jamaah akan muncul di sini secara real-time.</p>
+                    </div>
+                  ) : (
+                    notifications.map((notif) => {
+                      let badgeBg = 'bg-blue-50 text-blue-600 border-blue-100';
+                      let Icon = Info;
+                      
+                      if (notif.type === 'success') {
+                        badgeBg = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                        Icon = Check;
+                      } else if (notif.type === 'warning') {
+                        badgeBg = 'bg-amber-50 text-amber-600 border-amber-100';
+                        Icon = AlertTriangle;
+                      } else if (notif.type === 'error') {
+                        badgeBg = 'bg-rose-50 text-rose-600 border-rose-100';
+                        Icon = X;
+                      } else if (notif.type === 'broadcast') {
+                        badgeBg = 'bg-indigo-50 text-indigo-600 border-indigo-100';
+                        Icon = Sparkles;
+                      }
+                      
+                      return (
+                        <div 
+                          key={notif.id} 
+                          onClick={async () => {
+                            if (!notif.read) {
+                              await markNotificationAsRead(notif.id);
+                            }
+                          }}
+                          className={`p-4 flex gap-3 hover:bg-gray-50 transition-colors cursor-pointer text-left ${!notif.read ? 'bg-indigo-50/10' : ''}`}
+                        >
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${badgeBg}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={`text-xs text-gray-950 leading-snug ${!notif.read ? 'font-extrabold' : 'font-medium'}`}>
+                                {notif.title}
+                              </p>
+                              {!notif.read && (
+                                <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 animate-ping"></span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                              {notif.message}
+                            </p>
+                            <span className="text-[8px] font-mono font-bold text-gray-400 block mt-1 uppercase">
+                              {new Date(notif.createdAt).toLocaleDateString('id-ID', {
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></div>
+            <div className="text-left font-mono text-[11px] text-gray-600 leading-tight">
+              <p className="font-extrabold text-gray-900 flex items-center gap-1.5 uppercase">
+                <Clock className="w-3.5 h-3.5 text-indigo-600" /> SYSTEM ACTIVE
+              </p>
+              <p className="mt-0.5 font-semibold text-gray-500">
+                {format(new Date(), "eeee, dd MMMM yyyy", { locale: idLocale })}
+              </p>
+            </div>
           </div>
         </div>
       </div>

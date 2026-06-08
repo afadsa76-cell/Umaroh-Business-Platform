@@ -21,6 +21,1212 @@ export interface Hotel {
   seasons: Season[];
 }
 
+export const newRowaHotels: Hotel[] = [
+  {
+    "id": "rayhaan-al-marwa-rayhaan-rowa",
+    "name": "Rayhaan Al Marwa Rayhaan",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 24/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1150 },
+          { "roomType": "Triple", "price": 1420 },
+          { "roomType": "Quad", "price": 1690 }
+        ]
+      },
+      {
+        "range": "25/07/2026 TO 03/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1200 },
+          { "roomType": "Triple", "price": 1470 },
+          { "roomType": "Quad", "price": 1740 }
+        ]
+      },
+      {
+        "range": "04/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1270 },
+          { "roomType": "Triple", "price": 1540 },
+          { "roomType": "Quad", "price": 1810 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 15/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1970 },
+          { "roomType": "Triple", "price": 2270 },
+          { "roomType": "Quad", "price": 2570 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "movenpick-hotel-rowa",
+    "name": "Mövenpick Hotel",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 24/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1000 },
+          { "roomType": "Triple", "price": 1220 },
+          { "roomType": "Quad", "price": 1440 },
+          { "roomType": "Suite 5 Pax", "price": 1550 },
+          { "roomType": "Suite 6 Pax", "price": 1775 }
+        ]
+      },
+      {
+        "range": "25/07/2026 TO 13/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1050 },
+          { "roomType": "Triple", "price": 1275 },
+          { "roomType": "Quad", "price": 1450 },
+          { "roomType": "Suite 5 Pax", "price": 1700 },
+          { "roomType": "Suite 6 Pax", "price": 1920 }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1320 },
+          { "roomType": "Quad", "price": 1520 },
+          { "roomType": "Suite 5 Pax", "price": 1740 },
+          { "roomType": "Suite 6 Pax", "price": 1960 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 19/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1225 },
+          { "roomType": "Triple", "price": 1445 },
+          { "roomType": "Quad", "price": 1665 },
+          { "roomType": "Suite 5 Pax", "price": 1800 },
+          { "roomType": "Suite 6 Pax", "price": 2020 }
+        ]
+      },
+      {
+        "range": "20/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1675 },
+          { "roomType": "Triple", "price": 1895 },
+          { "roomType": "Quad", "price": 2115 },
+          { "roomType": "Suite 5 Pax", "price": 2300 },
+          { "roomType": "Suite 6 Pax", "price": 2525 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-safwa-tower-1-rowa",
+    "name": "Al Safwa Tower 1",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 900 },
+          { "roomType": "Triple", "price": 1100 },
+          { "roomType": "Quad", "price": 1250 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 31/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1250 },
+          { "roomType": "Quad", "price": 1350 }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1275 },
+          { "roomType": "Quad", "price": 1375 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1175 },
+          { "roomType": "Triple", "price": 1375 },
+          { "roomType": "Quad", "price": 1525 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 15/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1675 },
+          { "roomType": "Triple", "price": 1900 },
+          { "roomType": "Quad", "price": 2120 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "safwa-tower-3-rowa",
+    "name": "Safwa Tower 3",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 850 },
+          { "roomType": "Triple", "price": 1050 },
+          { "roomType": "Quad", "price": 1250 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 31/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 900 },
+          { "roomType": "Triple", "price": 1100 },
+          { "roomType": "Quad", "price": 1300 }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1320 },
+          { "roomType": "Quad", "price": 1540 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 15/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1750 },
+          { "roomType": "Triple", "price": 1970 },
+          { "roomType": "Quad", "price": 2190 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pullman-zamzam-rowa",
+    "name": "Pullman Zamzam",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 24/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1000 },
+          { "roomType": "Triple", "price": 1220 },
+          { "roomType": "Quad", "price": 1440 },
+          { "roomType": "Suite 6 Pax", "price": 2000 },
+          { "roomType": "Suite 7 Pax", "price": 2200 }
+        ]
+      },
+      {
+        "range": "25/07/2026 TO 13/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1050 },
+          { "roomType": "Triple", "price": 1275 },
+          { "roomType": "Quad", "price": 1500 },
+          { "roomType": "Suite 6 Pax", "price": 2200 },
+          { "roomType": "Suite 7 Pax", "price": 2425 }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1150 },
+          { "roomType": "Triple", "price": 1375 },
+          { "roomType": "Quad", "price": 1600 },
+          { "roomType": "Suite 6 Pax", "price": 2350 },
+          { "roomType": "Suite 7 Pax", "price": 2575 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1225 },
+          { "roomType": "Triple", "price": 1450 },
+          { "roomType": "Quad", "price": 1675 },
+          { "roomType": "Suite 6 Pax", "price": 2400 },
+          { "roomType": "Suite 7 Pax", "price": 2625 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1675 },
+          { "roomType": "Triple", "price": 1900 },
+          { "roomType": "Quad", "price": 2125 },
+          { "roomType": "Suite 6 Pax", "price": 2900 },
+          { "roomType": "Suite 7 Pax", "price": 3125 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fairmont-rowa",
+    "name": "Fairmont",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1350 },
+          { "roomType": "Triple", "price": 1680 },
+          { "roomType": "Quad", "price": 2010 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1470 },
+          { "roomType": "Triple", "price": 1800 },
+          { "roomType": "Quad", "price": 2130 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 15/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 2200 },
+          { "roomType": "Triple", "price": 2530 },
+          { "roomType": "Quad", "price": 2860 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "swissotel-rowa",
+    "name": "Swissôtel",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1380 },
+          { "roomType": "Quad", "price": 1660 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1300 },
+          { "roomType": "Triple", "price": 1580 },
+          { "roomType": "Quad", "price": 1860 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "swiss-al-maqam-rowa",
+    "name": "Swiss Al Maqam",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1380 },
+          { "roomType": "Quad", "price": 1660 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1300 },
+          { "roomType": "Triple", "price": 1580 },
+          { "roomType": "Quad", "price": 1860 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 15/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1970 },
+          { "roomType": "Triple", "price": 2250 },
+          { "roomType": "Quad", "price": 2530 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rotana-jabal-omar-rowa",
+    "name": "Rotana Jabal Omar",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 940 },
+          { "roomType": "Triple", "price": 1190 },
+          { "roomType": "Quad", "price": 1390 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1040 },
+          { "roomType": "Triple", "price": 1290 },
+          { "roomType": "Quad", "price": 1490 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 17/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1150 },
+          { "roomType": "Triple", "price": 1360 },
+          { "roomType": "Quad", "price": 1570 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "address-jabal-omar-rowa",
+    "name": "Address Jabal Omar",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 850 },
+          { "roomType": "Triple", "price": 1090 },
+          { "roomType": "Quad", "price": 1335 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1000 },
+          { "roomType": "Triple", "price": 1210 },
+          { "roomType": "Quad", "price": 1420 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 17/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1150 },
+          { "roomType": "Triple", "price": 1360 },
+          { "roomType": "Quad", "price": 1570 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hilton-suites-rowa",
+    "name": "Hilton Suites",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 20/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 950 },
+          { "roomType": "Triple", "price": 1160 },
+          { "roomType": "Quad", "price": 1370 }
+        ]
+      },
+      {
+        "range": "21/07/2026 TO 17/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1150 },
+          { "roomType": "Triple", "price": 1385 },
+          { "roomType": "Quad", "price": 1620 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "olayan-ajyad-rowa",
+    "name": "Olayan Ajyad",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 650 },
+          { "roomType": "Triple", "price": 750 },
+          { "roomType": "Quad", "price": 850 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 700 },
+          { "roomType": "Triple", "price": 800 },
+          { "roomType": "Quad", "price": 900 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 800 },
+          { "roomType": "Triple", "price": 900 },
+          { "roomType": "Quad", "price": 1000 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 1000 },
+          { "roomType": "Triple", "price": 1100 },
+          { "roomType": "Quad", "price": 1200 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1250 },
+          { "roomType": "Quad", "price": 1400 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "prestige-rowa",
+    "name": "Prestige",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 24/06/2026",
+        "prices": [
+          { "roomType": "Double", "price": 500 },
+          { "roomType": "Triple", "price": 575 },
+          { "roomType": "Quad", "price": 650 }
+        ]
+      },
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 630 },
+          { "roomType": "Triple", "price": 730 },
+          { "roomType": "Quad", "price": 830 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 675 },
+          { "roomType": "Triple", "price": 775 },
+          { "roomType": "Quad", "price": 875 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 725 },
+          { "roomType": "Triple", "price": 825 },
+          { "roomType": "Quad", "price": 925 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 950 },
+          { "roomType": "Triple", "price": 1050 },
+          { "roomType": "Quad", "price": 1250 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1050 },
+          { "roomType": "Triple", "price": 1200 },
+          { "roomType": "Quad", "price": 1350 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "saja-makkah-rowa",
+    "name": "Saja Makkah / Ex.Lemeredian Towers",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 31/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 280 },
+          { "roomType": "Triple", "price": 330 },
+          { "roomType": "Quad", "price": 380 }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 30/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 300 },
+          { "roomType": "Triple", "price": 350 },
+          { "roomType": "Quad", "price": 400 }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 31/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 380 },
+          { "roomType": "Triple", "price": 430 },
+          { "roomType": "Quad", "price": 480 }
+        ]
+      },
+      {
+        "range": "01/11/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 390 },
+          { "roomType": "Triple", "price": 440 },
+          { "roomType": "Quad", "price": 490 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-masa-grand-rowa",
+    "name": "Al Masa Grand",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 440 },
+          { "roomType": "Triple", "price": 490 },
+          { "roomType": "Quad", "price": 540 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 460 },
+          { "roomType": "Triple", "price": 510 },
+          { "roomType": "Quad", "price": 560 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 500 },
+          { "roomType": "Triple", "price": 550 },
+          { "roomType": "Quad", "price": 600 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 600 },
+          { "roomType": "Triple", "price": 650 },
+          { "roomType": "Quad", "price": 700 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 750 },
+          { "roomType": "Triple", "price": 800 },
+          { "roomType": "Quad", "price": 850 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-masa-al-fazeen-rowa",
+    "name": "Al Masa Al Fazeen",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 390 },
+          { "roomType": "Triple", "price": 440 },
+          { "roomType": "Quad", "price": 490 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 440 },
+          { "roomType": "Triple", "price": 490 },
+          { "roomType": "Quad", "price": 540 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 470 },
+          { "roomType": "Triple", "price": 520 },
+          { "roomType": "Quad", "price": 570 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 550 },
+          { "roomType": "Triple", "price": 600 },
+          { "roomType": "Quad", "price": 650 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 700 },
+          { "roomType": "Triple", "price": 750 },
+          { "roomType": "Quad", "price": 800 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-ajyad-rowa",
+    "name": "Snood Ajyad",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 420 },
+          { "roomType": "Triple", "price": 465 },
+          { "roomType": "Quad", "price": 510 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 440 },
+          { "roomType": "Triple", "price": 485 },
+          { "roomType": "Quad", "price": 530 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 480 },
+          { "roomType": "Triple", "price": 525 },
+          { "roomType": "Quad", "price": 570 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 580 },
+          { "roomType": "Triple", "price": 625 },
+          { "roomType": "Quad", "price": 670 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 730 },
+          { "roomType": "Triple", "price": 775 },
+          { "roomType": "Quad", "price": 820 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nada-ajyad-rowa",
+    "name": "Nada Ajyad",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 340 },
+          { "roomType": "Triple", "price": 380 },
+          { "roomType": "Quad", "price": 420 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 380 },
+          { "roomType": "Triple", "price": 420 },
+          { "roomType": "Quad", "price": 460 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 420 },
+          { "roomType": "Triple", "price": 460 },
+          { "roomType": "Quad", "price": 500 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 480 },
+          { "roomType": "Triple", "price": 520 },
+          { "roomType": "Quad", "price": 560 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 570 },
+          { "roomType": "Triple", "price": 610 },
+          { "roomType": "Quad", "price": 650 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "waha-ajyad-rowa",
+    "name": "Waha Ajyad",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 320 },
+          { "roomType": "Triple", "price": 360 },
+          { "roomType": "Quad", "price": 400 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 360 },
+          { "roomType": "Triple", "price": 400 },
+          { "roomType": "Quad", "price": 440 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 400 },
+          { "roomType": "Triple", "price": 440 },
+          { "roomType": "Quad", "price": 480 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 460 },
+          { "roomType": "Triple", "price": 500 },
+          { "roomType": "Quad", "price": 540 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 550 },
+          { "roomType": "Triple", "price": 590 },
+          { "roomType": "Quad", "price": 630 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "diafat-al-rajaa-rowa",
+    "name": "Diafat Al Rajaa",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 260 },
+          { "roomType": "Triple", "price": 300 },
+          { "roomType": "Quad", "price": 340 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 280 },
+          { "roomType": "Triple", "price": 320 },
+          { "roomType": "Quad", "price": 360 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 330 },
+          { "roomType": "Triple", "price": 370 },
+          { "roomType": "Quad", "price": 410 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 370 },
+          { "roomType": "Triple", "price": 410 },
+          { "roomType": "Quad", "price": 450 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 410 },
+          { "roomType": "Triple", "price": 450 },
+          { "roomType": "Quad", "price": 490 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "olayan-golden-rowa",
+    "name": "Olayan Golden",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 260 },
+          { "roomType": "Triple", "price": 300 },
+          { "roomType": "Quad", "price": 340 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 280 },
+          { "roomType": "Triple", "price": 320 },
+          { "roomType": "Quad", "price": 360 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 340 },
+          { "roomType": "Triple", "price": 380 },
+          { "roomType": "Quad", "price": 420 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 380 },
+          { "roomType": "Triple", "price": 420 },
+          { "roomType": "Quad", "price": 460 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 420 },
+          { "roomType": "Triple", "price": 460 },
+          { "roomType": "Quad", "price": 500 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "badr-al-masa-rowa",
+    "name": "Badr Al Masa",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 09/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 260 },
+          { "roomType": "Triple", "price": 300 },
+          { "roomType": "Quad", "price": 340 }
+        ]
+      },
+      {
+        "range": "10/09/2026 TO 07/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 280 },
+          { "roomType": "Triple", "price": 320 },
+          { "roomType": "Quad", "price": 360 }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 340 },
+          { "roomType": "Triple", "price": 380 },
+          { "roomType": "Quad", "price": 420 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 380 },
+          { "roomType": "Triple", "price": 420 },
+          { "roomType": "Quad", "price": 460 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 420 },
+          { "roomType": "Triple", "price": 460 },
+          { "roomType": "Quad", "price": 500 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "olayan-grand-rowa",
+    "name": "Olayan Grand",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 11/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 160 },
+          { "roomType": "Triple", "price": 200 },
+          { "roomType": "Quad", "price": 240 }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 210 },
+          { "roomType": "Triple", "price": 250 },
+          { "roomType": "Quad", "price": 290 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 270 },
+          { "roomType": "Triple", "price": 310 },
+          { "roomType": "Quad", "price": 350 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-al-rayan-rowa",
+    "name": "Snood Al Rayan",
+    "city": "Makkah",
+    "vendor": "ROWA",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 11/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 160 },
+          { "roomType": "Triple", "price": 200 },
+          { "roomType": "Quad", "price": 240 }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 16/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 210 },
+          { "roomType": "Triple", "price": 250 },
+          { "roomType": "Quad", "price": 290 }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 09/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 270 },
+          { "roomType": "Triple", "price": 310 },
+          { "roomType": "Quad", "price": 350 }
+        ]
+      }
+    ]
+  }
+];
+
+export const newAlharmainHotels: Hotel[] = [
+  {
+    "id": "fajr-al-badee-4-alharmain",
+    "name": "Fajr Al Badee 4",
+    "city": "Makkah",
+    "vendor": "Alharmain Hotels Management",
+    "mealPlan": "RO",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 280 },
+          { "roomType": "Triple", "price": 320 },
+          { "roomType": "Quad", "price": 360 }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 19/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 300 },
+          { "roomType": "Triple", "price": 340 },
+          { "roomType": "Quad", "price": 380 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-al-rayan-alharmain",
+    "name": "Snood Al Rayan",
+    "city": "Makkah",
+    "vendor": "Alharmain Hotels Management",
+    "mealPlan": "RO",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 235 },
+          { "roomType": "Triple", "price": 275 },
+          { "roomType": "Quad", "price": 315 }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 05/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 265 },
+          { "roomType": "Triple", "price": 305 },
+          { "roomType": "Quad", "price": 345 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mawteen-snood-alharmain",
+    "name": "Mawteen Snood",
+    "city": "Makkah",
+    "vendor": "Alharmain Hotels Management",
+    "mealPlan": "RO",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 200 },
+          { "roomType": "Triple", "price": 245 },
+          { "roomType": "Quad", "price": 290 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "winner-inn-ajyad-alharmain",
+    "name": "Winner Inn Ajyad (ex Mather Al Eiman)",
+    "city": "Makkah",
+    "vendor": "Alharmain Hotels Management",
+    "mealPlan": "RO",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 340 },
+          { "roomType": "Triple", "price": 385 },
+          { "roomType": "Quad", "price": 430 }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 10/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 360 },
+          { "roomType": "Triple", "price": 405 },
+          { "roomType": "Quad", "price": 450 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-zowar-alharmain",
+    "name": "Grand Zowar",
+    "city": "Madinah",
+    "vendor": "Alharmain Hotels Management",
+    "mealPlan": "RO",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 31/07/2026",
+        "prices": [
+          { "roomType": "Double", "price": 390 },
+          { "roomType": "Triple", "price": 430 },
+          { "roomType": "Quad", "price": 470 }
+        ]
+      },
+      {
+        "range": "30/07/2026 TO 30/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 430 },
+          { "roomType": "Triple", "price": 470 },
+          { "roomType": "Quad", "price": 510 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "plaza-in-houd-alharmain",
+    "name": "Plaza In Houd",
+    "city": "Madinah",
+    "vendor": "Alharmain Hotels Management",
+    "mealPlan": "RO",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          { "roomType": "Double", "price": 375 },
+          { "roomType": "Triple", "price": 425 },
+          { "roomType": "Quad", "price": 475 }
+        ]
+      }
+    ]
+  }
+];
+
 export const defaultHotels: Hotel[] = [
   {
     "id": "dar-al-eiman-al-haram-diar",
@@ -33,33 +1239,69 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 30/06/2026",
         "prices": [
-          { "roomType": "Double", "price": 1000 },
-          { "roomType": "Triple", "price": 1300 },
-          { "roomType": "Quad", "price": 1600 }
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1300
+          },
+          {
+            "roomType": "Quad",
+            "price": 1600
+          }
         ]
       },
       {
         "range": "30/06/2026 TO 15/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 800 },
-          { "roomType": "Triple", "price": 925 },
-          { "roomType": "Quad", "price": 1050 }
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 925
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
         ]
       },
       {
         "range": "15/08/2026 TO 11/11/2026",
         "prices": [
-          { "roomType": "Double", "price": 900 },
-          { "roomType": "Triple", "price": 1025 },
-          { "roomType": "Quad", "price": 1150 }
+          {
+            "roomType": "Double",
+            "price": 900
+          },
+          {
+            "roomType": "Triple",
+            "price": 1025
+          },
+          {
+            "roomType": "Quad",
+            "price": 1150
+          }
         ]
       },
       {
         "range": "11/11/2026 TO 10/12/2026",
         "prices": [
-          { "roomType": "Double", "price": 1100 },
-          { "roomType": "Triple", "price": 1225 },
-          { "roomType": "Quad", "price": 1350 }
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1225
+          },
+          {
+            "roomType": "Quad",
+            "price": 1350
+          }
         ]
       }
     ]
@@ -75,17 +1317,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 15/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 750 },
-          { "roomType": "Triple", "price": 875 },
-          { "roomType": "Quad", "price": 1000 }
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 875
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
         ]
       },
       {
         "range": "15/08/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 800 },
-          { "roomType": "Triple", "price": 925 },
-          { "roomType": "Quad", "price": 1050 }
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 925
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
         ]
       }
     ]
@@ -101,9 +1361,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 750 },
-          { "roomType": "Triple", "price": 900 },
-          { "roomType": "Quad", "price": 1050 }
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 900
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
         ]
       }
     ]
@@ -119,17 +1388,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 15/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 700 },
-          { "roomType": "Triple", "price": 825 },
-          { "roomType": "Quad", "price": 950 }
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
         ]
       },
       {
         "range": "15/08/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 750 },
-          { "roomType": "Triple", "price": 875 },
-          { "roomType": "Quad", "price": 1000 }
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 875
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
         ]
       }
     ]
@@ -145,9 +1432,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 500 },
-          { "roomType": "Triple", "price": 580 },
-          { "roomType": "Quad", "price": 660 }
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 580
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
         ]
       }
     ]
@@ -163,17 +1459,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 15/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 700 },
-          { "roomType": "Triple", "price": 825 },
-          { "roomType": "Quad", "price": 950 }
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
         ]
       },
       {
         "range": "15/08/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 725 },
-          { "roomType": "Triple", "price": 850 },
-          { "roomType": "Quad", "price": 975 }
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 850
+          },
+          {
+            "roomType": "Quad",
+            "price": 975
+          }
         ]
       }
     ]
@@ -189,9 +1503,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 480 },
-          { "roomType": "Triple", "price": 550 },
-          { "roomType": "Quad", "price": 620 }
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
         ]
       }
     ]
@@ -207,17 +1530,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 31/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 480 },
-          { "roomType": "Triple", "price": 530 },
-          { "roomType": "Quad", "price": 580 }
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 530
+          },
+          {
+            "roomType": "Quad",
+            "price": 580
+          }
         ]
       },
       {
         "range": "31/08/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 500 },
-          { "roomType": "Triple", "price": 550 },
-          { "roomType": "Quad", "price": 600 }
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
         ]
       }
     ]
@@ -233,25 +1574,52 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "15/07/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 490 },
-          { "roomType": "Triple", "price": 535 },
-          { "roomType": "Quad", "price": 580 }
+          {
+            "roomType": "Double",
+            "price": 490
+          },
+          {
+            "roomType": "Triple",
+            "price": 535
+          },
+          {
+            "roomType": "Quad",
+            "price": 580
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 01/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 510 },
-          { "roomType": "Triple", "price": 555 },
-          { "roomType": "Quad", "price": 600 }
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 555
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
         ]
       },
       {
         "range": "01/09/2026 TO 01/10/2026",
         "prices": [
-          { "roomType": "Double", "price": 530 },
-          { "roomType": "Triple", "price": 575 },
-          { "roomType": "Quad", "price": 620 }
+          {
+            "roomType": "Double",
+            "price": 530
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
         ]
       }
     ]
@@ -267,25 +1635,52 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 15/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 475 },
-          { "roomType": "Triple", "price": 525 },
-          { "roomType": "Quad", "price": 575 }
+          {
+            "roomType": "Double",
+            "price": 475
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
         ]
       },
       {
         "range": "15/08/2026 TO 11/11/2026",
         "prices": [
-          { "roomType": "Double", "price": 525 },
-          { "roomType": "Triple", "price": 575 },
-          { "roomType": "Quad", "price": 625 }
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 625
+          }
         ]
       },
       {
         "range": "11/11/2026 TO 10/12/2026",
         "prices": [
-          { "roomType": "Double", "price": 575 },
-          { "roomType": "Triple", "price": 625 },
-          { "roomType": "Quad", "price": 675 }
+          {
+            "roomType": "Double",
+            "price": 575
+          },
+          {
+            "roomType": "Triple",
+            "price": 625
+          },
+          {
+            "roomType": "Quad",
+            "price": 675
+          }
         ]
       }
     ]
@@ -301,17 +1696,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 14/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 430 },
-          { "roomType": "Triple", "price": 475 },
-          { "roomType": "Quad", "price": 520 }
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
         ]
       },
       {
         "range": "14/08/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 460 },
-          { "roomType": "Triple", "price": 505 },
-          { "roomType": "Quad", "price": 550 }
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 505
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
         ]
       }
     ]
@@ -327,33 +1740,69 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 15/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 370 },
-          { "roomType": "Triple", "price": 410 },
-          { "roomType": "Quad", "price": 450 }
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 410
+          },
+          {
+            "roomType": "Quad",
+            "price": 450
+          }
         ]
       },
       {
         "range": "15/07/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 400 },
-          { "roomType": "Triple", "price": 440 },
-          { "roomType": "Quad", "price": 480 }
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 440
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 01/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 460 },
-          { "roomType": "Triple", "price": 500 },
-          { "roomType": "Quad", "price": 540 }
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
         ]
       },
       {
         "range": "01/09/2026 TO 01/10/2026",
         "prices": [
-          { "roomType": "Double", "price": 500 },
-          { "roomType": "Triple", "price": 540 },
-          { "roomType": "Quad", "price": 580 }
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 540
+          },
+          {
+            "roomType": "Quad",
+            "price": 580
+          }
         ]
       }
     ]
@@ -369,25 +1818,52 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 15/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 425 },
-          { "roomType": "Triple", "price": 475 },
-          { "roomType": "Quad", "price": 525 }
+          {
+            "roomType": "Double",
+            "price": 425
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 525
+          }
         ]
       },
       {
         "range": "15/08/2026 TO 11/11/2026",
         "prices": [
-          { "roomType": "Double", "price": 475 },
-          { "roomType": "Triple", "price": 525 },
-          { "roomType": "Quad", "price": 575 }
+          {
+            "roomType": "Double",
+            "price": 475
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
         ]
       },
       {
         "range": "11/11/2026 TO 10/12/2026",
         "prices": [
-          { "roomType": "Double", "price": 525 },
-          { "roomType": "Triple", "price": 575 },
-          { "roomType": "Quad", "price": 625 }
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 625
+          }
         ]
       }
     ]
@@ -403,17 +1879,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 31/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 350 },
-          { "roomType": "Triple", "price": 390 },
-          { "roomType": "Quad", "price": 430 }
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
         ]
       },
       {
         "range": "31/07/2026 TO 31/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 390 },
-          { "roomType": "Triple", "price": 430 },
-          { "roomType": "Quad", "price": 470 }
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 430
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
         ]
       }
     ]
@@ -429,17 +1923,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 31/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 350 },
-          { "roomType": "Triple", "price": 390 },
-          { "roomType": "Quad", "price": 430 }
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
         ]
       },
       {
         "range": "31/07/2026 TO 31/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 390 },
-          { "roomType": "Triple", "price": 430 },
-          { "roomType": "Quad", "price": 470 }
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 430
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
         ]
       }
     ]
@@ -455,9 +1967,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 335 },
-          { "roomType": "Triple", "price": 385 },
-          { "roomType": "Quad", "price": 435 }
+          {
+            "roomType": "Double",
+            "price": 335
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 435
+          }
         ]
       }
     ]
@@ -473,17 +1994,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 09/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 1150 },
-          { "roomType": "Triple", "price": 1420 },
-          { "roomType": "Quad", "price": 1690 }
+          {
+            "roomType": "Double",
+            "price": 1150
+          },
+          {
+            "roomType": "Triple",
+            "price": 1420
+          },
+          {
+            "roomType": "Quad",
+            "price": 1690
+          }
         ]
       },
       {
         "range": "09/07/2026 TO 19/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 1230 },
-          { "roomType": "Triple", "price": 1500 },
-          { "roomType": "Quad", "price": 1770 }
+          {
+            "roomType": "Double",
+            "price": 1230
+          },
+          {
+            "roomType": "Triple",
+            "price": 1500
+          },
+          {
+            "roomType": "Quad",
+            "price": 1770
+          }
         ]
       }
     ]
@@ -499,17 +2038,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 09/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 1025 },
-          { "roomType": "Triple", "price": 1225 },
-          { "roomType": "Quad", "price": 1425 }
+          {
+            "roomType": "Double",
+            "price": 1025
+          },
+          {
+            "roomType": "Triple",
+            "price": 1225
+          },
+          {
+            "roomType": "Quad",
+            "price": 1425
+          }
         ]
       },
       {
         "range": "09/07/2026 TO 19/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 1100 },
-          { "roomType": "Triple", "price": 1300 },
-          { "roomType": "Quad", "price": 1500 }
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1300
+          },
+          {
+            "roomType": "Quad",
+            "price": 1500
+          }
         ]
       }
     ]
@@ -525,17 +2082,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 900 },
-          { "roomType": "Triple", "price": 1100 },
-          { "roomType": "Quad", "price": 1300 }
+          {
+            "roomType": "Double",
+            "price": 900
+          },
+          {
+            "roomType": "Triple",
+            "price": 1100
+          },
+          {
+            "roomType": "Quad",
+            "price": 1300
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 19/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 1000 },
-          { "roomType": "Triple", "price": 1200 },
-          { "roomType": "Quad", "price": 1400 }
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1200
+          },
+          {
+            "roomType": "Quad",
+            "price": 1400
+          }
         ]
       }
     ]
@@ -551,9 +2126,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 14/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 1000 },
-          { "roomType": "Triple", "price": 1130 },
-          { "roomType": "Quad", "price": 1260 }
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1130
+          },
+          {
+            "roomType": "Quad",
+            "price": 1260
+          }
         ]
       }
     ]
@@ -569,17 +2153,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 15/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 830 },
-          { "roomType": "Triple", "price": 910 },
-          { "roomType": "Quad", "price": 990 }
+          {
+            "roomType": "Double",
+            "price": 830
+          },
+          {
+            "roomType": "Triple",
+            "price": 910
+          },
+          {
+            "roomType": "Quad",
+            "price": 990
+          }
         ]
       },
       {
         "range": "15/07/2026 TO 14/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 880 },
-          { "roomType": "Triple", "price": 960 },
-          { "roomType": "Quad", "price": 1040 }
+          {
+            "roomType": "Double",
+            "price": 880
+          },
+          {
+            "roomType": "Triple",
+            "price": 960
+          },
+          {
+            "roomType": "Quad",
+            "price": 1040
+          }
         ]
       }
     ]
@@ -595,49 +2197,103 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 25/06/2026",
         "prices": [
-          { "roomType": "Double", "price": 455 },
-          { "roomType": "Triple", "price": 535 },
-          { "roomType": "Quad", "price": 615 }
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 535
+          },
+          {
+            "roomType": "Quad",
+            "price": 615
+          }
         ]
       },
       {
         "range": "25/06/2026 TO 09/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 495 },
-          { "roomType": "Triple", "price": 575 },
-          { "roomType": "Quad", "price": 655 }
+          {
+            "roomType": "Double",
+            "price": 495
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 655
+          }
         ]
       },
       {
         "range": "09/07/2026 TO 16/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 510 },
-          { "roomType": "Triple", "price": 590 },
-          { "roomType": "Quad", "price": 670 }
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 590
+          },
+          {
+            "roomType": "Quad",
+            "price": 670
+          }
         ]
       },
       {
         "range": "16/07/2026 TO 30/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 535 },
-          { "roomType": "Triple", "price": 615 },
-          { "roomType": "Quad", "price": 695 }
+          {
+            "roomType": "Double",
+            "price": 535
+          },
+          {
+            "roomType": "Triple",
+            "price": 615
+          },
+          {
+            "roomType": "Quad",
+            "price": 695
+          }
         ]
       },
       {
         "range": "30/07/2026 TO 05/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 580 },
-          { "roomType": "Triple", "price": 660 },
-          { "roomType": "Quad", "price": 740 }
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 660
+          },
+          {
+            "roomType": "Quad",
+            "price": 740
+          }
         ]
       },
       {
         "range": "05/09/2026 TO 15/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 525 },
-          { "roomType": "Triple", "price": 605 },
-          { "roomType": "Quad", "price": 685 }
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 605
+          },
+          {
+            "roomType": "Quad",
+            "price": 685
+          }
         ]
       }
     ]
@@ -653,25 +2309,52 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "20/06/2026 TO 30/06/2026",
         "prices": [
-          { "roomType": "Double", "price": 520 },
-          { "roomType": "Triple", "price": 570 },
-          { "roomType": "Quad", "price": 620 }
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
         ]
       },
       {
         "range": "30/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 550 },
-          { "roomType": "Triple", "price": 625 },
-          { "roomType": "Quad", "price": 700 }
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 625
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 01/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 580 },
-          { "roomType": "Triple", "price": 665 },
-          { "roomType": "Quad", "price": 750 }
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 665
+          },
+          {
+            "roomType": "Quad",
+            "price": 750
+          }
         ]
       }
     ]
@@ -687,25 +2370,52 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "20/06/2026 TO 30/06/2026",
         "prices": [
-          { "roomType": "Double", "price": 550 },
-          { "roomType": "Triple", "price": 620 },
-          { "roomType": "Quad", "price": 690 }
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 620
+          },
+          {
+            "roomType": "Quad",
+            "price": 690
+          }
         ]
       },
       {
         "range": "30/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 600 },
-          { "roomType": "Triple", "price": 690 },
-          { "roomType": "Quad", "price": 780 }
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 690
+          },
+          {
+            "roomType": "Quad",
+            "price": 780
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 01/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 630 },
-          { "roomType": "Triple", "price": 730 },
-          { "roomType": "Quad", "price": 830 }
+          {
+            "roomType": "Double",
+            "price": 630
+          },
+          {
+            "roomType": "Triple",
+            "price": 730
+          },
+          {
+            "roomType": "Quad",
+            "price": 830
+          }
         ]
       }
     ]
@@ -721,33 +2431,69 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "25/06/2026 TO 09/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 410 },
-          { "roomType": "Triple", "price": 460 },
-          { "roomType": "Quad", "price": 510 }
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 460
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
+          }
         ]
       },
       {
         "range": "09/07/2026 TO 30/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 420 },
-          { "roomType": "Triple", "price": 470 },
-          { "roomType": "Quad", "price": 520 }
+          {
+            "roomType": "Double",
+            "price": 420
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
         ]
       },
       {
         "range": "30/07/2026 TO 05/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 450 },
-          { "roomType": "Triple", "price": 500 },
-          { "roomType": "Quad", "price": 550 }
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
         ]
       },
       {
         "range": "05/09/2026 TO 15/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 425 },
-          { "roomType": "Triple", "price": 475 },
-          { "roomType": "Quad", "price": 525 }
+          {
+            "roomType": "Double",
+            "price": 425
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 525
+          }
         ]
       }
     ]
@@ -763,49 +2509,103 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 25/06/2026",
         "prices": [
-          { "roomType": "Double", "price": 345 },
-          { "roomType": "Triple", "price": 395 },
-          { "roomType": "Quad", "price": 445 }
+          {
+            "roomType": "Double",
+            "price": 345
+          },
+          {
+            "roomType": "Triple",
+            "price": 395
+          },
+          {
+            "roomType": "Quad",
+            "price": 445
+          }
         ]
       },
       {
         "range": "25/06/2026 TO 09/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 385 },
-          { "roomType": "Triple", "price": 435 },
-          { "roomType": "Quad", "price": 485 }
+          {
+            "roomType": "Double",
+            "price": 385
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 485
+          }
         ]
       },
       {
         "range": "09/07/2026 TO 16/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 400 },
-          { "roomType": "Triple", "price": 450 },
-          { "roomType": "Quad", "price": 500 }
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 450
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
         ]
       },
       {
         "range": "16/07/2026 TO 30/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 415 },
-          { "roomType": "Triple", "price": 465 },
-          { "roomType": "Quad", "price": 515 }
+          {
+            "roomType": "Double",
+            "price": 415
+          },
+          {
+            "roomType": "Triple",
+            "price": 465
+          },
+          {
+            "roomType": "Quad",
+            "price": 515
+          }
         ]
       },
       {
         "range": "30/07/2026 TO 05/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 450 },
-          { "roomType": "Triple", "price": 500 },
-          { "roomType": "Quad", "price": 550 }
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
         ]
       },
       {
         "range": "05/09/2026 TO 15/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 395 },
-          { "roomType": "Triple", "price": 445 },
-          { "roomType": "Quad", "price": 495 }
+          {
+            "roomType": "Double",
+            "price": 395
+          },
+          {
+            "roomType": "Triple",
+            "price": 445
+          },
+          {
+            "roomType": "Quad",
+            "price": 495
+          }
         ]
       }
     ]
@@ -821,17 +2621,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 280 },
-          { "roomType": "Triple", "price": 325 },
-          { "roomType": "Quad", "price": 370 }
+          {
+            "roomType": "Double",
+            "price": 280
+          },
+          {
+            "roomType": "Triple",
+            "price": 325
+          },
+          {
+            "roomType": "Quad",
+            "price": 370
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 19/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 300 },
-          { "roomType": "Triple", "price": 345 },
-          { "roomType": "Quad", "price": 390 }
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 345
+          },
+          {
+            "roomType": "Quad",
+            "price": 390
+          }
         ]
       }
     ]
@@ -847,17 +2665,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "07/06/2026 TO 13/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 305 },
-          { "roomType": "Triple", "price": 385 },
-          { "roomType": "Quad", "price": 465 }
+          {
+            "roomType": "Double",
+            "price": 305
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 465
+          }
         ]
       },
       {
         "range": "14/08/2026 TO 19/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 325 },
-          { "roomType": "Triple", "price": 405 },
-          { "roomType": "Quad", "price": 485 }
+          {
+            "roomType": "Double",
+            "price": 325
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 485
+          }
         ]
       }
     ]
@@ -873,17 +2709,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 280 },
-          { "roomType": "Triple", "price": 330 },
-          { "roomType": "Quad", "price": 380 }
+          {
+            "roomType": "Double",
+            "price": 280
+          },
+          {
+            "roomType": "Triple",
+            "price": 330
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 19/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 300 },
-          { "roomType": "Triple", "price": 350 },
-          { "roomType": "Quad", "price": 400 }
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 350
+          },
+          {
+            "roomType": "Quad",
+            "price": 400
+          }
         ]
       }
     ]
@@ -899,17 +2753,35 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 220 },
-          { "roomType": "Triple", "price": 260 },
-          { "roomType": "Quad", "price": 300 }
+          {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
+            "roomType": "Triple",
+            "price": 260
+          },
+          {
+            "roomType": "Quad",
+            "price": 300
+          }
         ]
       },
       {
         "range": "01/08/2026 TO 19/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 240 },
-          { "roomType": "Triple", "price": 280 },
-          { "roomType": "Quad", "price": 320 }
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 280
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
         ]
       }
     ]
@@ -5894,1613 +7766,6 @@ export const defaultHotels: Hotel[] = [
     ]
   },
   {
-    "id": "maysan-al-mashaer-makkah",
-    "name": "Maysan Al Mashaer",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 650
-          },
-          {
-            "roomType": "Triple",
-            "price": 735
-          },
-          {
-            "roomType": "Quad",
-            "price": 820
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 800
-          },
-          {
-            "roomType": "Triple",
-            "price": 875
-          },
-          {
-            "roomType": "Quad",
-            "price": 950
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 750
-          },
-          {
-            "roomType": "Triple",
-            "price": 825
-          },
-          {
-            "roomType": "Quad",
-            "price": 900
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 630
-          },
-          {
-            "roomType": "Triple",
-            "price": 705
-          },
-          {
-            "roomType": "Quad",
-            "price": 780
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 550
-          },
-          {
-            "roomType": "Triple",
-            "price": 625
-          },
-          {
-            "roomType": "Quad",
-            "price": 700
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-maqam-makkah",
-    "name": "Maysan Al Maqam",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 23/10/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 490
-          },
-          {
-            "roomType": "Triple",
-            "price": 545
-          },
-          {
-            "roomType": "Quad",
-            "price": 600
-          }
-        ]
-      },
-      {
-        "range": "23/10/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 565
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 660
-          },
-          {
-            "roomType": "Triple",
-            "price": 715
-          },
-          {
-            "roomType": "Quad",
-            "price": 770
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 610
-          },
-          {
-            "roomType": "Triple",
-            "price": 665
-          },
-          {
-            "roomType": "Quad",
-            "price": 720
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 565
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 410
-          },
-          {
-            "roomType": "Triple",
-            "price": 465
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "royal-majestic-makkah",
-    "name": "Royal Majestic",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 23/10/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 560
-          },
-          {
-            "roomType": "Triple",
-            "price": 625
-          },
-          {
-            "roomType": "Quad",
-            "price": 690
-          }
-        ]
-      },
-      {
-        "range": "23/10/2025 TO 15/11/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 580
-          },
-          {
-            "roomType": "Triple",
-            "price": 645
-          },
-          {
-            "roomType": "Quad",
-            "price": 710
-          }
-        ]
-      },
-      {
-        "range": "15/11/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 560
-          },
-          {
-            "roomType": "Triple",
-            "price": 625
-          },
-          {
-            "roomType": "Quad",
-            "price": 690
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 730
-          },
-          {
-            "roomType": "Triple",
-            "price": 795
-          },
-          {
-            "roomType": "Quad",
-            "price": 860
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 580
-          },
-          {
-            "roomType": "Triple",
-            "price": 645
-          },
-          {
-            "roomType": "Quad",
-            "price": 710
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "shurkaa-al-khair-makkah",
-    "name": "Shurkaa Al Khair",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 23/10/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 95
-          },
-          {
-            "roomType": "Triple",
-            "price": 95
-          },
-          {
-            "roomType": "Quad",
-            "price": 95
-          }
-        ]
-      },
-      {
-        "range": "23/10/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 105
-          },
-          {
-            "roomType": "Triple",
-            "price": 105
-          },
-          {
-            "roomType": "Quad",
-            "price": 105
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 135
-          },
-          {
-            "roomType": "Triple",
-            "price": 135
-          },
-          {
-            "roomType": "Quad",
-            "price": 135
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 105
-          },
-          {
-            "roomType": "Triple",
-            "price": 105
-          },
-          {
-            "roomType": "Quad",
-            "price": 105
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 95
-          },
-          {
-            "roomType": "Triple",
-            "price": 95
-          },
-          {
-            "roomType": "Quad",
-            "price": 95
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 50
-          },
-          {
-            "roomType": "Triple",
-            "price": 50
-          },
-          {
-            "roomType": "Quad",
-            "price": 50
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-manara-makkah",
-    "name": "Al Manara",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "BB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 23/10/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 180
-          },
-          {
-            "roomType": "Triple",
-            "price": 180
-          },
-          {
-            "roomType": "Quad",
-            "price": 180
-          },
-          {
-            "roomType": "Quint",
-            "price": 190
-          }
-        ]
-      },
-      {
-        "range": "23/10/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 190
-          },
-          {
-            "roomType": "Triple",
-            "price": 190
-          },
-          {
-            "roomType": "Quad",
-            "price": 190
-          },
-          {
-            "roomType": "Quint",
-            "price": 200
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 240
-          },
-          {
-            "roomType": "Triple",
-            "price": 240
-          },
-          {
-            "roomType": "Quad",
-            "price": 240
-          },
-          {
-            "roomType": "Quint",
-            "price": 250
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 190
-          },
-          {
-            "roomType": "Triple",
-            "price": 190
-          },
-          {
-            "roomType": "Quad",
-            "price": 190
-          },
-          {
-            "roomType": "Quint",
-            "price": 200
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-zomord-makkah",
-    "name": "Maysan Al Zomord",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 20/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 60
-          },
-          {
-            "roomType": "Triple",
-            "price": 60
-          },
-          {
-            "roomType": "Quad",
-            "price": 60
-          }
-        ]
-      },
-      {
-        "range": "20/12/2025 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 70
-          },
-          {
-            "roomType": "Triple",
-            "price": 70
-          },
-          {
-            "roomType": "Quad",
-            "price": 70
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-massi-makkah",
-    "name": "Maysan Al Massi",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 20/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 60
-          },
-          {
-            "roomType": "Triple",
-            "price": 60
-          },
-          {
-            "roomType": "Quad",
-            "price": 60
-          }
-        ]
-      },
-      {
-        "range": "20/12/2025 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 70
-          },
-          {
-            "roomType": "Triple",
-            "price": 70
-          },
-          {
-            "roomType": "Quad",
-            "price": 70
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-fadhi-makkah",
-    "name": "Maysan Al Fadhi",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 20/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 60
-          },
-          {
-            "roomType": "Triple",
-            "price": 60
-          },
-          {
-            "roomType": "Quad",
-            "price": 60
-          }
-        ]
-      },
-      {
-        "range": "20/12/2025 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 70
-          },
-          {
-            "roomType": "Triple",
-            "price": 70
-          },
-          {
-            "roomType": "Quad",
-            "price": 70
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "anjum-makkah-maysan",
-    "name": "Anjum",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 23/10/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 665
-          },
-          {
-            "roomType": "Triple",
-            "price": 775
-          },
-          {
-            "roomType": "Quad",
-            "price": 885
-          }
-        ]
-      },
-      {
-        "range": "23/10/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 715
-          },
-          {
-            "roomType": "Triple",
-            "price": 825
-          },
-          {
-            "roomType": "Quad",
-            "price": 935
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 06/01/2026 (WD)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1130
-          },
-          {
-            "roomType": "Triple",
-            "price": 1240
-          },
-          {
-            "roomType": "Quad",
-            "price": 1350
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 06/01/2026 (WE)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1180
-          },
-          {
-            "roomType": "Triple",
-            "price": 1290
-          },
-          {
-            "roomType": "Quad",
-            "price": 1400
-          }
-        ]
-      },
-      {
-        "range": "06/01/2026 TO 18/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 650
-          },
-          {
-            "roomType": "Triple",
-            "price": 760
-          },
-          {
-            "roomType": "Quad",
-            "price": 870
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-massah-grand-makkah",
-    "name": "Al Massah Grand",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 560
-          },
-          {
-            "roomType": "Quad",
-            "price": 610
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 590
-          },
-          {
-            "roomType": "Triple",
-            "price": 640
-          },
-          {
-            "roomType": "Quad",
-            "price": 690
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 540
-          },
-          {
-            "roomType": "Triple",
-            "price": 590
-          },
-          {
-            "roomType": "Quad",
-            "price": 640
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 520
-          },
-          {
-            "roomType": "Triple",
-            "price": 570
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 470
-          },
-          {
-            "roomType": "Triple",
-            "price": 520
-          },
-          {
-            "roomType": "Quad",
-            "price": 570
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-ajyad-makkah",
-    "name": "Snood Ajyad",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 610
-          },
-          {
-            "roomType": "Triple",
-            "price": 655
-          },
-          {
-            "roomType": "Quad",
-            "price": 700
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 420
-          },
-          {
-            "roomType": "Triple",
-            "price": 465
-          },
-          {
-            "roomType": "Quad",
-            "price": 510
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 420
-          },
-          {
-            "roomType": "Triple",
-            "price": 465
-          },
-          {
-            "roomType": "Quad",
-            "price": 510
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "ramada-al-fayzen-makkah",
-    "name": "Ramada Al Fayzen",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 435
-          },
-          {
-            "roomType": "Triple",
-            "price": 485
-          },
-          {
-            "roomType": "Quad",
-            "price": 535
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 550
-          },
-          {
-            "roomType": "Quad",
-            "price": 600
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 460
-          },
-          {
-            "roomType": "Triple",
-            "price": 510
-          },
-          {
-            "roomType": "Quad",
-            "price": 560
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 420
-          },
-          {
-            "roomType": "Triple",
-            "price": 470
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 420
-          },
-          {
-            "roomType": "Triple",
-            "price": 470
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "badr-al-massa-makkah",
-    "name": "Badr Al Massa",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 275
-          },
-          {
-            "roomType": "Triple",
-            "price": 315
-          },
-          {
-            "roomType": "Quad",
-            "price": 355
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 310
-          },
-          {
-            "roomType": "Triple",
-            "price": 350
-          },
-          {
-            "roomType": "Quad",
-            "price": 390
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 280
-          },
-          {
-            "roomType": "Triple",
-            "price": 320
-          },
-          {
-            "roomType": "Quad",
-            "price": 360
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 270
-          },
-          {
-            "roomType": "Triple",
-            "price": 310
-          },
-          {
-            "roomType": "Quad",
-            "price": 350
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 270
-          },
-          {
-            "roomType": "Triple",
-            "price": 310
-          },
-          {
-            "roomType": "Quad",
-            "price": 350
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-keswa-towers-makkah",
-    "name": "Al Keswa Towers",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 100
-          },
-          {
-            "roomType": "Triple",
-            "price": 100
-          },
-          {
-            "roomType": "Quad",
-            "price": 100
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 120
-          },
-          {
-            "roomType": "Triple",
-            "price": 120
-          },
-          {
-            "roomType": "Quad",
-            "price": 120
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 110
-          },
-          {
-            "roomType": "Triple",
-            "price": 110
-          },
-          {
-            "roomType": "Quad",
-            "price": 110
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 95
-          },
-          {
-            "roomType": "Triple",
-            "price": 95
-          },
-          {
-            "roomType": "Quad",
-            "price": 95
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 95
-          },
-          {
-            "roomType": "Triple",
-            "price": 95
-          },
-          {
-            "roomType": "Quad",
-            "price": 95
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-al-rayan-makkah",
-    "name": "Snood Al Rayan",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 18/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 110
-          },
-          {
-            "roomType": "Triple",
-            "price": 110
-          },
-          {
-            "roomType": "Quad",
-            "price": 110
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 140
-          },
-          {
-            "roomType": "Triple",
-            "price": 140
-          },
-          {
-            "roomType": "Quad",
-            "price": 140
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 07/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 110
-          },
-          {
-            "roomType": "Triple",
-            "price": 110
-          },
-          {
-            "roomType": "Quad",
-            "price": 110
-          }
-        ]
-      },
-      {
-        "range": "07/02/2026 TO 17/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 95
-          },
-          {
-            "roomType": "Triple",
-            "price": 95
-          },
-          {
-            "roomType": "Quad",
-            "price": 95
-          }
-        ]
-      },
-      {
-        "range": "20/03/2026 TO 18/04/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 95
-          },
-          {
-            "roomType": "Triple",
-            "price": 95
-          },
-          {
-            "roomType": "Quad",
-            "price": 95
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "swissotel-makkah",
-    "name": "SwissOtel Makkah",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "01/10/2025 TO 18/12/2025 (WD)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1370
-          },
-          {
-            "roomType": "Triple",
-            "price": 1640
-          },
-          {
-            "roomType": "Quad",
-            "price": 1910
-          }
-        ]
-      },
-      {
-        "range": "01/10/2025 TO 18/12/2025 (WE)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1520
-          },
-          {
-            "roomType": "Triple",
-            "price": 1790
-          },
-          {
-            "roomType": "Quad",
-            "price": 2060
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026 (WD)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1960
-          },
-          {
-            "roomType": "Triple",
-            "price": 2230
-          },
-          {
-            "roomType": "Quad",
-            "price": 2500
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026 (WE)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 2110
-          },
-          {
-            "roomType": "Triple",
-            "price": 2380
-          },
-          {
-            "roomType": "Quad",
-            "price": 2650
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 16/02/2026 (WD)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1370
-          },
-          {
-            "roomType": "Triple",
-            "price": 1640
-          },
-          {
-            "roomType": "Quad",
-            "price": 1910
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 16/02/2026 (WE)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1520
-          },
-          {
-            "roomType": "Triple",
-            "price": 1790
-          },
-          {
-            "roomType": "Quad",
-            "price": 2060
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "swissotel-maqam-makkah",
-    "name": "SwissOtel Maqam",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "01/10/2025 TO 18/12/2025 (WD)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1350
-          },
-          {
-            "roomType": "Triple",
-            "price": 1620
-          },
-          {
-            "roomType": "Quad",
-            "price": 1890
-          }
-        ]
-      },
-      {
-        "range": "01/10/2025 TO 18/12/2025 (WE)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1500
-          },
-          {
-            "roomType": "Triple",
-            "price": 1770
-          },
-          {
-            "roomType": "Quad",
-            "price": 2040
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026 (WD)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1950
-          },
-          {
-            "roomType": "Triple",
-            "price": 2220
-          },
-          {
-            "roomType": "Quad",
-            "price": 2490
-          }
-        ]
-      },
-      {
-        "range": "18/12/2025 TO 10/01/2026 (WE)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 2100
-          },
-          {
-            "roomType": "Triple",
-            "price": 2370
-          },
-          {
-            "roomType": "Quad",
-            "price": 2640
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 16/02/2026 (WD)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1350
-          },
-          {
-            "roomType": "Triple",
-            "price": 1620
-          },
-          {
-            "roomType": "Quad",
-            "price": 1890
-          }
-        ]
-      },
-      {
-        "range": "10/01/2026 TO 16/02/2026 (WE)",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1500
-          },
-          {
-            "roomType": "Triple",
-            "price": 1770
-          },
-          {
-            "roomType": "Quad",
-            "price": 2040
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-safwa-orchid-makkah",
-    "name": "Al Safwa Orchid",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "23/09/2025 TO 01/10/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1080
-          },
-          {
-            "roomType": "Triple",
-            "price": 1330
-          },
-          {
-            "roomType": "Quad",
-            "price": 1580
-          }
-        ]
-      },
-      {
-        "range": "01/10/2025 TO 15/12/2025",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1230
-          },
-          {
-            "roomType": "Triple",
-            "price": 1480
-          },
-          {
-            "roomType": "Quad",
-            "price": 1730
-          }
-        ]
-      },
-      {
-        "range": "15/12/2025 TO 06/01/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1700
-          },
-          {
-            "roomType": "Triple",
-            "price": 1950
-          },
-          {
-            "roomType": "Quad",
-            "price": 2200
-          }
-        ]
-      },
-      {
-        "range": "06/01/2026 TO 16/02/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1230
-          },
-          {
-            "roomType": "Triple",
-            "price": 1430
-          },
-          {
-            "roomType": "Quad",
-            "price": 1730
-          }
-        ]
-      }
-    ]
-  },
-  {
     "id": "alharmain-dar-al-eiman-al-haram",
     "name": "Dar Al Eiman Al Haram",
     "city": "Madinah",
@@ -7905,33 +8170,6 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 960
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-rotana-elmysk-madinah",
-    "name": "Maysan Rotana Elmysk",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 490
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
           }
         ]
       }
@@ -9326,231 +9564,6 @@ export const defaultHotels: Hotel[] = [
     ]
   },
   {
-    "id": "al-harithia-madinah",
-    "name": "Al Harithia",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 750
-          },
-          {
-            "roomType": "Triple",
-            "price": 900
-          },
-          {
-            "roomType": "Quad",
-            "price": 1050
-          },
-          {
-            "roomType": "Junior suite (2 Pax)",
-            "price": 1125
-          },
-          {
-            "roomType": "Executive Suite (2 Rooms 4 Pax)",
-            "price": 2250
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-plaza-badr-almaqam-madinah",
-    "name": "Grand Plaza Badr Almaqam",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 520
-          },
-          {
-            "roomType": "Triple",
-            "price": 600
-          },
-          {
-            "roomType": "Quad",
-            "price": 680
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "shaza-regency-plaza-madinah",
-    "name": "Shaza Regency Plaza",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 580
-          },
-          {
-            "roomType": "Quad",
-            "price": 660
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-plaza-almadina-madinah",
-    "name": "Grand Plaza Almadina",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 480
-          },
-          {
-            "roomType": "Triple",
-            "price": 550
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-rehab-elmysk-madinah",
-    "name": "Maysan Rehab Elmysk",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 490
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "arkan-almanar-madinah",
-    "name": "Arkan Almanar",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 490
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-altaqwa-madinah",
-    "name": "Maysan Altaqwa",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 360
-          },
-          {
-            "roomType": "Triple",
-            "price": 410
-          },
-          {
-            "roomType": "Quad",
-            "price": 460
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "plaza-inn-ohud-madinah",
-    "name": "Plaza Inn Ohud",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30 JUN 2026 TO 20 SEP 2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 335
-          },
-          {
-            "roomType": "Triple",
-            "price": 385
-          },
-          {
-            "roomType": "Quad",
-            "price": 435
-          }
-        ]
-      }
-    ]
-  }
-,
-  {
     "id": "wahat-al-diyafah",
     "name": "Wahat Al Diyafah",
     "city": "Makkah",
@@ -10430,1188 +10443,8 @@ export const defaultHotels: Hotel[] = [
       }
     ]
   },
-  {
-    "id": "plaza-in-houd-alharmain",
-    "name": "Plaza In Houd",
-    "city": "Madinah",
-    "vendor": "Alharmain Hotels Management",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 405
-          },
-          {
-            "roomType": "Triple",
-            "price": 435
-          },
-          {
-            "roomType": "Quad",
-            "price": 485
-          }
-        ]
-      }
-    ]
-  }
-
-,
-  {
-    "id": "marwa-rotana-rowa",
-    "name": "Marwa Rotana",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1100
-          },
-          {
-            "roomType": "Triple",
-            "price": 1370
-          },
-          {
-            "roomType": "Quad",
-            "price": 1640
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 30/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1180
-          },
-          {
-            "roomType": "Triple",
-            "price": 1450
-          },
-          {
-            "roomType": "Quad",
-            "price": 1720
-          }
-        ]
-      },
-      {
-        "range": "01/10/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1250
-          },
-          {
-            "roomType": "Triple",
-            "price": 1520
-          },
-          {
-            "roomType": "Quad",
-            "price": 1790
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "movenpick-hajar-rowa",
-    "name": "Movenpick Hajar",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 950
-          },
-          {
-            "roomType": "Triple",
-            "price": 1150
-          },
-          {
-            "roomType": "Quad",
-            "price": 1280
-          },
-          {
-            "roomType": "Suite 5 Pax",
-            "price": 1600
-          },
-          {
-            "roomType": "Suite 6 Pax",
-            "price": 1750
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 30/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1100
-          },
-          {
-            "roomType": "Triple",
-            "price": 1200
-          },
-          {
-            "roomType": "Quad",
-            "price": 1350
-          },
-          {
-            "roomType": "Suite 5 Pax",
-            "price": 1650
-          },
-          {
-            "roomType": "Suite 6 Pax",
-            "price": 1850
-          }
-        ]
-      },
-      {
-        "range": "31/08/2026 TO 14/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1050
-          },
-          {
-            "roomType": "Triple",
-            "price": 1250
-          },
-          {
-            "roomType": "Quad",
-            "price": 1400
-          },
-          {
-            "roomType": "Suite 5 Pax",
-            "price": 1750
-          },
-          {
-            "roomType": "Suite 6 Pax",
-            "price": 1850
-          }
-        ]
-      },
-      {
-        "range": "15/10/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1100
-          },
-          {
-            "roomType": "Triple",
-            "price": 1300
-          },
-          {
-            "roomType": "Quad",
-            "price": 1500
-          },
-          {
-            "roomType": "Suite 5 Pax",
-            "price": 1800
-          },
-          {
-            "roomType": "Suite 6 Pax",
-            "price": 2000
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "safwa-tower-3-rowa",
-    "name": "Safwa Tower 3",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 950
-          },
-          {
-            "roomType": "Triple",
-            "price": 1150
-          },
-          {
-            "roomType": "Quad",
-            "price": 1350
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1050
-          },
-          {
-            "roomType": "Triple",
-            "price": 1250
-          },
-          {
-            "roomType": "Quad",
-            "price": 1450
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "pullman-zamzam-rowa",
-    "name": "Pullman Zamzam",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1000
-          },
-          {
-            "roomType": "Triple",
-            "price": 1200
-          },
-          {
-            "roomType": "Quad",
-            "price": 1400
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 14/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1050
-          },
-          {
-            "roomType": "Triple",
-            "price": 1250
-          },
-          {
-            "roomType": "Quad",
-            "price": 1450
-          },
-          {
-            "roomType": "Suite 6 Pax",
-            "price": 2250
-          },
-          {
-            "roomType": "Suite 7 Pax",
-            "price": 2450
-          }
-        ]
-      },
-      {
-        "range": "15/10/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1150
-          },
-          {
-            "roomType": "Triple",
-            "price": 1350
-          },
-          {
-            "roomType": "Quad",
-            "price": 1550
-          },
-          {
-            "roomType": "Suite 6 Pax",
-            "price": 2350
-          },
-          {
-            "roomType": "Suite 7 Pax",
-            "price": 2550
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "fairmont-rowa",
-    "name": "Fairmont",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1350
-          },
-          {
-            "roomType": "Triple",
-            "price": 1680
-          },
-          {
-            "roomType": "Quad",
-            "price": 2010
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1470
-          },
-          {
-            "roomType": "Triple",
-            "price": 1800
-          },
-          {
-            "roomType": "Quad",
-            "price": 2130
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "swiss-al-maqam-rowa",
-    "name": "Swiss Al Maqam",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1080
-          },
-          {
-            "roomType": "Triple",
-            "price": 1360
-          },
-          {
-            "roomType": "Quad",
-            "price": 1640
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1250
-          },
-          {
-            "roomType": "Triple",
-            "price": 1530
-          },
-          {
-            "roomType": "Quad",
-            "price": 1810
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "hilton-suites-rowa",
-    "name": "Hilton Suites",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1000
-          },
-          {
-            "roomType": "Triple",
-            "price": 1210
-          },
-          {
-            "roomType": "Quad",
-            "price": 1420
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1150
-          },
-          {
-            "roomType": "Triple",
-            "price": 1385
-          },
-          {
-            "roomType": "Quad",
-            "price": 1620
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "rotana-jabal-omar-rowa",
-    "name": "Rotana Jabal Omar",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 08/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 940
-          },
-          {
-            "roomType": "Triple",
-            "price": 1190
-          },
-          {
-            "roomType": "Quad",
-            "price": 1390
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 03/11/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1040
-          },
-          {
-            "roomType": "Triple",
-            "price": 1290
-          },
-          {
-            "roomType": "Quad",
-            "price": 1491
-          }
-        ]
-      },
-      {
-        "range": "04/11/2026 TO 16/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1040
-          },
-          {
-            "roomType": "Triple",
-            "price": 1290
-          },
-          {
-            "roomType": "Quad",
-            "price": 1490
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "olayan-ajyad-rowa",
-    "name": "Olayan Ajyad",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 600
-          },
-          {
-            "roomType": "Triple",
-            "price": 700
-          },
-          {
-            "roomType": "Quad",
-            "price": 800
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 660
-          },
-          {
-            "roomType": "Triple",
-            "price": 760
-          },
-          {
-            "roomType": "Quad",
-            "price": 860
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "prestige-rowa",
-    "name": "Prestige",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 30/06/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 475
-          },
-          {
-            "roomType": "Triple",
-            "price": 550
-          },
-          {
-            "roomType": "Quad",
-            "price": 625
-          }
-        ]
-      },
-      {
-        "range": "01/07/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 575
-          },
-          {
-            "roomType": "Quad",
-            "price": 650
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 625
-          },
-          {
-            "roomType": "Triple",
-            "price": 725
-          },
-          {
-            "roomType": "Quad",
-            "price": 825
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "safa-azka-rowa",
-    "name": "Safa Azka",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "20/06/2026 TO 30/06/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 530
-          },
-          {
-            "roomType": "Triple",
-            "price": 580
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      },
-      {
-        "range": "01/07/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 560
-          },
-          {
-            "roomType": "Triple",
-            "price": 635
-          },
-          {
-            "roomType": "Quad",
-            "price": 710
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 31/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 590
-          },
-          {
-            "roomType": "Triple",
-            "price": 675
-          },
-          {
-            "roomType": "Quad",
-            "price": 760
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-masa-grand-rowa",
-    "name": "Al Masa Grand",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 400
-          },
-          {
-            "roomType": "Triple",
-            "price": 450
-          },
-          {
-            "roomType": "Quad",
-            "price": 500
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 480
-          },
-          {
-            "roomType": "Quad",
-            "price": 530
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-masa-al-fazeen-rowa",
-    "name": "Al Masa Al Fazeen",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 370
-          },
-          {
-            "roomType": "Triple",
-            "price": 420
-          },
-          {
-            "roomType": "Quad",
-            "price": 470
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 380
-          },
-          {
-            "roomType": "Triple",
-            "price": 430
-          },
-          {
-            "roomType": "Quad",
-            "price": 480
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-ajyad-rowa",
-    "name": "Snood Ajyad",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 380
-          },
-          {
-            "roomType": "Triple",
-            "price": 425
-          },
-          {
-            "roomType": "Quad",
-            "price": 470
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "waha-ajyad-rowa",
-    "name": "Waha Ajyad",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 290
-          },
-          {
-            "roomType": "Triple",
-            "price": 330
-          },
-          {
-            "roomType": "Quad",
-            "price": 370
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 310
-          },
-          {
-            "roomType": "Triple",
-            "price": 350
-          },
-          {
-            "roomType": "Quad",
-            "price": 390
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "nada-ajyad-rowa",
-    "name": "Nada Ajyad",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 310
-          },
-          {
-            "roomType": "Triple",
-            "price": 350
-          },
-          {
-            "roomType": "Quad",
-            "price": 390
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 330
-          },
-          {
-            "roomType": "Triple",
-            "price": 370
-          },
-          {
-            "roomType": "Quad",
-            "price": 410
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "diafat-al-rajaa-rowa",
-    "name": "Diafat Al Rajaa",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 260
-          },
-          {
-            "roomType": "Triple",
-            "price": 310
-          },
-          {
-            "roomType": "Quad",
-            "price": 360
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 300
-          },
-          {
-            "roomType": "Triple",
-            "price": 350
-          },
-          {
-            "roomType": "Quad",
-            "price": 400
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "olayan-golden-rowa",
-    "name": "Olayan Golden",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 270
-          },
-          {
-            "roomType": "Triple",
-            "price": 310
-          },
-          {
-            "roomType": "Quad",
-            "price": 350
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 320
-          },
-          {
-            "roomType": "Triple",
-            "price": 360
-          },
-          {
-            "roomType": "Quad",
-            "price": 400
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "badr-al-masa-rowa",
-    "name": "Badr Al Masa",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 260
-          },
-          {
-            "roomType": "Triple",
-            "price": 300
-          },
-          {
-            "roomType": "Quad",
-            "price": 340
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 280
-          },
-          {
-            "roomType": "Triple",
-            "price": 320
-          },
-          {
-            "roomType": "Quad",
-            "price": 360
-          }
-        ]
-      },
-      {
-        "range": "05/10/2026 TO 05/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 440
-          },
-          {
-            "roomType": "Triple",
-            "price": 490
-          },
-          {
-            "roomType": "Quad",
-            "price": 540
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "olayan-grand-rowa",
-    "name": "Olayan Grand",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 180
-          },
-          {
-            "roomType": "Triple",
-            "price": 220
-          },
-          {
-            "roomType": "Quad",
-            "price": 260
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 200
-          },
-          {
-            "roomType": "Triple",
-            "price": 240
-          },
-          {
-            "roomType": "Quad",
-            "price": 280
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "saja-makkah-rowa",
-    "name": "Saja Makkah / Ex.Lemeredian Towers",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 270
-          },
-          {
-            "roomType": "Triple",
-            "price": 320
-          },
-          {
-            "roomType": "Quad",
-            "price": 370
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 290
-          },
-          {
-            "roomType": "Triple",
-            "price": 340
-          },
-          {
-            "roomType": "Quad",
-            "price": 390
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "nawazi-towers-rowa",
-    "name": "Nawazi Towers",
-    "city": "Makkah",
-    "vendor": "ROWA",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 200
-          },
-          {
-            "roomType": "Triple",
-            "price": 240
-          },
-          {
-            "roomType": "Quad",
-            "price": 280
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 04/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 230
-          },
-          {
-            "roomType": "Triple",
-            "price": 270
-          },
-          {
-            "roomType": "Quad",
-            "price": 410
-          }
-        ]
-      }
-    ]
-  }
-,
+  ...newRowaHotels,
+  ...newAlharmainHotels,
   {
     "id": "elaf-al-bait-akuw",
     "name": "Elaf Al Bait",
@@ -12374,9 +11207,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 595 },
-          { "roomType": "Triple", "price": 695 },
-          { "roomType": "Quad", "price": 795 }
+          {
+            "roomType": "Double",
+            "price": 595
+          },
+          {
+            "roomType": "Triple",
+            "price": 695
+          },
+          {
+            "roomType": "Quad",
+            "price": 795
+          }
         ]
       }
     ]
@@ -12391,9 +11233,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 31/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 420 },
-          { "roomType": "Triple", "price": 470 },
-          { "roomType": "Quad", "price": 520 }
+          {
+            "roomType": "Double",
+            "price": 420
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
         ]
       }
     ]
@@ -12408,9 +11259,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "15/06/2026 TO 01/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 580 },
-          { "roomType": "Triple", "price": 650 },
-          { "roomType": "Quad", "price": 720 }
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 650
+          },
+          {
+            "roomType": "Quad",
+            "price": 720
+          }
         ]
       }
     ]
@@ -12425,9 +11285,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 390 },
-          { "roomType": "Triple", "price": 440 },
-          { "roomType": "Quad", "price": 480 }
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 440
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
         ]
       }
     ]
@@ -12442,9 +11311,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 19/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 150 },
-          { "roomType": "Triple", "price": 190 },
-          { "roomType": "Quad", "price": 230 }
+          {
+            "roomType": "Double",
+            "price": 150
+          },
+          {
+            "roomType": "Triple",
+            "price": 190
+          },
+          {
+            "roomType": "Quad",
+            "price": 230
+          }
         ]
       }
     ]
@@ -12459,9 +11337,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 19/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 190 },
-          { "roomType": "Triple", "price": 230 },
-          { "roomType": "Quad", "price": 270 }
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 230
+          },
+          {
+            "roomType": "Quad",
+            "price": 270
+          }
         ]
       }
     ]
@@ -12476,9 +11363,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 31/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 195 },
-          { "roomType": "Triple", "price": 235 },
-          { "roomType": "Quad", "price": 275 }
+          {
+            "roomType": "Double",
+            "price": 195
+          },
+          {
+            "roomType": "Triple",
+            "price": 235
+          },
+          {
+            "roomType": "Quad",
+            "price": 275
+          }
         ]
       }
     ]
@@ -12493,9 +11389,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "16/06/2026 TO 16/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 185 },
-          { "roomType": "Triple", "price": 230 },
-          { "roomType": "Quad", "price": 275 }
+          {
+            "roomType": "Double",
+            "price": 185
+          },
+          {
+            "roomType": "Triple",
+            "price": 230
+          },
+          {
+            "roomType": "Quad",
+            "price": 275
+          }
         ]
       }
     ]
@@ -12510,9 +11415,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 14/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 730 },
-          { "roomType": "Triple", "price": 855 },
-          { "roomType": "Quad", "price": 980 }
+          {
+            "roomType": "Double",
+            "price": 730
+          },
+          {
+            "roomType": "Triple",
+            "price": 855
+          },
+          {
+            "roomType": "Quad",
+            "price": 980
+          }
         ]
       }
     ]
@@ -12527,9 +11441,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "01/07/2026 TO 20/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 765 },
-          { "roomType": "Triple", "price": 910 },
-          { "roomType": "Quad", "price": 1055 }
+          {
+            "roomType": "Double",
+            "price": 765
+          },
+          {
+            "roomType": "Triple",
+            "price": 910
+          },
+          {
+            "roomType": "Quad",
+            "price": 1055
+          }
         ]
       }
     ]
@@ -12544,9 +11467,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 01/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 410 },
-          { "roomType": "Triple", "price": 450 },
-          { "roomType": "Quad", "price": 490 }
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 450
+          },
+          {
+            "roomType": "Quad",
+            "price": 490
+          }
         ]
       }
     ]
@@ -12561,9 +11493,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 14/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 450 },
-          { "roomType": "Triple", "price": 495 },
-          { "roomType": "Quad", "price": 540 }
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
         ]
       }
     ]
@@ -12578,9 +11519,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 31/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 400 },
-          { "roomType": "Triple", "price": 440 },
-          { "roomType": "Quad", "price": 480 }
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 440
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
         ]
       }
     ]
@@ -12595,9 +11545,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 15/07/2026",
         "prices": [
-          { "roomType": "Double", "price": 390 },
-          { "roomType": "Triple", "price": 430 },
-          { "roomType": "Quad", "price": 470 }
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 430
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
         ]
       }
     ]
@@ -12612,9 +11571,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 14/08/2026",
         "prices": [
-          { "roomType": "Double", "price": 350 },
-          { "roomType": "Triple", "price": 390 },
-          { "roomType": "Quad", "price": 430 }
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
         ]
       }
     ]
@@ -12629,9 +11597,18 @@ export const defaultHotels: Hotel[] = [
       {
         "range": "30/06/2026 TO 20/09/2026",
         "prices": [
-          { "roomType": "Double", "price": 370 },
-          { "roomType": "Triple", "price": 420 },
-          { "roomType": "Quad", "price": 470 }
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
         ]
       }
     ]
@@ -12646,7 +11623,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 950 }, { "roomType": "Triple", "price": 1150 }, { "roomType": "Quad", "price": 1350 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 950
+          },
+          {
+            "roomType": "Triple",
+            "price": 1150
+          },
+          {
+            "roomType": "Quad",
+            "price": 1350
+          }
+        ]
       }
     ]
   },
@@ -12660,7 +11650,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 950 }, { "roomType": "Triple", "price": 1150 }, { "roomType": "Quad", "price": 1350 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 950
+          },
+          {
+            "roomType": "Triple",
+            "price": 1150
+          },
+          {
+            "roomType": "Quad",
+            "price": 1350
+          }
+        ]
       }
     ]
   },
@@ -12674,11 +11677,37 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 01/08/2026",
-        "prices": [{ "roomType": "Double", "price": 575 }, { "roomType": "Triple", "price": 675 }, { "roomType": "Quad", "price": 775 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 575
+          },
+          {
+            "roomType": "Triple",
+            "price": 675
+          },
+          {
+            "roomType": "Quad",
+            "price": 775
+          }
+        ]
       },
       {
         "range": "01/08/2026 TO 05/10/2026",
-        "prices": [{ "roomType": "Double", "price": 670 }, { "roomType": "Triple", "price": 770 }, { "roomType": "Quad", "price": 870 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 670
+          },
+          {
+            "roomType": "Triple",
+            "price": 770
+          },
+          {
+            "roomType": "Quad",
+            "price": 870
+          }
+        ]
       }
     ]
   },
@@ -12692,7 +11721,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 580 }, { "roomType": "Triple", "price": 680 }, { "roomType": "Quad", "price": 780 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 680
+          },
+          {
+            "roomType": "Quad",
+            "price": 780
+          }
+        ]
       }
     ]
   },
@@ -12706,7 +11748,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 520 }, { "roomType": "Triple", "price": 610 }, { "roomType": "Quad", "price": 700 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 610
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
+        ]
       }
     ]
   },
@@ -12720,15 +11775,54 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "20/06/2026 TO 01/07/2026",
-        "prices": [{ "roomType": "Double", "price": 550 }, { "roomType": "Triple", "price": 620 }, { "roomType": "Quad", "price": 690 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 620
+          },
+          {
+            "roomType": "Quad",
+            "price": 690
+          }
+        ]
       },
       {
         "range": "01/07/2026 TO 01/08/2026",
-        "prices": [{ "roomType": "Double", "price": 600 }, { "roomType": "Triple", "price": 690 }, { "roomType": "Quad", "price": 780 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 690
+          },
+          {
+            "roomType": "Quad",
+            "price": 780
+          }
+        ]
       },
       {
         "range": "01/08/2026 TO 01/09/2026",
-        "prices": [{ "roomType": "Double", "price": 630 }, { "roomType": "Triple", "price": 730 }, { "roomType": "Quad", "price": 820 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 630
+          },
+          {
+            "roomType": "Triple",
+            "price": 730
+          },
+          {
+            "roomType": "Quad",
+            "price": 820
+          }
+        ]
       }
     ]
   },
@@ -12742,15 +11836,54 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "20/06/2026 TO 01/07/2026",
-        "prices": [{ "roomType": "Double", "price": 520 }, { "roomType": "Triple", "price": 570 }, { "roomType": "Quad", "price": 620 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
       },
       {
         "range": "01/07/2026 TO 01/08/2026",
-        "prices": [{ "roomType": "Double", "price": 550 }, { "roomType": "Triple", "price": 625 }, { "roomType": "Quad", "price": 700 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 625
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
+        ]
       },
       {
         "range": "01/08/2026 TO 01/09/2026",
-        "prices": [{ "roomType": "Double", "price": 580 }, { "roomType": "Triple", "price": 665 }, { "roomType": "Quad", "price": 750 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 665
+          },
+          {
+            "roomType": "Quad",
+            "price": 750
+          }
+        ]
       }
     ]
   },
@@ -12764,7 +11897,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 450 }, { "roomType": "Triple", "price": 500 }, { "roomType": "Quad", "price": 550 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
       }
     ]
   },
@@ -12778,7 +11924,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 420 }, { "roomType": "Triple", "price": 470 }, { "roomType": "Quad", "price": 520 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 420
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
       }
     ]
   },
@@ -12792,7 +11951,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 450 }, { "roomType": "Triple", "price": 495 }, { "roomType": "Quad", "price": 540 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
       }
     ]
   },
@@ -12806,7 +11978,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 420 }, { "roomType": "Triple", "price": 465 }, { "roomType": "Quad", "price": 510 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 420
+          },
+          {
+            "roomType": "Triple",
+            "price": 465
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
+          }
+        ]
       }
     ]
   },
@@ -12820,7 +12005,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 450 }, { "roomType": "Triple", "price": 500 }, { "roomType": "Quad", "price": 550 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
       }
     ]
   },
@@ -12834,7 +12032,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 350 }, { "roomType": "Triple", "price": 395 }, { "roomType": "Quad", "price": 440 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 395
+          },
+          {
+            "roomType": "Quad",
+            "price": 440
+          }
+        ]
       }
     ]
   },
@@ -12848,7 +12059,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 310 }, { "roomType": "Triple", "price": 355 }, { "roomType": "Quad", "price": 400 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 310
+          },
+          {
+            "roomType": "Triple",
+            "price": 355
+          },
+          {
+            "roomType": "Quad",
+            "price": 400
+          }
+        ]
       }
     ]
   },
@@ -12862,7 +12086,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 270 }, { "roomType": "Triple", "price": 315 }, { "roomType": "Quad", "price": 360 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 270
+          },
+          {
+            "roomType": "Triple",
+            "price": 315
+          },
+          {
+            "roomType": "Quad",
+            "price": 360
+          }
+        ]
       }
     ]
   },
@@ -12876,7 +12113,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 190 }, { "roomType": "Triple", "price": 235 }, { "roomType": "Quad", "price": 280 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 235
+          },
+          {
+            "roomType": "Quad",
+            "price": 280
+          }
+        ]
       }
     ]
   },
@@ -12890,7 +12140,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 170 }, { "roomType": "Triple", "price": 210 }, { "roomType": "Quad", "price": 250 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 170
+          },
+          {
+            "roomType": "Triple",
+            "price": 210
+          },
+          {
+            "roomType": "Quad",
+            "price": 250
+          }
+        ]
       }
     ]
   },
@@ -12904,7 +12167,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 380 }, { "roomType": "Triple", "price": 420 }, { "roomType": "Quad", "price": 460 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
       }
     ]
   },
@@ -12918,7 +12194,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 250 }, { "roomType": "Triple", "price": 290 }, { "roomType": "Quad", "price": 330 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 250
+          },
+          {
+            "roomType": "Triple",
+            "price": 290
+          },
+          {
+            "roomType": "Quad",
+            "price": 330
+          }
+        ]
       }
     ]
   },
@@ -12932,7 +12221,12 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Quad", "price": 530 }]
+        "prices": [
+          {
+            "roomType": "Quad",
+            "price": 530
+          }
+        ]
       }
     ]
   },
@@ -12946,7 +12240,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 490 }, { "roomType": "Triple", "price": 535 }, { "roomType": "Quad", "price": 580 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 490
+          },
+          {
+            "roomType": "Triple",
+            "price": 535
+          },
+          {
+            "roomType": "Quad",
+            "price": 580
+          }
+        ]
       }
     ]
   },
@@ -12960,7 +12267,20 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 470 }, { "roomType": "Triple", "price": 515 }, { "roomType": "Quad", "price": 560 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
       }
     ]
   },
@@ -12974,191 +12294,876 @@ export const defaultHotels: Hotel[] = [
     "seasons": [
       {
         "range": "16/06/2026 TO 19/07/2026",
-        "prices": [{ "roomType": "Double", "price": 360 }, { "roomType": "Triple", "price": 405 }, { "roomType": "Quad", "price": 460 }]
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 360
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
       }
     ]
   },
   {
-  "id": "pullman-zamzam-makkah-darmawisata",
-  "name": "Pullman Zamzam Makkah",
-  "city": "Makkah",
-  "vendor": "PT. Darmawisata Indonesia",
-  "mealPlan": "FB",
-  "stars": 5,
-  "seasons": [
-    {
-      "range": "16/06/2026 TO 19/07/2026",
-      "prices": [
-        {
-          "roomType": "Double",
-          "price": 980
-        },
-        {
-          "roomType": "Triple",
-          "price": 1190
-        },
-        {
-          "roomType": "Quad",
-          "price": 1400
-        }
-      ]
-    }
-  ]
-},
+    "id": "pullman-zamzam-makkah-darmawisata",
+    "name": "Pullman Zamzam Makkah",
+    "city": "Makkah",
+    "vendor": "PT. Darmawisata Indonesia",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 19/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 980
+          },
+          {
+            "roomType": "Triple",
+            "price": 1190
+          },
+          {
+            "roomType": "Quad",
+            "price": 1400
+          }
+        ]
+      }
+    ]
+  },
   {
-  "id": "le-meridien-makkah-darmawisata",
-  "name": "Le Meridien Makkah",
-  "city": "Makkah",
-  "vendor": "PT. Darmawisata Indonesia",
-  "mealPlan": "FB",
-  "stars": 5,
-  "seasons": [
-    {
-      "range": "01/07/2026 TO 01/09/2026",
-      "prices": [
-        {
-          "roomType": "Double",
-          "price": 630
-        },
-        {
-          "roomType": "Triple",
-          "price": 815
-        },
-        {
-          "roomType": "Quad",
-          "price": 950
-        }
-      ]
-    }
-  ]
-},
+    "id": "le-meridien-makkah-darmawisata",
+    "name": "Le Meridien Makkah",
+    "city": "Makkah",
+    "vendor": "PT. Darmawisata Indonesia",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 630
+          },
+          {
+            "roomType": "Triple",
+            "price": 815
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      }
+    ]
+  },
   {
-  "id": "villa-hilton-makkah-darmawisata",
-  "name": "VILLA HILTON",
-  "city": "Makkah",
-  "vendor": "PT. Darmawisata Indonesia",
-  "mealPlan": "FB",
-  "stars": 5,
-  "seasons": [
-    {
-      "range": "01/06/2026 TO 15/12/2026",
-      "prices": [
-        {
-          "roomType": "Per Bed",
-          "price": 220
-        }
-      ]
-    }
-  ]
-},
+    "id": "villa-hilton-makkah-darmawisata",
+    "name": "VILLA HILTON",
+    "city": "Makkah",
+    "vendor": "PT. Darmawisata Indonesia",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "01/06/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Per Bed",
+            "price": 220
+          }
+        ]
+      }
+    ]
+  },
   {
-  "id": "movenpick-makkah-darmawisata",
-  "name": "Movenpick Makkah",
-  "city": "Makkah",
-  "vendor": "PT. Darmawisata Indonesia",
-  "mealPlan": "FB",
-  "stars": 5,
-  "seasons": [
-    {
-      "range": "16/06/2026 TO 19/07/2026",
-      "prices": [
-        {
-          "roomType": "Double",
-          "price": 980
-        },
-        {
-          "roomType": "Triple",
-          "price": 1190
-        },
-        {
-          "roomType": "Quad",
-          "price": 1000
-        }
-      ]
-    }
-  ]
-},
+    "id": "movenpick-makkah-darmawisata",
+    "name": "Movenpick Makkah",
+    "city": "Makkah",
+    "vendor": "PT. Darmawisata Indonesia",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 19/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 980
+          },
+          {
+            "roomType": "Triple",
+            "price": 1190
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      }
+    ]
+  },
   {
-  "id": "maden-taiba-hotel-darmawisata",
-  "name": "Maden Taiba Hotel",
-  "city": "Madinah",
-  "vendor": "PT. Darmawisata Indonesia",
-  "mealPlan": "FB",
-  "stars": 5,
-  "seasons": [
-    {
-      "range": "25/06/2026 TO 14/08/2026",
-      "prices": [
-        {
-          "roomType": "Double",
-          "price": 880
-        },
-        {
-          "roomType": "Triple",
-          "price": 1040
-        },
-        {
-          "roomType": "Quad",
-          "price": 1200
-        }
-      ]
-    }
-  ]
-},
+    "id": "maden-taiba-hotel-darmawisata",
+    "name": "Maden Taiba Hotel",
+    "city": "Madinah",
+    "vendor": "PT. Darmawisata Indonesia",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 880
+          },
+          {
+            "roomType": "Triple",
+            "price": 1040
+          },
+          {
+            "roomType": "Quad",
+            "price": 1200
+          }
+        ]
+      }
+    ]
+  },
   {
-  "id": "millineum-al-aqeeq-darmawisata",
-  "name": "Millineum Al Aqeeq",
-  "city": "Madinah",
-  "vendor": "PT. Darmawisata Indonesia",
-  "mealPlan": "FB",
-  "stars": 5,
-  "seasons": [
-    {
-      "range": "30/06/2026 TO 14/08/2026",
-      "prices": [
-        {
-          "roomType": "Double",
-          "price": 780
-        },
-        {
-          "roomType": "Triple",
-          "price": 915
-        },
-        {
-          "roomType": "Quad",
-          "price": 1050
-        }
-      ]
-    }
-  ]
-},
+    "id": "millineum-al-aqeeq-darmawisata",
+    "name": "Millineum Al Aqeeq",
+    "city": "Madinah",
+    "vendor": "PT. Darmawisata Indonesia",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 780
+          },
+          {
+            "roomType": "Triple",
+            "price": 915
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
+        ]
+      }
+    ]
+  },
   {
-  "id": "dar-al-eiman-al-haram-hotel-darmawisata",
-  "name": "Dar Al Eiman Al Haram Hotel",
-  "city": "Madinah",
-  "vendor": "PT. Darmawisata Indonesia",
-  "mealPlan": "FB",
-  "stars": 5,
-  "seasons": [
-    {
-      "range": "30/06/2026 TO 15/08/2026",
-      "prices": [
-        {
-          "roomType": "Double",
-          "price": 830
-        },
-        {
-          "roomType": "Triple",
-          "price": 965
-        },
-        {
-          "roomType": "Quad",
-          "price": 1100
-        }
-      ]
-    }
-  ]
-}
+    "id": "dar-al-eiman-al-haram-hotel-darmawisata",
+    "name": "Dar Al Eiman Al Haram Hotel",
+    "city": "Madinah",
+    "vendor": "PT. Darmawisata Indonesia",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 830
+          },
+          {
+            "roomType": "Triple",
+            "price": 965
+          },
+          {
+            "roomType": "Quad",
+            "price": 1100
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-harithia-madinah",
+    "name": "The Venue Al Harithia",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "23/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 900
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 900
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 1550
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 2150
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 950
+          },
+          {
+            "roomType": "Quad",
+            "price": 1100
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 950
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 1600
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 2200
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-badr-almaqam-madinah",
+    "name": "Grand Plaza Badr Almaqam",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 680
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 630
+          },
+          {
+            "roomType": "Quad",
+            "price": 710
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shaza-regency-plaza-madinah",
+    "name": "Shaza Regency Plaza",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "27/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 580
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 530
+          },
+          {
+            "roomType": "Triple",
+            "price": 610
+          },
+          {
+            "roomType": "Quad",
+            "price": 690
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-almadina-madinah",
+    "name": "Grand Plaza Almadina",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-rehab-elmysk-madinah",
+    "name": "Maysan Rehab Elmysk",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-rotana-elmysk-madinah",
+    "name": "Maysan Rotana Elmysk",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "15/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "arkan-almanar-madinah",
+    "name": "Arkan Almanar",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-altaqwa-madinah",
+    "name": "Maysan Altaqwa",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "23/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 360
+          },
+          {
+            "roomType": "Triple",
+            "price": 410
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 440
+          },
+          {
+            "roomType": "Quad",
+            "price": 490
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "plaza-inn-ohud-madinah",
+    "name": "Plaza Inn Ohud",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 335
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 435
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 355
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 455
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-taqwa-maysan-madinah",
+    "name": "Dar Al Taqwa",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "BB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "05/06/2026 TO 30/08/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 945
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1010
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1075
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1135
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1640
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 1765
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 1890
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2015
+          }
+        ]
+      },
+      {
+        "range": "30/08/2026 TO 23/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1390
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1450
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1515
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1575
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2080
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2205
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2330
+          }
+        ]
+      },
+      {
+        "range": "23/09/2026 TO 27/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1515
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1700
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1700
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1890
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 2520
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2740
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2835
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 3055
+          }
+        ]
+      },
+      {
+        "range": "27/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1390
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1450
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1515
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1575
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2080
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2205
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2330
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-iman-intercontinental-maysan-madinah",
+    "name": "Dar Al Iman Intercontinental",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "BB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "11/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 860
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 910
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1035
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1080
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1050
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1165
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1225
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1340
+          }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1155
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1355
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1330
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1530
+          }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 31/10/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1175
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1360
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1410
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1600
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export const getHotels = (): Hotel[] => {
@@ -13166,11 +13171,19 @@ export const getHotels = (): Hotel[] => {
   if (stored) {
     try {
       const parsed = JSON.parse(stored) as Hotel[];
+      // Replace existing Maysan Int. Group, ROWA and Alharmain Hotels Management hotels in stored parsed data with updated ones from defaultHotels
+      const parsedUpdated = parsed.map(ph => {
+        const matchingDefault = defaultHotels.find(dh => dh.id === ph.id);
+        if (matchingDefault && (matchingDefault.vendor === 'Maysan Int. Group' || matchingDefault.vendor === 'ROWA' || matchingDefault.vendor === 'Alharmain Hotels Management')) {
+          return matchingDefault;
+        }
+        return ph;
+      });
       // Merge missing hotels from defaultHotels
-      const parsedIds = new Set(parsed.map(h => h.id));
+      const parsedIds = new Set(parsedUpdated.map(h => h.id));
       const missingHotels = defaultHotels.filter(h => !parsedIds.has(h.id));
       if (missingHotels.length > 0) {
-        const merged = [...parsed, ...missingHotels,
+        const merged = [...parsedUpdated, ...missingHotels,
   {
     "id": "mather-al-eiman-diar",
     "name": "Mather Al Eiman",
@@ -14237,19 +14250,19 @@ export const getHotels = (): Hotel[] => {
     "stars": 3,
     "seasons": [
       {
-        "range": "30/06/2026 TO 20/09/2026",
+        "range": "30/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 405
+            "price": 375
           },
           {
             "roomType": "Triple",
-            "price": 435
+            "price": 425
           },
           {
             "roomType": "Quad",
-            "price": 485
+            "price": 475
           }
         ]
       }

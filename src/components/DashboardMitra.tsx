@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell } from 'lucide-react';
+import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell, Check, Info, AlertTriangle, X } from 'lucide-react';
 import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc, signOut } from '../firebase';
+import { AppNotification } from '../types';
+import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, sendNotification } from '../services/notificationService';
 import { PaketMitraView } from './PaketMitraView';
 import { KatalogPaketView } from './KatalogPaketView';
 import { JamaahMitraView } from './JamaahMitraView';
@@ -100,6 +102,8 @@ type MitraTab = 'overview' | 'feed' | 'katalog' | 'paket' | 'validasi' | 'jamaah
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [balance, setBalance] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -216,6 +220,11 @@ export const DashboardMitra = () => {
       setMaskapais(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MitraMaskapai)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'maskapai'));
 
+    // Real-time Notifications Setup
+    const unsubscribeNotifications = listenToUserNotifications(userId, 'mitra', (notifs) => {
+      setNotifications(notifs);
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeWallet();
@@ -227,6 +236,7 @@ export const DashboardMitra = () => {
       unsubscribeMasters();
       unsubscribeHotels();
       unsubscribeMaskapai();
+      unsubscribeNotifications();
     };
   }, [userId]);
 
@@ -333,6 +343,23 @@ export const DashboardMitra = () => {
         bankAccountName,
         createdAt: new Date().toISOString()
       });
+
+      // Send real-time notifications
+      await sendNotification({
+        title: 'Pencairan Komisi Diajukan',
+        message: `Permintaan pencairan komisi sebesar Rp ${withdrawAmount.toLocaleString('id-ID')} ke rekening ${bankName} sedang kami proses.`,
+        type: 'info',
+        targetId: userId,
+        targetRole: 'mitra'
+      });
+
+      await sendNotification({
+        title: 'Permintaan Withdraw Baru',
+        message: `Mitra ${currentUserData?.brandName || currentUserData?.namaLengkap || 'Mitra'} mengajukan pencairan komisi sebesar Rp ${withdrawAmount.toLocaleString('id-ID')}.`,
+        type: 'warning',
+        targetRole: 'admin'
+      });
+
       alert('Permintaan penarikan berhasil dikirim.');
       setShowWithdrawModal(false);
       setWithdrawAmount(0);
@@ -1626,17 +1653,115 @@ export const DashboardMitra = () => {
             </div>
 
             {/* Quick Badges in Dark Green */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 relative">
               {/* Notifications */}
-              <button 
-                title="Pemberitahuan resmi" 
-                className="relative p-2 hover:bg-gray-50 active:scale-95 transition-all text-gray-500 rounded-xl cursor-pointer"
-              >
-                <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm font-sans">
-                  5
-                </span>
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                  title="Pemberitahuan resmi" 
+                  className="relative p-2 hover:bg-gray-50 active:scale-95 transition-all text-gray-500 rounded-xl cursor-pointer flex items-center justify-center"
+                >
+                  <Bell className="w-5 h-5 text-gray-600" />
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm font-sans">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </button>
+
+                {showNotificationDropdown && (
+                  <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200">
+                    {/* Popover Header */}
+                    <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black uppercase text-gray-800 tracking-wider">Notifikasi</span>
+                        {notifications.filter(n => !n.read).length > 0 && (
+                          <span className="bg-[#055734] text-white text-[10px] font-bold px-2 py-0.5 rounded-full font-mono">
+                            {notifications.filter(n => !n.read).length} Baru
+                          </span>
+                        )}
+                      </div>
+                      {notifications.filter(n => !n.read).length > 0 && (
+                        <button 
+                          onClick={async () => {
+                            await markAllNotificationsAsRead(notifications);
+                          }}
+                          className="text-[10px] font-extrabold text-[#055734] hover:underline uppercase tracking-wider cursor-pointer"
+                        >
+                          Tandai Semua Dibaca
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Popover Content */}
+                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-gray-400">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-30 text-gray-500" />
+                          <p className="text-xs font-bold uppercase tracking-wider">Belum Ada Notifikasi</p>
+                          <p className="text-[10px] text-gray-400 mt-1">Anda akan mendapat pemberitahuan saat sistem memperbarui status Anda.</p>
+                        </div>
+                      ) : (
+                        notifications.map((notif) => {
+                          let badgeBg = 'bg-blue-50 text-blue-600 border-blue-100';
+                          let Icon = Info;
+                          
+                          if (notif.type === 'success') {
+                            badgeBg = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                            Icon = Check;
+                          } else if (notif.type === 'warning') {
+                            badgeBg = 'bg-amber-50 text-amber-600 border-amber-100';
+                            Icon = AlertTriangle;
+                          } else if (notif.type === 'error') {
+                            badgeBg = 'bg-rose-50 text-rose-600 border-rose-100';
+                            Icon = X;
+                          } else if (notif.type === 'broadcast') {
+                            badgeBg = 'bg-indigo-50 text-indigo-600 border-indigo-100';
+                            Icon = Sparkles;
+                          }
+                          
+                          return (
+                            <div 
+                              key={notif.id} 
+                              onClick={async () => {
+                                if (!notif.read) {
+                                  await markNotificationAsRead(notif.id);
+                                }
+                              }}
+                              className={`p-4 flex gap-3 hover:bg-gray-50 transition-colors cursor-pointer text-left ${!notif.read ? 'bg-indigo-50/10' : ''}`}
+                            >
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${badgeBg}`}>
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className={`text-xs text-gray-900 leading-snug ${!notif.read ? 'font-extrabold' : 'font-medium'}`}>
+                                    {notif.title}
+                                  </p>
+                                  {!notif.read && (
+                                    <span className="w-2 h-2 rounded-full bg-[#055734] shrink-0"></span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                                  {notif.message}
+                                </p>
+                                <span className="text-[8px] font-mono font-bold text-gray-400 block mt-1 uppercase">
+                                  {new Date(notif.createdAt).toLocaleDateString('id-ID', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Chat Messages */}
               <button 

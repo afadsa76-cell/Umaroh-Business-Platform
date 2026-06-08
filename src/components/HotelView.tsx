@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { hotels, Hotel } from '../data/hotels';
+import React, { useState, useMemo, useEffect } from 'react';
+import { hotels, Hotel, newRowaHotels, newAlharmainHotels } from '../data/hotels';
 import { HotelCard } from './HotelCard';
 import { FilterBar } from './FilterBar';
 import { HotelDetailModal } from './HotelDetailModal';
-import { Building2, Download } from 'lucide-react';
+import { Building2, Download, RefreshCw } from 'lucide-react';
 import { isDateInRange, parseDate, parseDateRange } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
+import { db } from '../firebase';
+import { doc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 
 const MASTER_PERIODS = [
   { name: 'LOW SEASON JUN–JUL 2026', start: '16 Jun 2026', end: '31 Jul 2026', hijri: '1 Muharram 1448 – 15 Safar 1448' },
@@ -15,6 +17,357 @@ const MASTER_PERIODS = [
   { name: 'PEAK MAULID OCT–DEC 2026', start: '01 Oct 2026', end: '16 Dec 2026', hijri: '18 Rabiul Awal 1448 – 5 Jumadil Akhir 1448' },
   { name: 'AKHIR TAHUN – AWAL TAHUN', start: '16 Dec 2026', end: '08 Feb 2027', hijri: '5 Jumadil Akhir 1448 – 1 Sya’ban 1448' },
   { name: 'LONG SEASON 2026', start: '01 Jun 2026', end: '15 Dec 2026', hijri: '15 Dzulhijjah 1447 – 5 Jumadil Akhir 1448' },
+];
+
+const newMaysanHotels: Hotel[] = [
+  {
+    "id": "al-harithia-madinah",
+    "name": "The Venue Al Harithia",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "23/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 750 },
+          { "roomType": "Triple", "price": 900 },
+          { "roomType": "Quad", "price": 1050 },
+          { "roomType": "Junior suite (2 Pax)", "price": 900 },
+          { "roomType": "Executive Suite (2 Rooms 4 Pax)", "price": 1550 },
+          { "roomType": "Royal Suite (2 Rooms 4 Pax)", "price": 2150 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 800 },
+          { "roomType": "Triple", "price": 950 },
+          { "roomType": "Quad", "price": 1100 },
+          { "roomType": "Junior suite (2 Pax)", "price": 950 },
+          { "roomType": "Executive Suite (2 Rooms 4 Pax)", "price": 1600 },
+          { "roomType": "Royal Suite (2 Rooms 4 Pax)", "price": 2200 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-badr-almaqam-madinah",
+    "name": "Grand Plaza Badr Almaqam",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 520 },
+          { "roomType": "Triple", "price": 600 },
+          { "roomType": "Quad", "price": 680 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 550 },
+          { "roomType": "Triple", "price": 630 },
+          { "roomType": "Quad", "price": 710 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shaza-regency-plaza-madinah",
+    "name": "Shaza Regency Plaza",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "27/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 500 },
+          { "roomType": "Triple", "price": 580 },
+          { "roomType": "Quad", "price": 660 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 530 },
+          { "roomType": "Triple", "price": 610 },
+          { "roomType": "Quad", "price": 690 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-almadina-madinah",
+    "name": "Grand Plaza Almadina",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 480 },
+          { "roomType": "Triple", "price": 550 },
+          { "roomType": "Quad", "price": 620 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 500 },
+          { "roomType": "Triple", "price": 570 },
+          { "roomType": "Quad", "price": 640 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-rehab-elmysk-madinah",
+    "name": "Maysan Rehab Elmysk",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 430 },
+          { "roomType": "Triple", "price": 490 },
+          { "roomType": "Quad", "price": 550 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 455 },
+          { "roomType": "Triple", "price": 515 },
+          { "roomType": "Quad", "price": 575 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-rotana-elmysk-madinah",
+    "name": "Maysan Rotana Elmysk",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "15/07/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 430 },
+          { "roomType": "Triple", "price": 490 },
+          { "roomType": "Quad", "price": 550 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 455 },
+          { "roomType": "Triple", "price": 515 },
+          { "roomType": "Quad", "price": 575 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "arkan-almanar-madinah",
+    "name": "Arkan Almanar",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 430 },
+          { "roomType": "Triple", "price": 490 },
+          { "roomType": "Quad", "price": 550 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 455 },
+          { "roomType": "Triple", "price": 515 },
+          { "roomType": "Quad", "price": 575 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-altaqwa-madinah",
+    "name": "Maysan Altaqwa",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "23/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 360 },
+          { "roomType": "Triple", "price": 410 },
+          { "roomType": "Quad", "price": 460 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 390 },
+          { "roomType": "Triple", "price": 440 },
+          { "roomType": "Quad", "price": 490 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "plaza-inn-ohud-madinah",
+    "name": "Plaza Inn Ohud",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 335 },
+          { "roomType": "Triple", "price": 385 },
+          { "roomType": "Quad", "price": 435 }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 355 },
+          { "roomType": "Triple", "price": 405 },
+          { "roomType": "Quad", "price": 455 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-taqwa-maysan-madinah",
+    "name": "Dar Al Taqwa",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "BB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "05/06/2026 TO 30/08/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 945 },
+          { "roomType": "Double (City View - Weekend)", "price": 1010 },
+          { "roomType": "Standard Double (Haram View - Weekdays)", "price": 1075 },
+          { "roomType": "Standard Double (Haram View - Weekend)", "price": 1135 },
+          { "roomType": "Business Suite (Weekdays)", "price": 1640 },
+          { "roomType": "Business Suite (Weekend)", "price": 1765 },
+          { "roomType": "Business Junior Suite (Weekdays)", "price": 1890 },
+          { "roomType": "Business Junior Suite (Weekend)", "price": 2015 }
+        ]
+      },
+      {
+        "range": "30/08/2026 TO 23/09/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 1390 },
+          { "roomType": "Double (City View - Weekend)", "price": 1450 },
+          { "roomType": "Standard Double (Haram View - Weekdays)", "price": 1515 },
+          { "roomType": "Standard Double (Haram View - Weekend)", "price": 1575 },
+          { "roomType": "Business Suite (Weekdays)", "price": 1955 },
+          { "roomType": "Business Suite (Weekend)", "price": 2080 },
+          { "roomType": "Business Junior Suite (Weekdays)", "price": 2205 },
+          { "roomType": "Business Junior Suite (Weekend)", "price": 2330 }
+        ]
+      },
+      {
+        "range": "23/09/2026 TO 27/09/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 1515 },
+          { "roomType": "Double (City View - Weekend)", "price": 1700 },
+          { "roomType": "Standard Double (Haram View - Weekdays)", "price": 1700 },
+          { "roomType": "Standard Double (Haram View - Weekend)", "price": 1890 },
+          { "roomType": "Business Suite (Weekdays)", "price": 2520 },
+          { "roomType": "Business Suite (Weekend)", "price": 2740 },
+          { "roomType": "Business Junior Suite (Weekdays)", "price": 2835 },
+          { "roomType": "Business Junior Suite (Weekend)", "price": 3055 }
+        ]
+      },
+      {
+        "range": "27/09/2026 TO 22/10/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 1390 },
+          { "roomType": "Double (City View - Weekend)", "price": 1450 },
+          { "roomType": "Standard Double (Haram View - Weekdays)", "price": 1515 },
+          { "roomType": "Standard Double (Haram View - Weekend)", "price": 1575 },
+          { "roomType": "Business Suite (Weekdays)", "price": 1955 },
+          { "roomType": "Business Suite (Weekend)", "price": 2080 },
+          { "roomType": "Business Junior Suite (Weekdays)", "price": 2205 },
+          { "roomType": "Business Junior Suite (Weekend)", "price": 2330 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-iman-intercontinental-maysan-madinah",
+    "name": "Dar Al Iman Intercontinental",
+    "city": "Madinah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "BB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "11/06/2026 TO 01/08/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 860 },
+          { "roomType": "Double (City View - Weekend)", "price": 910 },
+          { "roomType": "Double (Haram View - Weekdays)", "price": 1035 },
+          { "roomType": "Double (Haram View - Weekend)", "price": 1080 }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 01/09/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 1050 },
+          { "roomType": "Double (City View - Weekend)", "price": 1165 },
+          { "roomType": "Double (Haram View - Weekdays)", "price": 1225 },
+          { "roomType": "Double (Haram View - Weekend)", "price": 1340 }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 01/10/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 1155 },
+          { "roomType": "Double (City View - Weekend)", "price": 1355 },
+          { "roomType": "Double (Haram View - Weekdays)", "price": 1330 },
+          { "roomType": "Double (Haram View - Weekend)", "price": 1530 }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 31/10/2026",
+        "prices": [
+          { "roomType": "Double (City View - Weekdays)", "price": 1175 },
+          { "roomType": "Double (City View - Weekend)", "price": 1360 },
+          { "roomType": "Double (Haram View - Weekdays)", "price": 1410 },
+          { "roomType": "Double (Haram View - Weekend)", "price": 1600 }
+        ]
+      }
+    ]
+  }
 ];
 
 const getMatchedPeriodName = (rangeStr: string): string => {
@@ -49,6 +402,113 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
   const [cityFilter, setCityFilter] = useState('ALL');
   const [dateFilter, setDateFilter] = useState('');
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'confirm' | 'synced' | 'loading' | 'error'>('idle');
+
+  // Automated silent sync check on component load
+  useEffect(() => {
+    const silentCheckAndSync = async () => {
+      try {
+        const q = query(collection(db, 'master_hotels'), where('vendor', '==', 'Maysan Int. Group'));
+        const snapshot = await getDocs(q);
+        // If Firestore master_hotels has outdated count or missing hotels, auto-sync them seamlessly
+        if (snapshot.size < 11) {
+          console.log('Automated silent sync: Maysan Int. Group hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newMaysanHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for Maysan completed!');
+        }
+
+        const qRowa = query(collection(db, 'master_hotels'), where('vendor', '==', 'ROWA'));
+        const rowaSnapshot = await getDocs(qRowa);
+        if (rowaSnapshot.size < 25) {
+          console.log('Automated silent sync: ROWA hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newRowaHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for ROWA completed!');
+        }
+
+        const qAlharmain = query(collection(db, 'master_hotels'), where('vendor', '==', 'Alharmain Hotels Management'));
+        const alharmainSnapshot = await getDocs(qAlharmain);
+        if (alharmainSnapshot.size < 25) {
+          console.log('Automated silent sync: Alharmain Hotels Management hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newAlharmainHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for Alharmain completed!');
+        }
+      } catch (e) {
+        console.warn('Silent sync checks failed. This is expected if the current user is signed out or non-operational user:', e);
+      }
+    };
+    silentCheckAndSync();
+  }, []);
+
+  const handleSyncToFirestore = async () => {
+    if (syncStatus === 'idle') {
+      setSyncStatus('confirm');
+      return;
+    }
+    if (syncStatus !== 'confirm') return;
+
+    setSyncStatus('loading');
+    try {
+      const batch = writeBatch(db);
+      newMaysanHotels.forEach((hotel) => {
+        const itemRef = doc(db, 'master_hotels', hotel.id);
+        const payload = {
+          ...hotel,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, payload, { merge: true });
+      });
+      newRowaHotels.forEach((hotel) => {
+        const itemRef = doc(db, 'master_hotels', hotel.id);
+        const payload = {
+          ...hotel,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, payload, { merge: true });
+      });
+      newAlharmainHotels.forEach((hotel) => {
+        const itemRef = doc(db, 'master_hotels', hotel.id);
+        const payload = {
+          ...hotel,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, payload, { merge: true });
+      });
+      await batch.commit();
+      setSyncStatus('synced');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } catch (err) {
+      console.error('Error manual syncing hotels to Firestore:', err);
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
 
   const vendors = useMemo(() => {
     const uniqueVendors = new Set(hotels.map(hotel => hotel.vendor));
@@ -212,13 +672,33 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         <div className="text-gray-500 text-sm">
           Showing {filteredHotels.length} hotels
         </div>
-        <button 
-          onClick={handleExportExcel}
-          className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-200 transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Download Excel Template
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleSyncToFirestore}
+            disabled={syncStatus === 'loading'}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all duration-200 border shadow-sm ${
+              syncStatus === 'confirm' ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200 animate-pulse' :
+              syncStatus === 'synced' ? 'bg-green-100 text-green-800 border-green-300' :
+              syncStatus === 'error' ? 'bg-red-100 text-red-800 border-red-300' :
+              'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+            }`}
+          >
+            <RefreshCw className={`w-4 h-4 ${syncStatus === 'loading' ? 'animate-spin' : ''}`} />
+            {syncStatus === 'idle' && 'Sinkronisasi Database'}
+            {syncStatus === 'confirm' && 'Yakin Sinkronisasi?'}
+            {syncStatus === 'loading' && 'Menyingkronkan...'}
+            {syncStatus === 'synced' && 'Database Selesai Disinkronkan!'}
+            {syncStatus === 'error' && 'Gagal Sinkronisasi!'}
+          </button>
+          
+          <button 
+            onClick={handleExportExcel}
+            className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-200 transition-colors border border-emerald-200 shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            Download Excel Template
+          </button>
+        </div>
       </div>
 
       {filteredHotels.length > 0 ? (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Activity, Radio, Search, Clock, Sparkles, RefreshCw, MessageSquare } from 'lucide-react';
+import indonesiaMapImg from '../../assets/images/indonesia_map_1780935734269.png';
 
 interface UserRecord {
   id: string;
@@ -124,6 +125,52 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [pulseKey, setPulseKey] = useState(0);
+  const [showCalibrator, setShowCalibrator] = useState(false);
+
+  const [mapX, setMapX] = useState<number>(() => {
+    const saved = localStorage.getItem('mitra_map_x');
+    return saved ? parseFloat(saved) : -120;
+  });
+  const [mapY, setMapY] = useState<number>(() => {
+    const saved = localStorage.getItem('mitra_map_y');
+    return saved ? parseFloat(saved) : -45;
+  });
+  const [mapWidth, setMapWidth] = useState<number>(() => {
+    const saved = localStorage.getItem('mitra_map_width');
+    return saved ? parseFloat(saved) : 1240;
+  });
+  const [mapHeight, setMapHeight] = useState<number>(() => {
+    const saved = localStorage.getItem('mitra_map_height');
+    return saved ? parseFloat(saved) : 410;
+  });
+
+  const updateMapX = (val: number) => {
+    setMapX(val);
+    localStorage.setItem('mitra_map_x', val.toString());
+  };
+  const updateMapY = (val: number) => {
+    setMapY(val);
+    localStorage.setItem('mitra_map_y', val.toString());
+  };
+  const updateMapWidth = (val: number) => {
+    setMapWidth(val);
+    localStorage.setItem('mitra_map_width', val.toString());
+  };
+  const updateMapHeight = (val: number) => {
+    setMapHeight(val);
+    localStorage.setItem('mitra_map_height', val.toString());
+  };
+
+  const handleResetCalibration = () => {
+    setMapX(-120);
+    setMapY(-45);
+    setMapWidth(1240);
+    setMapHeight(410);
+    localStorage.removeItem('mitra_map_x');
+    localStorage.removeItem('mitra_map_y');
+    localStorage.removeItem('mitra_map_width');
+    localStorage.removeItem('mitra_map_height');
+  };
 
   const normalizeWA = (phone?: string): string | undefined => {
     if (!phone) return undefined;
@@ -289,8 +336,17 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
           
           {/* LEFT CONTAINER: The Glowing Vector Map */}
           <div className="lg:col-span-8 bg-slate-900/60 rounded-2xl border border-slate-800/40 p-3 md:p-4 relative flex flex-col justify-between overflow-hidden shadow-inner backdrop-blur-sm min-h-[300px]">
-            <div className="absolute top-2 left-2 text-[9px] text-slate-500 font-mono flex items-center gap-1 uppercase">
-              <Sparkles className="w-3 h-3 text-indigo-400 animate-spin" /> ANTIGRAVITY GEO COMMAND MAP
+            <div className="absolute top-2 left-2 right-2 text-[9px] text-slate-500 font-mono flex justify-between items-center uppercase z-20">
+              <div className="flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-indigo-400 animate-spin" /> ANTIGRAVITY GEO COMMAND MAP
+              </div>
+              <button 
+                onClick={() => setShowCalibrator(!showCalibrator)}
+                className="bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[9px] font-black uppercase text-indigo-400 px-2.5 py-1 rounded transition-all cursor-pointer flex items-center gap-1"
+                title="Sesuaikan posisi gambar peta dengan titik kordinat daerah"
+              >
+                🔧 Kalibrasi Peta
+              </button>
             </div>
 
             {/* Interactive SVG Canvas */}
@@ -358,70 +414,19 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
                   <path d="M 60 50 L 290 215 L 530 258 L 680 270 M 500 100 L 520 254 M 680 155 L 680 190" 
                     fill="none" stroke="#6366f1" strokeWidth="1" strokeDasharray="4 6" opacity="0.15" />
 
-                  {/* Re-designed high-fidelity solid island geometries for Indonesia */}
-                  <g filter="url(#glow)" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Sumatra Shape */}
-                    <polygon 
-                      points="40,30 80,45 120,70 160,100 200,130 250,160 300,200 315,225 305,230 270,210 220,170 170,145 140,135 110,105 65,70 35,40" 
-                      fill="url(#islandGrad)" 
-                      stroke="#4f46e5" 
-                      strokeWidth="1.5" 
-                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
-                    />
-                    
-                    {/* Java Shape */}
-                    <polygon 
-                      points="330,242 360,242 390,245 430,246 470,248 510,250 562,254 565,260 515,260 460,261 410,260 365,256 340,250 330,245" 
-                      fill="url(#islandGrad)" 
-                      stroke="#4f46e5" 
-                      strokeWidth="1.5" 
-                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
-                    />
-
-                    {/* Borneo Shape */}
-                    <polygon 
-                      points="450,130 470,100 520,75 560,70 590,90 605,110 615,135 595,160 570,185 540,192 490,180 445,155 440,135" 
-                      fill="url(#islandGrad)" 
-                      stroke="#4f46e5" 
-                      strokeWidth="1.5" 
-                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
-                    />
-                    
-                    {/* Sulawesi Shape */}
-                    <polygon 
-                      points="635,125 670,125 720,110 755,95 750,105 715,120 700,130 735,135 740,142 695,145 715,175 710,185 685,165 675,195 665,195 670,155 640,145 635,135" 
-                      fill="url(#islandGrad)" 
-                      stroke="#4f46e5" 
-                      strokeWidth="1.5" 
-                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
-                    />
-
-                    {/* Bali & Nusa Tenggara Peninsula Chain */}
-                    <ellipse cx="578" cy="264" rx="7" ry="4" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <ellipse cx="598" cy="265" rx="7" ry="4" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <ellipse cx="625" cy="266" rx="14" ry="5" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <ellipse cx="670" cy="267" rx="20" ry="5" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <ellipse cx="655" cy="282" rx="12" ry="6" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <ellipse cx="725" cy="275" rx="24" ry="7" transform="rotate(-10 725 275)" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-
-                    {/* Papua Shape */}
-                    <polygon 
-                      points="795,165 810,150 835,155 830,172 855,182 900,185 965,184 970,220 920,222 875,208 845,192 810,188" 
-                      fill="url(#islandGrad)" 
-                      stroke="#4f46e5" 
-                      strokeWidth="1.5" 
-                      className="transition-colors duration-300 hover:stroke-[#818cf8]"
-                    />
-
-                    {/* Bangka Belitung */}
-                    <ellipse cx="280" cy="175" rx="8" ry="4" transform="rotate(-30 280 175)" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <ellipse cx="305" cy="180" rx="6" ry="4" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-
-                    {/* Maluku Islands Group */}
-                    <ellipse cx="800" cy="180" rx="5" ry="3.5" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <ellipse cx="818" cy="175" rx="12" ry="4" transform="rotate(15 818 175)" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                    <polygon points="782,120 798,120 803,110 796,130 801,145 788,135" fill="url(#islandGrad)" stroke="#4f46e5" strokeWidth="1" />
-                  </g>
+                  {/* High-fidelity solid island geometries from the custom map image asset */}
+                  <image
+                    href={indonesiaMapImg}
+                    x={mapX}
+                    y={mapY}
+                    width={mapWidth}
+                    height={mapHeight}
+                    opacity="0.85"
+                    style={{
+                      filter: 'invert(1) brightness(0.65) contrast(1.5) sepia(1) hue-rotate(200deg) saturate(3)',
+                      mixBlendMode: 'screen',
+                    }}
+                  />
 
                   {/* Elegant cyan star cluster overlay on main nodes for a futuristic high-tech network coordinate look */}
                   <g fill="#0284c7" opacity="0.65">
@@ -512,6 +517,145 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
               <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-slate-600 rounded-full"></span> Nusa Tenggara</span>
               <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-slate-600 rounded-full"></span> Papua</span>
             </div>
+
+            {showCalibrator && (
+              <div className="absolute bottom-12 left-4 right-4 bg-slate-950/95 border border-indigo-500/40 rounded-2xl p-4 text-xs z-50 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-200 text-slate-200">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+                  <span className="font-extrabold text-indigo-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    🔧 MAP CALIBRATION CONSOLE
+                  </span>
+                  <button 
+                    onClick={() => setShowCalibrator(false)}
+                    className="text-slate-400 hover:text-white font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
+                  Gunakan tombol di bawah untuk menggeser & menyesuaikan ukuran peta agar tepat pas dengan titik-titik koordinat daerah. Data disimpan otomatis di browser!
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* X Position */}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-slate-400 font-bold">X Position (Horizontal)</span>
+                      <span className="font-mono text-indigo-300 font-bold">{mapX}px</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button onClick={() => updateMapX(mapX - 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-10</button>
+                      <button onClick={() => updateMapX(mapX - 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-1</button>
+                      <button onClick={() => updateMapX(mapX + 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+1</button>
+                      <button onClick={() => updateMapX(mapX + 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+10</button>
+                    </div>
+                  </div>
+
+                  {/* Y Position */}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-slate-400 font-bold">Y Position (Vertical)</span>
+                      <span className="font-mono text-indigo-300 font-bold">{mapY}px</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button onClick={() => updateMapY(mapY - 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-10</button>
+                      <button onClick={() => updateMapY(mapY - 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-1</button>
+                      <button onClick={() => updateMapY(mapY + 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+1</button>
+                      <button onClick={() => updateMapY(mapY + 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+10</button>
+                    </div>
+                  </div>
+
+                  {/* Map Width */}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-slate-400 font-bold">Map Width (Scale)</span>
+                      <span className="font-mono text-indigo-300 font-bold">{mapWidth}px</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button onClick={() => updateMapWidth(mapWidth - 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-10</button>
+                      <button onClick={() => updateMapWidth(mapWidth - 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-1</button>
+                      <button onClick={() => updateMapWidth(mapWidth + 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+1</button>
+                      <button onClick={() => updateMapWidth(mapWidth + 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+10</button>
+                    </div>
+                  </div>
+
+                  {/* Map Height */}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-slate-400 font-bold">Map Height</span>
+                      <span className="font-mono text-indigo-300 font-bold">{mapHeight}px</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button onClick={() => updateMapHeight(mapHeight - 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-10</button>
+                      <button onClick={() => updateMapHeight(mapHeight - 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">-1</button>
+                      <button onClick={() => updateMapHeight(mapHeight + 1)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+1</button>
+                      <button onClick={() => updateMapHeight(mapHeight + 10)} className="bg-slate-900 border border-slate-800 hover:bg-slate-800 py-1 rounded text-[9px] font-black cursor-pointer">+10</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-800">
+                  <button 
+                    onClick={handleResetCalibration}
+                    className="bg-rose-950/50 hover:bg-rose-900/50 border border-rose-900/50 text-rose-300 px-2 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                  >
+                    Reset Default (-120, -45, 1240, 410)
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setMapX(-180);
+                      setMapY(-45);
+                      setMapWidth(1240);
+                      setMapHeight(410);
+                      localStorage.setItem('mitra_map_x', '-180');
+                      localStorage.setItem('mitra_map_y', '-45');
+                      localStorage.setItem('mitra_map_width', '1240');
+                      localStorage.setItem('mitra_map_height', '410');
+                    }}
+                    className="bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-300 px-2 mt-1 md:mt-0 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                  >
+                    Preset A (-180, -45, 1240)
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setMapX(-280);
+                      setMapY(-50);
+                      setMapWidth(1100);
+                      setMapHeight(390);
+                      localStorage.setItem('mitra_map_x', '-280');
+                      localStorage.setItem('mitra_map_y', '-50');
+                      localStorage.setItem('mitra_map_width', '1100');
+                      localStorage.setItem('mitra_map_height', '390');
+                    }}
+                    className="bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-305 px-2 mt-1 md:mt-0 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                  >
+                    Preset B (-280, -50, 1100)
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setMapX(-320);
+                      setMapY(-45);
+                      setMapWidth(1320);
+                      setMapHeight(420);
+                      localStorage.setItem('mitra_map_x', '-320');
+                      localStorage.setItem('mitra_map_y', '-45');
+                      localStorage.setItem('mitra_map_width', '1320');
+                      localStorage.setItem('mitra_map_height', '420');
+                    }}
+                    className="bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-350 px-2 mt-1 md:mt-0 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                  >
+                    Preset C (-320, -45, 1320)
+                  </button>
+                  <div className="flex-grow"></div>
+                  <button 
+                    onClick={() => setShowCalibrator(false)}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                  >
+                    Selesai (Simpan)
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* RIGHT CONTAINER: Live Activity Feed */}

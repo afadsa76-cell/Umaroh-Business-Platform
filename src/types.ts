@@ -225,3 +225,16 @@ export interface ShopOrder {
   createdAt?: unknown;
   noResi?: string;
 }
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error' | 'broadcast';
+  targetId?: string; // Specific user UID
+  targetRole: 'all' | 'broadcast' | 'mitra' | 'jamaah' | 'admin' | 'operasional';
+  read: boolean;
+  createdAt: string; // ISO String
+  senderId?: string; // Sender UID if any
+}
+

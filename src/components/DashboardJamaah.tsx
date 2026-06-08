@@ -3,12 +3,14 @@ import {
   Search, Star, LayoutDashboard, Package, History, User,
   ShoppingCart, Tag, Compass, Sparkles, BookOpen,
   MessageCircle, CheckCircle, Info, Minus, Plus, Check,
-  BadgePercent, Send, X
+  BadgePercent, Send, X, Bell, AlertTriangle
 } from 'lucide-react';
 import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc } from '../firebase';
 import { KatalogPaketView } from './KatalogPaketView';
 import { RiwayatPemesananView } from './RiwayatPemesananView';
 import { ProfileView } from './ProfileView';
+import { AppNotification } from '../types';
+import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
 
 type JamaahTab = 'overview' | 'katalog' | 'riwayat' | 'profile';
 
@@ -51,9 +53,20 @@ interface ChatMessage {
 
 export const DashboardJamaah = () => {
   const [activeTab, setActiveTab] = useState<JamaahTab>('overview');
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [katalogSearch, setKatalogSearch] = useState<string>('');
   const [selectedMitraId, setSelectedMitraId] = useState<string | null>(null);
   const userId = auth.currentUser?.uid;
+
+  // Real-time Notifications Listener for Jamaah
+  useEffect(() => {
+    if (!userId) return;
+    const unsubscribeNotifications = listenToUserNotifications(userId, 'jamaah', (notifs) => {
+      setNotifications(notifs);
+    });
+    return () => unsubscribeNotifications();
+  }, [userId]);
 
   // Real-time Database state
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
@@ -1082,13 +1095,67 @@ export const DashboardJamaah = () => {
             </div>
 
             {/* Shopee Smart AI bubble indicator */}
-            <button 
-              onClick={() => setShowAiChat(true)}
-              className="md:hidden bg-white/20 p-2 rounded-full relative hover:bg-white/30"
-            >
-              <MessageCircle className="w-5 h-5 text-amber-300" />
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border border-emerald-800"></span>
-            </button>
+            <div className="flex items-center gap-2 md:hidden">
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                  className="bg-white/20 p-2 rounded-full relative hover:bg-white/30 cursor-pointer flex items-center justify-center"
+                >
+                  <Bell className="w-4 h-4 text-white" />
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-emerald-850">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </button>
+
+                {showNotificationDropdown && (
+                  <div className="absolute right-0 mt-3.5 w-76 bg-white rounded-2xl border border-gray-100 shadow-2xl z-50 overflow-hidden text-gray-900 animate-in fade-in duration-200">
+                    <div className="p-3.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                      <span className="text-xs font-black uppercase tracking-wider text-gray-800">Notifikasi</span>
+                      {notifications.filter(n => !n.read).length > 0 && (
+                        <button 
+                          onClick={async () => {
+                            await markAllNotificationsAsRead(notifications);
+                          }}
+                          className="text-[10px] font-extrabold text-emerald-800 hover:underline uppercase tracking-wider"
+                        >
+                          Baca Semua
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-400">
+                          <p className="text-[11px] font-bold">Belum ada notifikasi.</p>
+                        </div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <div 
+                            key={notif.id}
+                            onClick={async () => {
+                              if (!notif.read) await markNotificationAsRead(notif.id);
+                            }}
+                            className="p-3 text-left hover:bg-gray-50 cursor-pointer"
+                          >
+                            <p className="text-xs font-bold text-gray-900">{notif.title}</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5">{notif.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button 
+                onClick={() => setShowAiChat(true)}
+                className="bg-white/20 p-2 rounded-full relative hover:bg-white/30"
+              >
+                <MessageCircle className="w-4 h-4 text-amber-300" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-emerald-800"></span>
+              </button>
+            </div>
           </div>
 
           {/* Search Box */}
@@ -1113,13 +1180,120 @@ export const DashboardJamaah = () => {
             )}
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            {/* Real-time Notifications Bell for Jamaah Desktop */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                className="bg-white/15 p-2 px-3 rounded-xl relative hover:bg-white/25 active:scale-95 transition-all text-white cursor-pointer flex items-center justify-center border border-white/10"
+                title="Notifikasi Saya"
+              >
+                <Bell className="w-4 h-4 text-white" />
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-emerald-800 shadow-sm">
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+
+              {showNotificationDropdown && (
+                <div className="absolute right-0 mt-3.5 w-96 bg-white rounded-2xl border border-gray-100 shadow-2xl z-50 overflow-hidden text-gray-900 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-gray-800">Notifikasi</span>
+                      {notifications.filter(n => !n.read).length > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {notifications.filter(n => !n.read).length} Baru
+                        </span>
+                      )}
+                    </div>
+                    {notifications.filter(n => !n.read).length > 0 && (
+                      <button 
+                        onClick={async () => {
+                          await markAllNotificationsAsRead(notifications);
+                        }}
+                        className="text-[10px] font-extrabold text-emerald-800 hover:underline uppercase tracking-wider cursor-pointer"
+                      >
+                        Baca Semua
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-gray-400">
+                        <Bell className="w-8 h-8 mx-auto mb-2 opacity-30 text-gray-500" />
+                        <p className="text-xs font-bold uppercase tracking-wider">Belum Ada Notifikasi</p>
+                        <p className="text-[10px] text-gray-400 mt-1">Anda akan menerima info keberangkatan, rincian biaya, & info visa di sini.</p>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        let badgeBg = 'bg-blue-50 text-blue-600 border-blue-100';
+                        let Icon = Info;
+                        
+                        if (notif.type === 'success') {
+                          badgeBg = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                          Icon = Check;
+                        } else if (notif.type === 'warning') {
+                          badgeBg = 'bg-amber-50 text-amber-600 border-amber-100';
+                          Icon = AlertTriangle;
+                        } else if (notif.type === 'error') {
+                          badgeBg = 'bg-rose-50 text-rose-600 border-rose-100';
+                          Icon = X;
+                        } else if (notif.type === 'broadcast') {
+                          badgeBg = 'bg-indigo-50 text-indigo-600 border-indigo-100';
+                          Icon = Sparkles;
+                        }
+                        
+                        return (
+                          <div 
+                            key={notif.id} 
+                            onClick={async () => {
+                              if (!notif.read) {
+                                await markNotificationAsRead(notif.id);
+                              }
+                            }}
+                            className={`p-4 flex gap-3 hover:bg-gray-50 transition-colors cursor-pointer text-left ${!notif.read ? 'bg-indigo-50/10' : ''}`}
+                          >
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${badgeBg}`}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className={`text-xs text-gray-950 leading-snug ${!notif.read ? 'font-extrabold' : 'font-medium'}`}>
+                                  {notif.title}
+                                </p>
+                                {!notif.read && (
+                                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-600 mt-1 leading-relaxed">
+                                {notif.message}
+                              </p>
+                              <span className="text-[8px] font-mono font-bold text-gray-450 block mt-1 uppercase">
+                                {new Date(notif.createdAt).toLocaleDateString('id-ID', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button 
               onClick={() => setShowAiChat(true)}
-              className="flex items-center gap-1.5 text-xs font-black bg-amber-500 hover:bg-amber-600 text-gray-950 px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow"
+              className="flex items-center gap-1.5 text-xs font-black bg-amber-500 hover:bg-amber-600 text-gray-950 px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shadow border border-amber-400"
             >
               <Sparkles className="w-4 h-4" />
-              TANYA SAHABAT AI
+              TANYA SAHAT AI
             </button>
           </div>
 
