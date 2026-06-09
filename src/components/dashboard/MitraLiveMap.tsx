@@ -129,19 +129,19 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
 
   const [mapX, setMapX] = useState<number>(() => {
     const saved = localStorage.getItem('mitra_map_x');
-    return saved ? parseFloat(saved) : -120;
+    return saved ? parseFloat(saved) : -280;
   });
   const [mapY, setMapY] = useState<number>(() => {
     const saved = localStorage.getItem('mitra_map_y');
-    return saved ? parseFloat(saved) : -45;
+    return saved ? parseFloat(saved) : -50;
   });
   const [mapWidth, setMapWidth] = useState<number>(() => {
     const saved = localStorage.getItem('mitra_map_width');
-    return saved ? parseFloat(saved) : 1240;
+    return saved ? parseFloat(saved) : 1100;
   });
   const [mapHeight, setMapHeight] = useState<number>(() => {
     const saved = localStorage.getItem('mitra_map_height');
-    return saved ? parseFloat(saved) : 410;
+    return saved ? parseFloat(saved) : 390;
   });
 
   const updateMapX = (val: number) => {
@@ -162,10 +162,10 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
   };
 
   const handleResetCalibration = () => {
-    setMapX(-120);
-    setMapY(-45);
-    setMapWidth(1240);
-    setMapHeight(410);
+    setMapX(-280);
+    setMapY(-50);
+    setMapWidth(1100);
+    setMapHeight(390);
     localStorage.removeItem('mitra_map_x');
     localStorage.removeItem('mitra_map_y');
     localStorage.removeItem('mitra_map_width');
@@ -597,9 +597,9 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
                 <div className="flex gap-2 mt-4 pt-3 border-t border-slate-800">
                   <button 
                     onClick={handleResetCalibration}
-                    className="bg-rose-950/50 hover:bg-rose-900/50 border border-rose-900/50 text-rose-300 px-2 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
                   >
-                    Reset Default (-120, -45, 1240, 410)
+                    Reset ke Default (-280, -50, 1100, 390)
                   </button>
                   <button 
                     onClick={() => {
@@ -618,18 +618,18 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
                   </button>
                   <button 
                     onClick={() => {
-                      setMapX(-280);
-                      setMapY(-50);
-                      setMapWidth(1100);
-                      setMapHeight(390);
-                      localStorage.setItem('mitra_map_x', '-280');
-                      localStorage.setItem('mitra_map_y', '-50');
-                      localStorage.setItem('mitra_map_width', '1100');
-                      localStorage.setItem('mitra_map_height', '390');
+                      setMapX(-120);
+                      setMapY(-45);
+                      setMapWidth(1240);
+                      setMapHeight(410);
+                      localStorage.setItem('mitra_map_x', '-120');
+                      localStorage.setItem('mitra_map_y', '-45');
+                      localStorage.setItem('mitra_map_width', '1240');
+                      localStorage.setItem('mitra_map_height', '410');
                     }}
-                    className="bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-305 px-2 mt-1 md:mt-0 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                    className="bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-300 px-2 mt-1 md:mt-0 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
                   >
-                    Preset B (-280, -50, 1100)
+                    Preset B (-120, -45, 1240)
                   </button>
                   <button 
                     onClick={() => {
@@ -642,14 +642,14 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
                       localStorage.setItem('mitra_map_width', '1320');
                       localStorage.setItem('mitra_map_height', '420');
                     }}
-                    className="bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-350 px-2 mt-1 md:mt-0 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                    className="bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/40 text-indigo-300 px-2 mt-1 md:mt-0 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
                   >
                     Preset C (-320, -45, 1320)
                   </button>
                   <div className="flex-grow"></div>
                   <button 
                     onClick={() => setShowCalibrator(false)}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-1.5 rounded text-[10px] font-black uppercase transition-all cursor-pointer"
                   >
                     Selesai (Simpan)
                   </button>

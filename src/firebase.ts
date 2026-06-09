@@ -626,7 +626,7 @@ interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  checkQuotaError(error);
+  const isQuota = checkQuotaError(error);
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -643,7 +643,11 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  console.error('Firestore Error: ', errInfo.error);
+  if (isQuota) {
+    console.warn("Quota exceeded error detected. Suppressing throw to enable seamless offline/read-only mode using local cache.");
+    return;
+  }
   throw new Error(JSON.stringify(errInfo));
 }
 

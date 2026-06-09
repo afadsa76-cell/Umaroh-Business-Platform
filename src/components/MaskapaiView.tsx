@@ -142,16 +142,21 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
 
     setMigrationStatus('migrating');
     try {
-      const batch = writeBatch(db);
-      initialData.forEach((item) => {
-        const itemRef = doc(db, 'maskapai', item.id);
-        const seedPayload = {
-          ...item,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, seedPayload, { merge: true });
-      });
-      await batch.commit();
+      // Chunk initialData to respect Firestore limit of 500 writes per batch
+      const chunkSize = 400;
+      for (let i = 0; i < initialData.length; i += chunkSize) {
+        const chunk = initialData.slice(i, i + chunkSize);
+        const batch = writeBatch(db);
+        chunk.forEach((item) => {
+          const itemRef = doc(db, 'maskapai', item.id);
+          const seedPayload = {
+            ...item,
+            updatedAt: new Date().toISOString()
+          };
+          batch.set(itemRef, seedPayload, { merge: true });
+        });
+        await batch.commit();
+      }
       setMigrationStatus('success');
       setTimeout(() => setMigrationStatus('idle'), 3000);
     } catch (error) {
