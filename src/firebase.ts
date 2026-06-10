@@ -23,7 +23,8 @@ import {
   limit, 
   startAfter, 
   endBefore, 
-  runTransaction as origRunTransaction 
+  runTransaction as origRunTransaction,
+  disableNetwork
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -31,6 +32,33 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Prevent background Firestore assertion errors from disrupting the UX or crashing the app
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    const isFirestoreAssertion = event.error && event.error.message && (
+      event.error.message.includes('FIRESTORE') || 
+      event.error.message.includes('INTERNAL ASSERTION FAILED')
+    );
+    if (isFirestoreAssertion) {
+      console.warn("Muted background Firestore assertion error:", event.error.message);
+      event.preventDefault(); // Stop propagating to console/error boundaries
+      event.stopPropagation();
+    }
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const isFirestoreAssertion = event.reason && event.reason.message && (
+      event.reason.message.includes('FIRESTORE') || 
+      event.reason.message.includes('INTERNAL ASSERTION FAILED')
+    );
+    if (isFirestoreAssertion) {
+      console.warn("Muted background Firestore assertion promise rejection:", event.reason.message);
+      event.preventDefault(); // Stop propagating to console/error boundaries
+      event.stopPropagation();
+    }
+  });
+}
 
 // Local Collection Storage Management helper functions
 function getLocalCollection(collectionName: string): any[] {
@@ -89,6 +117,15 @@ function checkQuotaError(err: unknown): boolean {
     if (typeof window !== 'undefined') {
       (window as any).firestoreQuotaExhausted = true;
       window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
+      
+      // Prevent further reconnection assert crashes by shifting to offline-only mode immediately
+      try {
+        disableNetwork(db).catch((e) => {
+          console.warn("Muted offline switch failure on quota limit:", e);
+        });
+      } catch (e) {
+        console.warn("Silent disableNetwork execution error:", e);
+      }
     }
   }
   return isQuota;

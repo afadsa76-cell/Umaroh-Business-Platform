@@ -851,7 +851,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const totalMarkupCount = isMitraContext ? (mitraMarkup + mitraAdminFee) : (margin + adminFee);
 
     // Wisata Halal specific
-    const baseIDR = (formData.hargaDasar || 1350) * 16000;
+    const baseIDR = (formData.hargaDasar || 1350) * 19000;
     let wisataAddonsTotal = 0;
     if (formData.wisataAddon_tourLeader) wisataAddonsTotal += 250000 * (Number(formData.wisataAddon_tourLeaderCount) || 1);
     if (formData.wisataAddon_handling) wisataAddonsTotal += 250000;
@@ -1743,6 +1743,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             setFormData({
                               ...formData,
                               negaraWisata: e.target.value,
+                              paketWisataId: "", // Reset PaketWisataId when country changes
                             })
                           }
                           className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 font-bold appearance-none transition-all"
@@ -1761,6 +1762,45 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           ))}
                         </select>
                       </div>
+
+                      {/* Program Paket Wisata (Produk Tour yang Diinput) */}
+                      {formData.negaraWisata && (
+                        <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+                          <label className="block text-[10px] sm:text-xs font-bold text-[#009B66] mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#009B66]"></span>
+                            PROGRAM PAKET WISATA (PRODUK TOUR) *
+                          </label>
+                          <select
+                            value={formData.paketWisataId || ""}
+                            onChange={(e) => {
+                              const selectedId = e.target.value;
+                              const matched = paketWisataList.find((p) => p.id === selectedId);
+                              setFormData({
+                                ...formData,
+                                paketWisataId: selectedId,
+                                durasiWisata: matched ? matched.durasiHari : formData.durasiWisata,
+                              });
+                            }}
+                            className="w-full p-4 bg-emerald-50/10 border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-bold appearance-none transition-all"
+                          >
+                            <option value="">-- Pilih Program Wisata yang Telah Diinput --</option>
+                            {paketWisataList
+                              .filter(
+                                (p) =>
+                                  (p.lokasi || "").toUpperCase() ===
+                                  (formData.negaraWisata || "").toUpperCase(),
+                              )
+                              .map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.nama} ({p.durasiHari} Hari)
+                                </option>
+                              ))}
+                          </select>
+                          <p className="text-[9px] text-gray-400 mt-1.5 font-bold tracking-wider uppercase">
+                            Menampilkan data Paket Wisata yang diinput di menu database
+                          </p>
+                        </div>
+                      )}
 
                       {/* Durasi Program Wisata */}
                       <div>
@@ -2182,7 +2222,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   const baseUSD = selectedPaket
                     ? selectedPaket.hargaStart
                     : 840;
-                  const multiplier = 16000;
+                  const multiplier = 19000;
 
                   const fitTiers = [
                     { label: "2", factor: 1.5 },
@@ -2775,7 +2815,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         {currentStepName === "REVIEW FASILITAS" &&
           formData.kategori === "WISATA HALAL" &&
           (() => {
-            const baseIDR = (formData.hargaDasar || 1350) * 16000;
+            const baseIDR = (formData.hargaDasar || 1350) * 19000;
             let addonsTotal = 0;
             if (formData.wisataAddon_tourLeader)
               addonsTotal +=
@@ -3163,20 +3203,81 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
         {currentStepName === "HOTEL WISATA" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 relative pb-20">
-            {/* Banner Header Dinamis */}
-            <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100 flex items-center justify-between">
-              <div>
-                <h3 className="font-black text-blue-900 text-lg uppercase tracking-wide">
-                  PAKET WISATA {formData.negaraWisata || "TURKEY"}
-                </h3>
-                <p className="text-xs font-bold text-blue-600 uppercase mt-1">
-                  DURASI PROGRAM: {formData.durasiWisata || 0} HARI
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                <Globe className="w-6 h-6 text-blue-500" />
-              </div>
-            </div>
+            {/* Banner Header Dinamis terhubung Database Paket Wisata */}
+            {(() => {
+              const selectedPaket = paketWisataList.find((p) => p.id === formData.paketWisataId);
+              return (
+                <div className="bg-[#FFFDF5] border border-amber-200 rounded-2xl p-5 shadow-sm transition-all animate-in fade-in">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 text-[9px] font-black tracking-widest bg-amber-100 text-amber-800 rounded-md uppercase">
+                          {formData.negaraWisata || "TURKEY"}
+                        </span>
+                        {selectedPaket ? (
+                          <span className="px-2 py-0.5 text-[9px] font-black tracking-widest bg-emerald-100 text-emerald-800 rounded-md uppercase animate-pulse">
+                            TERHUBUNG DATABASE
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 text-[9px] font-black tracking-widest bg-red-100 text-red-800 rounded-md uppercase">
+                            DRAFT MANUAL
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-black text-gray-900 text-sm sm:text-base uppercase tracking-wider">
+                        {selectedPaket ? selectedPaket.nama : `PAKET WISATA ${formData.negaraWisata || "TURKEY"}`}
+                      </h3>
+                      {selectedPaket ? (
+                        <p className="text-[11px] font-bold text-gray-500 leading-relaxed max-w-2xl">
+                          RUTE: {selectedPaket.deskripsi}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                          ⚠️ Tidak ada Paket Wisata terpilih. Silakan pilih di bawah agar rute/itinerary terisi otomatis dari database.
+                        </p>
+                      )}
+                    </div>
+                    <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center shrink-0">
+                      <span className="text-[9px] font-black text-gray-400 tracking-wider">DURASI</span>
+                      <span className="text-sm font-black text-blue-600">{selectedPaket ? selectedPaket.durasiHari : (formData.durasiWisata || 2)} HARI</span>
+                    </div>
+                  </div>
+
+                  {/* Dropdown switch Paket Wisata langsung di halaman ini */}
+                  <div className="mt-4 pt-4 border-t border-dashed border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider shrink-0">
+                      PILIH HUBUNGAN DATA PAKET WISATA:
+                    </span>
+                    <select
+                      value={formData.paketWisataId || ""}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const matched = paketWisataList.find((p) => p.id === selectedId);
+                        setFormData({
+                          ...formData,
+                          paketWisataId: selectedId,
+                          durasiWisata: matched ? matched.durasiHari : formData.durasiWisata,
+                        });
+                      }}
+                      className="text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none max-w-md w-full"
+                    >
+                      <option value="">-- Pilih Paket Program Wisata (Database) --</option>
+                      {paketWisataList
+                        .filter(
+                          (p) =>
+                            (p.lokasi || "").toUpperCase() ===
+                            (formData.negaraWisata || "").toUpperCase(),
+                        )
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.nama} ({p.durasiHari} Hari)
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="mt-8 mb-4">
               <label className="block text-[10px] sm:text-xs font-bold text-gray-900 uppercase tracking-wider">
@@ -3377,40 +3478,58 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             })()}
 
             {/* Preview Itinerary Wisata */}
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-              <h4 className="text-xs font-black text-gray-800 uppercase tracking-wider mb-6">
-                PREVIEW ITINERARY WISATA
-              </h4>
-              <div className="space-y-0 text-sm">
-                {[...Array(Math.max(1, formData.durasiWisata))].map(
-                  (_, idx) => (
-                    <div key={idx} className="flex relative">
-                      {/* Line connector */}
-                      {idx < formData.durasiWisata - 1 && (
-                        <div className="absolute left-[7px] top-6 bottom-0 w-[1px] bg-gray-300"></div>
-                      )}
+            {(() => {
+              const selectedPaket = paketWisataList.find((p) => p.id === formData.paketWisataId);
+              // Split description by " - " delimiter to extract daily programs
+              const activities = selectedPaket && selectedPaket.deskripsi 
+                ? selectedPaket.deskripsi.split(/\s*-\s*/) 
+                : [];
 
-                      {/* Circle marker */}
-                      <div className="w-4 h-4 rounded-full border-2 border-blue-500 bg-white z-10 shrink-0 mt-1 mr-4"></div>
+              return (
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                  <h4 className="text-xs font-black text-gray-800 uppercase tracking-wider mb-6 flex items-center justify-between">
+                    <span>PREVIEW ITINERARY WISATA {selectedPaket && " (TERHUBUNG)"}</span>
+                    {selectedPaket && (
+                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase">
+                        {selectedPaket.nama}
+                      </span>
+                    )}
+                  </h4>
+                  <div className="space-y-0 text-sm">
+                    {[...Array(Math.max(1, formData.durasiWisata))].map((_, idx) => {
+                      const activityText = activities[idx] || (activities.length > 0 
+                        ? `Kelanjutan Program: ${activities.join(" & ")}`
+                        : "");
 
-                      <div className="pb-8">
-                        <h5 className="font-bold text-gray-800 text-[11px] tracking-wider uppercase mb-1">
-                          HARI KE-{idx + 1}: EKSPLORASI{" "}
-                          {formData.negaraWisata || "TURKEY"}
-                        </h5>
-                        <p className="text-[10px] text-gray-500 leading-relaxed max-w-2xl">
-                          Agenda itinerary sedang dalam penyusunan. Mengunjungi
-                          destinasi populer dan penginapan di{" "}
-                          {formData.negaraWisata || "Turkey"}. Termasuk makan
-                          siang dan sarapan sesuai standar pelayanan yang
-                          berlaku.
-                        </p>
-                      </div>
-                    </div>
-                  ),
-                )}
-              </div>
-            </div>
+                      return (
+                        <div key={idx} className="flex relative">
+                          {/* Line connector */}
+                          {idx < formData.durasiWisata - 1 && (
+                            <div className="absolute left-[7px] top-6 bottom-0 w-[1px] bg-gray-300"></div>
+                          )}
+
+                          {/* Circle marker */}
+                          <div className={`w-4 h-4 rounded-full border-2 bg-white z-10 shrink-0 mt-1 mr-4 ${selectedPaket ? "border-[#009B66]" : "border-blue-500"}`}></div>
+
+                          <div className="pb-8">
+                            <h5 className="font-bold text-gray-800 text-[11px] tracking-wider uppercase mb-1">
+                              HARI KE-{idx + 1}: {activityText ? activityText : `EKSPLORASI ${formData.negaraWisata || "TURKEY"}`}
+                            </h5>
+                            <p className="text-[10px] text-gray-500 leading-relaxed max-w-2xl">
+                              {selectedPaket ? (
+                                `Bagian dari program tour resmi ${selectedPaket.nama} di ${formData.negaraWisata || "Turkey"}. Agenda harian mencakup kunjungan ke destinasi populer, transportasi lokal ber-AC, pemandu wisata lokal berbahasa Indonesia/Inggris, serta makan sesuai jadwal.`
+                              ) : (
+                                `Agenda itinerary sedang dalam penyusunan. Mengunjungi destinasi populer dan penginapan di ${formData.negaraWisata || "Turkey"}. Termasuk makan siang dan sarapan sesuai standar pelayanan yang berlaku.`
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 

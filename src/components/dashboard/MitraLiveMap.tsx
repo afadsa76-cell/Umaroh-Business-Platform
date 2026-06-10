@@ -201,7 +201,7 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
               const diffMins = Math.floor(diffMs / 60000);
               minutesAgo = Math.max(0, diffMins);
               
-              if (diffMins < 5) {
+              if (diffMins < 15) {
                 active = true;
                 activeStatusText = "Aktif Sekarang";
               } else if (diffMins < 60) {

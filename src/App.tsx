@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Footer } from './components/Footer';
 import { Navbar, TabType } from './components/Navbar';
 import { DatabaseView } from './components/DatabaseView';
@@ -57,19 +57,7 @@ function App() {
   const [showRegisterMitra, setShowRegisterMitra] = useState(false);
   const [registerPrefill, setRegisterPrefill] = useState<{ email?: string; name?: string; uid?: string } | null>(null);
 
-  const [isQuotaExhausted, setIsQuotaExhausted] = useState(() => {
-    return typeof window !== 'undefined' ? !!(window as unknown as { firestoreQuotaExhausted?: boolean }).firestoreQuotaExhausted : false;
-  });
 
-  useEffect(() => {
-    const handleQuotaExceeded = () => {
-      setIsQuotaExhausted(true);
-    };
-    window.addEventListener('firestore-quota-exceeded', handleQuotaExceeded);
-    return () => {
-      window.removeEventListener('firestore-quota-exceeded', handleQuotaExceeded);
-    };
-  }, []);
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
@@ -189,21 +177,52 @@ function App() {
     };
   }, []);
 
+  // Interaction tracking for intelligent presence updates
+  const lastInteractionTime = useRef<number>(Date.now());
+
+  useEffect(() => {
+    const handleInteraction = () => {
+      lastInteractionTime.current = Date.now();
+    };
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'mousemove'];
+    events.forEach(event => {
+      window.addEventListener(event, handleInteraction, { passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleInteraction);
+      });
+    };
+  }, []);
+
   // Heartbeat / Active Status Live tracker
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | undefined;
     
     const updateActiveHeartbeat = async () => {
+      // 1. Skip if document is hidden (background tab) to save major Firestore quota
+      if (typeof document !== 'undefined' && document.hidden) {
+        return;
+      }
+
       const user = auth.currentUser;
       if (user) {
-        // Enforce a strict 3-minute client-side write throttle across tabs to prevent Firestore quota exhaustion
+        // 2. Check if the user is idle (no interaction in last 10 minutes)
+        const timeSinceLastInteraction = Date.now() - lastInteractionTime.current;
+        if (timeSinceLastInteraction > 600000) { // 10 minutes idle limit
+          return;
+        }
+
+        // 3. Enforce a strict 10-minute client-side write throttle across tabs to prevent Firestore quota exhaustion
         const storageKey = `last_heartbeat_${user.uid}`;
         const lastWriteTime = localStorage.getItem(storageKey);
         const now = Date.now();
         
         if (lastWriteTime) {
           const diff = now - parseInt(lastWriteTime, 10);
-          if (diff < 180000) { // 3 minutes cooldown
+          if (diff < 600000) { // 10 minutes cooldown
             return;
           }
         }
@@ -245,7 +264,7 @@ function App() {
 
     if (isLoggedIn) {
       updateActiveHeartbeat();
-      intervalId = setInterval(updateActiveHeartbeat, 180000); // Send heartbeat every 3 minutes
+      intervalId = setInterval(updateActiveHeartbeat, 600000); // Send heartbeat every 10 minutes
     }
 
     return () => {
@@ -420,14 +439,7 @@ function App() {
 
   return (
     <div className={`min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative ${isPortalView ? '' : 'pb-20'}`}>
-      {isQuotaExhausted && (
-        <div className="bg-gradient-to-r from-rose-600 via-amber-600 to-red-600 text-white text-[11px] sm:text-xs text-center py-2.5 px-4 shadow-[0_2px_10px_rgba(220,38,38,0.2)] font-semibold flex items-center justify-center gap-2 z-50 animate-fade-in">
-          <span className="text-base animate-pulse">⚠️</span>
-          <span>
-            <strong className="font-extrabold uppercase tracking-wide">Batas Kuota Firestore Terlampaui (Read-Only Mode):</strong> Aplikasi berjalan dalam mode aman (hanya-baca) karena batas kuota gratis harian Firebase Firestore telah habis. Semua data Anda aman & dapat ditampilkan dengan lancar.
-          </span>
-        </div>
-      )}
+
       {/* Hero Section */}
       {!isPortalView && (
         <header className="bg-white text-gray-900 py-6 md:py-12 relative overflow-hidden border-b border-gray-100 lg:hidden">

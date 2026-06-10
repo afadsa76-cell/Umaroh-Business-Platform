@@ -36,6 +36,31 @@ export const PaketWisataView: React.FC = () => {
       });
       setData(paketList);
       setLoading(false);
+
+      // Quietly auto-seed if the collection is completely empty, ensuring smooth UX 
+      if (snapshot.empty) {
+        console.log("Auto-seeding master_paket_wisata...");
+        const seeds = [
+          { nama: 'LATITUDE 2D1N ONLY ISTANBUL TOUR', deskripsi: 'HIPPODROME - BLUE MOSQUE - HAGIA SOPHIA - TURKISH DELIGHT SHOP - BOSPHORUS CRUISE', durasiHari: 2, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 84 },
+          { nama: 'LATITUDE 3D2N ISTANBUL + BURSA TOUR', deskripsi: 'ISTANBUL - BURSA - HIPPODROME - BLUE MOSQUE - GRAND MOSQUE - BOSPHORUS CRUISE', durasiHari: 3, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 90 },
+          { nama: 'LATITUDE 4D3N ISTANBUL + BURSA TOUR', deskripsi: 'ISTANBUL - BURSA - EYUP MOSQUE & TOMB - PIERRE LOTTI - BOSPHORUS CRUISE', durasiHari: 4, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1506459312158-1c469f697dbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 145 },
+          { nama: 'LATITUDE 5D4N ISTANBUL BURSA CAPPADOCIA & ANKARA TOUR', deskripsi: 'ISTANBUL - BURSA - CAPPADOCIA - SALT LAKE - POTTERY SHOP - GOREME PANORAMA', durasiHari: 5, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 151 },
+          { nama: 'LATITUDE 6D5N ISTANBUL BURSA ANKARA & CAPPADOCIA TOUR', deskripsi: 'ISTANBUL - BURSA - ANKARA - CAPPADOCIA - CARDAK UNDERGROUND CITY - DEVRENT VALLEY', durasiHari: 6, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1570737197260-ac340ae13f30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 220 },
+          { nama: 'LATITUDE 7D6N ISTANBUL BURSA PAMUKKALE KONYA CAPPADOCIA ANKARA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - PAMUKKALE - KONYA - CAPPADOCIA - ANKARA - BOLU', durasiHari: 7, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 225 },
+          { nama: 'LATITUDE 8D7N ISTANBUL BURSA PAMUKKALE KONYA CAPPADOCIA ANKARA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - PAMUKKALE - KONYA - CAPPADOCIA - ANKARA - BOLU - SULTANHANI CARVANSARAI', durasiHari: 8, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 290 },
+          { nama: 'LATITUDE 8D7N ISTANBUL BURSA BILECIK ESKISEHIR AMASYA SAFRANBOLU CAPPADOCIA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - BILECIK - ESKISEHIR - AMASYA - SAFRANBOLU - CAPPADOCIA - BOLU - SAFRANBOLU UNESCO HOUSE', durasiHari: 8, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 322 },
+          { nama: 'HONSHU EXPLORER 8D7N', deskripsi: 'TOKYO - KYOTO - OSAKA', durasiHari: 8, lokasi: 'JAPAN', img: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 1250 },
+          { nama: 'HOKKAIDO WINTER 9D8N', deskripsi: 'SAPPORO - OTARU - HAKODATE', durasiHari: 9, lokasi: 'JAPAN', img: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 1400 },
+          { nama: 'WEST EUROPE 12D11N', deskripsi: 'PARIS - BRUSSELS - AMSTERDAM', durasiHari: 12, lokasi: 'EUROPE', img: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 1650 },
+        ];
+        seeds.forEach(async (s) => {
+          try {
+            await addDoc(collection(db, 'master_paket_wisata'), s);
+          } catch(err) {
+            console.error("Silent seed error:", err);
+          }
+        });
+      }
     }, (error) => {
       console.error("Error fetching paket wisata:", error);
       setLoading(false);
@@ -93,9 +118,14 @@ export const PaketWisataView: React.FC = () => {
 
   const handleAddSeed = async () => {
     const seeds = [
-      { nama: 'TURKEY 10D9N', deskripsi: 'ISTANBUL - BURSA - CAPPADOCIA', durasiHari: 10, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 840 },
-      { nama: 'TURKEY 12D11N', deskripsi: 'ISTANBUL - BURSA - CAPPADOCIA', durasiHari: 12, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 920 },
-      { nama: 'TURKEY 8D7N', deskripsi: 'ISTANBUL - BURSA - ANKARA', durasiHari: 8, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1506459312158-1c469f697dbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 750 },
+      { nama: 'LATITUDE 2D1N ONLY ISTANBUL TOUR', deskripsi: 'HIPPODROME - BLUE MOSQUE - HAGIA SOPHIA - TURKISH DELIGHT SHOP - BOSPHORUS CRUISE', durasiHari: 2, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 84 },
+      { nama: 'LATITUDE 3D2N ISTANBUL + BURSA TOUR', deskripsi: 'ISTANBUL - BURSA - HIPPODROME - BLUE MOSQUE - GRAND MOSQUE - BOSPHORUS CRUISE', durasiHari: 3, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 90 },
+      { nama: 'LATITUDE 4D3N ISTANBUL + BURSA TOUR', deskripsi: 'ISTANBUL - BURSA - EYUP MOSQUE & TOMB - PIERRE LOTTI - BOSPHORUS CRUISE', durasiHari: 4, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1506459312158-1c469f697dbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 145 },
+      { nama: 'LATITUDE 5D4N ISTANBUL BURSA CAPPADOCIA & ANKARA TOUR', deskripsi: 'ISTANBUL - BURSA - CAPPADOCIA - SALT LAKE - POTTERY SHOP - GOREME PANORAMA', durasiHari: 5, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 151 },
+      { nama: 'LATITUDE 6D5N ISTANBUL BURSA ANKARA & CAPPADOCIA TOUR', deskripsi: 'ISTANBUL - BURSA - ANKARA - CAPPADOCIA - CARDAK UNDERGROUND CITY - DEVRENT VALLEY', durasiHari: 6, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1570737197260-ac340ae13f30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 220 },
+      { nama: 'LATITUDE 7D6N ISTANBUL BURSA PAMUKKALE KONYA CAPPADOCIA ANKARA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - PAMUKKALE - KONYA - CAPPADOCIA - ANKARA - BOLU', durasiHari: 7, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 225 },
+      { nama: 'LATITUDE 8D7N ISTANBUL BURSA PAMUKKALE KONYA CAPPADOCIA ANKARA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - PAMUKKALE - KONYA - CAPPADOCIA - ANKARA - BOLU - SULTANHANI CARVANSARAI', durasiHari: 8, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 290 },
+      { nama: 'LATITUDE 8D7N ISTANBUL BURSA BILECIK ESKISEHIR AMASYA SAFRANBOLU CAPPADOCIA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - BILECIK - ESKISEHIR - AMASYA - SAFRANBOLU - CAPPADOCIA - BOLU - SAFRANBOLU UNESCO HOUSE', durasiHari: 8, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 322 },
       { nama: 'HONSHU EXPLORER 8D7N', deskripsi: 'TOKYO - KYOTO - OSAKA', durasiHari: 8, lokasi: 'JAPAN', img: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 1250 },
       { nama: 'HOKKAIDO WINTER 9D8N', deskripsi: 'SAPPORO - OTARU - HAKODATE', durasiHari: 9, lokasi: 'JAPAN', img: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 1400 },
       { nama: 'WEST EUROPE 12D11N', deskripsi: 'PARIS - BRUSSELS - AMSTERDAM', durasiHari: 12, lokasi: 'EUROPE', img: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 1650 },
@@ -110,6 +140,38 @@ export const PaketWisataView: React.FC = () => {
       console.error(e);
       handleFirestoreError(e, OperationType.WRITE, 'master_paket_wisata');
       alert('Gagal menambah seed data');
+    }
+  };
+
+  const handleInjectLatitudeOnly = async () => {
+    const latSeeds = [
+      { nama: 'LATITUDE 2D1N ONLY ISTANBUL TOUR', deskripsi: 'HIPPODROME - BLUE MOSQUE - HAGIA SOPHIA - TURKISH DELIGHT SHOP - BOSPHORUS CRUISE (PRIVATE)', durasiHari: 2, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 84 },
+      { nama: 'LATITUDE 3D2N ISTANBUL + BURSA TOUR', deskripsi: 'ISTANBUL - BURSA - HIPPODROME - BLUE MOSQUE - GRAND MOSQUE - BOSPHORUS CRUISE (PRIVATE) - LEATHER FACTORY', durasiHari: 3, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 90 },
+      { nama: 'LATITUDE 4D3N ISTANBUL + BURSA TOUR', deskripsi: 'ISTANBUL - BURSA - EYUP MOSQUE & TOMB - PIERRE LOTTI - BOSPHORUS CRUISE (PRIVATE)', durasiHari: 4, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1506459312158-1c469f697dbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 145 },
+      { nama: 'LATITUDE 5D4N ISTANBUL BURSA CAPPADOCIA & ANKARA TOUR', deskripsi: 'ISTANBUL - BURSA - CAPPADOCIA - SALT LAKE - POTTERY SHOP & WORKSHOP - GOREME PANORAMA', durasiHari: 5, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 151 },
+      { nama: 'LATITUDE 6D5N ISTANBUL BURSA ANKARA & CAPPADOCIA TOUR', deskripsi: 'ISTANBUL - BURSA - ANKARA - CAPPADOCIA - CARDAK UNDERGROUND CITY - DEVRENT VALLEY', durasiHari: 6, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1570737197260-ac340ae13f30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 220 },
+      { nama: 'LATITUDE 7D6N ISTANBUL BURSA PAMUKKALE KONYA CAPPADOCIA ANKARA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - PAMUKKALE - KONYA - CAPPADOCIA - ANKARA - BOLU', durasiHari: 7, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 225 },
+      { nama: 'LATITUDE 8D7N ISTANBUL BURSA PAMUKKALE KONYA CAPPADOCIA ANKARA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - PAMUKKALE - KONYA - CAPPADOCIA - ANKARA - BOLU - SULTANHANI CARVANSARAI', durasiHari: 8, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 290 },
+      { nama: 'LATITUDE 8D7N ISTANBUL BURSA BILECIK ESKISEHIR AMASYA SAFRANBOLU CAPPADOCIA BOLU TOUR', deskripsi: 'ISTANBUL - BURSA - BILECIK - ESKISEHIR - AMASYA - SAFRANBOLU - CAPPADOCIA - BOLU - SAFRANBOLU UNESCO HOUSE', durasiHari: 8, lokasi: 'TURKEY', img: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', hargaStart: 322 },
+    ];
+
+    let countAdded = 0;
+    try {
+      for (const s of latSeeds) {
+        const exists = data.some((item) => item.nama.toUpperCase().trim() === s.nama.toUpperCase().trim());
+        if (!exists) {
+          await addDoc(collection(db, 'master_paket_wisata'), s);
+          countAdded++;
+        }
+      }
+      if (countAdded > 0) {
+        alert(`${countAdded} Paket Latitude dari PDF berhasil di-inject ke Database!`);
+      } else {
+        alert('Seluruh paket tour Latitude sudah ada di Database (tidak ada duplikasi).');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Gagal menambah program tour Latitude.');
     }
   };
 
@@ -129,15 +191,21 @@ export const PaketWisataView: React.FC = () => {
           <p className="text-gray-500 text-sm mt-1">Kelola data program tour tambahan untuk opsi wisata halal</p>
         </div>
         <div className="flex gap-2">
+          <button 
+            onClick={handleInjectLatitudeOnly}
+            className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm text-xs"
+          >
+            📥 Inject Paket Latitude from PDF
+          </button>
           {data.length === 0 && !loading && (
             <button 
               onClick={handleAddSeed}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-xs"
             >
               Inject Data Awal
             </button>
           )}
-          <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors" onClick={() => handleOpenForm()}>
+          <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors text-xs" onClick={() => handleOpenForm()}>
             <Plus className="w-4 h-4" />
             Tambah Master Paket
           </button>
