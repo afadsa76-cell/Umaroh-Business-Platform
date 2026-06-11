@@ -15,14 +15,16 @@ import { KemitraanAdminView } from './database/KemitraanAdminView';
 import { BandaraView } from './BandaraView';
 import { PaketWisataView } from './PaketWisataView';
 import { HotelMediaView } from './database/HotelMediaView';
-import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon } from 'lucide-react';
+import { SupabaseBridgeView } from './database/SupabaseBridgeView';
+import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon, Layers } from 'lucide-react';
 
-type DatabaseTab = 'paketMaster' | 'kemitraan' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'mutawif' | 'handlingDomestik' | 'manasik' | 'ziarah' | 'keretaCepat';
+type DatabaseTab = 'paketMaster' | 'kemitraan' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'mutawif' | 'handlingDomestik' | 'manasik' | 'ziarah' | 'keretaCepat' | 'supabaseBridge';
 
 export const DatabaseView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DatabaseTab>('paketMaster');
 
   const tabs: { id: DatabaseTab; label: string; icon: React.ElementType }[] = [
+    { id: 'supabaseBridge', label: 'Migration Bridge (Supabase)', icon: Layers },
     { id: 'paketMaster', label: 'Paket Master', icon: Package },
     { id: 'kemitraan', label: 'Kemitraan', icon: Handshake },
     { id: 'hotel', label: 'Hotel', icon: Building2 },
@@ -44,6 +46,7 @@ export const DatabaseView: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'supabaseBridge': return <SupabaseBridgeView />;
       case 'paketMaster': return <PaketMasterView />;
       case 'kemitraan': return <KemitraanAdminView />;
       case 'hotel': return <HotelView />;

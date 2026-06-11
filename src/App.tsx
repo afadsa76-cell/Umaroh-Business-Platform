@@ -34,7 +34,7 @@ import { MaskapaiView } from './components/MaskapaiView';
 import { HotelView } from './components/HotelView';
 import { DashboardVendor } from './components/DashboardVendor';
 import { logoBase64 } from './utils/logoBase64';
-import { LogOut, User, Settings, Users } from 'lucide-react';
+import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType, updateDoc, setDoc } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
@@ -53,7 +53,7 @@ function App() {
   const [vendorName, setVendorName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [adminViewMode, setAdminViewMode] = useState<'operasional' | 'mitra' | 'jamaah'>('operasional');
+  const [adminViewMode, setAdminViewMode] = useState<'operasional' | 'mitra' | 'jamaah' | 'vendor'>('operasional');
   const [showRegisterMitra, setShowRegisterMitra] = useState(false);
   const [registerPrefill, setRegisterPrefill] = useState<{ email?: string; name?: string; uid?: string } | null>(null);
 
@@ -357,6 +357,9 @@ function App() {
     if (isMasterAdmin) {
       if (adminViewMode === 'mitra') return <DashboardMitra />;
       if (adminViewMode === 'jamaah') return <DashboardJamaah />;
+      if (adminViewMode === 'vendor') {
+        return <DashboardVendor vendorName="Master Admin" vendorType={null} onNavigate={handleTabChange} isMasterView={true} />;
+      }
       // else fall through to operasional routes
     } else {
       // Route based on role first
@@ -435,7 +438,7 @@ function App() {
     return 'User';
   };
 
-  const isPortalView = userRole === 'mitra' || userRole === 'jamaah' || (isMasterAdmin && (adminViewMode === 'mitra' || adminViewMode === 'jamaah'));
+  const isPortalView = userRole === 'mitra' || userRole === 'jamaah' || (isMasterAdmin && (adminViewMode === 'mitra' || adminViewMode === 'jamaah' || adminViewMode === 'vendor'));
 
   return (
     <div className={`min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative ${isPortalView ? '' : 'pb-20'}`}>
@@ -521,6 +524,12 @@ function App() {
             className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'jamaah' ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <User className="w-3 h-3 md:w-4 md:h-4" /> Jamaah
+          </button>
+          <button
+            onClick={() => setAdminViewMode('vendor')}
+            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'vendor' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <Sliders className="w-3 h-3 md:w-4 md:h-4" /> Vendor
           </button>
         </div>
       )}
