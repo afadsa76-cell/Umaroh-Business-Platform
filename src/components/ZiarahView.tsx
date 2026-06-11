@@ -7,7 +7,7 @@ export const ZiarahView: React.FC = () => {
 
   // Calculator state
   const [selectedItemId, setSelectedItemId] = useState<string>(ziarahData[0]?.id || '');
-  const [kurs, setKurs] = useState<number>(4700);
+  const [kurs, setKurs] = useState<number>(4900);
   const [paxInput, setPaxInput] = useState<number>(ziarahData[0]?.jumlahPax || 45);
   const [marginPercent, setMarginPercent] = useState<number>(20);
 

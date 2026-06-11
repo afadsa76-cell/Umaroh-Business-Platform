@@ -4,7 +4,7 @@ import { Users, Info, Calculator } from 'lucide-react';
 export const MutawifView: React.FC = () => {
   const [hargaAsing, setHargaAsing] = useState<number>(300);
   const [jumlahHari, setJumlahHari] = useState<number>(8);
-  const [kurs, setKurs] = useState<number>(4700);
+  const [kurs, setKurs] = useState<number>(4900);
   const [persentase, setPersentase] = useState<number>(80);
   const [maxPax, setMaxPax] = useState<number>(50);
 

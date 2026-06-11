@@ -16,10 +16,10 @@ export const visaData: VisaData[] = [
     vendorName: '-',
     foreignPriceUsd: 137,
     paxRange: '1-34 PAX',
-    exchangeRate: 17000,
-    sellingPrice: 2492030,
-    vendorPrice: 2329000,
-    margin: 163030,
+    exchangeRate: 20000,
+    sellingPrice: 2928300,
+    vendorPrice: 2740000,
+    margin: 188300,
     percentage: 7
   },
   {
@@ -27,10 +27,10 @@ export const visaData: VisaData[] = [
     vendorName: '-',
     foreignPriceUsd: 145,
     paxRange: '35-55 PAX',
-    exchangeRate: 17000,
-    sellingPrice: 2637550,
-    vendorPrice: 2465000,
-    margin: 172550,
+    exchangeRate: 20000,
+    sellingPrice: 3099350,
+    vendorPrice: 2900000,
+    margin: 199350,
     percentage: 7
   }
 ];

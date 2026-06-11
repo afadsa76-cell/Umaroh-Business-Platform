@@ -387,7 +387,7 @@ Gunakan data context yang diberikan untuk mencocokkan nama vendor atau item jika
 
   const totals = useMemo(() => {
     const all = [...readyTickets, ...notReadyTickets];
-    const kurs = { SAR: 4700, USD: 17000, IDR: 1 };
+    const kurs = { SAR: 4900, USD: 20000, IDR: 1 };
     
     return {
       totalBudgetIDR: all.reduce((sum, r) => sum + (r.vendorInvoice * (kurs[r.currency] || 1)), 0),
@@ -671,7 +671,7 @@ Gunakan data context yang diberikan untuk mencocokkan nama vendor atau item jika
           <p className="text-2xl font-black text-rose-600">{formatIDR(totals.totalBudgetIDR)}</p>
           <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
             <TrendingUpIcon className="w-4 h-4 text-emerald-500" />
-            <span>Converted with Kurs SAR 4.700</span>
+            <span>Converted with Kurs SAR 4.900 & USD 20.000</span>
           </div>
         </div>
         

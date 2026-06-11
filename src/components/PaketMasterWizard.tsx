@@ -599,20 +599,20 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   ].map((opt) => ({
     id: opt.id,
     label: `${opt.label} Full Trip`,
-    price: targetJamaah > 0 ? Math.round(((opt.sar * 4700) / targetJamaah) * 1.4) : 0,
+    price: targetJamaah > 0 ? Math.round(((opt.sar * 4900) / targetJamaah) * 1.4) : 0,
   }));
 
   const mutawwifDays = Math.max(1, durasiHari - 1);
   const mutawwifPrice =
     targetJamaah > 0
-      ? Math.round(((300 * 4700 * mutawwifDays) / targetJamaah) * 1.8)
+      ? Math.round(((300 * 4900 * mutawwifDays) / targetJamaah) * 1.8)
       : 0;
 
   const ziarahOptions = ziarahData.map((item) => {
     const margin = 0.2;
     const computedPrice =
       targetJamaah > 0
-        ? Math.round(((item.hargaAsing * 4700) / targetJamaah) * (1 + margin))
+        ? Math.round(((item.hargaAsing * 4900) / targetJamaah) * (1 + margin))
         : 0;
     return {
       id: `ziarah_${item.id}`,
@@ -761,7 +761,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const priceEntry = season.prices.find((p) => p.roomType === roomType);
     if (!priceEntry) return 0;
     
-    const kurs = 4700; // Use a standard kurs or from state if available
+    const kurs = 4900; // Use a standard kurs or from state if available
     const margin = 1.1;
     let divisor = 1;
     if (roomType === 'Quad') divisor = 4;
@@ -929,7 +929,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         h.seasons[0]?.prices.find((p) => p.roomType === "Double")?.price ||
         0;
 
-      const kurs = 4700;
+      const kurs = 4900;
       const margin = 1.1;
 
       return {

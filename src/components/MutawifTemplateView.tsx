@@ -10,7 +10,7 @@ export const MutawifTemplateView: React.FC = () => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [hargaAsing, setHargaAsing] = useState<number>(300);
   const [jumlahHari, setJumlahHari] = useState<number>(8);
-  const [kurs, setKurs] = useState<number>(4700);
+  const [kurs, setKurs] = useState<number>(4900);
   const [persentase, setPersentase] = useState<number>(80);
   const [maxPax, setMaxPax] = useState<number>(50);
   const [currency, setCurrency] = useState<'SAR' | 'IDR'>('IDR');

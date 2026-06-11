@@ -7,8 +7,8 @@ import { logoBase64 } from '../utils/logoBase64';
 export const EquipmentTemplateView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [currency, setCurrency] = useState<'IDR' | 'USD' | 'SAR'>('IDR');
-  const [kursUSD, setKursUSD] = useState<number>(17000);
-  const [kursSAR, setKursSAR] = useState<number>(4700);
+  const [kursUSD, setKursUSD] = useState<number>(20000);
+  const [kursSAR, setKursSAR] = useState<number>(4900);
   const [totalPax, setTotalPax] = useState<number>(45);
   const [margin, setMargin] = useState<number>(7);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);

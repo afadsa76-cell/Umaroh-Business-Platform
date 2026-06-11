@@ -7,7 +7,7 @@ export const KeretaCepatView: React.FC = () => {
   
   // Calculator state
   const [selectedItemId, setSelectedItemId] = useState<string>(keretaCepatData[0]?.id || '');
-  const [kurs, setKurs] = useState<number>(4700);
+  const [kurs, setKurs] = useState<number>(4900);
   const [marginPercent, setMarginPercent] = useState<number>(10);
   const [paxInput, setPaxInput] = useState<number>(1);
 

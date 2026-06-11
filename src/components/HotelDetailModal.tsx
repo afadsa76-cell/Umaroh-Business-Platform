@@ -9,7 +9,7 @@ interface HotelDetailModalProps {
 
 export const HotelDetailModal: React.FC<HotelDetailModalProps> = ({ hotel, onClose }) => {
   const [nights, setNights] = useState(1);
-  const EXCHANGE_RATE = 4700;
+  const EXCHANGE_RATE = 4900;
 
   const getPaxCount = (roomType: string): number => {
     const lower = roomType.toLowerCase();

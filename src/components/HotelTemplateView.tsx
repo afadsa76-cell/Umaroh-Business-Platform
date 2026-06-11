@@ -25,7 +25,7 @@ export const HotelTemplateView: React.FC = () => {
   const [city, setCity] = useState<'Madinah' | 'Makkah'>('Madinah');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [kurs, setKurs] = useState<number>(4700);
+  const [kurs, setKurs] = useState<number>(4900);
   const [marginPercent, setMarginPercent] = useState<number>(15);
   const [currency, setCurrency] = useState<'SAR' | 'IDR'>('SAR');
   const printRef = useRef<HTMLDivElement>(null);

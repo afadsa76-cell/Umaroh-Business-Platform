@@ -75,8 +75,8 @@ export const SalesOrderView: React.FC = () => {
   const [hargaTransportasiUpdate, setHargaTransportasiUpdate] = useState(2500);
   const [hargaMutawwifUpdate, setHargaMutawwifUpdate] = useState(300);
   const [pakaiMutawif, setPakaiMutawif] = useState(true);
-  const [kursSaudi, setKursSaudi] = useState(4700);
-  const [kursUsd, setKursUsd] = useState(17000);
+  const [kursSaudi, setKursSaudi] = useState(4900);
+  const [kursUsd, setKursUsd] = useState(20000);
   const [malamMadinah, setMalamMadinah] = useState(3);
   const [malamMakkah, setMalamMakkah] = useState(4);
   const tableRef = useRef<HTMLDivElement>(null);

@@ -15,8 +15,8 @@ export const VisaTemplateView: React.FC = () => {
   const [includeTransport, setIncludeTransport] = useState(false);
   const [transportType, setTransportType] = useState<string>('BUS');
   const [transportRoute, setTransportRoute] = useState<string>('Full Trip (Jed - Mak - CT Mak - CT Mad - Mad)');
-  const [kurs, setKurs] = useState<number>(17000); // Default USD to IDR
-  const [kursSar, setKursSar] = useState<number>(4700); // Default SAR to IDR
+  const [kurs, setKurs] = useState<number>(20000); // Default USD to IDR
+  const [kursSar, setKursSar] = useState<number>(4900); // Default SAR to IDR
   const [marginPercent, setMarginPercent] = useState<number>(7);
   const printRef = useRef<HTMLDivElement>(null);
 

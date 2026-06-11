@@ -26,8 +26,8 @@ export const QuotationView: React.FC = () => {
   const [includeMutawif, setIncludeMutawif] = useState<boolean>(false);
   const [includeVisa, setIncludeVisa] = useState<boolean>(false);
   const [currency, setCurrency] = useState<'SAR' | 'USD' | 'IDR'>('IDR');
-  const [kurs, setKurs] = useState<number>(4700);
-  const [kursUsd, setKursUsd] = useState<number>(17000);
+  const [kurs, setKurs] = useState<number>(4900);
+  const [kursUsd, setKursUsd] = useState<number>(20000);
   const [rows, setRows] = useState<QuotationRow[]>(Array(14).fill({}));
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);

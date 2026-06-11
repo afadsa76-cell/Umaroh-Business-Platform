@@ -10,7 +10,7 @@ export const TransportTemplateView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('gmc');
-  const [kurs, setKurs] = useState<number>(4700);
+  const [kurs, setKurs] = useState<number>(4900);
   const [marginPercent, setMarginPercent] = useState<number>(40);
   const [currency, setCurrency] = useState<'SAR' | 'IDR'>('IDR');
   const printRef = useRef<HTMLDivElement>(null);

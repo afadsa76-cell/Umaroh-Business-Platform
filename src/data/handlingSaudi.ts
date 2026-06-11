@@ -20,6 +20,6 @@ export const HANDLING_TIERS: HandlingTier[] = [
 
 export const HANDLING_CONSTANTS = {
   adminFee: 7,
-  defaultKurs: 17000,
+  defaultKurs: 20000,
   defaultMarginPercent: 30,
 };
