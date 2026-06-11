@@ -35,7 +35,7 @@ import { HotelView } from './components/HotelView';
 import { DashboardVendor } from './components/DashboardVendor';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
-import { auth, db, doc, getDoc, handleFirestoreError, OperationType, updateDoc, setDoc } from './firebase';
+import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const categoryItems: Record<string, string[]> = {
@@ -228,10 +228,13 @@ function App() {
         }
         
         try {
+          // TEMPORARILY DISABLED: Suspended database heartbeat write to preserve active Firestore write quota
+          /*
           const userDocRef = doc(db, 'users', user.uid);
           await updateDoc(userDocRef, {
             lastActiveAt: new Date().toISOString()
           });
+          */
           localStorage.setItem(storageKey, now.toString());
         } catch (err) {
           const errorPayload = err as { code?: string };
@@ -245,6 +248,8 @@ function App() {
           try {
             const userDocSnap = await getDoc(doc(db, 'users', user.uid));
             if (!userDocSnap.exists()) {
+              // Same here, bypass cloud writes
+              /*
               await setDoc(doc(db, 'users', user.uid), {
                 id: user.uid,
                 email: user.email || '',
@@ -253,6 +258,7 @@ function App() {
                 lastActiveAt: new Date().toISOString(),
                 createdAt: new Date().toISOString()
               }, { merge: true });
+              */
               localStorage.setItem(storageKey, now.toString());
             }
           } catch (e) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { db, collection, addDoc, onSnapshot, query, where } from '../firebase';
+import { db, collection, onSnapshot, query, where } from '../firebase';
 import { Sparkles, Terminal, X, ExternalLink, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -233,8 +233,8 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
         timestamp: new Date().toISOString()
       };
       
-      // Store to Firestore log
-      await addDoc(collection(db, 'ad_performance_logs'), log);
+      // TEMPORARILY DISABLED: Suspended cloud saving to prevent extreme Firestore write quota exhaustion
+      // await addDoc(collection(db, 'ad_performance_logs'), log);
       
       // Keep state locally
       let stored = [];
