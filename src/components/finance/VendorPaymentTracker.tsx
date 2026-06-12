@@ -9,11 +9,7 @@ import {
 import { db, collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, handleFirestoreError, OperationType, getDocs } from '../../firebase';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
-
-interface jsPDFWithAutoTable extends jsPDF {
-  autoTable?: (options: unknown) => void;
-}
+import autoTable from 'jspdf-autotable';
 
 // Interfaces & Types
 export interface CostComponent {
@@ -150,7 +146,7 @@ export const VendorPaymentTracker: React.FC = () => {
   const [totalPemasukanMitra, setTotalPemasukanMitra] = useState(1250000000); // Decoupled static/mock start
 
   // Real-time master sync states
-  const [realPackages, setRealPackages] = useState<{ id: string; nama: string }[]>([]);
+  const [realPackages, setRealPackages] = useState<{ id: string; nama: string; tglBerangkat?: string }[]>([]);
   const [realHotels, setRealHotels] = useState<{ id: string; nama: string; kota: string }[]>([]);
   const [realAirlines, setRealAirlines] = useState<{ id: string; name: string }[]>([]);
 
@@ -610,10 +606,14 @@ export const VendorPaymentTracker: React.FC = () => {
 
     // Sub to Paket Master to read real packages
     const unsubPaketMaster = onSnapshot(collection(db, 'paket_master'), (snap) => {
-      const arr: { id: string; nama: string }[] = [];
+      const arr: { id: string; nama: string; tglBerangkat?: string }[] = [];
       snap.forEach(d => {
         const data = d.data();
-        arr.push({ id: d.id, nama: data.nama || data.nama_paket || d.id });
+        arr.push({ 
+          id: d.id, 
+          nama: data.nama || data.nama_paket || d.id,
+          tglBerangkat: data.tglBerangkat || data.tanggalBerangkat || data.tanggal_berangkat || ''
+        });
       });
       setRealPackages(arr);
     }, (err) => {
@@ -938,41 +938,149 @@ export const VendorPaymentTracker: React.FC = () => {
   };
 
   const handleExportPDF = () => {
-    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const doc = new jsPDF('l', 'mm', 'a4'); // Use landscape layout for professional bento-style reports
+    
+    interface jsPDFWithAutoTable extends jsPDF {
+      lastAutoTable?: {
+        finalY: number;
+      };
+    }
+
+    const getDaysRemaining = (tglStr?: string) => {
+      if (!tglStr) return "";
+      try {
+        const depDate = new Date(tglStr);
+        if (isNaN(depDate.getTime())) return "";
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        depDate.setHours(0,0,0,0);
+        const diffTime = depDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) return "(Hari Ini)";
+        if (diffDays < 0) return `(Selesai Keberangkatan)`;
+        return `(${diffDays} Hari Lagi)`;
+      } catch {
+        return "";
+      }
+    };
+
+    // Header Laporan
     doc.setFont("helvetica", "bold");
-    doc.text("LAPORAN TRACKER BIAYA VENDOR & COST COMPONENT ERP", 14, 20);
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text("UMAROH PLATFORM - LAPORAN TRACKER BIAYA VENDOR & KOMPONEN BIAYA (PER PAKET)", 14, 15);
+    
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Waktu Cetak: ${new Date().toLocaleString('id-ID')} | Operator: ${currentUserRole}`, 14, 26);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')} | Operator: ${currentUserRole} | Total Paket: ${Object.keys(groupedComponents).length} Paket`, 14, 20);
+    
+    let currentY = 25;
 
-    const headers = [["Komponen", "Vendor", "Kategori", "Total Biaya", "Sisa", "Status", "Risiko"]];
-    const data = filteredList.map(item => [
-      item.nama_komponen,
-      item.vendor_id,
-      item.kategori_komponen,
-      formatCurrency(item.total_biaya),
-      formatCurrency(item.sisa_tagihan),
-      item.status_pembayaran,
-      item.status_risiko
-    ]);
+    Object.keys(groupedComponents).forEach((paketName) => {
+      const items = groupedComponents[paketName];
+      if (items.length === 0) return;
 
-    if (doc.autoTable) {
-      doc.autoTable({
-        startY: 32,
+      const matchedPkg = realPackages.find(p => p.nama === paketName);
+      const tglBerangkat = matchedPkg?.tglBerangkat || '-';
+      const daysLeft = matchedPkg?.tglBerangkat ? getDaysRemaining(matchedPkg.tglBerangkat) : '';
+
+      // Tentukan apakah butuh halaman baru jika posisinya terlalu rendah
+      if (currentY > 175) {
+        doc.addPage();
+        currentY = 15;
+      }
+
+      // Judul Blok Paket
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(13, 148, 136); // teal-600
+      doc.text(`🟢 PAKET: ${paketName.toUpperCase()}  |  KEBERANGKATAN: ${tglBerangkat} ${daysLeft}`, 14, currentY);
+      currentY += 4;
+
+      const headers = [['Komponen / Kebutuhan', 'Kategori', 'Vendor', 'Volume Qty', 'Total Anggaran', 'Sudah Dibayar', 'Sisa Tagihan', '% Progress', 'Jatuh Tempo', 'Risiko']];
+      
+      // Map data baris
+      const data = items.map(item => {
+        const sisa = item.total_biaya - item.total_bayar;
+        return [
+          item.nama_komponen,
+          item.kategori_komponen,
+          item.vendor_id || '-',
+          `${item.qty_used} / ${item.qty}`,
+          formatCurrency(item.total_biaya),
+          formatCurrency(item.total_bayar),
+          formatCurrency(sisa),
+          `${item.persentase_bayar}%`,
+          item.tanggal_jatuh_tempo || '-',
+          item.status_risiko
+        ];
+      });
+
+      // Hitung sub total untuk paket ini
+      const totalCost = items.reduce((sum, item) => sum + (item.total_biaya || 0), 0);
+      const totalPaid = items.reduce((sum, item) => sum + (item.total_bayar || 0), 0);
+      const totalSisa = totalCost - totalPaid;
+      const avgPercent = totalCost > 0 ? Math.round((totalPaid / totalCost) * 100) : 0;
+
+      // Sisipkan baris subtotal di akhir data tabel ini
+      data.push([
+        `TOTAL ${paketName.toUpperCase()}`,
+        `${items.length} Komponen`,
+        '',
+        '',
+        formatCurrency(totalCost),
+        formatCurrency(totalPaid),
+        formatCurrency(totalSisa),
+        `${avgPercent}%`,
+        '',
+        ''
+      ]);
+
+      autoTable(doc, {
         head: headers,
         body: data,
-        theme: 'striped',
-        headStyles: { fillColor: [13, 148, 136] }
+        startY: currentY,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2, font: 'helvetica' },
+        headStyles: { fillColor: [13, 148, 136] }, // Teal-600
+        didParseCell: (hookData) => {
+          // Highlight baris total (baris terakhir)
+          if (hookData.row.index === data.length - 1) {
+            hookData.cell.styles.fontStyle = 'bold';
+            hookData.cell.styles.fillColor = [240, 253, 250]; // teal-50 bg
+            hookData.cell.styles.textColor = [15, 23, 42]; // slate-900
+          }
+        }
       });
-      doc.save('Laporan_Biaya_Vendor_ERP.pdf');
-      addLog("EXPORT PDF", "Mengekspor laporan tracker pembayaran vendor ke file PDF");
-    }
+
+      // Update currentY setelah tabel selesai dibuat
+      const docWithTable = doc as jsPDFWithAutoTable;
+      currentY = (docWithTable.lastAutoTable?.finalY ?? currentY + 30) + 8;
+    });
+
+    doc.save(`Laporan_Biaya_Vendor_Per_Paket_${new Date().toISOString().split('T')[0]}.pdf`);
+    addLog("EXPORT PDF", "Mengekspor laporan tracker pembayaran vendor ke file PDF (Per Paket)");
   };
 
   return (
     <div className="space-y-6">
+      {/* Dynamic Print Header */}
+      <div className="hidden print:block border-b-2 border-slate-950 pb-3 mb-6">
+        <div className="flex justify-between items-end">
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">LAPORAN BIAYA VENDOR & KOMPONEN BIAYA ERP</h1>
+            <p className="text-xs text-slate-500 font-bold mt-1">Sistem Pengawasan Keuangan Keberangkatan Umroh Real-time</p>
+          </div>
+          <div className="text-right text-xs text-slate-500 font-bold">
+            <p>Waktu Cetak: {new Date().toLocaleString('id-ID')}</p>
+            <p>Operator: {currentUserRole}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Dynamic Role Simulation Header Panel */}
-      <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-teal-500/20 relative overflow-hidden">
+      <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-teal-500/20 relative overflow-hidden print:hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl -z-10" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -1104,7 +1212,7 @@ export const VendorPaymentTracker: React.FC = () => {
         <div>
           <h4 className="font-extrabold text-slate-800 text-sm tracking-wide uppercase">CASHFLOW MONITORING</h4>
           <p className="text-xs text-slate-500 mt-1 font-medium">Berdasarkan data umroh keberangkatan aktif.</p>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex items-center gap-2 print:hidden">
             <span className="text-xs font-extrabold text-slate-600">Total Setoran Jemaah:</span>
             <input 
               type="number"
@@ -1135,7 +1243,7 @@ export const VendorPaymentTracker: React.FC = () => {
       </div>
 
       {/* PUSAT MITIGASI FLUKTUASI TIKET & KONTINGENSI SEAT (FLIGHT MITIGATION CONSOLE) */}
-      <div id="flight-mitigation-console" className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-teal-500/30 overflow-hidden relative">
+      <div id="flight-mitigation-console" className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-teal-500/30 overflow-hidden relative print:hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
         
         <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
@@ -1578,7 +1686,7 @@ export const VendorPaymentTracker: React.FC = () => {
       </div>
 
       {/* NOTIFICATION HUD & INTERACTIVE ANALYTIC METRICS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 print:hidden">
         {/* Dynamic Analytics Visual Charts (SVG Based) */}
         <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-150 shadow-sm space-y-6">
           <div className="flex items-center justify-between">
@@ -1660,7 +1768,7 @@ export const VendorPaymentTracker: React.FC = () => {
       </div>
 
       {/* FILTER & REAL-TIME SEARCH SECTION */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm space-y-4">
+      <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm space-y-4 print:hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -1829,11 +1937,11 @@ export const VendorPaymentTracker: React.FC = () => {
       </div>
 
       {/* CORE FINANCE TABLE (MONITORING TABLE & RECORD MATRIX) */}
-      <div className="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden print:border-none print:shadow-none print:rounded-none">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-900 text-white font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-800 sticky top-0 z-10 select-none">
+              <tr className="bg-slate-900 text-white font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-800 sticky top-0 z-10 select-none print:bg-slate-100 print:text-slate-900 print:border-b-2 print:border-slate-800">
                 <th className="p-4">Komponen & Kategori</th>
                 <th className="p-4">Vendor & Paket</th>
                 <th className="p-4 text-center">Volume (Qty)</th>
@@ -1842,7 +1950,7 @@ export const VendorPaymentTracker: React.FC = () => {
                 <th className="p-4 text-right">Sisa Tagihan</th>
                 <th className="p-4 text-center">Progress</th>
                 <th className="p-4 text-center">Risiko / Ops</th>
-                <th className="p-4 text-center text-slate-300">Aksi</th>
+                <th className="p-4 text-center text-slate-300 print:hidden">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 divide-dashed">
@@ -1936,7 +2044,7 @@ export const VendorPaymentTracker: React.FC = () => {
                       </td>
 
                       {/* Detailed Actions buttons */}
-                      <td className="p-4 text-center whitespace-nowrap">
+                      <td className="p-4 text-center whitespace-nowrap print:hidden">
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => setDetailModalItem(item)}
@@ -1953,6 +2061,7 @@ export const VendorPaymentTracker: React.FC = () => {
                                   setSelectedItem(item);
                                   setFormData({ ...item });
                                   const isKnown = realPackages.some(p => p.nama === item.package_id) || 
+                                                  costComponents.some(e => e.package_id === item.package_id) ||
                                                   item.package_id === 'UMROH-VIP-AGUSTUS' || 
                                                   item.package_id === 'UMROH-REGULER-DESEMBER';
                                   setIsManualPackage(!isKnown);
@@ -2022,12 +2131,12 @@ export const VendorPaymentTracker: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="p-3 text-center print:hidden">
                           <span className="text-[10px] text-teal-600 font-bold hover:underline">
                             {isCollapsed ? 'Buka Detail' : 'Tutup Detail'}
                           </span>
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="p-3 text-center print:hidden">
                           {canWrite && (
                             <button
                               onClick={(e) => {
@@ -2120,7 +2229,7 @@ export const VendorPaymentTracker: React.FC = () => {
                             </td>
 
                             {/* Detailed Actions buttons */}
-                            <td className="p-4 text-center whitespace-nowrap">
+                            <td className="p-4 text-center whitespace-nowrap print:hidden">
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   onClick={() => setDetailModalItem(item)}
@@ -2137,6 +2246,7 @@ export const VendorPaymentTracker: React.FC = () => {
                                         setSelectedItem(item);
                                         setFormData({ ...item });
                                         const isKnown = realPackages.some(p => p.nama === item.package_id) || 
+                                                        costComponents.some(e => e.package_id === item.package_id) ||
                                                         item.package_id === 'UMROH-VIP-AGUSTUS' || 
                                                         item.package_id === 'UMROH-REGULER-DESEMBER';
                                         setIsManualPackage(!isKnown);
@@ -2384,16 +2494,14 @@ export const VendorPaymentTracker: React.FC = () => {
                       className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500 cursor-pointer"
                     >
                       <option value="">-- Pilih Paket --</option>
-                      {realPackages.map(p => (
-                        <option key={p.id} value={p.nama}>{p.nama}</option>
+                      {Array.from(new Set([
+                        ...realPackages.map(p => p.nama),
+                        ...costComponents.map(e => e.package_id),
+                        'UMROH-VIP-AGUSTUS',
+                        'UMROH-REGULER-DESEMBER'
+                      ])).filter(Boolean).map(pkgName => (
+                        <option key={pkgName} value={pkgName}>{pkgName}</option>
                       ))}
-                      {/* Fallback mock constants if empty */}
-                      {!realPackages.some(pkg => pkg.nama === 'UMROH-VIP-AGUSTUS') && (
-                        <option value="UMROH-VIP-AGUSTUS">UMROH-VIP-AGUSTUS</option>
-                      )}
-                      {!realPackages.some(pkg => pkg.nama === 'UMROH-REGULER-DESEMBER') && (
-                        <option value="UMROH-REGULER-DESEMBER">UMROH-REGULER-DESEMBER</option>
-                      )}
                     </select>
                   )}
                 </div>

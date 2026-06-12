@@ -106,10 +106,25 @@ export const calculateDeadlineH30 = (departureDateStr: string): string => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+// Helper to calculate H-45 (45 days before departure) for local date inputs based on PT Nawaitu rules
+export const calculateDeadlineH45 = (departureDateStr: string): string => {
+  if (!departureDateStr) return '';
+  const date = new Date(departureDateStr);
+  if (isNaN(date.getTime())) return '';
+  date.setDate(date.getDate() - 45); // Subtract 45 days
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export const MitraTrackerView: React.FC = () => {
   // Navigation & Role Configuration
   const [activeSubTab, setActiveSubTab] = useState<MenuSubTab>('dashboard');
   const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'finance' | 'owner'>('admin');
+  
+  // Expanded Mitra Rows Trigger
+  const [expandedMitraIds, setExpandedMitraIds] = useState<Record<string, boolean>>({});
 
   // Core States
   const [trackers, setTrackers] = useState<MitraTracker[]>([]);
@@ -253,13 +268,13 @@ export const MitraTrackerView: React.FC = () => {
         days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       }
 
-      // Re-evaluate risk state based on specifications:
-      // - >= 80% = AMAN
-      // - 50% - 79% = WASPADA
-      // - < 50% = RISIKO TINGGI
-      const risk = tr.persentase_bayar >= 80 
+      // Re-evaluate risk state based on specifications (sisa piutang progress):
+      // - <= 20% = AMAN (equivalent to paid >= 80%)
+      // - <= 50% = WASPADA (equivalent to paid >= 50%)
+      // - > 50% = RISIKO TINGGI (equivalent to paid < 50%)
+      const risk = tr.persentase_bayar <= 20 
         ? 'AMAN' 
-        : tr.persentase_bayar >= 50 
+        : tr.persentase_bayar <= 50 
           ? 'WASPADA' 
           : 'RISIKO TINGGI';
 
@@ -291,7 +306,7 @@ export const MitraTrackerView: React.FC = () => {
         pelunasan: 200000000,
         total_bayar: 1100000000,
         sisa_tagihan: 250000000,
-        persentase_bayar: 81.48,
+        persentase_bayar: 18.52, // 18.52% Sisa Piutang (<= 20% = AMAN)
         deadline_pelunasan: '2026-06-10',
         pic_finance: 'Andika Finance',
         status_pembayaran: 'DP',
@@ -319,7 +334,7 @@ export const MitraTrackerView: React.FC = () => {
         pelunasan: 0,
         total_bayar: 1700000000,
         sisa_tagihan: 1180000000,
-        persentase_bayar: 59.02, // 50-79% = Waspada
+        persentase_bayar: 40.97, // 40.97% Sisa Piutang (21%-50% = WASPADA)
         deadline_pelunasan: '2026-05-26',
         pic_finance: 'Sonia Finance',
         status_pembayaran: 'DP',
@@ -347,7 +362,7 @@ export const MitraTrackerView: React.FC = () => {
         pelunasan: 0,
         total_bayar: 420000000,
         sisa_tagihan: 630000000,
-        persentase_bayar: 40.0, // < 50% = Risiko Tinggi & H-14 critical warning
+        persentase_bayar: 60.00, // 60.0% Sisa Piutang (> 50% = RISIKO TINGGI)
         deadline_pelunasan: '2026-05-25',
         pic_finance: 'Andika Finance',
         status_pembayaran: 'DP',
@@ -458,7 +473,7 @@ export const MitraTrackerView: React.FC = () => {
             total_bayar: 0,
             sisa_tagihan: Number(m.paketHarga) || 0,
             persentase_bayar: 0,
-            deadline_pelunasan: calculateDeadlineH30('2026-08-08'), // Default is H-30 of departures forward-looking projection
+            deadline_pelunasan: calculateDeadlineH45('2026-08-08'), // Default is H-45 of departures forward-looking projection
             hari_menuju_berangkat: 999,
             status_pembayaran: 'BELUM LUNAS',
             status_risiko: 'RISIKO TINGGI',
@@ -527,7 +542,7 @@ export const MitraTrackerView: React.FC = () => {
 
     const nextTotalBayar = nextDp + nextT1 + nextT2 + nextPel;
     const nextSisa = mTracker.total_tagihan - nextTotalBayar;
-    const nextPct = (nextTotalBayar / mTracker.total_tagihan) * 100;
+    const nextPct = mTracker.total_tagihan > 0 ? (nextSisa / mTracker.total_tagihan) * 100 : 0;
     const nextStatusPembayaran = nextSisa <= 0 ? 'LUNAS' : (nextTotalBayar > 0 ? 'DP' : 'BELUM LUNAS');
 
     try {
@@ -628,25 +643,58 @@ export const MitraTrackerView: React.FC = () => {
       ? `(${tr.hari_menuju_berangkat} Hari Lagi)` 
       : '';
 
-    const message = `*Konfirmasi Pembayaran Mitra - Umaroh Platform* 📑\n\n` +
-      `Yth. Bapak/Ibu *${tr.pic || tr.nama_mitra}*\n` +
-      `dari *${tr.nama_brand || tr.nama_mitra}*\n\n` +
-      `Berikut rincian status pembayaran saat ini:\n\n` +
-      `• *Paket Umroh:* ${tr.paket_umroh || '-'}\n` +
-      `• *Rencana Keberangkatan:* ${tr.tanggal_berangkat || '-'} ${hariLagiText}\n` +
-      `• *Jumlah Seat:* ${tr.jumlah_seat || 0} pax\n\n` +
-      `*Rincian Finansial:*\n` +
-      `• Total Tagihan Kontrak: *${formatCurrency(tr.total_tagihan)}*\n` +
-      `• Total Terbayar: *${formatCurrency(tr.total_bayar)}* (${tr.persentase_bayar?.toFixed(1)}%)\n` +
-      `• *Sisa Piutang Berjalan: ${formatCurrency(tr.sisa_tagihan)}*\n\n` +
-      `• *Batas Pelunasan (Deadline):* ${tr.deadline_pelunasan || '-'}\n\n` +
-      `Mohon perwakilan mitra dapat segera mengoordinasikan pelunasan tagihan sisa piutang di atas sesuai tanggal deadline demi kelancaran penerbitan dokumen dan ticketing jamaah.\n\n` +
-      `Jika ada pertanyaan atau konfirmasi pembayaran cicilan baru, silakan hubungi kami dengan melampirkan bukti transfer.\n\n` +
-      `Terima kasih. 🙏\n` +
-      `*Finance - Umaroh Platform*`;
+    const dpRequired = (tr.jumlah_seat || 0) * 5000000;
+    const remainingSisa = Math.max(0, tr.total_tagihan - dpRequired);
+    const termin2Required = remainingSisa * 0.30;
+    const termin3Required = remainingSisa * 0.30;
+    const pelunasanRequired = tr.total_tagihan - dpRequired - termin2Required - termin3Required;
+
+    const message = `*Konfirmasi Pembayaran Mitra - Umaroh Platform* 📑
+
+Yth. Bapak/Ibu ${tr.pic || tr.nama_mitra}
+dari *${tr.nama_brand || tr.nama_mitra}*
+
+Berikut rincian status pembayaran saat ini:
+
+• *Paket Umroh:* ${tr.paket_umroh || '-'}
+• *Rencana Keberangkatan:* ${tr.tanggal_berangkat || '-'} ${hariLagiText}
+• *Jumlah Seat:* ${tr.jumlah_seat || 0} pax
+
+*Rincian Finansial:*
+• Total Tagihan Kontrak: *${formatCurrency(tr.total_tagihan)}*
+• Total Terbayar: *${formatCurrency(tr.total_bayar)}* (${tr.persentase_bayar?.toFixed(1)}%)
+• *Sisa Piutang Berjalan: ${formatCurrency(tr.sisa_tagihan)}*
+
+• *Batas Pelunasan (Deadline H-45):* ${tr.deadline_pelunasan || '-'}
+
+*KETENTUAN & REKAP TAHAPAN PEMBAYARAN:*
+-------------------------------------------
+*a. Uang Muka (DP)*
+📌 *Rp 5.000.000 / Jamaah* dibayarkan langsung saat pendaftaran awal untuk mengamankan block seat kuota.
+📌 Target DP (${tr.jumlah_seat || 0} pax): *${formatCurrency(dpRequired)}*
+
+*b. Pembayaran Ke-2*
+📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Menyesuaikan fluktuasi rilis tiket).
+📌 Target Termin 2: *${formatCurrency(termin2Required)}*
+
+*c. Pembayaran Ke-3*
+📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Melengkapi verifikasi logistik).
+📌 Target Termin 3: *${formatCurrency(termin3Required)}*
+
+*d. Pelunasan Akhir (H-45)*
+📌 Seluruh sisa biaya wajib dilunasi sepenuhnya paling lambat *H-45 (45 hari sebelum terbang)*.
+📌 Target Pelunasan Akhir: *${formatCurrency(pelunasanRequired)}*
+-------------------------------------------
+
+Mohon perwakilan mitra dapat segera mengoordinasikan pelunasan tagihan sisa piutang di atas sesuai tanggal deadline demi kelancaran penerbitan dokumen dan ticketing jamaah.
+
+Jika ada pertanyaan atau konfirmasi pembayaran cicilan baru, silakan hubungi kami dengan melampirkan bukti transfer.
+
+Terima kasih. 🙏
+*Finance - Umaroh Platform*`;
 
     const encodedText = encodeURIComponent(message);
-    const waUrl = `https://wa.me/${waNumber}?text=${encodedText}`;
+    const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodedText}`;
     window.open(waUrl, '_blank');
   };
 
@@ -692,16 +740,16 @@ export const MitraTrackerView: React.FC = () => {
       const total_bayar = Number(formDataEditMitra.total_bayar);
       const sisa_tagihan = Number(formDataEditMitra.total_tagihan) - total_bayar;
       const persentase_bayar = Number(formDataEditMitra.total_tagihan) > 0 
-        ? (total_bayar / Number(formDataEditMitra.total_tagihan)) * 100 
+        ? (sisa_tagihan / Number(formDataEditMitra.total_tagihan)) * 100 
         : 0;
 
       // Re-evaluate risk state based on specifications:
-      // - >= 80% = AMAN
-      // - 50% - 79% = WASPADA
-      // - < 50% = RISIKO TINGGI
-      const risk = persentase_bayar >= 80 
+      // - <= 20% sisa piutang = AMAN
+      // - <= 50% sisa piutang = WASPADA
+      // - > 50% sisa piutang = RISIKO TINGGI
+      const risk = persentase_bayar <= 20 
         ? 'AMAN' 
-        : (persentase_bayar >= 50 ? 'WASPADA' : 'RISIKO TINGGI');
+        : (persentase_bayar <= 50 ? 'WASPADA' : 'RISIKO TINGGI');
 
       // Re-evaluate payment status
       const nextStatusPembayaran = sisa_tagihan <= 0 ? 'LUNAS' : (total_bayar > 0 ? 'DP' : 'BELUM LUNAS');
@@ -783,21 +831,21 @@ export const MitraTrackerView: React.FC = () => {
     }
   };
 
-  // Automated warnings evaluator
-  const getWarningState = (daysStr: number, progressPct: number, sisaTagihan: number) => {
+  // Automated warnings evaluator based on PT Nawaitu H-45 criteria standard
+  const getWarningState = (daysStr: number, sisaPct: number, sisaTagihan: number) => {
     if (sisaTagihan <= 0) return null;
     
-    // H-14 belum lunas: Critical Warning
-    if (daysStr <= 14 && progressPct < 100) {
-      return { level: 'CRITICAL', text: 'H-14 Belum lunas! Sangat Kritis untuk Penerbitan Dokumen / Visa.', color: 'red' };
+    // H-45 belum lunas: CRITICAL (Melewati Batas Ketentuan Pelunasan Akhir)
+    if (daysStr <= 45) {
+      return { level: 'CRITICAL', text: 'Melewati batas pelunasan akhir H-45! Wajib segera dilunasi.', color: 'red' };
     }
-    // H-30 < 70%: Red Warning
-    if (daysStr <= 30 && progressPct < 70) {
-      return { level: 'RISIKO', text: 'H-30 Pembayaran masih di bawah 70%! Risiko Pembatalan Tiket.', color: 'orange' };
+    // H-60 dan sisa piutang > 40%: Red Warning
+    if (daysStr <= 60 && sisaPct > 40) {
+      return { level: 'RISIKO', text: 'H-60 Pembayaran di bawah 60% (Sisa Pembayaran ke-3 belum tuntas).', color: 'orange' };
     }
-    // H-45 < 50%: Yellow Warning
-    if (daysStr <= 45 && progressPct < 50) {
-      return { level: 'WARNING', text: 'H-45 Pembayaran masih di bawah 50%! Harap follow up pencairan DP/Termin.', color: 'yellow' };
+    // H-90 dan sisa piutang > 75%: Yellow Warning
+    if (daysStr <= 90 && sisaPct > 75) {
+      return { level: 'WARNING', text: 'H-90 Pembayaran di bawah 25% (Uang Muka/DP belum lunas penuh).', color: 'yellow' };
     }
     return null;
   };
@@ -982,10 +1030,10 @@ export const MitraTrackerView: React.FC = () => {
       g.totalPiutang += (tr.sisa_tagihan || 0);
     }
 
-    // Hitung rata-rata persentase terkumpul per paket
+    // Hitung rata-rata persentase sisa piutang per paket
     const list = Object.values(groups);
     for (const g of list) {
-      g.averagePercent = g.totalTagihan > 0 ? (g.totalBayar / g.totalTagihan) * 100 : 0;
+      g.averagePercent = g.totalTagihan > 0 ? (g.totalPiutang / g.totalTagihan) * 100 : 0;
     }
 
     return list;
@@ -1018,7 +1066,7 @@ export const MitraTrackerView: React.FC = () => {
       'Pelunasan': t.pelunasan,
       'Total Terbayar': t.total_bayar,
       'Sisa Piutang': t.sisa_tagihan,
-      '% Pembayaran': `${t.persentase_bayar?.toFixed(1)}%`,
+      '% Sisa Piutang': `${t.persentase_bayar?.toFixed(1)}%`,
       'Deadline': t.deadline_pelunasan,
       'H-Minus Keberangkatan': t.hari_menuju_berangkat,
       'Status Bayar': t.status_pembayaran,
@@ -1088,7 +1136,7 @@ export const MitraTrackerView: React.FC = () => {
       doc.text(`🟢 PAKET: ${paketName.toUpperCase()}  |  KEBERANGKATAN: ${tglBerangkat} ${hariLagi}`, 14, currentY);
       currentY += 4;
 
-      const headers = [['Mitra / Brand', 'Seat', 'PIC & No. HP', 'Total Tagihan', 'Total Terbayar', 'Sisa Piutang', '% Bayar', 'Batas Pelunasan', 'Risiko']];
+      const headers = [['Mitra / Brand', 'Seat', 'PIC & No. HP', 'Total Tagihan', 'Total Terbayar', 'Sisa Piutang', '% Sisa', 'Batas Pelunasan', 'Risiko']];
       
       // Map data baris
       const data = items.map(t => [
@@ -1108,7 +1156,7 @@ export const MitraTrackerView: React.FC = () => {
       const totalTagihan = items.reduce((sum, item) => sum + (item.total_tagihan || 0), 0);
       const totalBayar = items.reduce((sum, item) => sum + (item.total_bayar || 0), 0);
       const totalSisa = items.reduce((sum, item) => sum + (item.sisa_tagihan || 0), 0);
-      const avgPercent = totalTagihan > 0 ? (totalBayar / totalTagihan) * 100 : 0;
+      const avgPercent = totalTagihan > 0 ? (totalSisa / totalTagihan) * 100 : 0;
 
       // Sisipkan baris subtotal di akhir data tabel ini
       data.push([
@@ -1477,7 +1525,53 @@ export const MitraTrackerView: React.FC = () => {
 
       {/* 2. TRACKER PEMBAYARAN TABLE SUBTAB */}
       {activeSubTab === 'pembayaran' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-6 animate-in fade-in duration-300 font-sans">
+          
+          {/* PT Nawaitu Payment Guidelines Block */}
+          <div className="bg-gradient-to-r from-teal-955 to-slate-900 bg-teal-950 text-white p-5 rounded-2xl shadow-md border border-teal-800 space-y-3.5 relative overflow-hidden">
+            <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-64 h-64 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div className="flex items-start gap-2.5 pb-2 border-b border-white/10">
+              <span className="text-xl">📌</span>
+              <div>
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-teal-300">
+                  KETENTUAN & TAHAPAN JADWAL PEMBAYARAN JAMAAH - PT NAWAITU UMRAH HAJI
+                </h3>
+                <p className="text-[10px] text-teal-100/70 font-medium leading-relaxed">
+                  Semua transaksi pendaftaran agen & mitra wajib mematuhi skema termin standar perlindungan kuota keberangkatan berikut:
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-medium text-teal-100">
+              <div className="space-y-1 bg-white/5 p-3 rounded-xl border border-white/5 text-left">
+                <p className="font-black text-teal-300 text-xs uppercase">a. Uang Muka (DP)</p>
+                <p className="text-[11px] leading-relaxed text-teal-100/90">
+                  <strong className="text-white">Rp 5.000.000 / Jamaah</strong> dibayarkan langsung saat pendaftaran awal untuk mengamankan block seat kuota.
+                </p>
+              </div>
+              <div className="space-y-1 bg-white/5 p-3 rounded-xl border border-white/5 text-left">
+                <p className="font-black text-teal-300 text-xs uppercase">b. Pembayaran Ke-2</p>
+                <p className="text-[11px] leading-relaxed text-teal-100/90">
+                  Sebesar <strong className="text-white">30% dari sisa total tagihan</strong> setelah dikurangi alokasi DP awal (Menyesuaikan fluktuasi rilis tiket).
+                </p>
+              </div>
+              <div className="space-y-1 bg-white/5 p-3 rounded-xl border border-white/5 text-left">
+                <p className="font-black text-teal-300 text-xs uppercase">c. Pembayaran Ke-3</p>
+                <p className="text-[11px] leading-relaxed text-teal-100/90">
+                  Sebesar <strong className="text-white">30% dari sisa total tagihan</strong> setelah dikurangi alokasi DP awal (Melengkapi verifikasi logistik).
+                </p>
+              </div>
+              <div className="space-y-1 bg-teal-900/40 p-3 rounded-xl border border-emerald-500/20 text-left">
+                <p className="font-black text-amber-300 text-xs uppercase flex items-center gap-1">
+                  d. Pelunasan Akhir (H-45)
+                </p>
+                <p className="text-[11px] leading-relaxed text-teal-50 font-bold">
+                  Seluruh sisa biaya wajib dilunasi sepenuhnya paling lambat <strong className="text-white bg-amber-600 px-1 py-0.5 rounded">H-45 (45 hari sebelum terbang)</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
           
           {/* Filters, search and actions headers */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-2xs space-y-4">
@@ -1632,7 +1726,7 @@ export const MitraTrackerView: React.FC = () => {
                     <th className="p-4 cursor-pointer hover:bg-gray-100 text-right" onClick={() => requestSort('sisa_tagihan')}>
                       <div className="flex items-center justify-end gap-1">SISA PIUTANG <ArrowUpDown className="w-3.5 h-3.5" /></div>
                     </th>
-                    <th className="p-4 text-center">% BAYAR</th>
+                    <th className="p-4 text-center">% PIUTANG</th>
                     <th className="p-4">DEADLINE</th>
                     <th className="p-4 text-center">RISIKO</th>
                     {currentUserRole !== 'owner' && <th className="p-4 text-right">AKSI</th>}
@@ -1662,7 +1756,7 @@ export const MitraTrackerView: React.FC = () => {
                     const sumTagihan = groupItems.reduce((acc, curr) => acc + (curr.total_tagihan || 0), 0);
                     const sumTerbayar = groupItems.reduce((acc, curr) => acc + (curr.total_bayar || 0), 0);
                     const sumSisa = groupItems.reduce((acc, curr) => acc + (curr.sisa_tagihan || 0), 0);
-                    const calculatedPercent = sumTagihan > 0 ? (sumTerbayar / sumTagihan) * 100 : 0;
+                    const calculatedPercent = sumTagihan > 0 ? (sumSisa / sumTagihan) * 100 : 0;
 
                     return (
                       <React.Fragment key={paketName}>
@@ -1677,95 +1771,371 @@ export const MitraTrackerView: React.FC = () => {
                         {groupItems.map(tr => {
                           const warn = getWarningState(tr.hari_menuju_berangkat, tr.persentase_bayar, tr.sisa_tagihan);
                           return (
-                            <tr key={tr.id} className={`hover:bg-gray-50/80 transition-all ${warn?.level === 'CRITICAL' ? 'bg-rose-50/10' : ''}`}>
-                              <td className="p-4 font-bold text-gray-900">
-                                {tr.nama_mitra || '-'}
-                              </td>
-                              <td className="p-4">
-                                <p className="font-extrabold text-indigo-700 text-xs sm:text-sm">{tr.nama_brand || tr.nama_mitra}</p>
-                                <p className="text-[10px] text-gray-400 mt-0.5">{tr.pic} • {tr.hp} • {tr.kota}</p>
-                              </td>
-                              <td className="p-4 text-center text-sm font-black text-gray-900 bg-gray-50/30">
-                                {tr.jumlah_seat}
-                              </td>
-                              <td className="p-4">
-                                <p className="font-bold text-gray-800">{tr.paket_umroh}</p>
-                                <p className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-0.5">
-                                  <Calendar className="w-3 h-3" />
-                                  {tr.tanggal_berangkat} ({tr.hari_menuju_berangkat} Hari Lagi)
-                                </p>
-                              </td>
-                              <td className="p-4 text-right font-black text-gray-800">
-                                {formatCurrency(tr.total_tagihan)}
-                              </td>
-                              <td className="p-4 text-right">
-                                <p className="font-black text-emerald-600">{formatCurrency(tr.total_bayar)}</p>
-                                <p className="text-[10px] text-gray-400">DP: {formatCurrency(tr.dp)}</p>
-                              </td>
-                              <td className="p-4 text-right">
-                                <p className="font-black text-rose-600">{formatCurrency(tr.sisa_tagihan)}</p>
-                              </td>
-                              <td className="p-4 text-center">
-                                <span className={`px-2 py-1 rounded-full text-[10px] font-black ${tr.persentase_bayar >= 80 ? 'bg-emerald-100 text-emerald-800' : (tr.persentase_bayar >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-rose-100 text-rose-800')}`}>
-                                  {tr.persentase_bayar?.toFixed(1)}%
-                                </span>
-                              </td>
-                              <td className="p-4">
-                                <p className="font-bold text-gray-700">{tr.deadline_pelunasan}</p>
-                                {warn && <p className="text-[9px] font-black text-rose-600 bg-rose-50/60 p-1 rounded mt-1">{warn.level} ALERT</p>}
-                              </td>
-                              <td className="p-4 text-center">
-                                <span className={`px-3 py-1 font-black text-[10px] rounded-full text-white inline-block w-28 uppercase ${tr.status_risiko === 'AMAN' ? 'bg-emerald-500' : (tr.status_risiko === 'WASPADA' ? 'bg-yellow-500' : 'bg-red-500')}`}>
-                                  {tr.status_risiko}
-                                </span>
-                              </td>
-                              {currentUserRole !== 'owner' && (
-                                <td className="p-4 text-right">
-                                  <div className="flex flex-wrap items-center justify-end gap-1.5">
-                                    <button
-                                      onClick={() => { setSelectedMitraId(tr.id); setIsPaymentModalOpen(true); }}
-                                      className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all"
-                                    >
-                                      + Cicilan
-                                    </button>
-                                    <button
-                                      onClick={() => { setSelectedMitraId(tr.id); setIsFollowupModalOpen(true); }}
-                                      className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all"
-                                    >
-                                      Follow Up
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenWhatsApp(tr)}
-                                      className="bg-green-600 hover:bg-green-700 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 active:scale-95"
-                                      title="Kirim status rincian tagihan via WhatsApp ke Mitra"
-                                    >
-                                      💬 WA Share
-                                    </button>
-                                    {(currentUserRole === 'admin' || currentUserRole === 'finance') && (
-                                      <>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleOpenEditModal(tr)}
-                                          className="text-gray-400 hover:text-amber-600 p-1.5 rounded-lg hover:bg-amber-50 transition-all duration-200 active:scale-90"
-                                          title="Edit Data Mitra"
-                                        >
-                                          <Pencil className="w-4 h-4 cursor-pointer" />
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleDeleteTracker(tr.id)}
-                                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all duration-200 active:scale-90"
-                                          title="Hapus Tracker"
-                                        >
-                                          <Trash2 className="w-4 h-4 cursor-pointer" />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
+                            <React.Fragment key={tr.id}>
+                              <tr className={`hover:bg-gray-50/80 transition-all ${warn?.level === 'CRITICAL' ? 'bg-rose-50/10' : ''} ${expandedMitraIds[tr.id] ? 'bg-slate-50/90 font-medium' : ''}`}>
+                                <td className="p-4 font-bold text-gray-900">
+                                  <div className="leading-tight text-gray-900">{tr.nama_mitra || '-'}</div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedMitraIds(prev => ({ ...prev, [tr.id]: !prev[tr.id] }))}
+                                    className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase transition-all shadow-2xs hover:scale-105 active:scale-95 ${
+                                      expandedMitraIds[tr.id]
+                                        ? "bg-amber-600 text-white hover:bg-amber-700" 
+                                        : "bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200"
+                                    }`}
+                                  >
+                                    {expandedMitraIds[tr.id] ? "▲ Tutup Milestones" : "▼ Cek Milestones a-d"}
+                                  </button>
                                 </td>
+                                <td className="p-4">
+                                  <p className="font-extrabold text-indigo-700 text-xs sm:text-sm">{tr.nama_brand || tr.nama_mitra}</p>
+                                  <p className="text-[10px] text-gray-400 mt-0.5">{tr.pic} • {tr.hp} • {tr.kota}</p>
+                                </td>
+                                <td className="p-4 text-center text-sm font-black text-gray-900 bg-gray-50/30">
+                                  {tr.jumlah_seat}
+                                </td>
+                                <td className="p-4">
+                                  <p className="font-bold text-gray-800">{tr.paket_umroh}</p>
+                                  <p className="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-0.5">
+                                    <Calendar className="w-3 h-3" />
+                                    {tr.tanggal_berangkat} ({tr.hari_menuju_berangkat} Hari Lagi)
+                                  </p>
+                                </td>
+                                <td className="p-4 text-right font-black text-gray-800">
+                                  {formatCurrency(tr.total_tagihan)}
+                                </td>
+                                <td className="p-4 text-right">
+                                  <p className="font-black text-emerald-600">{formatCurrency(tr.total_bayar)}</p>
+                                  <p className="text-[10px] text-gray-400 font-semibold">DP: {formatCurrency(tr.dp)}</p>
+                                </td>
+                                <td className="p-4 text-right">
+                                  <p className="font-black text-rose-600">{formatCurrency(tr.sisa_tagihan)}</p>
+                                </td>
+                                <td className="p-4 text-center">
+                                  <span className={`px-2 py-1 rounded-full text-[10px] font-black ${tr.persentase_bayar <= 20 ? 'bg-emerald-100 text-emerald-800' : (tr.persentase_bayar <= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-rose-100 text-rose-800')}`}>
+                                    {tr.persentase_bayar?.toFixed(1)}%
+                                  </span>
+                                </td>
+                                <td className="p-4">
+                                  <p className="font-bold text-gray-700">{tr.deadline_pelunasan}</p>
+                                  {warn && <p className="text-[9px] font-black text-rose-600 bg-rose-50/60 p-1 rounded mt-1">{warn.level} ALERT</p>}
+                                </td>
+                                <td className="p-4 text-center">
+                                  <span className={`px-3 py-1 font-black text-[10px] rounded-full text-white inline-block w-28 uppercase ${tr.status_risiko === 'AMAN' ? 'bg-emerald-500' : (tr.status_risiko === 'WASPADA' ? 'bg-yellow-500' : 'bg-red-500')}`}>
+                                    {tr.status_risiko}
+                                  </span>
+                                </td>
+                                {currentUserRole !== 'owner' && (
+                                  <td className="p-4 text-right">
+                                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                                      <button
+                                        onClick={() => { setSelectedMitraId(tr.id); setIsPaymentModalOpen(true); }}
+                                        className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all"
+                                      >
+                                        + Cicilan
+                                      </button>
+                                      <button
+                                        onClick={() => { setSelectedMitraId(tr.id); setIsFollowupModalOpen(true); }}
+                                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all"
+                                      >
+                                        Follow Up
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenWhatsApp(tr)}
+                                        className="bg-green-600 hover:bg-green-700 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 active:scale-95"
+                                        title="Kirim status rincian tagihan via WhatsApp ke Mitra"
+                                      >
+                                        💬 WA Share
+                                      </button>
+                                      {(currentUserRole === 'admin' || currentUserRole === 'finance') && (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenEditModal(tr)}
+                                            className="text-gray-400 hover:text-amber-600 p-1.5 rounded-lg hover:bg-amber-50 transition-all duration-200 active:scale-90"
+                                            title="Edit Data Mitra"
+                                          >
+                                            <Pencil className="w-4 h-4 cursor-pointer" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteTracker(tr.id)}
+                                            className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all duration-200 active:scale-90"
+                                            title="Hapus Tracker"
+                                          >
+                                            <Trash2 className="w-4 h-4 cursor-pointer" />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </td>
+                                )}
+                              </tr>
+
+                              {/* Collapsible PT Nawaitu Payment Milestone Check Details */}
+                              {expandedMitraIds[tr.id] && (
+                                <tr className="bg-slate-50 border-l-4 border-amber-500 animate-in fade-in duration-200 select-none">
+                                  <td colSpan={currentUserRole !== 'owner' ? 11 : 10} className="p-4">
+                                    <div className="bg-white rounded-2xl p-5 border border-slate-205 shadow-xs space-y-4 font-sans text-xs">
+                                      
+                                      {/* Banner Ketentuan */}
+                                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gray-100">
+                                        <div className="text-left font-sans">
+                                          <h4 className="font-extrabold text-sm text-slate-900 uppercase tracking-tight">
+                                            📋 KEPATUHAN TAHAPAN MILISTONE PEMBAYARAN - PT NAWAITU
+                                          </h4>
+                                          <p className="text-[10px] text-gray-400 font-bold mt-0.5 uppercase tracking-wider">
+                                            Skema Evaluasi Seat: {tr.jumlah_seat} pax • Nilai Jual Kontrak: {formatCurrency(tr.total_tagihan)}
+                                          </p>
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                                          {tr.nama_brand}
+                                        </span>
+                                      </div>
+
+                                      {/* 4 Steps Grid */}
+                                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        
+                                        {/* STEP A */}
+                                        {(() => {
+                                          const dpReq = tr.jumlah_seat * 5000000;
+                                          const dpPaid = Math.min(tr.total_bayar, dpReq);
+                                          const dpPct = dpReq > 0 ? (dpPaid / dpReq) * 100 : 0;
+                                          const dpMet = tr.total_bayar >= dpReq;
+                                          
+                                          return (
+                                            <div className={`p-4 rounded-xl border transition-all text-left ${dpMet ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : 'bg-amber-50/30 border-amber-205'}`}>
+                                              <div className="flex justify-between items-start gap-1 pb-2">
+                                                <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">a. Uang Muka (DP)</span>
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${dpMet ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                                  {dpMet ? "✓ TERPENUHI" : "DIALOKASIKAN"}
+                                                </span>
+                                              </div>
+                                              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                                Rp 5.000.000 / Jamaah wajib disetor saat pendataan awal.
+                                              </p>
+                                              <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Target DP:</span>
+                                                  <span className="text-slate-900">{formatCurrency(dpReq)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Terbayar:</span>
+                                                  <span className={dpMet ? "text-emerald-700 font-extrabold" : "text-amber-700 font-extrabold"}>{formatCurrency(dpPaid)}</span>
+                                                </div>
+                                                {/* Progress Bar */}
+                                                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
+                                                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${dpPct}%` }}></div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        })()}
+
+                                        {/* STEP B */}
+                                        {(() => {
+                                          const dpReq = tr.jumlah_seat * 5000000;
+                                          const remainingSisa = Math.max(0, tr.total_tagihan - dpReq);
+                                          const t2Req = remainingSisa * 0.30;
+                                          const t2Paid = Math.min(Math.max(0, tr.total_bayar - dpReq), t2Req);
+                                          const t2Pct = t2Req > 0 ? (t2Paid / t2Req) * 100 : 0;
+                                          const t2Met = tr.total_bayar >= dpReq + t2Req;
+
+                                          return (
+                                            <div className={`p-4 rounded-xl border transition-all text-left ${t2Met ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : 'bg-slate-50 border-gray-200'}`}>
+                                              <div className="flex justify-between items-start gap-1 pb-2">
+                                                <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">b. Angsuran Ke-2</span>
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${t2Met ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>
+                                                  {t2Met ? "✓ TERPENUHI" : `${Math.round(t2Pct)}%`}
+                                                </span>
+                                              </div>
+                                              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                                Angsuran 30% dari sisa tagihan kontrak sesudah dikurangi DP.
+                                              </p>
+                                              <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Target 30%:</span>
+                                                  <span className="text-slate-900">{formatCurrency(t2Req)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Terbayar:</span>
+                                                  <span className={t2Met ? "text-emerald-700 font-extrabold" : "text-slate-700 font-extrabold"}>{formatCurrency(t2Paid)}</span>
+                                                </div>
+                                                {/* Progress Bar */}
+                                                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
+                                                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${t2Pct}%` }}></div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        })()}
+
+                                        {/* STEP C */}
+                                        {(() => {
+                                          const dpReq = tr.jumlah_seat * 5000000;
+                                          const remainingSisa = Math.max(0, tr.total_tagihan - dpReq);
+                                          const t2Req = remainingSisa * 0.30;
+                                          const t3Req = remainingSisa * 0.30;
+                                          const t3Paid = Math.min(Math.max(0, tr.total_bayar - dpReq - t2Req), t3Req);
+                                          const t3Pct = t3Req > 0 ? (t3Paid / t3Req) * 100 : 0;
+                                          const t3Met = tr.total_bayar >= dpReq + t2Req + t3Req;
+
+                                          return (
+                                            <div className={`p-4 rounded-xl border transition-all text-left ${t3Met ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : 'bg-slate-50 border-gray-200'}`}>
+                                              <div className="flex justify-between items-start gap-1 pb-2">
+                                                <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">c. Angsuran Ke-3</span>
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${t3Met ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>
+                                                  {t3Met ? "✓ TERPENUHI" : `${Math.round(t3Pct)}%`}
+                                                </span>
+                                              </div>
+                                              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                                Angsuran ke-3 sebesar 30% dari sisa tagihan sisa kontrak.
+                                              </p>
+                                              <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Target 30%:</span>
+                                                  <span className="text-slate-900">{formatCurrency(t3Req)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Terbayar:</span>
+                                                  <span className={t3Met ? "text-emerald-700 font-extrabold" : "text-slate-700 font-extrabold"}>{formatCurrency(t3Paid)}</span>
+                                                </div>
+                                                {/* Progress Bar */}
+                                                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
+                                                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${t3Pct}%` }}></div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        })()}
+
+                                        {/* STEP D (PELUNASAN AKHIR H-45) */}
+                                        {(() => {
+                                          const dpReq = tr.jumlah_seat * 5000000;
+                                          const remainingSisa = Math.max(0, tr.total_tagihan - dpReq);
+                                          const t2Req = remainingSisa * 0.30;
+                                          const t3Req = remainingSisa * 0.30;
+                                          const pelReq = tr.total_tagihan - dpReq - t2Req - t3Req;
+                                          const pelPaid = Math.max(0, tr.total_bayar - dpReq - t2Req - t3Req);
+                                          const pelMet = tr.total_bayar >= tr.total_tagihan;
+
+                                          const dLimit = calculateDeadlineH45(tr.tanggal_berangkat);
+                                          const dToD = tr.hari_menuju_berangkat - 45;
+
+                                          let badgeBg = "bg-gray-100 text-gray-700";
+                                          if (pelMet) {
+                                            badgeBg = "bg-emerald-100 text-emerald-800 font-black";
+                                          } else if (dToD <= 0) {
+                                            badgeBg = "bg-rose-100 text-rose-800 border border-rose-300 animate-pulse font-black";
+                                          } else if (dToD <= 15) {
+                                            badgeBg = "bg-amber-100 text-amber-800 border border-amber-250 font-black";
+                                          }
+
+                                          return (
+                                            <div className={`p-4 rounded-xl border transition-all text-left ${pelMet ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : (dToD <= 0 ? 'bg-rose-50/40 border-rose-200' : 'bg-gray-50 border-gray-200')}`}>
+                                              <div className="flex justify-between items-start gap-1 pb-2">
+                                                <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">d. Pelunasan H-45</span>
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${badgeBg}`}>
+                                                  {pelMet ? "✓ LUNAS" : (dToD <= 0 ? "❗️ MELEWATI H-45" : "TENOR H-45")}
+                                                </span>
+                                              </div>
+                                              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                                Wajib lunas 100% paling lambat <span className="text-slate-900 font-black">H-45 keberangkatan</span>.
+                                              </p>
+                                              <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Target Akhir:</span>
+                                                  <span className="text-slate-900">{formatCurrency(pelReq)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[10px] font-black">
+                                                  <span className="text-gray-400 font-bold">Terbayar:</span>
+                                                  <span className={pelMet ? "text-emerald-700 font-extrabold" : (dToD <= 0 ? "text-rose-700 font-extrabold" : "text-slate-700 font-extrabold")}>{formatCurrency(pelPaid)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[9px] font-bold pt-1 border-t border-gray-100 mt-1">
+                                                  <span className="text-slate-500 font-black">Batas H-45:</span>
+                                                  <span className="text-amber-800 bg-amber-50 px-1 rounded font-black">{dLimit || '-'}</span>
+                                                </div>
+                                                {!pelMet && (
+                                                  <div className="text-[9px] text-right font-black mt-1">
+                                                    {dToD > 0 ? (
+                                                      <span className="text-amber-600">Sisa {dToD} Hari lagi Menuju H-45</span>
+                                                    ) : (
+                                                      <span className="text-rose-600 font-bold animate-pulse">LATE H-45 (Lewat {Math.abs(dToD)} hari)</span>
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        })()}
+
+                                      </div>
+
+                                      {/* Dynamic Compliance Summary */}
+                                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-205 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-[9px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-black uppercase">STATUS AUDIT</span>
+                                          {(() => {
+                                            const dpReq = tr.jumlah_seat * 5000000;
+                                            const remainingSisa = Math.max(0, tr.total_tagihan - dpReq);
+                                            const t2Req = remainingSisa * 0.30;
+                                            const t3Req = remainingSisa * 0.30;
+                                            const pelMet = tr.total_bayar >= tr.total_tagihan;
+                                            const dToD = tr.hari_menuju_berangkat - 45;
+
+                                            if (pelMet) {
+                                              return (
+                                                <span className="text-emerald-700 font-black">
+                                                  🟢 Keuangan Aman. Seluruh tahapan pembayaran telah diselesaikan (100% Lunas).
+                                                </span>
+                                              );
+                                            }
+                                            if (tr.total_bayar < dpReq) {
+                                              return (
+                                                <span className="text-amber-700 font-black">
+                                                  ⚠️ Defisit Uang Muka. Dana masuk belum menutup minimal Rp 5.000.000 / seat. Hubungi PIC {tr.pic}.
+                                                </span>
+                                              );
+                                            }
+                                            if (dToD <= 0) {
+                                              return (
+                                                <span className="text-rose-700 font-black flex items-center gap-1 animate-pulse">
+                                                  🔴 KRITIS! Melewati batas waktu pelunasan akhir H-45. Tiket dan akomodasi terancam freeze otomatis.
+                                                </span>
+                                              );
+                                            }
+                                            if (tr.total_bayar >= dpReq + t2Req + t3Req) {
+                                              return (
+                                                <span className="text-emerald-700 font-black">
+                                                  🔵 Memasuki Tahap Pelunasan Akhir (H-45). Tersisa {dToD} hari lagi untuk merampungkan pelunasan.
+                                                </span>
+                                              );
+                                            }
+                                            return (
+                                              <span className="text-slate-700 font-black">
+                                                🟡 Berjalan sesuai jadwal. Sedang menyelesaikan sisa pembayaran angsuran.
+                                              </span>
+                                            );
+                                          })()}
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleOpenWhatsApp(tr)}
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-lg transition-all"
+                                          >
+                                            Kirim Tagihan Rinci via WhatsApp
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                    </div>
+                                  </td>
+                                </tr>
                               )}
-                            </tr>
+                            </React.Fragment>
                           );
                         })}
 
@@ -1790,7 +2160,7 @@ export const MitraTrackerView: React.FC = () => {
                             {formatCurrency(sumSisa)}
                           </td>
                           <td className="p-4 text-center font-black text-xs">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${calculatedPercent >= 80 ? 'bg-emerald-100 text-emerald-800' : (calculatedPercent >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-rose-100 text-rose-800')}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${calculatedPercent <= 20 ? 'bg-emerald-100 text-emerald-800' : (calculatedPercent <= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-rose-100 text-rose-800')}`}>
                               {calculatedPercent.toFixed(1)}%
                             </span>
                           </td>
@@ -2295,7 +2665,7 @@ export const MitraTrackerView: React.FC = () => {
                     value={formDataMitra.tanggal_berangkat}
                     onChange={(e) => {
                       const tgl = e.target.value;
-                      const computedDeadline = calculateDeadlineH30(tgl);
+                      const computedDeadline = calculateDeadlineH45(tgl);
                       setFormDataMitra(prev => ({ 
                         ...prev, 
                         tanggal_berangkat: tgl,
@@ -2483,7 +2853,7 @@ export const MitraTrackerView: React.FC = () => {
                     value={formDataEditMitra.tanggal_berangkat}
                     onChange={(e) => {
                       const tgl = e.target.value;
-                      const computedDeadline = calculateDeadlineH30(tgl);
+                      const computedDeadline = calculateDeadlineH45(tgl);
                       setFormDataEditMitra(prev => ({ 
                         ...prev, 
                         tanggal_berangkat: tgl,
@@ -2602,10 +2972,10 @@ export const MitraTrackerView: React.FC = () => {
                   value={formDataPay.jenis_pembayaran}
                   onChange={(e) => setFormDataPay(prev => ({ ...prev, jenis_pembayaran: e.target.value }))}
                 >
-                  <option value="DP">UANG MUKA (DP)</option>
-                  <option value="TERMIN 1">TERMIN 1</option>
-                  <option value="TERMIN 2">TERMIN 2</option>
-                  <option value="PELUNASAN">PELUNASAN FINAL</option>
+                  <option value="DP">a. UANG MUKA (DP - Rp 5.000.000 / JAMAAH)</option>
+                  <option value="TERMIN 1">b. TERMIN 1 (PEMBAYARAN KE-2 - 30% SISA TAGIHAN)</option>
+                  <option value="TERMIN 2">c. TERMIN 2 (PEMBAYARAN KE-3 - 30% SISA TAGIHAN)</option>
+                  <option value="PELUNASAN">d. PELUNASAN FINAL (WAJIB LUNAS H-45 BERANGKAT)</option>
                 </select>
               </div>
 
