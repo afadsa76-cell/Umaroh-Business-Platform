@@ -118,6 +118,42 @@ export const calculateDeadlineH45 = (departureDateStr: string): string => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+// Helper to calculate H-90 (90 days before departure)
+export const calculateDeadlineH90 = (departureDateStr: string): string => {
+  if (!departureDateStr) return '';
+  const date = new Date(departureDateStr);
+  if (isNaN(date.getTime())) return '';
+  date.setDate(date.getDate() - 90);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+// Helper to calculate H-60 (60 days before departure)
+export const calculateDeadlineH60 = (departureDateStr: string): string => {
+  if (!departureDateStr) return '';
+  const date = new Date(departureDateStr);
+  if (isNaN(date.getTime())) return '';
+  date.setDate(date.getDate() - 60);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+// Helper to calculate H-50 (50 days before departure)
+export const calculateDeadlineH50 = (departureDateStr: string): string => {
+  if (!departureDateStr) return '';
+  const date = new Date(departureDateStr);
+  if (isNaN(date.getTime())) return '';
+  date.setDate(date.getDate() - 50);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export const MitraTrackerView: React.FC = () => {
   // Navigation & Role Configuration
   const [activeSubTab, setActiveSubTab] = useState<MenuSubTab>('dashboard');
@@ -649,6 +685,42 @@ export const MitraTrackerView: React.FC = () => {
     const termin3Required = remainingSisa * 0.30;
     const pelunasanRequired = tr.total_tagihan - dpRequired - termin2Required - termin3Required;
 
+    const deadlineH90 = calculateDeadlineH90(tr.tanggal_berangkat);
+    const deadlineH60 = calculateDeadlineH60(tr.tanggal_berangkat);
+    const deadlineH50 = calculateDeadlineH50(tr.tanggal_berangkat);
+    const deadlineH45 = calculateDeadlineH45(tr.tanggal_berangkat);
+
+    // Merge Termin 1 (Pembayaran Ke-2) and Termin 2 (Pembayaran Ke-3) if H-60 is passed and unpaid
+    const isTermin1PassedAndUnpaid = (tr.hari_menuju_berangkat != null && tr.hari_menuju_berangkat <= 60) && (tr.total_bayar < dpRequired + termin2Required);
+
+    const rekapTahapanSection = isTermin1PassedAndUnpaid
+      ? `*a. Uang Muka (DP)* (Jatuh Tempo: ${deadlineH90 || '-'})
+📌 *Rp 5.000.000 / Jamaah* dibayarkan langsung saat pendaftaran awal untuk mengamankan block seat kuota.
+📌 Target DP (${tr.jumlah_seat || 0} pax): *${formatCurrency(dpRequired)}*
+
+*b & c. Pembayaran Ke-2 & Ke-3 (DIGABUNG)* (Jatuh Tempo Ke-2 Terlewati: ${deadlineH60 || '-'})
+📌 Sebesar *60% dari sisa total tagihan* (Pembayaran Ke-2 & Ke-3 digabungkan secara otomatis karena batas waktu Pembayaran Ke-2 telah terlewati).
+📌 Target Termin 2 & 3: *${formatCurrency(termin2Required + termin3Required)}*
+
+*d. Pelunasan Akhir (H-45)* (Jatuh Tempo: ${deadlineH45 || '-'})
+📌 Seluruh sisa biaya wajib dilunasi sepenuhnya paling lambat *H-45 (45 hari sebelum terbang)*.
+📌 Target Pelunasan Akhir: *${formatCurrency(pelunasanRequired)}*`
+      : `*a. Uang Muka (DP)* (Jatuh Tempo: ${deadlineH90 || '-'})
+📌 *Rp 5.000.000 / Jamaah* dibayarkan langsung saat pendaftaran awal untuk mengamankan block seat kuota.
+📌 Target DP (${tr.jumlah_seat || 0} pax): *${formatCurrency(dpRequired)}*
+
+*b. Pembayaran Ke-2* (Jatuh Tempo: ${deadlineH60 || '-'})
+📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Menyesuaikan fluktuasi rilis tiket).
+📌 Target Termin 2: *${formatCurrency(termin2Required)}*
+
+*c. Pembayaran Ke-3* (Jatuh Tempo: ${deadlineH50 || '-'})
+📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Melengkapi verifikasi logistik).
+📌 Target Termin 3: *${formatCurrency(termin3Required)}*
+
+*d. Pelunasan Akhir (H-45)* (Jatuh Tempo: ${deadlineH45 || '-'})
+📌 Seluruh sisa biaya wajib dilunasi sepenuhnya paling lambat *H-45 (45 hari sebelum terbang)*.
+📌 Target Pelunasan Akhir: *${formatCurrency(pelunasanRequired)}*`;
+
     const message = `*Konfirmasi Pembayaran Mitra - Umaroh Platform* 📑
 
 Yth. Bapak/Ibu ${tr.pic || tr.nama_mitra}
@@ -669,21 +741,7 @@ Berikut rincian status pembayaran saat ini:
 
 *KETENTUAN & REKAP TAHAPAN PEMBAYARAN:*
 -------------------------------------------
-*a. Uang Muka (DP)*
-📌 *Rp 5.000.000 / Jamaah* dibayarkan langsung saat pendaftaran awal untuk mengamankan block seat kuota.
-📌 Target DP (${tr.jumlah_seat || 0} pax): *${formatCurrency(dpRequired)}*
-
-*b. Pembayaran Ke-2*
-📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Menyesuaikan fluktuasi rilis tiket).
-📌 Target Termin 2: *${formatCurrency(termin2Required)}*
-
-*c. Pembayaran Ke-3*
-📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Melengkapi verifikasi logistik).
-📌 Target Termin 3: *${formatCurrency(termin3Required)}*
-
-*d. Pelunasan Akhir (H-45)*
-📌 Seluruh sisa biaya wajib dilunasi sepenuhnya paling lambat *H-45 (45 hari sebelum terbang)*.
-📌 Target Pelunasan Akhir: *${formatCurrency(pelunasanRequired)}*
+${rekapTahapanSection}
 -------------------------------------------
 
 Mohon perwakilan mitra dapat segera mengoordinasikan pelunasan tagihan sisa piutang di atas sesuai tanggal deadline demi kelancaran penerbitan dokumen dan ticketing jamaah.
@@ -1928,85 +1986,136 @@ Terima kasih. 🙏
                                                 <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
                                                   <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${dpPct}%` }}></div>
                                                 </div>
-                                              </div>
-                                            </div>
-                                          );
-                                        })()}
-
-                                        {/* STEP B */}
-                                        {(() => {
-                                          const dpReq = tr.jumlah_seat * 5000000;
-                                          const remainingSisa = Math.max(0, tr.total_tagihan - dpReq);
-                                          const t2Req = remainingSisa * 0.30;
-                                          const t2Paid = Math.min(Math.max(0, tr.total_bayar - dpReq), t2Req);
-                                          const t2Pct = t2Req > 0 ? (t2Paid / t2Req) * 100 : 0;
-                                          const t2Met = tr.total_bayar >= dpReq + t2Req;
-
-                                          return (
-                                            <div className={`p-4 rounded-xl border transition-all text-left ${t2Met ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : 'bg-slate-50 border-gray-200'}`}>
-                                              <div className="flex justify-between items-start gap-1 pb-2">
-                                                <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">b. Angsuran Ke-2</span>
-                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${t2Met ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>
-                                                  {t2Met ? "✓ TERPENUHI" : `${Math.round(t2Pct)}%`}
-                                                </span>
-                                              </div>
-                                              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
-                                                Angsuran 30% dari sisa tagihan kontrak sesudah dikurangi DP.
-                                              </p>
-                                              <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
-                                                <div className="flex justify-between text-[10px] font-black">
-                                                  <span className="text-gray-400 font-bold">Target 30%:</span>
-                                                  <span className="text-slate-900">{formatCurrency(t2Req)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-[10px] font-black">
-                                                  <span className="text-gray-400 font-bold">Terbayar:</span>
-                                                  <span className={t2Met ? "text-emerald-700 font-extrabold" : "text-slate-700 font-extrabold"}>{formatCurrency(t2Paid)}</span>
-                                                </div>
-                                                {/* Progress Bar */}
-                                                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
-                                                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${t2Pct}%` }}></div>
+                                                <div className="flex justify-between text-[9px] font-bold pt-1 border-t border-gray-100 mt-1">
+                                                  <span className="text-slate-500 font-bold">Jatuh Tempo H-90:</span>
+                                                  <span className="text-amber-800 bg-amber-50 px-1 rounded font-black">{calculateDeadlineH90(tr.tanggal_berangkat) || '-'}</span>
                                                 </div>
                                               </div>
                                             </div>
                                           );
                                         })()}
 
-                                        {/* STEP C */}
+                                        {/* STEP B & C (AUTO-MERGED IF H-60 PASSED & UNPAID) */}
                                         {(() => {
                                           const dpReq = tr.jumlah_seat * 5000000;
                                           const remainingSisa = Math.max(0, tr.total_tagihan - dpReq);
                                           const t2Req = remainingSisa * 0.30;
                                           const t3Req = remainingSisa * 0.30;
+
+                                          const isTermin1PassedAndUnpaid = (tr.hari_menuju_berangkat != null && tr.hari_menuju_berangkat <= 60) && (tr.total_bayar < dpReq + t2Req);
+
+                                          if (isTermin1PassedAndUnpaid) {
+                                            const mergedReq = t2Req + t3Req;
+                                            const mergedPaid = Math.min(Math.max(0, tr.total_bayar - dpReq), mergedReq);
+                                            const mergedPct = mergedReq > 0 ? (mergedPaid / mergedReq) * 100 : 0;
+                                            const mergedMet = tr.total_bayar >= dpReq + mergedReq;
+
+                                            return (
+                                              <div className="col-span-1 md:col-span-2 p-4 rounded-xl border transition-all text-left bg-rose-50/25 border-rose-300 shadow-sm">
+                                                <div className="flex justify-between items-start gap-1 pb-2">
+                                                  <span className="text-[11px] font-black text-rose-800 uppercase tracking-wider">b & c. Angsuran 2 & 3 (DIGABUNG)</span>
+                                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 animate-pulse">
+                                                    MELEWATI JATUH TEMPO
+                                                  </span>
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                                  Angsuran Ke-2 & Ke-3 otomatis digabungkan karena batas waktu Pembayaran Ke-2 (Termin 1) terlewati tanpa pembayaran memadai.
+                                                </p>
+                                                <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
+                                                  <div className="flex justify-between text-[10px] font-black">
+                                                    <span className="text-gray-400 font-bold">Target Gabungan (60%):</span>
+                                                    <span className="text-slate-900">{formatCurrency(mergedReq)}</span>
+                                                  </div>
+                                                  <div className="flex justify-between text-[10px] font-black">
+                                                    <span className="text-gray-400 font-bold">Terbayar:</span>
+                                                    <span className={mergedMet ? "text-emerald-700 font-extrabold" : "text-rose-700 font-extrabold"}>{formatCurrency(mergedPaid)}</span>
+                                                  </div>
+                                                  {/* Progress Bar */}
+                                                  <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
+                                                    <div className="bg-rose-500 h-1.5 rounded-full" style={{ width: `${mergedPct}%` }}></div>
+                                                  </div>
+                                                  <div className="flex justify-between text-[9px] font-bold pt-1 border-t border-gray-100 mt-1">
+                                                    <span className="text-rose-600 font-black">Batas Jatuh Tempo Ke-2:</span>
+                                                    <span className="text-rose-800 bg-rose-50 px-1 rounded font-black">{calculateDeadlineH60(tr.tanggal_berangkat) || '-'}</span>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+
+                                          // Render separated otherwise
+                                          const t2Paid = Math.min(Math.max(0, tr.total_bayar - dpReq), t2Req);
+                                          const t2Pct = t2Req > 0 ? (t2Paid / t2Req) * 100 : 0;
+                                          const t2Met = tr.total_bayar >= dpReq + t2Req;
+
                                           const t3Paid = Math.min(Math.max(0, tr.total_bayar - dpReq - t2Req), t3Req);
                                           const t3Pct = t3Req > 0 ? (t3Paid / t3Req) * 100 : 0;
                                           const t3Met = tr.total_bayar >= dpReq + t2Req + t3Req;
 
                                           return (
-                                            <div className={`p-4 rounded-xl border transition-all text-left ${t3Met ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : 'bg-slate-50 border-gray-200'}`}>
-                                              <div className="flex justify-between items-start gap-1 pb-2">
-                                                <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">c. Angsuran Ke-3</span>
-                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${t3Met ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>
-                                                  {t3Met ? "✓ TERPENUHI" : `${Math.round(t3Pct)}%`}
-                                                </span>
+                                            <>
+                                              {/* STEP B */}
+                                              <div className={`p-4 rounded-xl border transition-all text-left ${t2Met ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : 'bg-slate-50 border-gray-200'}`}>
+                                                <div className="flex justify-between items-start gap-1 pb-2">
+                                                  <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">b. Angsuran Ke-2</span>
+                                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${t2Met ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>
+                                                    {t2Met ? "✓ TERPENUHI" : `${Math.round(t2Pct)}%`}
+                                                  </span>
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                                  Angsuran 30% dari sisa tagihan kontrak sesudah dikurangi DP.
+                                                </p>
+                                                <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
+                                                  <div className="flex justify-between text-[10px] font-black">
+                                                    <span className="text-gray-400 font-bold">Target 30%:</span>
+                                                    <span className="text-slate-900">{formatCurrency(t2Req)}</span>
+                                                  </div>
+                                                  <div className="flex justify-between text-[10px] font-black">
+                                                    <span className="text-gray-400 font-bold">Terbayar:</span>
+                                                    <span className={t2Met ? "text-emerald-700 font-extrabold" : "text-slate-700 font-extrabold"}>{formatCurrency(t2Paid)}</span>
+                                                  </div>
+                                                  {/* Progress Bar */}
+                                                  <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
+                                                    <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${t2Pct}%` }}></div>
+                                                  </div>
+                                                  <div className="flex justify-between text-[9px] font-bold pt-1 border-t border-gray-100 mt-1">
+                                                    <span className="text-slate-500 font-black">Batas Jatuh Tempo:</span>
+                                                    <span className="text-amber-800 bg-amber-50 px-1 rounded font-black">{calculateDeadlineH60(tr.tanggal_berangkat) || '-'}</span>
+                                                  </div>
+                                                </div>
                                               </div>
-                                              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
-                                                Angsuran ke-3 sebesar 30% dari sisa tagihan sisa kontrak.
-                                              </p>
-                                              <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
-                                                <div className="flex justify-between text-[10px] font-black">
-                                                  <span className="text-gray-400 font-bold">Target 30%:</span>
-                                                  <span className="text-slate-900">{formatCurrency(t3Req)}</span>
+
+                                              {/* STEP C */}
+                                              <div className={`p-4 rounded-xl border transition-all text-left ${t3Met ? 'bg-emerald-50/40 border-emerald-200 shadow-xs' : 'bg-slate-50 border-gray-200'}`}>
+                                                <div className="flex justify-between items-start gap-1 pb-2">
+                                                  <span className="text-[11px] font-black text-slate-800 uppercase tracking-wider">c. Angsuran Ke-3</span>
+                                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${t3Met ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}>
+                                                    {t3Met ? "✓ TERPENUHI" : `${Math.round(t3Pct)}%`}
+                                                  </span>
                                                 </div>
-                                                <div className="flex justify-between text-[10px] font-black">
-                                                  <span className="text-gray-400 font-bold">Terbayar:</span>
-                                                  <span className={t3Met ? "text-emerald-700 font-extrabold" : "text-slate-700 font-extrabold"}>{formatCurrency(t3Paid)}</span>
-                                                </div>
-                                                {/* Progress Bar */}
-                                                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
-                                                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${t3Pct}%` }}></div>
+                                                <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                                  Angsuran ke-3 sebesar 30% dari sisa tagihan sisa kontrak.
+                                                </p>
+                                                <div className="pt-2 mt-2 border-t border-dashed border-gray-200/50 space-y-1">
+                                                  <div className="flex justify-between text-[10px] font-black">
+                                                    <span className="text-gray-400 font-bold">Target 30%:</span>
+                                                    <span className="text-slate-900">{formatCurrency(t3Req)}</span>
+                                                  </div>
+                                                  <div className="flex justify-between text-[10px] font-black">
+                                                    <span className="text-gray-400 font-bold">Terbayar:</span>
+                                                    <span className={t3Met ? "text-emerald-700 font-extrabold" : "text-slate-700 font-extrabold"}>{formatCurrency(t3Paid)}</span>
+                                                  </div>
+                                                  {/* Progress Bar */}
+                                                  <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden mt-1.5">
+                                                    <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${t3Pct}%` }}></div>
+                                                  </div>
+                                                  <div className="flex justify-between text-[9px] font-bold pt-1 border-t border-gray-100 mt-1">
+                                                    <span className="text-slate-500 font-black">Batas Jatuh Tempo:</span>
+                                                    <span className="text-amber-800 bg-amber-50 px-1 rounded font-black">{calculateDeadlineH50(tr.tanggal_berangkat) || '-'}</span>
+                                                  </div>
                                                 </div>
                                               </div>
-                                            </div>
+                                            </>
                                           );
                                         })()}
 
