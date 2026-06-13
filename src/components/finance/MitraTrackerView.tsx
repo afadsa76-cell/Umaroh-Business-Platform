@@ -106,7 +106,7 @@ export const calculateDeadlineH30 = (departureDateStr: string): string => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-// Helper to calculate H-45 (45 days before departure) for local date inputs based on PT Nawaitu rules
+// Helper to calculate H-45 (45 days before departure) for local date inputs based on PT NAWAITUL UMRAH HAJI rules
 export const calculateDeadlineH45 = (departureDateStr: string): string => {
   if (!departureDateStr) return '';
   const date = new Date(departureDateStr);
@@ -887,7 +887,7 @@ Terima kasih. 🙏
     }
   };
 
-  // Automated warnings evaluator based on PT Nawaitu H-45 criteria standard
+  // Automated warnings evaluator based on PT NAWAITUL UMRAH HAJI H-45 criteria standard
   const getWarningState = (daysStr: number, sisaPct: number, sisaTagihan: number) => {
     if (sisaTagihan <= 0) return null;
     
@@ -1583,7 +1583,7 @@ Terima kasih. 🙏
       {activeSubTab === 'pembayaran' && (
         <div className="space-y-6 animate-in fade-in duration-300 font-sans">
           
-          {/* PT Nawaitu Payment Guidelines Block */}
+          {/* PT NAWAITUL UMRAH HAJI Payment Guidelines Block */}
           <div className="bg-gradient-to-r from-teal-955 to-slate-900 bg-teal-950 text-white p-5 rounded-2xl shadow-md border border-teal-800 space-y-3.5 relative overflow-hidden">
             <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-64 h-64 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
             
@@ -1591,7 +1591,7 @@ Terima kasih. 🙏
               <span className="text-xl">📌</span>
               <div>
                 <h3 className="font-extrabold text-sm uppercase tracking-wider text-teal-300">
-                  KETENTUAN & TAHAPAN JADWAL PEMBAYARAN JAMAAH - PT NAWAITU UMRAH HAJI
+                  KETENTUAN & TAHAPAN JADWAL PEMBAYARAN JAMAAH - PT NAWAITUL UMRAH HAJI
                 </h3>
                 <p className="text-[10px] text-teal-100/70 font-medium leading-relaxed">
                   Semua transaksi pendaftaran agen & mitra wajib mematuhi skema termin standar perlindungan kuota keberangkatan berikut:
@@ -1929,7 +1929,7 @@ Terima kasih. 🙏
                                 )}
                               </tr>
 
-                              {/* Collapsible PT Nawaitu Payment Milestone Check Details */}
+                              {/* Collapsible PT NAWAITUL UMRAH HAJI Payment Milestone Check Details */}
                               {expandedMitraIds[tr.id] && (
                                 <tr className="bg-slate-50 border-l-4 border-amber-500 animate-in fade-in duration-200 select-none">
                                   <td colSpan={currentUserRole !== 'owner' ? 11 : 10} className="p-4">
@@ -1939,7 +1939,7 @@ Terima kasih. 🙏
                                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gray-100">
                                         <div className="text-left font-sans">
                                           <h4 className="font-extrabold text-sm text-slate-900 uppercase tracking-tight">
-                                            📋 KEPATUHAN TAHAPAN MILISTONE PEMBAYARAN - PT NAWAITU
+                                            📋 KEPATUHAN TAHAPAN MILISTONE PEMBAYARAN - PT NAWAITUL UMRAH HAJI
                                           </h4>
                                           <p className="text-[10px] text-gray-400 font-bold mt-0.5 uppercase tracking-wider">
                                             Skema Evaluasi Seat: {tr.jumlah_seat} pax • Nilai Jual Kontrak: {formatCurrency(tr.total_tagihan)}

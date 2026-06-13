@@ -19,11 +19,12 @@ import {
   Truck,
   Layers,
   Crown,
-  LogOut
+  LogOut,
+  Landmark
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel';
+export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
 
 interface NavbarProps {
@@ -55,6 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'finance', label: 'Finance & Keuangan', icon: TrendingUp },
     { id: 'mitra-tracker', label: 'Tracker Mitra (Realtime)', icon: Handshake },
     { id: 'tracker-vendor', label: 'Cost Component Tracker (ERP)', icon: Layers },
+    { id: 'finance-cumulative', label: 'Laporan Konsolidasi (Kumulatif)', icon: Landmark },
     { id: 'ad-management', label: 'Iklan & Ad Management (Ads)', icon: Megaphone },
     { id: 'profile', label: 'Profil Saya', icon: Users },
     { id: 'vendor-maskapai', label: 'Update Data Maskapai', icon: Plane },
@@ -83,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'finance',
       label: '3. FINANCE',
       icon: Coins,
-      items: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor']
+      items: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor', 'finance-cumulative']
     },
     {
       id: 'marketing',

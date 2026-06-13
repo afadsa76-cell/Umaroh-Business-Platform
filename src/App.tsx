@@ -20,6 +20,7 @@ import { PerlengkapanView } from './components/inventory/PerlengkapanView';
 import { FinanceDashboard } from './components/finance/FinanceDashboard';
 import { MitraTrackerView } from './components/finance/MitraTrackerView';
 import { VendorPaymentTracker } from './components/finance/VendorPaymentTracker';
+import { CumulativeFinanceReport } from './components/finance/CumulativeFinanceReport';
 import { LoginView, Role } from './components/LoginView';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DashboardMitra } from './components/DashboardMitra';
@@ -41,7 +42,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
   operasional: ['dashboard', 'owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
-  finance: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor'],
+  finance: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor', 'finance-cumulative'],
   marketing: ['templates', 'ad-management', 'profile']
 };
 
@@ -424,6 +425,8 @@ function App() {
         return <MitraTrackerView />;
       case 'tracker-vendor':
         return <VendorPaymentTracker />;
+      case 'finance-cumulative':
+        return <CumulativeFinanceReport />;
       case 'ad-management':
         return <AdManagementView />;
       case 'profile':

@@ -139,6 +139,12 @@ export const VendorPaymentTracker: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<CostComponent | null>(null);
   const [deletePackageTarget, setDeletePackageTarget] = useState<{ name: string; items: CostComponent[] } | null>(null);
   
+  // Excel Template Upload & Impor States
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importedItems, setImportedItems] = useState<Partial<CostComponent>[]>([]);
+  const [importPackageName, setImportPackageName] = useState('PEJABAT #1 - 20 JUNI 2026');
+  const [importError, setImportError] = useState<string | null>(null);
+  
   // Custom Warnings and Diagnostics
   const [warningsList, setWarningsList] = useState<string[]>([]);
 
@@ -147,6 +153,7 @@ export const VendorPaymentTracker: React.FC = () => {
 
   // Real-time master sync states
   const [realPackages, setRealPackages] = useState<{ id: string; nama: string; tglBerangkat?: string }[]>([]);
+  const [mitraPackages, setMitraPackages] = useState<string[]>([]);
   const [realHotels, setRealHotels] = useState<{ id: string; nama: string; kota: string }[]>([]);
   const [realAirlines, setRealAirlines] = useState<{ id: string; name: string }[]>([]);
 
@@ -644,6 +651,21 @@ export const VendorPaymentTracker: React.FC = () => {
       console.error("Firestore error loading airlines: ", err);
     });
 
+    // Sub to Mitra Tracker to get packages listed in Mitra tracker
+    const unsubMitraTracker = onSnapshot(collection(db, 'mitra_tracker'), (snap) => {
+      const arr: string[] = [];
+      snap.forEach(d => {
+        const data = d.data();
+        const pkgName = data.paket_umroh;
+        if (pkgName) {
+          arr.push(pkgName);
+        }
+      });
+      setMitraPackages(Array.from(new Set(arr)).filter(Boolean));
+    }, (err) => {
+      console.error("Firestore error loading mitra packages: ", err);
+    });
+
     return () => {
       unsub();
       unsubLogs();
@@ -651,6 +673,7 @@ export const VendorPaymentTracker: React.FC = () => {
       unsubPaketMaster();
       unsubHotels();
       unsubAirlines();
+      unsubMitraTracker();
     };
   }, []);
 
@@ -904,6 +927,265 @@ export const VendorPaymentTracker: React.FC = () => {
     });
     return groups;
   }, [filteredList]);
+
+  // EXCEL TEMPLATE DOWNLOAD & UPLOAD PARSING
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      ["KETERANGAN", "VENDOR", "PAX", "HARGA JUAL", "HARGA BELI KE VENDOR", "PAYMENT 1 / DP", "PAYMENT 2", "PAYMENT 3", "SISA/BALANCE", "% BLM BAYAR", "CATATAN"],
+      ["PEJABAT #1 - 20 JUNI 2026", "", "", "", "", "", "", "", "", "", ""],
+      ["TIKET INDIGO", "INDIGO", 20, 297657840, 294503280, 73625820, 220877460, "", 0, "0%", "DP PORTAL = 26 MAY 2026\nPELUNASAN 04 JUNI 2026 PORTAL INDIGO"],
+      ["HOTEL MAKKAH OLAYAN GOLDEN 23-27 JUNI", "TFA", "", 41840000, 41128000, 41128000, "", "", 0, "0%", "LANGSUNG LUNAS 03/06/2026"],
+      ["HOTEL MADINAH JAWHARAT AL RASHEED 20-23 JUN", "HEAVEN", "", 41697000, 38880000, "", "", "", 38880000, "100%", "SUDAH TERBIT CL"],
+      ["HANDLING SAUDI + MUTAWWIF+MUTAWIFAH ALL IN", "TFA", 20, 42567000, 40567000, "", "", "", 40567000, "100%", ""],
+      ["VISA + TRANSPORTASI", "ALFA", 20, 55252500, 53252500, "", "", "", 53252500, "100%", ""],
+      ["HANDLING DOMESTIK + SNACK BOX", "BOWO", 20, 3000000, 2700000, "", "", "", 2700000, "100%", ""],
+      ["ASURANSI YELLOW POLIS", "ASKRIDA", 20, "", 1000000, 1000000, "", "", 0, "0%", ""]
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(templateData);
+    
+    // Auto fits column widths
+    const max_cols = templateData[0].length;
+    const wscols = [];
+    for (let i = 0; i < max_cols; i++) {
+      let max_len = 12;
+      templateData.forEach(row => {
+        const cell_val = row[i];
+        if (cell_val != null) {
+          max_len = Math.max(max_len, String(cell_val).length);
+        }
+      });
+      wscols.push({ wch: max_len + 3 });
+    }
+    ws['!cols'] = wscols;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'Template_Upload_Biaya_Vendor.xlsx');
+    addLog("DOWNLOAD TEMPLATE", "Mendownload template Excel unggah biaya vendor");
+  };
+
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        
+        // Convert to 2D array
+        const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as (string | number | null | undefined)[][];
+        if (rawRows.length === 0) {
+          setImportError("File Excel kosong atau tidak terbaca!");
+          return;
+        }
+
+        // Find header row or use first row if not found
+        let headerRowIndex = -1;
+        for (let i = 0; i < rawRows.length; i++) {
+          const row = rawRows[i];
+          if (row && row.some(cell => typeof cell === 'string' && (
+            cell.toUpperCase().includes('KETERANGAN') || 
+            cell.toUpperCase().includes('VENDOR') || 
+            cell.toUpperCase().includes('HARGA BELI')
+          ))) {
+            headerRowIndex = i;
+            break;
+          }
+        }
+
+        if (headerRowIndex === -1) {
+          headerRowIndex = 0;
+        }
+
+        const headers = (rawRows[headerRowIndex] || []).map(h => String(h || '').trim().toUpperCase());
+        
+        const idxKeterangan = headers.findIndex(h => h.includes('KETERANGAN') || h.includes('KOMPONEN'));
+        const idxVendor = headers.findIndex(h => h.includes('VENDOR'));
+        const idxPax = headers.findIndex(h => h.includes('PAX') || h.includes('QTY') || h.includes('VOLUME'));
+        const idxHargaJual = headers.findIndex(h => h.includes('JUAL'));
+        const idxHargaBeli = headers.findIndex(h => h.includes('BELI') || h.includes('TOTAL BIAYA'));
+        const idxDp = headers.findIndex(h => h.includes('DP') || h.includes('PAYMENT 1') || h.includes('TERM 1'));
+        const idxTermin1 = headers.findIndex(h => h.includes('PAYMENT 2') || h.includes('TERM 2') || h.includes('CICILAN 1'));
+        const idxTermin2 = headers.findIndex(h => h.includes('PAYMENT 3') || h.includes('TERM 3') || h.includes('CICILAN 2'));
+        const idxCatatan = headers.findIndex(h => h.includes('CATATAN') || h.includes('NOTE'));
+
+        let parsedPkgName = 'PEJABAT #1 - 20 JUNI 2026';
+        const componentsParsed: Partial<CostComponent>[] = [];
+
+        // Traverse rows below header
+        for (let i = 0; i < rawRows.length; i++) {
+          if (i === headerRowIndex) continue;
+          const row = rawRows[i];
+          if (!row || row.length === 0) continue;
+
+          // Check if it's package name row (like "PEJABAT #1 - 20 JUNI 2026")
+          const nonEmpties = row.filter(cell => cell !== null && cell !== undefined && String(cell).trim() !== '');
+          if (nonEmpties.length === 1 && typeof nonEmpties[0] === 'string' && i < headerRowIndex + 4 && i > headerRowIndex - 3) {
+            parsedPkgName = nonEmpties[0].trim();
+            continue;
+          }
+
+          const ketVal = idxKeterangan !== -1 && row[idxKeterangan] ? String(row[idxKeterangan]).trim() : '';
+          if (!ketVal || ketVal.toUpperCase() === 'TOTAL' || ketVal.toUpperCase().startsWith('TOTAL ')) {
+            continue;
+          }
+
+          const vendorVal = idxVendor !== -1 && row[idxVendor] ? String(row[idxVendor]).trim() : 'Tanpa Vendor';
+          const paxVal = idxPax !== -1 && row[idxPax] ? Number(row[idxPax]) || 0 : 0;
+          const hargaJualVal = idxHargaJual !== -1 && row[idxHargaJual] ? Number(String(row[idxHargaJual]).replace(/[^\d]/g, '')) || 0 : 0;
+          const hargaBeliVal = idxHargaBeli !== -1 && row[idxHargaBeli] ? Number(String(row[idxHargaBeli]).replace(/[^\d]/g, '')) || 0 : 0;
+          const dpVal = idxDp !== -1 && row[idxDp] ? Number(String(row[idxDp]).replace(/[^\d]/g, '')) || 0 : 0;
+          const termin1Val = idxTermin1 !== -1 && row[idxTermin1] ? Number(String(row[idxTermin1]).replace(/[^\d]/g, '')) || 0 : 0;
+          const termin2Val = idxTermin2 !== -1 && row[idxTermin2] ? Number(String(row[idxTermin2]).replace(/[^\d]/g, '')) || 0 : 0;
+          const catatanVal = idxCatatan !== -1 && row[idxCatatan] ? String(row[idxCatatan]).trim() : '';
+
+          let kategori = 'Custom Component';
+          const ketUpper = ketVal.toUpperCase();
+          if (ketUpper.includes('TIKET') || ketUpper.includes('MASKAPAI') || ketUpper.includes('FLIGHT') || ketUpper.includes('PESAWAT') || ketUpper.includes('INDIGO')) {
+            kategori = 'Maskapai';
+          } else if (ketUpper.includes('HOTEL MADINAH') || (ketUpper.includes('HOTEL') && (ketUpper.includes('MADINAH') || ketUpper.includes('RASHEED')))) {
+            kategori = 'Hotel Madinah';
+          } else if (ketUpper.includes('HOTEL MAKKAH') || (ketUpper.includes('HOTEL') && (ketUpper.includes('MAKKAH') || ketUpper.includes('OLAYAN')))) {
+            kategori = 'Hotel Makkah';
+          } else if (ketUpper.includes('VISA')) {
+            kategori = 'Visa';
+          } else if (ketUpper.includes('HANDLING') && (ketUpper.includes('SAUDI') || ketUpper.includes('MUTAWWIF') || ketUpper.includes('MUTAWIFAH'))) {
+            kategori = 'Handling Saudi';
+          } else if (ketUpper.includes('HANDLING') && (ketUpper.includes('DOMESTIK') || ketUpper.includes('SNACK'))) {
+            kategori = 'Handling Domestik';
+          } else if (ketUpper.includes('ASURANSI') || ketUpper.includes('YELLOW') || ketUpper.includes('POLIS')) {
+            kategori = 'Asuransi';
+          } else if (ketUpper.includes('AVTUR')) {
+            kategori = 'Avtur';
+          } else if (ketUpper.includes('CATERING') || ketUpper.includes('KONSUMSI') || ketUpper.includes('MAKAN')) {
+            kategori = 'Catering';
+          } else if (ketUpper.includes('MUTAWIF') || ketUpper.includes('TOUR GUIDE')) {
+            kategori = 'Mutawif';
+          }
+
+          const qty = paxVal || 1;
+          const qty_used = paxVal || 1;
+          const total_biaya = hargaBeliVal;
+          const harga_satuan = qty > 0 ? total_biaya / qty : total_biaya;
+          const total_bayar = dpVal + termin1Val + termin2Val;
+          const sisa_tagihan = total_biaya - total_bayar;
+          const persentase_bayar = total_biaya > 0 ? Number(((total_bayar / total_biaya) * 100).toFixed(2)) : 0;
+
+          let payStatus: CostComponent['status_pembayaran'] = 'Belum Bayar';
+          if (total_bayar >= total_biaya) {
+            payStatus = 'Lunas';
+          } else if (total_bayar >= total_biaya * 0.9) {
+            payStatus = 'Hampir Lunas';
+          } else if (total_bayar > dpVal) {
+            payStatus = 'Cicilan';
+          } else if (total_bayar > 0) {
+            payStatus = 'DP';
+          }
+
+          let finalCatatan = catatanVal;
+          if (hargaJualVal > 0) {
+            finalCatatan = `[Harga Jual: Rp ${hargaJualVal.toLocaleString('id-ID')}] ${finalCatatan}`.trim();
+          }
+
+          componentsParsed.push({
+            id: 'comp_' + Math.random().toString(36).substring(2, 9),
+            nama_komponen: ketVal,
+            kategori_komponen: kategori,
+            vendor_id: vendorVal,
+            qty,
+            qty_used,
+            harga_satuan,
+            total_biaya,
+            dp: dpVal,
+            termin_1: termin1Val,
+            termin_2: termin2Val,
+            pelunasan: 0,
+            total_bayar,
+            sisa_tagihan,
+            persentase_bayar,
+            status_pembayaran: payStatus,
+            catatan: finalCatatan,
+            status_operasional: 'Confirmed',
+            approval_status: 'Approved',
+            status_risiko: 'Aman'
+          });
+        }
+
+        if (componentsParsed.length === 0) {
+          setImportError("Tidak menemukan baris data biaya vendor yang valid.");
+        } else {
+          setImportedItems(componentsParsed);
+          setImportPackageName(parsedPkgName);
+          setImportError(null);
+        }
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        setImportError("Error membaca file Excel: " + errMsg);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleSaveImportedItems = async () => {
+    if (importedItems.length === 0) return;
+    
+    setLoading(true);
+    let successCount = 0;
+    try {
+      for (const item of importedItems) {
+        const itemToSave: CostComponent = {
+          id: item.id || 'comp_' + Math.random().toString(36).substring(2, 9),
+          nama_komponen: item.nama_komponen || 'Komponen Tanpa Nama',
+          kategori_komponen: item.kategori_komponen || 'Custom Component',
+          vendor_id: item.vendor_id || 'Tanpa Vendor',
+          package_id: importPackageName,
+          qty: item.qty ?? 1,
+          qty_used: item.qty_used ?? 1,
+          harga_satuan: item.harga_satuan ?? 0,
+          total_biaya: item.total_biaya ?? 0,
+          dp: item.dp ?? 0,
+          termin_1: item.termin_1 ?? 0,
+          termin_2: item.termin_2 ?? 0,
+          pelunasan: item.pelunasan ?? 0,
+          total_bayar: item.total_bayar ?? 0,
+          sisa_tagihan: item.sisa_tagihan ?? 0,
+          persentase_bayar: item.persentase_bayar ?? 0,
+          tanggal_jatuh_tempo: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          tanggal_pembayaran: new Date().toISOString().split('T')[0],
+          status_pembayaran: item.status_pembayaran || 'Belum Bayar',
+          status_risiko: item.status_risiko || 'Aman',
+          status_operasional: item.status_operasional || 'Confirmed',
+          approval_status: item.approval_status || 'Approved',
+          catatan: item.catatan || '',
+          created_by: currentUserRole,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        
+        itemToSave.status_risiko = calculateAutoRisiko(itemToSave);
+
+        await setDoc(doc(db, 'package_cost_components', itemToSave.id), itemToSave);
+        successCount++;
+      }
+
+      await addLog("IMPORT EXCEL", `Berhasil mengimpor ${successCount} rincian biaya vendor untuk paket ${importPackageName}`);
+      triggerNotification('success', 'Impor Sukses', `Berhasil menyimpan ${successCount} data rincian vendor ke paket ${importPackageName}.`);
+      setShowImportModal(false);
+      setImportedItems([]);
+    } catch (err: unknown) {
+      console.error(err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      triggerNotification('error', 'Gagal Impor', `Gagal mengimpor data: ${errMsg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // REPORTS EXPORT SUPPORT
   const handleExportExcel = () => {
@@ -1783,6 +2065,24 @@ export const VendorPaymentTracker: React.FC = () => {
 
           <div className="flex flex-wrap gap-2">
             <button
+              onClick={handleDownloadTemplate}
+              className="bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200/60 transition-all font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2"
+              title="Unduh template Excel dengan struktur kolom yang direkomendasikan"
+            >
+              <Download className="w-4 h-4 text-sky-600" /> DOWNLOAD TEMPLATE UPLOAD
+            </button>
+            <button
+              onClick={() => {
+                setImportedItems([]);
+                setImportError(null);
+                setShowImportModal(true);
+              }}
+              className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/60 transition-all font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2"
+              title="Unggah template rincian biaya vendor hasil pengisian"
+            >
+              <Upload className="w-4 h-4 text-indigo-600" /> IMPOR DARI TEMPLATE
+            </button>
+            <button
               onClick={handleExportExcel}
               className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60 transition-all font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2"
             >
@@ -1851,7 +2151,8 @@ export const VendorPaymentTracker: React.FC = () => {
               <option value="">-- Semua Paket --</option>
               {Array.from(new Set([
                 ...costComponents.map(e => e.package_id).filter(Boolean),
-                ...realPackages.map(p => p.nama).filter(Boolean)
+                ...realPackages.map(p => p.nama).filter(Boolean),
+                ...mitraPackages
               ])).map(pkg => (
                 <option key={pkg} value={pkg}>{pkg}</option>
               ))}
@@ -2061,6 +2362,7 @@ export const VendorPaymentTracker: React.FC = () => {
                                   setSelectedItem(item);
                                   setFormData({ ...item });
                                   const isKnown = realPackages.some(p => p.nama === item.package_id) || 
+                                                  mitraPackages.includes(item.package_id || '') ||
                                                   costComponents.some(e => e.package_id === item.package_id) ||
                                                   item.package_id === 'UMROH-VIP-AGUSTUS' || 
                                                   item.package_id === 'UMROH-REGULER-DESEMBER';
@@ -2246,6 +2548,7 @@ export const VendorPaymentTracker: React.FC = () => {
                                         setSelectedItem(item);
                                         setFormData({ ...item });
                                         const isKnown = realPackages.some(p => p.nama === item.package_id) || 
+                                                        mitraPackages.includes(item.package_id || '') ||
                                                         costComponents.some(e => e.package_id === item.package_id) ||
                                                         item.package_id === 'UMROH-VIP-AGUSTUS' || 
                                                         item.package_id === 'UMROH-REGULER-DESEMBER';
@@ -2496,6 +2799,7 @@ export const VendorPaymentTracker: React.FC = () => {
                       <option value="">-- Pilih Paket --</option>
                       {Array.from(new Set([
                         ...realPackages.map(p => p.nama),
+                        ...mitraPackages,
                         ...costComponents.map(e => e.package_id),
                         'UMROH-VIP-AGUSTUS',
                         'UMROH-REGULER-DESEMBER'
@@ -2727,6 +3031,174 @@ export const VendorPaymentTracker: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TEMPLATE UPLOAD & IMPORT */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-5xl w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="bg-slate-950 p-5 text-white flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-indigo-400" /> Impor Rincian Biaya Vendor
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">Unggah file Excel hasil pengisian sesuai template gambar yang Anda bagikan</p>
+              </div>
+              <button onClick={() => setShowImportModal(false)} className="text-slate-400 hover:text-white transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar flex-1">
+              {/* Petunjuk & Download Section */}
+              <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div className="md:col-span-2">
+                  <h4 className="font-black text-xs text-indigo-950 uppercase tracking-wider mb-1">💡 Langkah Penggunaan:</h4>
+                  <ul className="text-xs text-indigo-900/80 space-y-1 list-decimal list-inside font-semibold">
+                    <li>Klik <strong>Download Template Upload</strong> jika belum memiliki file template.</li>
+                    <li>Isi data vendor Anda di Excel sesuai format yang persis seperti screenshot gambar.</li>
+                    <li>Pastikan baris pink berisi Nama Paket (contoh: <code>PEJABAT #1 - 20 JUNI 2026</code>) ada di atas rincian data.</li>
+                    <li>Unggah file di area bawah dan periksa hasilnya sebelum di-submit ke database.</li>
+                  </ul>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleDownloadTemplate}
+                    className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-4 py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" /> Download Template
+                  </button>
+                </div>
+              </div>
+
+              {/* Upload Drop Zone / Picker */}
+              <div className="border-2 border-dashed border-slate-200 hover:border-teal-500 rounded-xl p-8 text-center bg-slate-50 hover:bg-teal-50/10 transition-all relative">
+                <input
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  onChange={handleImportExcel}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="space-y-2 pointer-events-none">
+                  <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                    <Upload className="w-6 h-6 text-indigo-600 animate-bounce" />
+                  </div>
+                  <p className="text-xs font-black text-slate-700">Tarik dan taruh file Excel di sini atau klik untuk mencari</p>
+                  <p className="text-[10px] text-slate-400 font-bold">Mendukung format .XLSX, .XLS atau .CSV</p>
+                </div>
+              </div>
+
+              {/* Error feedback */}
+              {importError && (
+                <div className="p-3 bg-rose-50 text-rose-700 border border-rose-100 rounded-lg text-xs font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" /> {importError}
+                </div>
+              )}
+
+              {/* Parsed Output Preview */}
+              {importedItems.length > 0 && (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-black text-slate-600 uppercase mb-1">Nama Paket Target (Temuan Auto-Detect):</label>
+                      <input
+                        type="text"
+                        value={importPackageName}
+                        onChange={e => setImportPackageName(e.target.value)}
+                        className="w-full text-xs font-bold p-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500"
+                        placeholder="Masukkan nama paket untuk mengikat row ini..."
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <div className="text-[10px] text-slate-500 font-bold leading-normal">
+                        ℹ️ Nama paket yang terisi di sini akan menghubungkan rincian biaya ini ke menu filter pencarian ERP utama. Anda dapat mengubahnya sesuai identitas paket yang diinginkan.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      📋 Pratinjau Baris Data Terdeteksi ({importedItems.length} Komponen):
+                    </h4>
+
+                    <div className="overflow-x-auto border border-slate-150 rounded-xl">
+                      <table className="w-full text-left border-collapse bg-white">
+                        <thead>
+                          <tr className="bg-slate-100 border-b border-slate-200 text-[10px] text-slate-500 font-extrabold uppercase">
+                            <th className="p-2.5 pl-3">Keterangan</th>
+                            <th className="p-2.5">Kategori (Auto)</th>
+                            <th className="p-2.5">Vendor</th>
+                            <th className="p-2.5 text-center">Pax</th>
+                            <th className="p-2.5 text-right">Harga Beli Total</th>
+                            <th className="p-2.5 text-right">DP (Pay 1)</th>
+                            <th className="p-2.5 text-right">Termin 1 (Pay 2)</th>
+                            <th className="p-2.5 text-right">Sisa Tagihan</th>
+                            <th className="p-2.5 text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-[11px]">
+                          {importedItems.map((item, idx) => (
+                            <tr key={idx} className="hover:bg-teal-50/10">
+                              <td className="p-2.5 pl-3 font-extrabold text-slate-900 leading-tight">{item.nama_komponen}</td>
+                              <td className="p-2.5">
+                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-black text-[9px] uppercase tracking-wider">{item.kategori_komponen}</span>
+                              </td>
+                              <td className="p-2.5 font-bold text-slate-700">{item.vendor_id}</td>
+                              <td className="p-2.5 text-center font-black text-slate-800">{item.qty} p</td>
+                              <td className="p-2.5 text-right font-black text-slate-900">{formatCurrency(item.total_biaya)}</td>
+                              <td className="p-2.5 text-right text-teal-600 font-bold">{formatCurrency(item.dp)}</td>
+                              <td className="p-2.5 text-right text-indigo-600 font-bold">{formatCurrency(item.termin_1)}</td>
+                              <td className="p-2.5 text-right text-rose-600 font-extrabold">{formatCurrency(item.sisa_tagihan)}</td>
+                              <td className="p-2.5 text-center font-extrabold">
+                                <span className={`px-2 py-0.5 rounded font-black text-[9px] uppercase tracking-wider
+                                  ${item.status_pembayaran === 'Lunas' ? 'bg-teal-150 text-teal-700' :
+                                    item.status_pembayaran === 'Cicilan' ? 'bg-indigo-100 text-indigo-700' :
+                                    item.status_pembayaran === 'DP' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-slate-100 text-slate-600'}`}
+                                >
+                                  {item.status_pembayaran}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-slate-50 p-5 border-t border-slate-150 flex justify-between items-center shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setImportedItems([]);
+                  setImportError(null);
+                  setShowImportModal(false);
+                }}
+                className="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-xs"
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                disabled={importedItems.length === 0}
+                onClick={handleSaveImportedItems}
+                className={`px-6 py-2.5 rounded-xl font-black text-xs shadow flex items-center gap-2
+                  ${importedItems.length === 0
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+              >
+                <Check className="w-4 h-4" /> Simpan Impor ke Database ({importedItems.length} Baris)
+              </button>
+            </div>
           </div>
         </div>
       )}
