@@ -695,30 +695,28 @@ export const MitraTrackerView: React.FC = () => {
 
     const rekapTahapanSection = isTermin1PassedAndUnpaid
       ? `*a. Uang Muka (DP)* (Jatuh Tempo: ${deadlineH90 || '-'})
-📌 *Rp 5.000.000 / Jamaah* dibayarkan langsung saat pendaftaran awal untuk mengamankan block seat kuota.
+📌 *Rp 5.000.000 / Jamaah*
 📌 Target DP (${tr.jumlah_seat || 0} pax): *${formatCurrency(dpRequired)}*
 
 *b & c. Pembayaran Ke-2 & Ke-3 (DIGABUNG)* (Jatuh Tempo Ke-2 Terlewati: ${deadlineH60 || '-'})
-📌 Sebesar *60% dari sisa total tagihan* (Pembayaran Ke-2 & Ke-3 digabungkan secara otomatis karena batas waktu Pembayaran Ke-2 telah terlewati).
+📌 Sebesar *60% dari sisa total tagihan*
 📌 Target Termin 2 & 3: *${formatCurrency(termin2Required + termin3Required)}*
 
 *d. Pelunasan Akhir (H-45)* (Jatuh Tempo: ${deadlineH45 || '-'})
-📌 Seluruh sisa biaya wajib dilunasi sepenuhnya paling lambat *H-45 (45 hari sebelum terbang)*.
 📌 Target Pelunasan Akhir: *${formatCurrency(pelunasanRequired)}*`
       : `*a. Uang Muka (DP)* (Jatuh Tempo: ${deadlineH90 || '-'})
-📌 *Rp 5.000.000 / Jamaah* dibayarkan langsung saat pendaftaran awal untuk mengamankan block seat kuota.
+📌 *Rp 5.000.000 / Jamaah*
 📌 Target DP (${tr.jumlah_seat || 0} pax): *${formatCurrency(dpRequired)}*
 
 *b. Pembayaran Ke-2* (Jatuh Tempo: ${deadlineH60 || '-'})
-📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Menyesuaikan fluktuasi rilis tiket).
+📌 Sebesar *30% dari sisa total tagihan*
 📌 Target Termin 2: *${formatCurrency(termin2Required)}*
 
 *c. Pembayaran Ke-3* (Jatuh Tempo: ${deadlineH50 || '-'})
-📌 Sebesar *30% dari sisa total tagihan* setelah dikurangi alokasi DP awal (Melengkapi verifikasi logistik).
+📌 Sebesar *30% dari sisa total tagihan*
 📌 Target Termin 3: *${formatCurrency(termin3Required)}*
 
 *d. Pelunasan Akhir (H-45)* (Jatuh Tempo: ${deadlineH45 || '-'})
-📌 Seluruh sisa biaya wajib dilunasi sepenuhnya paling lambat *H-45 (45 hari sebelum terbang)*.
 📌 Target Pelunasan Akhir: *${formatCurrency(pelunasanRequired)}*`;
 
     const message = `*Konfirmasi Pembayaran Mitra - Umaroh Platform* 📑
