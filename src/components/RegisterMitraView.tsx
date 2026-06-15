@@ -841,8 +841,8 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
                         </p>
                         <div className="bg-white p-3 rounded-lg border border-gray-200 mb-4">
                           <p className="text-xs text-gray-500 uppercase font-bold">Bank Syariah Indonesia (BSI)</p>
-                          <p className="text-lg font-black text-gray-900 tracking-wider">7123 4567 89</p>
-                          <p className="text-sm text-gray-600">a.n PT Umaroh Travel</p>
+                          <p className="text-lg font-black text-gray-900 tracking-wider">5577 7750 03</p>
+                          <p className="text-sm text-gray-600">a.n PT NAWAITUL UMRAH HAJI</p>
                         </div>
                         
                         <div className="mt-4">

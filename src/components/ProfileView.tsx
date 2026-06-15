@@ -150,8 +150,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   // Core profile state (synced with Firebase)
   const [profile, setProfile] = useState<MitraProfile>({
     id: 'placeholder',
-    travelName: 'Sahabat Umroh Tour & Travel',
-    companyName: 'PT. Sahabat Umroh Indonesia',
+    travelName: 'Nawaitul Umrah Tour & Travel',
+    companyName: 'PT Nawaitul Umrah Haji',
     logo: 'https://images.unsplash.com/photo-1579202673506-ca3ce28943ef?w=150&auto=format&fit=crop&q=80', // Beautiful Islamic calligraphy art icon
     coverImage: 'https://images.unsplash.com/photo-1542856391-010fb87dcfed?w=800&auto=format&fit=crop&q=80', // Kaaba landscape
     description: 'Melayani perjalanan ibadah umroh dengan pelayanan profesional, amanah, dan berpengalaman sejak 2021.',
@@ -187,11 +187,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       { id: 't3', name: 'Dr. Ahmad Fauzi', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', date: '05 Januari 2026', rating: 4, text: 'Pelepasan & penanganan bagasi profesional. Terasa amanah sejak mulai pendaftaran manasik.' }
     ],
     socialMedia: {
-      instagram: '@sahabatumrohofficial',
-      tiktok: '@sahabatumroh.travel',
-      facebook: 'Sahabat Umroh Tour',
-      youtube: 'Sahabat Umroh Channel',
-      website: 'www.sahabatumroh.co.id',
+      instagram: '@nawaitulumrohofficial',
+      tiktok: '@nawaitulumroh.travel',
+      facebook: 'Nawaitul Umrah Tour',
+      youtube: 'Nawaitul Umrah Channel',
+      website: 'www.nawaitulumrah.co.id',
       whatsapp: '6281234567890'
     },
     areas: ['Jabodetabek', 'Jawa Barat', 'Jawa Tengah', 'Jawa Timur', 'Seluruh Indonesia']
@@ -2165,7 +2165,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             {/* --- STICKY BOTTOM ACTIONS FOOTER --- */}
             <footer className="sticky bottom-0 z-40 bg-white border-t border-slate-200 px-4 py-3 flex gap-2.5 shadow-[0_-4px_10px_rgba(0,0,0,0.04)] select-none">
               <a 
-                href={`https://wa.me/${profile.socialMedia.whatsapp}?text=Assalamualaikum%20Sahabat%20Umroh%20saya%20tertarik%20melihat%20katalog%20paket%20umroh%20Anda`}
+                href={`https://wa.me/${profile.socialMedia.whatsapp}?text=Assalamualaikum%20Nawaitu%20Umrah%20saya%20tertarik%20melihat%20katalog%20paket%20umroh%20Anda`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-[2] py-3 px-4 bg-[#25D366] hover:bg-[#20ba59] active:scale-95 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-transform cursor-pointer"
@@ -2975,7 +2975,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               type="text" 
               value={form.socialMedia.instagram} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, instagram: e.target.value } }))} 
-              placeholder="@sahabatumroh"
+              placeholder="@nawaitulumrah"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
@@ -2998,7 +2998,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               type="text" 
               value={form.socialMedia.facebook} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, facebook: e.target.value } }))} 
-              placeholder="Sahabat Umroh Official"
+              placeholder="Nawaitul Umrah Official"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
@@ -3008,7 +3008,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               type="text" 
               value={form.socialMedia.youtube} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, youtube: e.target.value } }))} 
-              placeholder="@SahabatUmroh"
+              placeholder="@NawaitulUmrah"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
@@ -3021,7 +3021,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               type="text" 
               value={form.socialMedia.tiktok || ''} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, tiktok: e.target.value } }))} 
-              placeholder="@sahabatumroh"
+              placeholder="@nawaitulumrah"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>
@@ -3031,7 +3031,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
               type="text" 
               value={form.socialMedia.website} 
               onChange={(e) => setForm(p => ({ ...p, socialMedia: { ...p.socialMedia, website: e.target.value } }))} 
-              placeholder="www.sahabatumroh.com"
+              placeholder="www.nawaitulumrah.com"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 focus:outline-[#047857]"
             />
           </div>

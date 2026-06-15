@@ -1,0 +1,2256 @@
+import React, { useState, useEffect } from 'react';
+import { db, collection, addDoc, updateDoc, doc, onSnapshot, query, where } from '../firebase';
+import { 
+  CreditCard, ChevronRight, FileSpreadsheet, Video, 
+  Award, Heart, Package, ShoppingCart, 
+  FileText, ShieldCheck, BookOpen, Compass, CheckCircle, 
+  MessageCircle, Printer, Upload, Check,
+  ChevronDown, ChevronUp, Clock, Download,
+  ArrowRight, ExternalLink, Plane
+} from 'lucide-react';
+import { BookingRecord } from '../types';
+
+interface PortalSubTabsProps {
+  bookingData: BookingRecord | null;
+  manifestForm?: Record<string, string>;
+  setManifestForm?: (form: Record<string, string>) => void;
+  savingManifest?: boolean;
+  handleSaveManifest?: (e: React.FormEvent) => void;
+  handleManifestFileChange?: (field: string, e: React.ChangeEvent<HTMLInputElement>) => void;
+  showPrintKwitansi?: boolean;
+  setShowPrintKwitansi?: (show: boolean) => void;
+  prepChecklist?: {[key: string]: boolean};
+  handleTogglePrepChecklist?: (key: string) => void;
+  onLogout?: () => void;
+  setPortalTab?: (tab: 'beranda' | 'info' | 'keuangan' | 'dokumen' | 'lainnya') => void;
+}
+
+export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
+  bookingData,
+  prepChecklist,
+  setPortalTab,
+  setShowPrintKwitansi
+}) => {
+  if (!bookingData) return null;
+
+  // Calculators
+  const isPassportUploaded = !!bookingData.filePassport || !!bookingData.docPassport;
+  const isKtpUploaded = !!bookingData.fileKtp || !!bookingData.docKtp;
+  const isVaccineUploaded = !!bookingData.fileVaccine || !!bookingData.docVaccine;
+  const isFotoUploaded = !!bookingData.fileFoto || !!bookingData.docFoto;
+
+  const docCount = (isPassportUploaded ? 1 : 0) + (isKtpUploaded ? 1 : 0) + (isVaccineUploaded ? 1 : 0) + (isFotoUploaded ? 1 : 0);
+  const docProgressPercent = Math.round((docCount / 4) * 100);
+
+  const totalHarga = Number(bookingData.totalHarga || 23900000);
+  const jumlahBayar = Number(bookingData.jumlahBayar || 7500000);
+  const remainingBalance = totalHarga - jumlahBayar;
+  const paymentPercent = Math.round((jumlahBayar / totalHarga) * 100);
+
+  const completedChecklistCount = Object.values(prepChecklist || {}).filter(Boolean).length;
+  const checklistPercent = Math.round((completedChecklistCount / 15) * 100);
+
+  // Dynamic countdown logic based on simulated launch June 15, 2026
+  const getCountdown = () => {
+    const departureStr = bookingData.tglKeberangkatan || bookingData.tgl_keberangkatan || '2026-09-15';
+    const depDate = new Date(departureStr);
+    const today = new Date('2026-06-15');
+    const diffTime = depDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return {
+      daysLeft: diffDays > 0 ? diffDays : 0,
+      formattedDate: depDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    };
+  };
+
+  const countdown = getCountdown();
+
+  // 17-grid items config mapped exactly to screenshots
+  const bentoGridItems = [
+    { id: 1, title: 'Informasi Paket', sub: 'Detail & Timeline', icon: Package, tab: 'info' as const, color: 'text-orange-600 bg-orange-50' },
+    { id: 2, title: 'Add On Layanan', sub: 'Layanan tambahan Anda', icon: ShoppingCart, tab: 'keuangan' as const, color: 'text-amber-600 bg-amber-50' },
+    { id: 3, title: 'Formulir Mandiri', sub: 'Wajib diisi jamaah', icon: FileText, tab: 'dokumen' as const, color: 'text-rose-600 bg-rose-50', bar: true, val: 100 },
+    { id: 4, title: 'Keuangan', sub: 'Cicilan & Pelunasan', icon: CreditCard, tab: 'keuangan' as const, color: 'text-emerald-600 bg-emerald-50', bar: true, val: paymentPercent },
+    { id: 5, title: 'Surat Menyurat', sub: 'Surat rekomendasi & izin', icon: FileSpreadsheet, tab: 'dokumen' as const, color: 'text-blue-600 bg-blue-50' },
+    { id: 6, title: 'Kelengkapan Dokumen', sub: 'Status berkas paspor', icon: ShieldCheck, tab: 'dokumen' as const, color: 'text-teal-600 bg-teal-50', bar: true, val: docProgressPercent },
+    { id: 7, title: 'Edukasi Mandiri', sub: 'Materi & Video panduan', icon: BookOpen, tab: 'lainnya' as const, color: 'text-violet-600 bg-violet-50' },
+    { id: 8, title: 'Itinerary Perjalanan', sub: 'Jadwal harian program', icon: Compass, tab: 'info' as const, color: 'text-indigo-600 bg-indigo-50' },
+    { id: 9, title: 'Checklist Persiapan', sub: 'Persiapan Keberangkatan', icon: CheckCircle, tab: 'lainnya' as const, color: 'text-blue-700 bg-blue-50', bar: true, val: checklistPercent },
+    { id: 10, title: 'Perlengkapan', sub: 'Checklist barang koper', icon: Package, tab: 'lainnya' as const, color: 'text-pink-600 bg-pink-50', bar: true, val: 100 },
+    { id: 11, title: 'Grup WhatsApp', sub: 'Komunikasi antar Jamaah', icon: MessageCircle, tab: 'lainnya' as const, color: 'text-emerald-500 bg-emerald-50' },
+    { id: 12, title: 'Manasik Online', sub: 'Video bimbingan live', icon: Video, tab: 'lainnya' as const, color: 'text-red-600 bg-red-50' },
+    { id: 13, title: 'Travel Document', sub: 'Hotel, Maskapai, Visa', icon: FileText, tab: 'info' as const, color: 'text-sky-600 bg-sky-50' },
+    { id: 15, title: 'Kenangan Umroh', sub: 'Galeri foto perjalanan', icon: Heart, tab: 'lainnya' as const, color: 'text-rose-500 bg-rose-50', timeLock: true },
+    { id: 16, title: 'Link Feedback', sub: 'Evaluasi masukan jamaah', icon: MessageCircle, tab: 'lainnya' as const, color: 'text-amber-500 bg-amber-100', timeLock: true },
+    { id: 17, title: 'Rahmah Miles', sub: 'Eksklusif alumni poin', icon: Award, tab: 'lainnya' as const, color: 'text-indigo-700 bg-indigo-50' }
+  ];
+
+  return (
+    <div className="space-y-6 px-4 md:px-0">
+      
+      {/* 1. GREETING SEGMENT */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-150 pb-4 font-sans">
+        <div>
+          <h2 className="text-xl font-extrabold text-emerald-950 flex items-center gap-1.5 leading-tight">
+            👋 Assalamualaikum, <span className="text-amber-600 uppercase">{bookingData.namaJamaah || 'Calon Tamu Allah'}</span>
+          </h2>
+          <p className="text-xs text-gray-450 mt-1 font-bold">
+            ✈️ {bookingData.paketNama} • <span className="text-gray-400">Batch {bookingData.kodeBooking.split('-').pop()}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* 2. ORANGE COUNTDOWN CARD */}
+      <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden font-sans">
+        <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 opacity-10 font-bold text-9xl pointer-events-none uppercase font-mono tracking-tighter">
+          UMROH
+        </div>
+        <div className="relative z-10 space-y-4">
+          <div>
+            <p className="text-[10px] uppercase font-black tracking-widest text-orange-100 opacity-90">⏳ COUNTDOWN KEBERANGKATAN</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-4xl md:text-5xl font-black tracking-tighter">{countdown.daysLeft}</span>
+              <span className="text-lg font-bold text-orange-50">hari lagi</span>
+            </div>
+            <p className="text-[11px] text-orange-100/90 font-bold mt-1.5 flex items-center gap-1">
+              🗓️ Berangkat: <strong>{countdown.formattedDate}</strong>
+            </p>
+          </div>
+
+          <button 
+            type="button"
+            onClick={() => setPortalTab('info')}
+            className="bg-white text-orange-600 hover:bg-orange-50 font-black text-xs uppercase px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm inline-flex items-center gap-1"
+          >
+            Lihat Itinerary <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* 3. YANG PERLU KAMU SELESAIKAN LIST */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4 font-sans">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+            🔔 Yang Perlu Kamu Selesaikan
+          </h3>
+          <span className="bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-black px-2 py-0.5 rounded-full">
+            4 item
+          </span>
+        </div>
+
+        <div className="space-y-2.5">
+          {/* Item 1 */}
+          <div className="bg-amber-50/50 border border-amber-100/60 rounded-xl p-3.5 flex items-center justify-between gap-4 text-xs font-bold font-sans">
+            <div className="flex items-center gap-2.5 text-amber-951">
+              <span className="text-lg">💳</span>
+              <span>Pelunasan belum selesai (Rp {remainingBalance.toLocaleString('id-ID')})</span>
+            </div>
+            <button
+              onClick={() => setPortalTab('keuangan')}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-1.5 rounded-lg transition shrink-0 inline-flex items-center gap-0.5"
+            >
+              Bayar <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Item 2 */}
+          <div className="bg-amber-50/50 border border-amber-100/60 rounded-xl p-3.5 flex items-center justify-between gap-4 text-xs font-bold font-sans">
+            <div className="flex items-center gap-2.5 text-amber-951">
+              <span className="text-lg">🆔</span>
+              <span>Dokumen jamaah belum lengkap ({docProgressPercent}%)</span>
+            </div>
+            <button
+              onClick={() => setPortalTab('dokumen')}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-1.5 rounded-lg transition shrink-0 inline-flex items-center gap-0.5"
+            >
+              Lengkapi <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Item 3 */}
+          <div className="bg-amber-50/50 border border-amber-100/60 rounded-xl p-3.5 flex items-center justify-between gap-4 text-xs font-bold font-sans">
+            <div className="flex items-center gap-2.5 text-amber-951">
+              <span className="text-lg">📝</span>
+              <span>Form perlengkapan belum penuh (0%)</span>
+            </div>
+            <button
+              onClick={() => setPortalTab('dokumen')}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-1.5 rounded-lg transition shrink-0 inline-flex items-center gap-0.5"
+            >
+              Isi <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Item 4 */}
+          <div className="bg-blue-50/40 border border-blue-105 rounded-xl p-3.5 flex items-center justify-between gap-4 text-xs font-bold font-sans">
+            <div className="flex items-center gap-2.5 text-blue-900">
+              <span className="text-lg">📋</span>
+              <span>Checklist persiapan {completedChecklistCount}/15 selesai</span>
+            </div>
+            <button
+              onClick={() => setPortalTab('lainnya')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-1.5 rounded-lg transition shrink-0 inline-flex items-center gap-0.5"
+            >
+              Lanjutkan <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. PROGRESS BAR GAUGES */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4 font-sans">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+          📈 Progress Persiapan Saya
+        </h3>
+        
+        <div className="space-y-3">
+          {/* Bar 1 */}
+          <div>
+            <div className="flex justify-between text-[11px] font-bold text-gray-600 mb-1">
+              <span>💳 Pembayaran</span>
+              <span className="text-emerald-700">{paymentPercent}%</span>
+            </div>
+            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+              <div className="bg-orange-505 h-full rounded-full transition-all duration-500" style={{ width: `${paymentPercent}%` }}></div>
+            </div>
+          </div>
+
+          {/* Bar 2 */}
+          <div>
+            <div className="flex justify-between text-[11px] font-bold text-gray-600 mb-1">
+              <span>📋 Dokumen Jamaah</span>
+              <span className="text-yellow-600">{docProgressPercent}%</span>
+            </div>
+            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+              <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${docProgressPercent}%` }}></div>
+            </div>
+          </div>
+
+          {/* Bar 3 */}
+          <div>
+            <div className="flex justify-between text-[11px] font-bold text-gray-600 mb-1">
+              <span>🎒 Perlengkapan</span>
+              <span className="text-rose-500">{completedChecklistCount > 0 ? '100%' : '0%'}</span>
+            </div>
+            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full transition-all duration-500 ${completedChecklistCount > 0 ? 'bg-emerald-500 w-full' : 'bg-gray-300 w-0'}`}></div>
+            </div>
+          </div>
+
+          {/* Bar 4 */}
+          <div>
+            <div className="flex justify-between text-[11px] font-bold text-gray-600 mb-1">
+              <span>📋 Checklist Persiapan</span>
+              <span className="text-blue-600">{checklistPercent}%</span>
+            </div>
+            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+              <div className="bg-blue-600 h-full rounded-full transition-all duration-500" style={{ width: `${checklistPercent}%` }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. STATUS PEMBAYARAN CARD */}
+      <div className="bg-emerald-50/40 border border-emerald-150/60 rounded-2xl p-5 shadow-sm space-y-4 font-sans">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-700 text-lg">💵</span>
+            <span className="text-sm font-black text-emerald-950">Status Pembayaran</span>
+          </div>
+          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded border ${
+            remainingBalance <= 0 
+              ? 'bg-emerald-100 border-emerald-200 text-emerald-800' 
+              : 'bg-red-50 border-red-100 text-red-700'
+          }`}>
+            {remainingBalance <= 0 ? 'LUNAS ✓' : 'Belum Lunas'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs font-bold leading-normal">
+          <div className="bg-white border border-gray-100 p-3.5 rounded-xl">
+            <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">TOTAL TAGIHAN</p>
+            <p className="text-sm font-black text-gray-800">Rp {totalHarga.toLocaleString('id-ID')}</p>
+          </div>
+          <div className="bg-white border border-gray-100 p-3.5 rounded-xl">
+            <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">SUDAH BAYAR</p>
+            <p className="text-sm font-black text-emerald-700">Rp {jumlahBayar.toLocaleString('id-ID')}</p>
+          </div>
+          <div className="bg-white border border-gray-100 p-3.5 rounded-xl">
+            <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">SISA TAGIHAN</p>
+            <p className="text-sm font-black text-red-650">Rp {remainingBalance.toLocaleString('id-ID')}</p>
+          </div>
+        </div>
+
+        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-[10px] text-amber-900 leading-normal flex items-start gap-1.5 font-bold">
+          <span>⚠️</span>
+          <span>
+            <strong>Pembayaran WAJIB</strong> ke rekening resmi <strong>PT Nawaitul Umrah Haji</strong>. Jangan transfer ke rekening pribadi staff/mitra demi keamanan transaksi.
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={() => setPortalTab('keuangan')}
+            className="flex-grow bg-red-600 hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs uppercase tracking-wider text-center transition cursor-pointer shadow-sm"
+          >
+            💳 Lanjutkan Pembayaran
+          </button>
+          
+          <button
+            onClick={() => setShowPrintKwitansi(true)}
+            className="bg-emerald-750 hover:bg-emerald-800 text-white font-extrabold py-3.5 px-5 rounded-xl text-xs uppercase tracking-wider text-center transition cursor-pointer border border-emerald-800"
+          >
+            🖨️ Cetak Invoice
+          </button>
+        </div>
+      </div>
+
+      {/* 6. THE 16 BEN-TO ROADMAP GRID */}
+      <div>
+        <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3.5">
+          🎯 RENCANA & FITUR PENYELESAIAN
+        </h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {bentoGridItems.map((item) => {
+            const IconComp = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (!item.timeLock) {
+                    setPortalTab(item.tab);
+                  } else {
+                    alert(`Fitur ini terkunci dan akan aktif otomatis ${item.id === 15 ? 'saat hari H keberangkatan' : 'H-1 sebelum kepulangan'}!`);
+                  }
+                }}
+                className="relative bg-white border border-gray-150 p-4 rounded-2xl text-left hover:shadow-md hover:border-emerald-350 transition duration-150 group flex flex-col justify-between min-h-[140px]"
+              >
+                {/* ID Tag top corner */}
+                <span className="absolute top-3.5 right-3.5 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[9px] font-bold text-gray-400">
+                  {item.id}
+                </span>
+
+                {/* Big cute visual circle */}
+                <div className={`w-11 h-11 rounded-xl ${item.color} flex items-center justify-center text-lg mb-4 transform group-hover:scale-105 transition-transform`}>
+                  <IconComp className="w-5 h-5" />
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-extrabold text-gray-801 group-hover:text-emerald-800 transition-colors leading-tight">
+                    {item.title}
+                  </h4>
+                  <p className="text-[9px] text-gray-400 mt-0.5 font-bold truncate">
+                    {item.sub}
+                  </p>
+
+                  {/* Progress lines */}
+                  {item.bar && (
+                    <div className="mt-2.5">
+                      <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+                        <div className="bg-emerald-550 h-full rounded-full transition-all" style={{ width: `${item.val || 0}%` }}></div>
+                      </div>
+                      <span className="text-[8px] text-gray-450 font-black tracking-widest uppercase block mt-1">{item.val || 0}% lengkap</span>
+                    </div>
+                  )}
+
+                  {item.timeLock && (
+                    <span className="inline-block mt-2.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-amber-100">
+                      🔒 Terkunci
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 7. WELCOME NOTIFICATION WARNING BASE */}
+      <div className="bg-amber-50/50 border border-amber-150/60 rounded-2xl p-5 text-xs text-amber-900 leading-relaxed font-sans mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans">
+        <div className="space-y-1">
+          <p className="font-extrabold text-emerald-950 text-sm">🎉 Selamat! Anda Terdaftar Sebagai Jamaah Umaroh.com</p>
+          <p className="text-gray-500 font-bold text-[11px]">Portal ini didesain khusus agar memudahkan Anda secara mandiri mengunggah berkas, mengecek rute penerbangan, dan melunasi sisa biaya paket.</p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <a
+            href="https://wa.me/628123456789"
+            target="_blank"
+            rel="noreferrer"
+            className="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider transition cursor-pointer"
+          >
+            💬 Chat CS (Salsa)
+          </a>
+          <button
+            onClick={() => alert('Kebijakan Syarat & Ketentuan berlaku sesuai akad pendaftaran awal di kantor cabang.')}
+            className="bg-amber-100 hover:bg-amber-200 text-amber-901 font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider transition cursor-pointer"
+          >
+            📄 Syarat & Ketentuan
+          </button>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPortalTab }) => {
+  const [activeDay, setActiveDay] = useState<number | null>(null);
+  const [isPackageExpanded, setIsPackageExpanded] = useState(false);
+  const [showItineraryModal, setShowItineraryModal] = useState(false);
+  const [showManasikModal, setShowManasikModal] = useState(false);
+  const [showSuitcaseModal, setShowSuitcaseModal] = useState(false);
+
+  if (!bookingData) return null;
+
+  const packageName = bookingData.packageName || bookingData.paketNama || 'Umroh 9d City Tour Makkah + Madinah by Saudia';
+  const totalHarga = Number(bookingData.totalHarga || 23900000);
+  const jumlahBayar = Number(bookingData.jumlahBayar || 7500000);
+  const kodeOrder = bookingData.kodeBooking || 'ORD-2026-UMR-004127';
+
+  const itineraryDays = [
+    { day: 1, title: 'Keberangkatan Jakarta - Jeddah - Madinah', detail: 'Penerbangan dengan Saudia Airlines SV-815 pukul 10.30 WIB dari Bandara Soekarno Hatta Terminal 3. Landing di Jeddah pukul 16.20 waktu setempat, kemudian dilanjutkan dengan Bus Eksekutif AC menuju Kota Suci Madinah untuk check-in hotel.' },
+    { day: 2, title: 'Ziarah Makam Rasulullah ﷺ & Raudhah', detail: 'Ziarah mendalam dipandu Mutawwif resmi ke makam Nabi Muhammad ﷺ, Abu Bakar, Umar, dan pemakaman Baki. Melaksanakan shalat malam dan Munajat di Raudhah (taman surga) sesuai waktu tasrih aplikasi resmi.' },
+    { day: 3, title: 'Ziarah Kota Madinah Al-Munawwarah', detail: 'Ziarah keliling kota suci Madinah mengunjungi Masjid Quba (shalat sunnah 2 rakaat fadhilah Umroh), kebun kurma, Jabal Uhud (perang bersejarah), dan Masjid Kiblatain.' },
+    { day: 4, title: 'Persiapan Miqat & Perjalanan ke Makkah', detail: 'Mandi ihram, mempersiapkan baju ihram, dan check-out hotel Madinah. Menuju Masjid Bir Ali untuk meluruskan niat mengambil Miqat Ihram Umroh, kemudian perjalanan 5 jam ke Makkah Al-Mukarramah via bus AC.' },
+    { day: 5, title: 'Ibadah Umroh Utama & Tawaf Sai', detail: 'Check-in hotel Makkah, istirahat sejenak, dilanjutkan melaksanakan rangkaian Rukun Ibadah Umroh Pertama (Tawaf, Sai, dan diakhiri Tahallul mencukur rambut) dipandu Mutawwif secara khusyuk.' },
+    { day: 6, title: 'Ibadah Mandiri & Tadabbur Masjidil Haram', detail: 'Memperbanyak thawaf sunnah secara mandiri, melipatgandakan ibadah wajib di pelataran Ka`bah, membaca Al-Quran, dan munajat doa mustajab di Multazam serta Hijr Ismail.' },
+    { day: 7, title: 'Ziarah Mekkah (Jabal Nur, Arafah, & Miqat Kedua)', detail: 'Ziarah keliling kota Makkah melewati Jabal Tsur, Padang Arafah (lokasi Wukuf), Muzdalifah, Mina (lempar jumrah), dan Jabal Nur (Gua Hira). Singgah di Masjid Ji`ranah bagi yang ingin mengambil Miqat Umroh Kedua.' },
+    { day: 8, title: 'Tawaf Wada & Persiapan Check-Out', detail: 'Melaksanakan rangkaian Tawaf Wada (tawaf perpisahan) mengitari Ka`bah sebelum check-out hotel Makkah. Bersiap menaiki bus menuju Bandara Internasional King Abdulaziz Jeddah.' },
+    { day: 9, title: 'Kepulangan Jeddah - Flight ke Jakarta', detail: 'Proses check-in koper baggage dan boarding penerbangan luar negeri Saudia Airlines SV-816 menuju Soekarno Hatta Cengkareng. Landing dengan selamat serta membawa predikat Umroh Maqbullah, Amin Ya Rabbal Alamin.' }
+  ];
+
+  return (
+    <div className="space-y-6 font-sans">
+      
+      {/* 1. TITLE & BRIEF SUBTITLE */}
+      <div className="pb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0">
+            <Package className="w-4.5 h-4.5" />
+          </div>
+          <div>
+            <h2 id="pkg-info-title" className="text-base font-black text-emerald-950">Informasi Paket Umroh</h2>
+            <p className="text-[10.5px] text-gray-450 font-bold leading-tight mt-0.5">Detail lengkap paket yang Anda ambil</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. ORANGE MAIN PACKAGE BRAND CARD */}
+      <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-5 text-white shadow-md space-y-4 relative overflow-hidden">
+        {/* Subtle decorative vector circles */}
+        <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
+        <div className="absolute -right-4 -top-8 w-24 h-24 bg-white/5 rounded-full blur-md pointer-events-none" />
+
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 bg-white/20 backdrop-blur-xs rounded-2xl flex items-center justify-center text-white shrink-0">
+            {/* Custom stylized Kabah cube shape icon */}
+            <span className="text-lg font-bold">🕋</span>
+          </div>
+          <div className="space-y-0.5">
+            <span className="text-[8px] bg-white/25 text-white font-black px-2 py-0.5 rounded uppercase tracking-wider">PAKET TERPILIH</span>
+            <h3 className="text-sm font-black leading-snug drop-shadow-xs">{packageName}</h3>
+          </div>
+        </div>
+
+        {/* Three tags underneath */}
+        <div className="flex flex-wrap gap-2 text-[10px] pt-1">
+          <span className="bg-white/15 text-white border border-white/20 px-2.5 py-1 rounded-xl font-bold inline-flex items-center gap-1">
+            📦 Batch {kodeOrder.split('-').pop() || '227'}
+          </span>
+          <span className="bg-white/15 text-white border border-white/20 px-2.5 py-1 rounded-xl font-bold inline-flex items-center gap-1">
+            ⏱ 9 Hari
+          </span>
+          <span className="bg-emerald-600 text-white border border-emerald-500 px-2.5 py-1 rounded-xl font-black inline-flex items-center gap-1 shadow-sm">
+            📅 H-92 Hari
+          </span>
+        </div>
+
+        <p className="text-[11px] text-amber-50 font-bold leading-normal pt-1">
+          Paket umroh pilihan dengan pelayanan terbaik dari Rahmah Travel
+        </p>
+
+        {/* Total Dibayar info inside orange card */}
+        <div className="pt-3 border-t border-white/10 flex justify-between items-end">
+          <div>
+            <span className="text-[9px] text-amber-100 font-bold block uppercase tracking-wide">Total Dibayar</span>
+            <span className="text-base font-black tracking-tight mt-0.5 block">Rp {jumlahBayar.toLocaleString('id-ID')}</span>
+          </div>
+          <div className="bg-amber-400 text-amber-950 text-[10px] font-black px-2.5 py-1 rounded-lg shadow-xs flex items-center gap-1">
+            ⏳ DP
+          </div>
+        </div>
+      </div>
+
+      {/* 3. JADWAL KEBERANGKATAN */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5 border-b border-gray-50 pb-2.5">
+          <span className="text-amber-500">📅</span> Jadwal Keberangkatan
+        </h3>
+
+        <div className="space-y-3">
+          {/* Tanggal Berangkat (Green theme) */}
+          <div className="bg-emerald-50/10 border border-emerald-100 p-4 rounded-2xl flex items-center gap-3">
+            <div className="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0 shadow-xs">
+              <Plane className="w-4.5 h-4.5 rotate-45" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider leading-none">Tanggal Berangkat</p>
+              <p className="text-xs font-black text-emerald-800 mt-1.5 leading-none">Selasa, 15 September 2026</p>
+            </div>
+          </div>
+
+          {/* Tanggal Pulang (Blue theme) */}
+          <div className="bg-blue-50/10 border border-blue-10c p-4 rounded-2xl flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-50 | text-blue-600 rounded-full flex items-center justify-center shrink-0 shadow-xs">
+              <Plane className="w-4.5 h-4.5 -rotate-45" />
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider leading-none">Tanggal Pulang</p>
+              <p className="text-xs font-black text-blue-700 mt-1.5 leading-none">Rabu, 23 September 2026</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. TIMELINE PERSIAPAN */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5 border-b border-gray-50 pb-2.5">
+          <span className="text-amber-500">📊</span> Timeline Persiapan
+        </h3>
+
+        <div className="pl-2 pt-2 relative">
+          
+          {/* Custom high fidelity connected timeline */}
+          
+          {/* Item 1 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-md z-10 shrink-0">✓</div>
+              <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
+            </div>
+            <div className="pb-6 grow">
+              <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-xs transition hover:border-gray-200">
+                <p className="font-extrabold text-sm text-gray-800 leading-tight">Pendaftaran Selesai</p>
+                <p className="text-[10px] text-gray-400 font-semibold mt-1">Selasa, 26 Mei 2026</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Item 2 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-md z-10 shrink-0">✓</div>
+              <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
+            </div>
+            <div className="pb-6 grow">
+              <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-xs space-y-2 transition hover:border-gray-200">
+                <p className="font-extrabold text-sm text-gray-800 leading-tight">Pengisian Formulir Pendaftaran</p>
+                <p className="text-[10px] text-gray-400 font-semibold">100% selesai (1/1 jamaah)</p>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full w-full rounded-full" />
+                </div>
+                {setPortalTab && (
+                  <button 
+                    onClick={() => setPortalTab('dokumen')}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    Lihat Detail Formulir →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Item 3 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 border border-gray-200 flex items-center justify-center font-bold text-xs z-10 shrink-0 shadow-xs">⏳</div>
+              <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
+            </div>
+            <div className="pb-6 grow">
+              <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-xs space-y-2 transition hover:border-gray-200">
+                <p className="font-extrabold text-sm text-gray-801 leading-tight">Memenuhi Kelengkapan Dokumen</p>
+                <p className="text-[10px] text-gray-400 font-semibold">0% selesai (0/1 jamaah)</p>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-gray-300 h-full w-0 rounded-full" />
+                </div>
+                {setPortalTab && (
+                  <button 
+                    onClick={() => setPortalTab('dokumen')}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    Lihat Detail Dokumen →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Item 4 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs ring-4 ring-amber-100 z-10 shrink-0 shadow-md">⏳</div>
+              <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
+            </div>
+            <div className="pb-6 grow">
+              <div className="bg-white border border-amber-100 p-4 rounded-xl shadow-xs space-y-2 transition hover:border-amber-200">
+                <p className="font-extrabold text-sm text-gray-801 leading-tight">Pelunasan Pembayaran</p>
+                <p className="text-[10px] text-amber-600 font-bold">31% selesai</p>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-amber-500 h-full w-[31%] rounded-full" />
+                </div>
+                {setPortalTab && (
+                  <button 
+                    onClick={() => setPortalTab('keuangan')}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    Lihat Detail Keuangan →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Item 5 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 border border-gray-200 flex items-center justify-center font-bold text-xs z-10 shrink-0 shadow-xs">⏳</div>
+              <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
+            </div>
+            <div className="pb-6 grow">
+              <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-xs space-y-2 transition hover:border-gray-200">
+                <p className="font-extrabold text-sm text-gray-801 leading-tight">Penerimaan/Pengambilan Perlengkapan</p>
+                <p className="text-[10px] text-gray-400 font-semibold">0% selesai (0/1 jamaah)</p>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-gray-300 h-full w-0 rounded-full" />
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setShowSuitcaseModal(true)}
+                  className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer"
+                >
+                  Lihat Detail Perlengkapan →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Item 6 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 border border-gray-200 flex items-center justify-center font-bold text-xs z-10 shrink-0 shadow-xs">⏳</div>
+              <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
+            </div>
+            <div className="pb-6 grow">
+              <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-xs space-y-2 transition hover:border-gray-200">
+                <p className="font-extrabold text-sm text-gray-801 leading-tight">Pelaksanaan Manasik Online</p>
+                <button 
+                  type="button"
+                  onClick={() => setShowManasikModal(true)}
+                  className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer block mt-1"
+                >
+                  Lihat Jadwal Manasik →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Item 7 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 border border-gray-200 flex items-center justify-center font-bold text-xs z-10 shrink-0 shadow-xs">⏳</div>
+              <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
+            </div>
+            <div className="pb-6 grow">
+              <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-xs space-y-2 transition hover:border-gray-200">
+                <p className="font-extrabold text-sm text-gray-810 leading-tight">Kesiapan Travel Documents</p>
+                <p className="text-[10.5px] text-gray-500 leading-snug">Pantau kesiapan tiket pesawat, visa, asuransi, dan SISKOPATUH untuk 1 jamaah.</p>
+                <p className="text-[10px] text-gray-400 font-semibold">0% selesai (0/4 dokumen siap)</p>
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-gray-300 h-full w-0 rounded-full" />
+                </div>
+                {setPortalTab && (
+                  <button 
+                    onClick={() => setPortalTab('dokumen')}
+                    className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer"
+                  >
+                    Lihat Travel Document →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Item 8 */}
+          <div className="flex gap-4 relative">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-md z-10 shrink-0">
+                <Package className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="pb-1 grow">
+              <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-4 rounded-2xl shadow-sm space-y-1">
+                <p className="font-black text-sm leading-tight text-white">Keberangkatan</p>
+                <p className="text-xs font-bold font-sans">Selasa, 15 September 2026</p>
+                <p className="text-[10px] text-white/95 font-bold font-mono tracking-wider flex items-center gap-1 mt-1 block">
+                  ⏳ H-92 Hari
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 5. INFORMASI PAKET (FASILITAS & HOTEL) */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 border-b border-gray-50 pb-2.5">
+          <div className="w-8 h-8 bg-amber-500/10 text-amber-600 rounded-lg flex items-center justify-center">
+            <Package className="w-4.5 h-4.5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-emerald-950">Informasi Paket</h3>
+            <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">Rincian fasilitas & hotel dari paket yang Anda ambil.</p>
+          </div>
+        </div>
+        <p className="text-[10px] text-gray-450 font-bold">👇 Ketuk kartu untuk melihat detail fasilitas.</p>
+
+        {/* Dropdown Card */}
+        <div className="border border-blue-100 bg-blue-50/5 rounded-2xl overflow-hidden shadow-xs">
+          <button
+            type="button"
+            onClick={() => setIsPackageExpanded(!isPackageExpanded)}
+            className="w-full flex items-center justify-between p-4 bg-gray-50/40 text-left transition hover:bg-gray-50/50 cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 bg-blue-100 text-blue-650 rounded-lg flex items-center justify-center">
+                <Package className="w-4.5 h-4.5" />
+              </span>
+              <div>
+                <span className="font-black text-xs text-gray-850">Hemat - Emaar Noor</span>
+                <span className="block mt-0.5 bg-blue-150 text-blue-800 text-[8.5px] font-extrabold px-1.5 py-0.5 rounded w-max uppercase tracking-wider">✓ Paket Anda</span>
+              </div>
+            </div>
+            <ChevronDown className={`w-4.5 h-4.5 text-gray-400 transition-transform duration-300 ${isPackageExpanded ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isPackageExpanded && (
+            <div className="p-4 bg-white border-t border-gray-100 text-xs space-y-3 font-sans">
+              <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                <span className="text-gray-400 font-bold flex items-center gap-1.5">
+                  <span className="text-amber-500 text-[10px]">💵</span> Harga
+                </span>
+                <div className="text-right">
+                  <p className="font-black text-gray-800">Rp {totalHarga.toLocaleString('id-ID')}</p>
+                  <p className="text-[9px] text-gray-400 font-mono font-bold uppercase">Quad - Emaar Noor</p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                <span className="text-gray-400 font-bold flex items-center gap-1.5">
+                  <span className="text-blue-500 text-[10px]">✈️</span> Tiket Pesawat
+                </span>
+                <span className="font-extrabold text-emerald-600 flex items-center gap-0.5 text-lg">✓</span>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                <span className="text-gray-400 font-bold flex items-center gap-1.5">
+                  <span className="text-orange-500 text-[10px]">🍽️</span> Makan 3x sehari
+                </span>
+                <span className="font-extrabold text-emerald-600 flex items-center gap-0.5 text-lg">✓</span>
+              </div>
+
+              <div className="flex justify-between items-center py-1 border-b border-gray-50">
+                <span className="text-gray-400 font-bold flex items-center gap-1.5">
+                  <span className="text-indigo-500 text-[10px]">🏢</span> Hotel
+                </span>
+                <span className="font-extrabold text-emerald-600 flex items-center gap-0.5 text-lg">✓</span>
+              </div>
+
+              <div className="flex justify-between items-center py-1">
+                <span className="text-gray-400 font-bold flex items-center gap-1.5">
+                  <span className="text-teal-500 text-[10px]">💧</span> Air Zam Zam
+                </span>
+                <span className="font-black text-emerald-700">✓ 1 galon</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Upgrade alert */}
+        <div className="bg-emerald-50/20 border border-emerald-100 rounded-2xl p-4 text-center space-y-3">
+          <p className="text-xs font-extrabold text-emerald-950">Mau upgrade paket? ✨</p>
+          <p className="text-[10px] text-gray-450 font-bold leading-relaxed">Hubungi admin untuk info pilihan upgrade paket umroh Anda.</p>
+          <a
+            href="https://wa.me/628123456789?text=Assalamualaikum,%20saya%20ingin%20tanya%20upgrade%20paket%20Umroh"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-2.5 rounded-xl text-xs uppercase transition cursor-pointer w-full sm:w-auto"
+          >
+            <MessageCircle className="w-4 h-4 fill-white text-emerald-600" /> Hubungi Admin
+          </a>
+        </div>
+      </div>
+
+      {/* 6. HOTEL & PENERBANGAN */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5 border-b border-gray-50 pb-2.5">
+          <span className="text-amber-500">🏨</span> Hotel & Penerbangan
+        </h3>
+
+        <div className="space-y-2">
+          {/* Flight Card */}
+          <div className="border border-violet-100 bg-violet-50/10 p-4 rounded-2xl flex items-center gap-3">
+            <div className="w-10 h-10 bg-violet-100 text-violet-750 rounded-full flex items-center justify-center shrink-0">
+              <Plane className="w-5 h-5 rotate-45" />
+            </div>
+            <div>
+              <p className="text-[10px] text-violet-700 uppercase font-bold tracking-wider leading-none">Penerbangan</p>
+              <p className="text-xs font-black text-gray-800 mt-1.5 leading-none">Saudia</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. AKSI CEPAT */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5 border-b border-gray-50 pb-2.5">
+          <span className="text-amber-500">⚡</span> Aksi Cepat
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs leading-normal font-sans">
+          {/* Action 1: Itinerary */}
+          <button
+            type="button"
+            onClick={() => setShowItineraryModal(true)}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black p-4 rounded-2xl flex items-center justify-between text-left transition cursor-pointer shadow-sm hover:shadow-md"
+          >
+            <div className="space-y-1">
+              <p className="font-extrabold leading-tight text-sm">Lihat Itinerary</p>
+              <p className="text-[10px] text-amber-50 font-bold">Jadwal harian program</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white" />
+          </button>
+
+          {/* Action 2: Keuangan */}
+          <button
+            type="button"
+            onClick={() => setPortalTab && setPortalTab('keuangan')}
+            className="w-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-150 text-emerald-900 font-black p-4 rounded-2xl flex items-center justify-between text-left transition cursor-pointer shadow-xs"
+          >
+            <div className="space-y-1">
+              <p className="font-extrabold leading-tight text-emerald-950 text-sm">Lihat Keuangan</p>
+              <p className="text-[10px] text-emerald-650 font-bold">Cicilan & sisa tagihan</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-emerald-600" />
+          </button>
+
+          {/* Action 3: Manasik */}
+          <button
+            type="button"
+            onClick={() => setShowManasikModal(true)}
+            className="w-full bg-violet-50 hover:bg-violet-100 border border-violet-150 text-violet-900 font-black p-4 rounded-2xl flex items-center justify-between text-left transition cursor-pointer shadow-xs"
+          >
+            <div className="space-y-1">
+              <p className="font-extrabold leading-tight text-violet-950 text-sm">Panduan Manasik</p>
+              <p className="text-[10px] text-violet-650 font-bold">Edukasi & video tata cara</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-violet-600" />
+          </button>
+
+          {/* Action 4: Surat Menyurat */}
+          <button
+            type="button"
+            onClick={() => setPortalTab && setPortalTab('dokumen')}
+            className="w-full bg-sky-50 hover:bg-sky-100 border border-sky-150 text-sky-900 font-black p-4 rounded-2xl flex items-center justify-between text-left transition cursor-pointer shadow-xs"
+          >
+            <div className="space-y-1">
+              <p className="font-extrabold leading-tight text-sky-950 text-sm">Surat Menyurat</p>
+              <p className="text-[10px] text-sky-600 font-bold">Rekomendasi paspor & izin</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-sky-600" />
+          </button>
+        </div>
+      </div>
+
+      {/* 8. STATUS PAKET CARD */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5 border-b border-gray-50 pb-2.5">
+          <span className="text-amber-500">ℹ️</span> Status Paket
+        </h3>
+
+        <div className="space-y-3 font-sans text-xs">
+          <div className="flex justify-between items-center py-1">
+            <span className="text-gray-400 font-bold">Kode Order:</span>
+            <span className="font-bold text-amber-600 font-mono tracking-wider">{kodeOrder}</span>
+          </div>
+
+          <div className="flex justify-between items-center py-1 border-t border-gray-50 pt-2.5">
+            <span className="text-gray-400 font-bold">Status Paket:</span>
+            <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black px-2 py-0.5 rounded">
+              ✓ Publish
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-1 border-t border-gray-50 pt-2.5">
+            <span className="text-gray-400 font-bold">Status Verifikasi:</span>
+            <span className="bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black px-2 py-0.5 rounded">
+              ✓ Verified
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 9. salsa call to action box */}
+      <div className="border border-emerald-150 bg-emerald-50/30 rounded-3xl p-5 flex flex-col items-center justify-center text-center space-y-4 shadow-xs">
+        <div className="w-12 h-12 bg-emerald-700 text-white rounded-full flex items-center justify-center shadow-md animate-bounce">
+          <MessageCircle className="w-6 h-6 fill-white text-emerald-700" />
+        </div>
+        <div className="space-y-1">
+          <h4 className="text-sm font-black text-emerald-950">Butuh Bantuan?</h4>
+          <p className="text-[11px] text-gray-600">
+            CS Anda: <strong className="text-emerald-900">Salsa</strong>
+          </p>
+          <p className="text-[10px] text-gray-450 leading-relaxed font-semibold">Siap membantu informasi paket Anda</p>
+        </div>
+        <div>
+          <a
+            href="https://wa.me/628123456789?text=Assalamualaikum%20Salsa,%20saya%20ingin%20tanya%20detail%20info%20paket%20Umroh"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 bg-emerald-750 hover:bg-emerald-800 text-white font-black px-6 py-2.5 rounded-full text-xs transition cursor-pointer"
+          >
+            <MessageCircle className="w-4 h-4 fill-white text-emerald-750" /> Chat Salsa
+          </a>
+        </div>
+      </div>
+
+      {/* MODAL 1: FULL ITINERARY */}
+      {showItineraryModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full relative shadow-2xl p-5 overflow-y-auto max-h-[85vh] font-sans">
+            <button
+              onClick={() => setShowItineraryModal(false)}
+              className="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm z-10 transition cursor-pointer"
+            >
+              ✖
+            </button>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                <span className="text-lg">🗓️</span>
+                <div>
+                  <h4 className="text-sm font-black text-emerald-950">Rangkaian Jadwal Perjalanan</h4>
+                  <p className="text-[10px] text-gray-400 mt-0.5 font-bold">Program Itinerary Madinah & Makkah 9 Hari</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 mt-2">
+                {itineraryDays.map((elem) => (
+                  <div key={elem.day} className="border border-gray-105 rounded-xl overflow-hidden shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => setActiveDay(activeDay === elem.day ? null : elem.day)}
+                      className="w-full bg-gray-55 flex items-center justify-between p-3 text-left transition hover:bg-gray-100 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-emerald-800 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                          H-{elem.day}
+                        </span>
+                        <p className="text-[11px] font-black text-gray-801 leading-snug">{elem.title}</p>
+                      </div>
+                      <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${activeDay === elem.day ? 'rotate-90' : ''}`} />
+                    </button>
+                    
+                    {activeDay === elem.day && (
+                      <div className="p-3 bg-white border-t border-gray-100 text-[10.5px] leading-relaxed text-gray-600 font-sans">
+                        {elem.detail}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setShowItineraryModal(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold px-4 py-2 rounded-xl text-xs cursor-pointer uppercase transition"
+              >
+                Tutup Itinerary
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: MANASIK GUIDE */}
+      {showManasikModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full relative shadow-2xl p-5 overflow-y-auto max-h-[85vh] font-sans">
+            <button
+              onClick={() => setShowManasikModal(false)}
+              className="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm z-10 transition cursor-pointer"
+            >
+              ✖
+            </button>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                <span className="text-lg">🔮</span>
+                <div>
+                  <h4 className="text-sm font-black text-emerald-950">Panduan Manasik Online</h4>
+                  <p className="text-[10px] text-gray-400 mt-0.5 font-bold">Materi bimbingan tata cara Umroh lengkap</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2 text-xs">
+                <p className="font-semibold text-gray-600 leading-relaxed">
+                  Semua jamaah diwajibkan menyimak dan memahami tata cara Thawaf, Sa’i, dan Tahallul sebelum keberangkatan.
+                </p>
+
+                {/* Simulated video cards */}
+                <div className="border border-violet-100 bg-violet-50/10 p-3 rounded-xl space-y-1">
+                  <p className="font-extrabold text-violet-950 leading-tight">1. Tata Cara Ihram & Larangannya</p>
+                  <p className="text-[10px] text-gray-400">Durasi: 12 menit • Mutawwif Syarif</p>
+                  <button 
+                    onClick={() => alert('Memutar video panduan Ihram')}
+                    className="mt-1.5 bg-violet-600 hover:bg-violet-750 text-white font-extrabold text-[9px] px-2.5 py-1 rounded-md transition cursor-pointer"
+                  >
+                    ▶ Putar Materi Video
+                  </button>
+                </div>
+
+                <div className="border border-violet-100 bg-violet-50/10 p-3 rounded-xl space-y-1">
+                  <p className="font-extrabold text-violet-950 leading-tight">2. Rukun Umroh: Thawaf & Sa’i</p>
+                  <p className="text-[10px] text-gray-400">Durasi: 25 menit • Mutawwif Syarif</p>
+                  <button 
+                    onClick={() => alert('Memutar video panduan Thawaf & Sai')}
+                    className="mt-1.5 bg-violet-600 hover:bg-violet-750 text-white font-extrabold text-[9px] px-2.5 py-1 rounded-md transition cursor-pointer"
+                  >
+                    ▶ Putar Materi Video
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setShowManasikModal(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold px-4 py-2 rounded-xl text-xs cursor-pointer uppercase transition"
+              >
+                Tutup Panduan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: SUITCASE PREPARATION CHECKLIST */}
+      {showSuitcaseModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full relative shadow-2xl p-5 overflow-y-auto max-h-[85vh] font-sans">
+            <button
+              onClick={() => setShowSuitcaseModal(false)}
+              className="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm z-10 transition cursor-pointer"
+            >
+              ✖
+            </button>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                <span className="text-lg">💼</span>
+                <div>
+                  <h4 className="text-sm font-black text-emerald-950">Detail Pengambilan Perlengkapan</h4>
+                  <p className="text-[10px] text-gray-400 mt-0.5 font-bold">Koper, kain ihram, sabuk, & seragam batik</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2 text-xs">
+                <p className="font-bold text-gray-650 leading-relaxed">
+                  Perlengkapan fisik (Batik Rahmah, Koper Cabin, Kain Ihram/Mukena, & Tas Selempang) dapat diambil di Kantor Regional Cabang kami mulai <strong className="text-emerald-900">10 Agustus 2026</strong>.
+                </p>
+                <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl space-y-1 leading-relaxed">
+                  <p className="font-extrabold text-gray-800">Syarat pengambilan:</p>
+                  <ul className="list-disc list-inside text-gray-500 text-[10.5px] space-y-1 mt-1 font-sans">
+                    <li>Membawa struk / kuitansi pembayaran DP</li>
+                    <li>Membawa KTP asli pemohon</li>
+                    <li>Bisa dikirim via kurir ekspedisi (hubungi Salsa)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setShowSuitcaseModal(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold px-4 py-2 rounded-xl text-xs cursor-pointer uppercase transition"
+              >
+                Mengerti
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export interface UmarohPayment {
+  id: string;
+  tanggal: string;
+  jumlah: number;
+  status: string;
+  jenis: string;
+  bankTujuan: string;
+  pengirim: string;
+  noTransaksi: string;
+  noStruk: string;
+  biayaAdmin: number;
+  keterangan: string;
+  uploadedImage?: string;
+}
+
+export const PortalKeuanganTab: React.FC<{
+  bookingData: BookingRecord | null;
+  setShowPrintKwitansi: (show: boolean) => void;
+}> = ({ bookingData, setShowPrintKwitansi }) => {
+  const [senderName, setSenderName] = useState('');
+  const [senderBank, setSenderBank] = useState('');
+  const [amount, setAmount] = useState('');
+  const [receiptBase64, setReceiptBase64] = useState('');
+  const [submittingPayload, setSubmittingPayload] = useState(false);
+  
+  // Toggle for adding custom payment
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [transferDate, setTransferDate] = useState(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  });
+  
+  // Selected payment for fullscreen receipt preview modal
+  const [selectedReceipt, setSelectedReceipt] = useState<UmarohPayment | null>(null);
+
+  // Accordion state for FAQs
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+
+  const handleCopy = (text: string, id: string) => {
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedText(id);
+      setTimeout(() => setCopiedText(null), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  if (!bookingData) return null;
+
+  // Real or default values
+  const totalHarga = Number(bookingData.totalHarga || 23900000);
+  
+  // State for payments to make it fully reactive
+  const [payments, setPayments] = useState<UmarohPayment[]>(() => {
+    if (bookingData.jumlahBayar && bookingData.jumlahBayar > 0) {
+      return [
+        {
+          id: 'p-initial-dp',
+          tanggal: '26 Mei 2026',
+          jumlah: bookingData.jumlahBayar,
+          status: 'Verified',
+          jenis: 'DP',
+          bankTujuan: 'BSI (Bank Syariah Indonesia)',
+          pengirim: (bookingData.nama_paspor || bookingData.namaJamaah || 'JAMAAH').toUpperCase(),
+          noTransaksi: 'FT26146RP19Y',
+          noStruk: '20260526112150170543',
+          biayaAdmin: 0,
+          keterangan: `Pembayaran DP Paket "${bookingData.paketNama || 'Umroh'}"`,
+        }
+      ];
+    }
+    return [];
+  });
+
+  // Subscribe to real-time transactions in Firestore
+  useEffect(() => {
+    if (!bookingData.id) return;
+    const q = query(collection(db, 'transactions'), where('bookingId', '==', bookingData.id));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const dbPayments: UmarohPayment[] = [];
+      snapshot.forEach((snap) => {
+        const data = snap.data();
+        dbPayments.push({
+          id: snap.id,
+          tanggal: data.createdAt ? new Date(data.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+          jumlah: Number(data.amount || 0),
+          status: data.status === 'approved' || data.status === 'Verified' ? 'Verified' : 'Pending',
+          jenis: data.type === 'deposit' ? 'DP' : 'Pelunasan',
+          bankTujuan: data.bankTujuan || 'BSI (Bank Syariah Indonesia)',
+          pengirim: (data.namaJamaah || bookingData.namaJamaah || 'Jamaah').toUpperCase(),
+          noTransaksi: data.noTransaksi || ('FT' + Math.floor(Math.random() * 100000000) + 'Y'),
+          noStruk: data.noStruk || ('202606' + Math.floor(Math.random() * 100000000)),
+          biayaAdmin: Number(data.biayaAdmin || 0),
+          keterangan: data.description || `Pembayaran ke paket "${bookingData.paketNama}"`,
+          uploadedImage: data.uploadedImage || null
+        });
+      });
+
+      if (dbPayments.length > 0) {
+        dbPayments.sort((a, b) => b.id.localeCompare(a.id));
+        setPayments(dbPayments);
+      } else {
+        if (bookingData.jumlahBayar && bookingData.jumlahBayar > 0) {
+          setPayments([
+            {
+              id: 'p-real-dp',
+              tanggal: '26 Mei 2026',
+              jumlah: bookingData.jumlahBayar,
+              status: 'Verified',
+              jenis: 'DP',
+              bankTujuan: 'BSI (Bank Syariah Indonesia)',
+              pengirim: (bookingData.nama_paspor || bookingData.namaJamaah || 'JAMAAH').toUpperCase(),
+              noTransaksi: 'FT26146RP19Y',
+              noStruk: '20260526112150170543',
+              biayaAdmin: 0,
+              keterangan: `Pembayaran DP Paket "${bookingData.paketNama || 'Umroh'}"`,
+            }
+          ]);
+        } else {
+          setPayments([]);
+        }
+      }
+    }, (err) => {
+      console.warn("Firestore transactions query failed/quota exhausted:", err);
+    });
+
+    return () => unsubscribe();
+  }, [bookingData.id, bookingData.jumlahBayar, bookingData.namaJamaah, bookingData.nama_paspor, bookingData.paketNama]);
+
+  // Derived financial computations
+  const totalBayar = payments
+    .filter(p => p.status === 'Verified')
+    .reduce((sum, p) => sum + p.jumlah, 0);
+
+  const remaining = totalHarga - totalBayar;
+  const progressPercent = Math.min(100, Math.round((totalBayar / totalHarga) * 100));
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setReceiptBase64(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const handleNotifyConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!senderName || !senderBank || !amount || !receiptBase64) {
+      alert('Mohon lengkapi semua isian formulir dan unggah bukti transfer pendaftaran Anda.');
+      return;
+    }
+
+    setSubmittingPayload(true);
+    try {
+      const addedAmount = Number(amount);
+      const newPaid = Number(bookingData.jumlahBayar || 0) + addedAmount;
+      const statusPemb = newPaid >= totalHarga ? 'Lunas' : 'DP';
+
+      // 1. Write the transaction into Firestore
+      const transPayload = {
+        userId: 'jamaah-session',
+        bookingId: bookingData.id,
+        namaJamaah: (bookingData.nama_paspor || bookingData.namaJamaah || senderName).toUpperCase(),
+        type: 'deposit',
+        amount: addedAmount,
+        status: 'approved',
+        description: `Setoran pembayaran via Portal dari ${senderName.toUpperCase()} ke ${senderBank}`,
+        createdAt: transferDate ? new Date(transferDate).toISOString() : new Date().toISOString(),
+        bankTujuan: senderBank || 'BSI (Bank Syariah Indonesia)',
+        noTransaksi: 'FT' + Math.floor(Math.random() * 100000000) + 'Y',
+        noStruk: '202606' + Math.floor(Math.random() * 100000000),
+        uploadedImage: receiptBase64,
+        biayaAdmin: 0
+      };
+
+      await addDoc(collection(db, 'transactions'), transPayload);
+
+      // 2. Update booking in database
+      const bookingRef = doc(db, 'bookings', bookingData.id);
+      await updateDoc(bookingRef, {
+        jumlahBayar: newPaid,
+        statusPembayaran: statusPemb,
+        updatedAt: new Date().toISOString()
+      });
+
+      alert('Alhamdulillah! Bukti transfer berhasil diunggah. Sistem otomatis memverifikasi pembayaran Anda menjadi BERHASIL.');
+      setSenderName('');
+      setSenderBank('');
+      setAmount('');
+      setReceiptBase64('');
+      setIsFormOpen(false);
+    } catch (err) {
+      console.error("Failed to post real transaction:", err);
+      alert('Terjadi kesalahan saat mengunggah konfirmasi pembayaran.');
+    } finally {
+      setSubmittingPayload(false);
+    }
+  };
+
+  // FAQ structure from image
+  const faqData = [
+    {
+      category: 'Pelunasan',
+      countLabel: '2 pertanyaan',
+      questions: [
+        {
+          id: 'peln-1',
+          q: 'Kapan batas waktu maksimal pelunasan biaya umroh?',
+          a: 'Batas waktu maksimal pelunasan biaya umroh adalah H-45 sebelum tanggal keberangkatan yang tercantum pada jadwal program Anda.'
+        },
+        {
+          id: 'peln-2',
+          q: 'Di mana bukti pelunasan pembayaran dapat dilihat?',
+          a: 'Bukti pelunasan pembayaran dapat dilihat langsung di sub-tab keuangan Portal Jamaah Mandiri ini setelah tim verifikasi administrasi menyetujui dokumen transfer Anda, serta salinan fisik akan dikirimkan lewat WhatsApp / Email.'
+        }
+      ]
+    },
+    {
+      category: 'Metode pembayaran',
+      countLabel: '2 pertanyaan',
+      questions: [
+        {
+          id: 'meth-1',
+          q: 'Metode pembayaran apa saja yang tersedia?',
+          a: 'Kami menerima transfer bank resmi ke rekening PT NAWAITUL UMRAH HAJI via Bank Syariah Indonesia (BSI) No. Rekening 5577775003 dan pembayaran tunai di kantor cabang pusat terdekat.'
+        },
+        {
+          id: 'meth-2',
+          q: 'Apakah diperbolehkan mencicil biaya Umroh?',
+          a: 'Ya, diperbolehkan. Jamaah dapat mencicil pembayaran dengan ketentuan uang muka (DP) di awal pendaftaran, friendly top-up di H-60, dan pelunasan seluruhnya wajib diselesaikan paling lambat di H-45.'
+        }
+      ]
+    },
+    {
+      category: 'pelunasan',
+      countLabel: '1 pertanyaan',
+      questions: [
+        {
+          id: 'peln2-1',
+          q: 'Bagaimana jika pelunasan dilakukan melewati batas waktu H-45?',
+          a: 'Keterlambatan pelunasan dapat menyebabkan pembatalan nomor porsi visa, issued tiket pesawat, atau penyesuaian biaya tambahan kamar hotel di Arab Saudi.'
+        }
+      ]
+    },
+    {
+      category: 'refund',
+      countLabel: '1 pertanyaan',
+      questions: [
+        {
+          id: 'ref-1',
+          q: 'Apakah uang yang sudah dibayarkan dapat dibatalkan atau dikembalikan?',
+          a: 'Pengajuan pembatalan (refund) tunduk pada S&K Syariat & Operasional kami, dipengaruhi oleh periode waktu sisa menuju keberangkatan serta status tiket pesawat yang telah ter-issued.'
+        }
+      ]
+    },
+    {
+      category: 'pembayaran',
+      countLabel: '3 pertanyaan',
+      questions: [
+        {
+          id: 'pemb-1',
+          q: 'Bagaimana cara memastikan pembayaran saya sudah tercatat?',
+          a: 'Sistem akan mengirimkan push notification di dasbor serta notifikasi otomatis WhatsApp sesaat setelah bukti transfer Anda berhasil diverifikasi oleh tim keuangan kami.'
+        },
+        {
+          id: 'pemb-2',
+          q: 'setelah saya melakukan pembayaran secara online apa saja yang perlu saya lampirkan?',
+          a: 'Anda cukup melampirkan foto / screenshot struk bukti transfer resmi asli, mencantumkan nama pengirim sesuai rekening asal, dan nominal yang ditransfer pada formulir Tambah Pembayaran.'
+        },
+        {
+          id: 'pemb-3',
+          q: 'Jika invoice tidak saya terima, apa yang harus saya lakukan?',
+          a: 'Anda dapat langsung mengunduh invoice digital Anda melalu tombol \'Download Invoice\' di bagian atas sub-tab Keuangan ini, atau menghubungi CS Salsa untuk bantuan instan.'
+        }
+      ]
+    }
+  ];
+
+  // Helper component to render a high-fidelity BSI mobile receipt ticket
+  const BsiReceipt: React.FC<{ payment: UmarohPayment }> = ({ payment }) => {
+    return (
+      <div className="bg-white border-2 border-emerald-100 rounded-3xl p-5 max-w-sm mx-auto shadow-md font-sans text-gray-800 text-[11px] leading-relaxed relative overflow-hidden my-4">
+        {/* Wave details decoration */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-teal-500 via-emerald-600 to-amber-500" />
+        
+        {/* Header receipt */}
+        <div className="flex items-center justify-between pb-3.5 border-b border-dashed border-gray-200 mt-2">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 bg-teal-600 text-white font-serif font-black text-[10px] rounded-full flex items-center justify-center">BSI</span>
+            <div>
+              <p className="font-extrabold text-[10.5px] text-teal-800 tracking-tight leading-none block">BANK SYARIAH</p>
+              <p className="font-bold text-[7.5px] text-teal-500 tracking-wider block uppercase mt-0.5">INDONESIA</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="bg-teal-50 border border-teal-150 text-teal-700 text-[8px] font-black px-2 py-0.5 rounded tracking-wide uppercase">Transfer BI Fast</span>
+          </div>
+        </div>
+
+        {/* Status indicator */}
+        <div className="py-4 text-center">
+          <span className="text-[9px] text-gray-400 font-extrabold uppercase tracking-widest block">Status Transaksi</span>
+          <span className="text-base font-black text-emerald-600 inline-flex items-center gap-1.5 mt-0.5">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping inline-block"></span>
+            ✓ BERHASIL
+          </span>
+        </div>
+
+        {/* Content rows */}
+        <div className="space-y-2 text-gray-600 pt-1">
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-semibold shrink-0">Nomor Transaksi:</span>
+            <span className="text-right font-bold text-gray-800 font-mono text-[9px] break-all uppercase">{payment.noTransaksi || 'FT26146RP19Y'}</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-semibold shrink-0">Tanggal Transaksi:</span>
+            <span className="text-right font-bold text-gray-800">{payment.tanggal} • 11:21:50</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-semibold shrink-0">Nomor Struk:</span>
+            <span className="text-right font-bold text-gray-800 font-mono text-[9px] break-all">{payment.noStruk || '20260526112150170543'}</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-bold text-emerald-950 shrink-0">Pengirim:</span>
+            <span className="text-right font-black text-gray-900 uppercase text-[9.5px]">{payment.pengirim || 'ILHAM FICHRI ABDULLAH'}</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-semibold shrink-0">Dari Rekening:</span>
+            <span className="text-right font-mono text-gray-700">XXXXXX4930</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-semibold shrink-0">Bank Penerima:</span>
+            <span className="text-right font-bold text-gray-800">BANK SYARIAH INDONESIA (BSI)</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-semibold shrink-0">No. Rekening Penerima:</span>
+            <span className="text-right font-bold text-gray-800 font-mono">5577775003</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-bold text-emerald-950 shrink-0">Atas Nama Penerima:</span>
+            <span className="text-right font-black text-emerald-900 text-[10px] uppercase leading-snug">PT NAWAITUL UMRAH HAJI</span>
+          </div>
+
+          {/* Separator */}
+          <div className="my-2 border-t border-dashed border-gray-250" />
+
+          <div className="flex justify-between items-center py-0.5">
+            <span className="text-emerald-950 font-black text-[10px] tracking-wide uppercase">JUMLAH TRANSFER:</span>
+            <span className="text-right font-black text-emerald-700 text-[14px]">Rp {payment.jumlah.toLocaleString('id-ID')}</span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400 font-semibold">Biaya Administrasi:</span>
+            <span className="text-right font-mono text-gray-600">Rp {payment.biayaAdmin === 0 ? '0' : (payment.biayaAdmin || 2500).toLocaleString('id-ID')}</span>
+          </div>
+
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-gray-400 font-semibold shrink-0">Keterangan:</span>
+            <span className="text-right font-bold text-gray-600 text-[10px] leading-tight italic">{payment.keterangan || 'DP Paket September Bu Arni'}</span>
+          </div>
+        </div>
+
+        {/* Bottom edge pattern */}
+        <div className="absolute bottom-0 left-0 right-0 h-2 flex justify-between px-3 gap-1 overflow-hidden opacity-30 mt-3">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <div key={i} className="w-3.5 h-3.5 bg-gray-100 rounded-full shrink-0 -mb-2" />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6 font-sans">
+      
+      {/* 1. HEADER: INFORMASI KEUANGAN */}
+      <div className="pb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+            <CreditCard className="w-4.5 h-4.5" />
+          </div>
+          <div>
+            <h2 id="fin-header-title" className="text-base font-black text-emerald-950">Informasi Keuangan</h2>
+            <p className="text-[10.5px] text-gray-450 font-bold leading-tight mt-0.5">Detail pembayaran dan status keuangan paket Anda</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. BLUE DOWNLOAD INVOICE ALERT BANNER */}
+      <button
+        onClick={() => {
+          alert(`Men-downlod Invoice digital #INV-20260526-4127...\n\nDetail Rekapitulasi:\n• Total tagihan: Rp ${totalHarga.toLocaleString('id-ID')}\n• Total dibayar: Rp ${totalBayar.toLocaleString('id-ID')}\n• Sisa tagihan: Rp ${remaining.toLocaleString('id-ID')}\n\nPdf berhasil disimpan.`);
+        }}
+        className="w-full bg-blue-600 text-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-700 transition"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+            <FileText className="w-5 h-5 text-white" />
+          </div>
+          <div className="text-left">
+            <p className="text-xs font-black tracking-wide leading-none">Download Invoice</p>
+            <p className="text-[10px] text-white/80 font-mono tracking-wider mt-1">No. INV-20260526-4127</p>
+          </div>
+        </div>
+        <div className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition">
+          <Download className="w-4 h-4 text-white" />
+        </div>
+      </button>
+
+      {/* 3. RINGKASAN KEUANGAN CARD */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+            <span className="text-amber-500">🍕</span> Ringkasan Keuangan
+          </h3>
+          <span className="bg-indigo-50 border border-indigo-150 text-indigo-700 text-[10px] font-extrabold px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-xs">
+            <Clock className="w-3 h-3" /> DP Terverifikasi
+          </span>
+        </div>
+
+        {/* Vertically stacked cards like in the screenshot */}
+        <div className="space-y-2.5">
+          {/* Total Tagihan (Blue Theme) */}
+          <div className="border border-blue-100 bg-blue-50/5 p-3 px-4 rounded-xl flex flex-col">
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Total Tagihan</span>
+            <span className="text-lg font-black text-blue-700 mt-1">Rp {totalHarga.toLocaleString('id-ID')}</span>
+          </div>
+
+          {/* Total Bayar (Green Theme) */}
+          <div className="border border-emerald-200/60 bg-emerald-50/5 p-3 px-4 rounded-xl flex flex-col">
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Total Bayar</span>
+            <span className="text-lg font-black text-emerald-600 mt-1">Rp {totalBayar.toLocaleString('id-ID')}</span>
+          </div>
+
+          {/* Sisa Tagihan (Red/Rose Theme) */}
+          <div className="border border-red-150 bg-red-50/5 p-3 px-4 rounded-xl flex flex-col">
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Sisa Tagihan</span>
+            <span className="text-lg font-black text-rose-600 mt-1">Rp {remaining.toLocaleString('id-ID')}</span>
+          </div>
+        </div>
+
+        {/* Progress bar and percentages */}
+        <div className="space-y-1 pt-1">
+          <div className="flex justify-between items-center text-xs">
+            <span className="font-bold text-gray-450">Progress Pelunasan</span>
+            <span className="font-extrabold text-amber-500">{progressPercent}%</span>
+          </div>
+          <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+            <div 
+              className="bg-amber-500 h-full rounded-full transition-all duration-500" 
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Deadlines alerts block */}
+        <div className="pt-2 space-y-2.5">
+          <div className="bg-blue-50/50 border border-blue-10c p-3.5 rounded-xl flex flex-col text-xs leading-normal">
+            <span className="text-gray-400 font-bold">Jatuh Tempo Friendly Top Up (H-60)</span>
+            <span className="font-extrabold text-blue-850 mt-1">17 Juli 2026 <span className="text-gray-400 font-medium font-sans">— H-32</span></span>
+          </div>
+
+          <div className="bg-amber-50/20 border border-amber-100 p-3.5 rounded-xl flex flex-col text-xs leading-normal">
+            <span className="text-gray-400 font-bold">Jatuh Tempo Pelunasan (H-45)</span>
+            <span className="font-extrabold text-amber-800 mt-1">1 Agustus 2026 <span className="text-gray-300 font-medium font-sans">— H-47</span></span>
+          </div>
+
+          {/* Yellow gold left-bordered notification callout */}
+          <div className="bg-amber-50/30 border-l-4 border-amber-500 p-4 rounded-r-xl flex flex-col leading-relaxed text-xs">
+            <span className="font-extrabold text-amber-900 text-sm font-sans">Jatuh Tempo dalam 47 hari</span>
+            <span className="text-gray-500 font-bold mt-1 text-[11px] font-sans">Tanggal: 1 Agustus 2026</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. TAMBAH PEMBAYARAN CONTROL BAR */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-xs font-black text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
+              <span className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-xs">+</span>
+              Tambah Pembayaran
+            </h3>
+            <p className="text-[10.5px] text-gray-450 font-bold">Upload bukti transfer dan masukkan nominal pembayaran Anda</p>
+          </div>
+          <div>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black px-4.5 py-2.5 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer w-full sm:w-auto"
+            >
+              <span className="text-sm">💳</span> + Tambah Pembayaran
+            </button>
+          </div>
+        </div>
+
+        {/* HIGH-FIDELITY BACKDROP OVERLAY DIALOG MODAL (MIRRORING THE SCREENSHOT WITH MODERN UMAROH.COM LOOK) */}
+        {isFormOpen && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs select-none">
+            <div className="bg-white rounded-3xl w-full max-w-md shadow-[0_25px_60px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col md:max-h-[92vh] max-h-[95vh] border border-[#047857]/15 animate-in fade-in zoom-in-95 duration-200">
+              
+              {/* Modal Header */}
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-sm">
+                    🪙
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-extrabold text-slate-900 leading-none">Tambah Pembayaran</h3>
+                    <p className="text-[8.5px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Konfirmasi Transaksi Anda</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsFormOpen(false)}
+                  className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-450 hover:text-slate-700 flex items-center justify-center transition cursor-pointer text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scrollable Modal Body */}
+              <form onSubmit={handleNotifyConfirm} className="overflow-y-auto p-5 space-y-4 flex-1">
+                
+                {/* 1. Sisa Tagihan Box (Blue Callout Theme) */}
+                <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-4 flex flex-col gap-0.5">
+                  <span className="text-[9px] text-blue-500 font-bold uppercase tracking-wider">Sisa Tagihan Anda</span>
+                  <span className="text-lg font-black text-blue-700 font-sans">
+                    Rp {remaining.toLocaleString('id-ID')}
+                  </span>
+                </div>
+
+                {/* 2. DAFTAR REKENING BANK Copy List */}
+                <div className="space-y-1.5">
+                  <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider">Daftar Rekening Bank resmi</span>
+                  <div className="bg-slate-50 border border-slate-150 rounded-2xl p-3.5 space-y-2.5">
+                    
+                    {/* BSI Copy Block */}
+                    <div className="bg-white border border-slate-100 rounded-xl p-3 flex justify-between items-center shadow-xs">
+                      <div className="font-sans text-[10.5px] leading-relaxed space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 font-bold shrink-0">Nama Bank:</span>
+                          <span className="font-extrabold text-slate-800">Bank Syariah Indonesia (BSI)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 font-bold shrink-0">No Rek:</span>
+                          <span className="font-black text-emerald-800 font-mono tracking-wider text-xs">5577775003</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 font-bold shrink-0">Atas Nama:</span>
+                          <span className="font-extrabold text-slate-800 uppercase text-[9.5px]">PT NAWAITUL UMRAH HAJI</span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={() => handleCopy("5577775003", "bsi_add")}
+                        className="bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-900 border border-amber-200 font-black px-2.5 py-1.5 rounded-lg text-[9px] uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+                      >
+                        <span>📋</span>
+                        {copiedText === 'bsi_add' ? 'Disalin' : 'Copy'}
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* 3. Rekening Bank Tujuan * */}
+                <div className="space-y-1">
+                  <label className="text-[9.5px] uppercase font-black text-slate-450 block">Rekening Bank Tujuan <span className="text-red-500 font-bold">*</span></label>
+                  <select
+                    required
+                    value={senderBank}
+                    onChange={(e) => setSenderBank(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 hover:bg-slate-100/50 p-3 rounded-xl text-xs font-extrabold text-slate-800 focus:ring-2 focus:ring-[#047857]/10 outline-none focus:border-[#047857] transition"
+                  >
+                    <option value="">-- Pilih Rekening Bank --</option>
+                    <option value="BSI - 5577775003 - PT NAWAITUL UMRAH HAJI">BSI — 5577775003 (a.n PT NAWAITUL UMRAH HAJI)</option>
+                  </select>
+                </div>
+
+                {/* 4. Bukti Transfer Drag & Drop Upload Zone */}
+                <div className="space-y-1">
+                  <label className="text-[9.5px] uppercase font-black text-slate-450 block font-sans">Bukti Transfer <span className="text-red-500 font-bold">*</span></label>
+                  <div className="border-2 border-dashed border-[#047857]/20 hover:border-[#047857] hover:bg-emerald-50/5 rounded-2xl p-5 text-center transition relative">
+                    <input 
+                      type="file" 
+                      required={!receiptBase64}
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <Upload className="w-6 h-6 text-[#047857] mx-auto mb-1.5" />
+                    <p className="text-xs font-extrabold text-slate-700">Klik untuk pilih foto atau drag & drop</p>
+                    <p className="text-[8.5px] text-[#047857] font-bold mt-1 uppercase tracking-wide">Format: JPG, PNG (Maks. 5MB)</p>
+                  </div>
+                  {receiptBase64 && (
+                    <div className="mt-2.5 bg-slate-50 p-2 border border-slate-150 rounded-2xl max-w-xs mx-auto text-center relative shadow-xs">
+                      <img src={receiptBase64} alt="Screenshot bukti" className="max-h-32 object-contain rounded-xl mx-auto border border-white shadow-xs" />
+                      <button 
+                        type="button" 
+                        onClick={() => setReceiptBase64('')} 
+                        className="mt-1 text-[8.5px] text-red-500 hover:underline font-extrabold cursor-pointer block w-full uppercase tracking-wider"
+                      >
+                        ✕ Urungkan Gambar
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. Nama Pengirim (Kesesuaian Rekening) */}
+                <div className="space-y-1">
+                  <label className="text-[9.5px] uppercase font-black text-slate-450 block">Nama Pengirim Sesuai Rekening <span className="text-red-500 font-bold">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    value={senderName}
+                    onChange={(e) => setSenderName(e.target.value)}
+                    placeholder="CONTOH: KEMAL ADI"
+                    className="w-full bg-slate-50 border border-slate-200 px-3 py-2.5 rounded-xl text-xs font-extrabold outline-none focus:ring-2 focus:ring-[#047857]/10 text-slate-800"
+                  />
+                </div>
+
+                {/* 6. Nominal Transfer */}
+                <div className="space-y-1">
+                  <label className="text-[9.5px] uppercase font-black text-slate-450 block">Nominal Transfer <span className="text-red-500 font-bold">*</span></label>
+                  <div className="flex rounded-xl overflow-hidden border border-slate-200 bg-slate-50 focus-within:ring-2 focus-within:ring-[#047857]/10 focus-within:border-[#047857] transition">
+                    <span className="bg-slate-100 px-3.5 py-2.5 text-xs font-black text-slate-500 border-r border-slate-200">Rp</span>
+                    <input
+                      type="number"
+                      required
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-white px-3.5 py-2.5 text-xs font-black outline-none text-slate-800 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* 7. Tanggal Transfer */}
+                <div className="space-y-1">
+                  <label className="text-[9.5px] uppercase font-black text-slate-450 block font-sans">Tanggal Transfer <span className="text-red-500 font-bold">*</span></label>
+                  <input
+                    type="date"
+                    required
+                    value={transferDate}
+                    onChange={(e) => setTransferDate(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-extrabold outline-none focus:ring-2 focus:ring-[#047857]/10 text-slate-800"
+                  />
+                </div>
+
+                {/* Modal Footer actions inside form */}
+                <div className="pt-2 border-t border-slate-100 flex gap-2.5 select-none">
+                  <button
+                    type="button"
+                    onClick={() => setIsFormOpen(false)}
+                    className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 active:scale-98 text-slate-600 font-extrabold text-[10.5px] rounded-xl text-center transition cursor-pointer uppercase tracking-wider"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingPayload}
+                    className="flex-[1.5] py-3 px-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 active:scale-98 text-white font-extrabold text-[10.5px] rounded-xl flex items-center justify-center gap-1.5 shadow-sm shadow-amber-500/10 transition cursor-pointer uppercase tracking-wider"
+                  >
+                    <span>⚡</span> {submittingPayload ? 'Sistem Memproses...' : 'Submit Pembayaran'}
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 5. RIWAYAT PEMBAYARAN */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+          <span className="text-amber-500">⏳</span> Riwayat Pembayaran
+        </h3>
+
+        <div className="space-y-4">
+          {payments.map((p) => (
+            <div key={p.id} className="border border-gray-100 bg-gray-50/10 rounded-2xl p-5 space-y-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-2 text-xs">
+                <div>
+                  <span className="text-gray-400 block font-semibold text-[10px] uppercase">Tanggal</span>
+                  <span className="font-extrabold text-gray-800 text-sm mt-0.5 inline-block">{p.tanggal}</span>
+                </div>
+                <div>
+                  <span className="bg-indigo-55 text-indigo-700 border border-indigo-100 font-black px-2.5 py-1 rounded text-[10px] block w-max uppercase tracking-wider">{p.jenis || 'PELUNASAN'}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-gray-400 block font-semibold text-[10px] uppercase">Jumlah</span>
+                  <span className="font-black text-gray-800 text-sm mt-0.5 inline-block">Rp {p.jumlah.toLocaleString('id-ID')}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block font-semibold text-[10px] uppercase">Status</span>
+                  <span className="bg-emerald-50 text-emerald-800 border border-emerald-150 font-black px-2 py-1 rounded text-[10px] inline-flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Verified
+                  </span>
+                </div>
+              </div>
+
+              {/* Kwitansi Button */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPrintKwitansi(true)}
+                  className="bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" /> Kwitansi
+                </button>
+              </div>
+
+              {/* Collapsible Bukti Transfer Card preview */}
+              <div className="border border-gray-200/50 rounded-2xl p-4 bg-white space-y-3 shadow-xs">
+                <p className="text-[10px] uppercase font-black text-gray-450 tracking-wider">Bukti Transfer Resmi</p>
+                {p.uploadedImage ? (
+                  <div className="p-1 max-w-sm mx-auto">
+                    <img 
+                      src={p.uploadedImage} 
+                      alt="Uploaded transfer receipt" 
+                      className="max-h-52 object-contain mx-auto rounded shadow-sm border border-gray-100 cursor-pointer"
+                      onClick={() => setSelectedReceipt(p)}
+                    />
+                  </div>
+                ) : (
+                  <BsiReceipt payment={p} />
+                )}
+                
+                <button
+                  type="button"
+                  onClick={() => setSelectedReceipt(p)}
+                  className="text-center w-full block text-blue-600 hover:underline font-bold text-[10.5px] py-1 inline-flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Klik gambar untuk melihat ukuran penuh
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 6. DOKUMEN PEMBAYARAN ORDER */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+          <span className="text-amber-500">📄</span> Dokumen Pembayaran Order
+        </h3>
+
+        <div className="border border-gray-100 bg-gray-50/10 rounded-2xl p-4 md:p-5 text-xs">
+          <div className="bg-blue-50/40 p-3 rounded-xl border border-blue-100 text-[10px] font-extrabold flex items-center gap-1.5 text-blue-800 mb-4 tracking-wide uppercase">
+            <span className="w-4 h-4 bg-blue-100 text-blue-700 flex items-center justify-center rounded font-black text-[9px]">$</span>
+            Bukti Transfer Order
+          </div>
+
+          {payments && payments.length > 0 && (
+            <div>
+              {payments[payments.length - 1].uploadedImage ? (
+                <img 
+                  src={payments[payments.length - 1].uploadedImage} 
+                  alt="Proof Document" 
+                  className="max-h-52 object-contain mx-auto rounded shadow-sm border border-gray-100 cursor-pointer"
+                  onClick={() => setSelectedReceipt(payments[payments.length - 1])}
+                />
+              ) : (
+                <BsiReceipt payment={payments[payments.length - 1]} />
+              )}
+            </div>
+          )}
+
+          <div className="pt-2 text-center">
+            <button
+              onClick={() => setSelectedReceipt(payments[payments.length - 1])}
+              className="text-blue-600 hover:underline font-extrabold text-[10px] tracking-wide inline-flex items-center gap-1"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Klik gambar untuk melihat ukuran penuh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. INFO PAKET */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+          <span className="text-amber-500">📦</span> Info Paket
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+          <div className="p-4 border border-gray-100 bg-gray-50/30 rounded-xl flex flex-col gap-1.5">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">Nama Paket</span>
+            <span className="font-extrabold text-gray-801 leading-snug">{bookingData.packageName || 'Umroh 9d City Tour Makkah + Madinah by Saudia'}</span>
+          </div>
+
+          <div className="p-4 border border-gray-100 bg-gray-50/30 rounded-xl flex flex-col gap-1.5">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">Batch</span>
+            <span className="font-extrabold text-gray-801">Batch 227</span>
+          </div>
+
+          <div className="p-4 border border-gray-100 bg-gray-50/30 rounded-xl flex flex-col gap-1.5">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">Jumlah Jamaah</span>
+            <span className="font-extrabold text-gray-801">1 Orang</span>
+          </div>
+
+          <div className="p-4 border border-gray-100 bg-gray-50/30 rounded-xl flex flex-col gap-1.5">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">Keberangkatan</span>
+            <span className="font-black text-gray-801 flex flex-col gap-0.5">
+              <span>15 September 2026</span>
+              <span className="text-amber-600 font-medium font-sans text-[10px] mt-0.5 inline-block bg-amber-50/65 w-max px-2 py-0.5 rounded border border-amber-100">H-92 Hari</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 8. BUTUH BANTUAN? CS WHATSAPP BOX */}
+      <div className="border border-emerald-150 bg-emerald-50/30 rounded-3xl p-5 flex flex-col items-center justify-center text-center space-y-4 shadow-xs">
+        <div className="w-12 h-12 bg-emerald-700 text-white rounded-full flex items-center justify-center shadow-md animate-bounce">
+          <MessageCircle className="w-6 h-6 fill-white text-emerald-700" />
+        </div>
+        <div className="space-y-1">
+          <h4 className="text-sm font-black text-emerald-950">Butuh Bantuan?</h4>
+          <p className="text-[11px] text-gray-600">
+            CS Anda: <strong className="text-emerald-900">Salsa</strong>
+          </p>
+          <p className="text-[10px] text-gray-450 leading-relaxed font-semibold">Siap membantu informasi pembayaran Anda</p>
+        </div>
+        <div>
+          <a
+            href="https://wa.me/628123456789?text=Assalamualaikum%20Salsa,%20konfirmasi%2520keuangan%20Umroh"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 bg-emerald-750 hover:bg-emerald-800 text-white font-black px-6 py-2.5 rounded-full text-xs transition cursor-pointer"
+          >
+            <MessageCircle className="w-4 h-4 fill-white text-emerald-750" /> Chat Salsa
+          </a>
+        </div>
+      </div>
+
+      {/* 9. FAQ ADMINISTRASI & KEUANGAN */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center shrink-0">
+            <span className="font-black text-sm">?</span>
+          </div>
+          <div>
+            <h3 className="text-xs font-black text-emerald-950 uppercase tracking-wider">FAQ Administrasi & Keuangan</h3>
+            <p className="text-[10px] text-gray-450 leading-tight">Pertanyaan yang Sering Diajukan seputar Pembayaran dan Administrasi</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {faqData.map((group) => (
+            <div key={group.category} className="space-y-2">
+              {/* Category banner */}
+              <div className="bg-amber-500 text-white px-3.5 py-2.5 rounded-xl text-[10px] font-black flex justify-between items-center shadow-xs uppercase tracking-wider">
+                <span className="flex items-center gap-1.5">
+                  📁 {group.category}
+                </span>
+                <span className="bg-amber-600/70 border border-white/20 text-white text-[9px] px-2 py-0.5 rounded font-black tracking-normal">
+                  {group.countLabel}
+                </span>
+              </div>
+
+              {/* Questions accordions */}
+              <div className="space-y-1.5 pl-1.5">
+                {group.questions.map((faq) => {
+                  const isExpanded = expandedFaqId === faq.id;
+                  return (
+                    <div key={faq.id} className="bg-white border border-gray-105 rounded-xl overflow-hidden shadow-xs">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedFaqId(isExpanded ? null : faq.id)}
+                        className="w-full flex items-center justify-between p-3.5 text-left transition hover:bg-gray-50/50 cursor-pointer gap-2"
+                      >
+                        <span className="text-[11.5px] font-extrabold text-gray-750 leading-snug">
+                          {faq.q}
+                        </span>
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                        )}
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="px-4 py-3 bg-gray-50/40 border-t border-gray-50 text-[10.5px] leading-relaxed text-gray-500 font-sans">
+                          {faq.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-2 text-center">
+          <button
+            onClick={() => alert('Menautkan ke database FAQ pusat umaroh Syariah Cabang. Seluruh data panduan Administrasi & Keuangan tersedia.')}
+            className="bg-amber-500 hover:bg-amber-600 text-white font-black px-5 py-3 rounded-xl text-xs uppercase tracking-wide inline-flex items-center justify-center gap-1.5 transition shadow-sm w-full sm:w-auto cursor-pointer"
+          >
+            📋 Lihat Semua FAQ Administrasi <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* FULLSCREEN PREVIEW RECEIPT MODAL */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-sm w-full relative shadow-2xl p-4 overflow-y-auto max-h-[90vh]">
+            <button
+              onClick={() => setSelectedReceipt(null)}
+              className="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm z-10 transition cursor-pointer"
+            >
+              ✖
+            </button>
+            <div className="pt-6">
+              {selectedReceipt.uploadedImage ? (
+                <div className="space-y-4">
+                  <h4 className="text-xs font-black text-center text-gray-400 uppercase tracking-widest">Bukti Transfer Unggahan</h4>
+                  <img src={selectedReceipt.uploadedImage} alt="Bukti Transfer" className="w-full h-auto rounded-2xl border border-gray-100 shadow-md" />
+                  <div className="bg-emerald-50 text-emerald-800 p-3 rounded-xl border border-emerald-100 text-center text-[10px] font-black uppercase">
+                    Status: Verified • Rp {selectedReceipt.jumlah.toLocaleString('id-ID')}
+                  </div>
+                </div>
+              ) : (
+                <BsiReceipt payment={selectedReceipt} />
+              )}
+            </div>
+            <div className="mt-4 pt-2 flex justify-end">
+              <button
+                onClick={() => setSelectedReceipt(null)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold px-4 py-2 rounded-xl text-xs cursor-pointer uppercase transition"
+              >
+                Tutup Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export const PortalLainnyaTab: React.FC<{
+  bookingData: BookingRecord | null;
+  prepChecklist: {[key: string]: boolean};
+  handleTogglePrepChecklist: (key: string) => void;
+}> = ({ bookingData, prepChecklist, handleTogglePrepChecklist }) => {
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [isSendingFeedback, setIsSendingFeedback] = useState(false);
+
+  if (!bookingData) return null;
+
+  const essentialList = [
+    { key: 'ihram', label: '👔 Kain Ihram & Sabuk (L) / Mukena & Khimar Ihram (P)' },
+    { key: 'sandal', label: '鞋 Sandal Kamar Ringan & Kantong Jaring Sandal Gantung' },
+    { key: 'buku', label: '📘 Buku Panduan Doa Saku & Bacaan Manasik Praktis' },
+    { key: 'sabun', label: '🧴 Sabun Non-parfum, Pelembab & Sunscreen Ramah Ihram' },
+    { key: 'obat', label: '💊 Obat-obatan Pribadi, Vitamin, Plaster kaki & Masker' },
+    { key: 'koper', label: '💼 Koper Kabin Resmi Berlabel Umroh & Tas Gantung Paspor' },
+    { key: 'powerbank', label: '🔋 Powerbank 10.000mAh & Steker Arab 3-Pin (Colokan G)' },
+    { key: 'jaket', label: '🧥 Jaket / Syal Hangat (Madinah relative sejuk dingin subuh)' },
+    { key: 'kacamata', label: '👓 Kacamata Hitam & Payung Lipat Mungil Penahan Terik' },
+    { key: 'botol', label: '🚰 Botol Semprotan Spray untuk Air Wajah / Zam-zam' },
+    { key: 'dok', label: '📄 Printout Fotokopi Visa, Tiket & Paspor saku' },
+    { key: 'riyal', label: '💵 Uang Tunai Riyal Saudi (SAR) untuk jajan kecil harian' },
+    { key: 'sajadah', label: '🧣 Sajadah Tipis Praktis Travel Ringan' },
+    { key: 'lip', label: '💄 Pelembab Bibir (Lipbalm) penahan kering bibir retak' },
+    { key: 'plastik', label: '🛍️ Kantong Plastik Kecil Ziploc untuk baju basah / kotor' }
+  ];
+
+  const handleSendFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackText.trim()) {
+      alert('Mohon ketikkan masukan ulasan Anda terlebih dahulu.');
+      return;
+    }
+    setIsSendingFeedback(true);
+    await new Promise((r) => setTimeout(r, 1000));
+    alert('Alhamdulillah! Ulasan bintang ' + feedbackRating + ' Anda berhasil terkirim. Ulasan ini sangat berharga untuk meningkatkan kualitas Mutawwif dan Maskapai di program umroh selanjutnya!');
+    setFeedbackText('');
+    setIsSendingFeedback(false);
+  };
+
+  const completedChecklistCount = Object.values(prepChecklist || {}).filter(Boolean).length;
+
+  return (
+    <div className="space-y-6 font-sans">
+      
+      {/* 1. INTERACTIVE PREVENTIVE CHECKLIST OF 15 ITEMS */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm space-y-4">
+        <div>
+          <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+            📋 Checklist 15 Barang Bawaan Esensial Koper
+          </h3>
+          <p className="text-[10px] text-gray-500 mt-1">Sentuh baris untuk mencentang barang yang sudah Anda masukkan koper kabin demi keamanan bagasi.</p>
+          <div className="mt-2.5 bg-emerald-50 text-emerald-950 font-black px-3 py-1.5 rounded-lg text-[10px] flex justify-between items-center">
+            <span>🎒 KELENGKAPAN BARANG:</span>
+            <span>{completedChecklistCount} dari 15 Berhasil Terpacking</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 font-medium text-xs text-gray-700 leading-snug">
+          {essentialList.map((item) => {
+            const isChecked = !!prepChecklist[item.key];
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleTogglePrepChecklist(item.key)}
+                className={`w-full p-2.5 rounded-xl border text-left flex items-start gap-2.5 transition active:scale-[0.98] ${
+                  isChecked 
+                    ? 'bg-emerald-50/50 border-emerald-250 text-emerald-950' 
+                    : 'bg-white border-gray-150 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded mt-0.5 flex-shrink-0 flex items-center justify-center border transition-all ${
+                  isChecked ? 'bg-emerald-700 border-emerald-700 text-white' : 'bg-gray-50 border-gray-350'
+                }`}>
+                  {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                </div>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. MANASIK ONLINE AND LIVESTREAM VIDEO */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm space-y-4">
+        <h3 className="text-sm font-black text-gray-901 uppercase tracking-widest flex items-center gap-1.5">
+          📹 VIDEO PENUNTUN MANASIK SAKU
+        </h3>
+        
+        <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden flex flex-col justify-between p-4 text-white relative">
+          <div className="absolute inset-0 bg-cover bg-center opacity-30 select-none" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1565552645632-d725f8bab19f?auto=format&fit=crop&q=80')" }}></div>
+          
+          <span className="bg-red-650 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg self-start z-10 animate-pulse">LIVE REPLAY STREAMING</span>
+          
+          <div className="text-center z-10 my-auto">
+            <button
+              onClick={() => alert('Memutar video bimbingan rukun-rukun tawaf dan sai secara detail...')}
+              className="w-14 h-14 rounded-full bg-white text-emerald-800 flex items-center justify-center mx-auto shadow-xl hover:scale-110 active:scale-95 transition cursor-pointer"
+            >
+              ▶️
+            </button>
+            <p className="text-xs font-black mt-3 text-shadow-sm">Tutorial Tata Cara Ber-Ihram, Tawaf & Sai Sesuai Sunnah</p>
+            <p className="text-[10px] text-gray-300">Durasi: 42 Menit • Dipandu oleh KH. Mas`ud Halimi</p>
+          </div>
+
+          <div className="text-[9px] text-gray-400 z-10 flex justify-between">
+            <span>2.4K Jamaah menonton</span>
+            <span>Umaroh Synergy HD 1080p</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. WHATSAPP LINK COMMUNITY */}
+      <div className="bg-emerald-950 text-white p-6 rounded-2xl relative overflow-hidden space-y-4">
+        <div className="space-y-1">
+          <h4 className="text-sm font-extrabold">📌 Gabung WhatsApp Group Jamaah</h4>
+          <p className="text-xs text-emerald-100 font-bold leading-relaxed">Komunikasi antar pimpinan regu, mutawwif, coordinator batch, dan sesama anggota jamaah satu program.</p>
+        </div>
+        <a
+          href="https://wa.me/628123456789"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block bg-white text-emerald-950 font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-wider hover:scale-[1.02] transition shadow-md"
+        >
+          💬 Gabung Group WA Batch
+        </a>
+      </div>
+
+      {/* 4. FEEDBACK FORM */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-6 shadow-sm space-y-4">
+        <div>
+          <h4 className="text-xs font-black text-gray-401 uppercase tracking-widest">⭐ MASUKAN & ULASAN LAYANAN</h4>
+          <p className="text-[11px] text-gray-500 mt-1">Ulasan Anda akan dijadikan parameter indeks kepuasan perbaikan fasilitas katering, hotel, dan bus mutawwif pada perjalanan selanjutnya.</p>
+        </div>
+
+        <form onSubmit={handleSendFeedback} className="space-y-3">
+          <div className="flex gap-2 text-xl cursor-default py-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setFeedbackRating(star)}
+                className={`transition-colors duration-150 ${star <= feedbackRating ? 'text-amber-500' : 'text-gray-200'}`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            rows={3}
+            required
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+            placeholder="Tuliskan ulasan masukan pelayanan hotel, mutawwif, pendaftaran disini..."
+            className="w-full bg-gray-55 border border-gray-200 p-3.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/10"
+          />
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSendingFeedback}
+              className="bg-emerald-750 hover:bg-emerald-800 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {isSendingFeedback ? 'Mengirim...' : 'Kirim Masukan'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* 5. RA-HMAH MILES LOYALTY PROGRAM */}
+      <div className="bg-amber-50/50 border border-amber-150/60 rounded-2xl p-5 space-y-3 text-xs leading-normal font-sans">
+        <h4 className="text-[11px] font-black text-amber-900 uppercase tracking-wider">🌟 PROGRAM LOYALITAS SAHABAT MILES</h4>
+        <p className="text-gray-500 font-bold">Kumpulkan poin Sahabat Miles setiap mendaftar ber-Umroh. Poin dapat ditukar diskon paket haji furoda, koper eksklusif fiber, badal umroh gratis, atau upgrade kamar hotel bintang 5.</p>
+        <div className="bg-white border border-amber-100 p-3.5 rounded-xl flex items-center justify-between font-mono">
+          <div>
+            <p className="text-[10px] text-gray-400 font-bold">TINGKATAN MEMBERSHIP</p>
+            <p className="text-xs font-black text-amber-700">BRONZE ALUMNI</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 font-bold">SALDO POIN</p>
+            <p className="text-xs font-black text-emerald-800">1,500 MILES</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+};

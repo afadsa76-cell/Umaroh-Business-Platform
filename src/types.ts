@@ -238,3 +238,77 @@ export interface AppNotification {
   senderId?: string; // Sender UID if any
 }
 
+export interface BookingRecord {
+  id: string;
+  bookingId?: string;
+  kodeBooking: string;
+  uniqueCode: string;
+  namaJamaah: string;
+  nomorPassport?: string;
+  nomor_paspor?: string;
+  nik?: string;
+  noHp?: string;
+  paxType?: string;
+  gender?: string;
+  roomType?: string;
+  customRoomType?: string;
+  hotelType?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  amountPaid?: number;
+  totalCost?: number;
+  packageId?: string;
+  packageName?: string;
+  mitraId?: string | null;
+  nama_lengkap?: string;
+  status?: string;
+  createdAt?: unknown;
+  
+  // Manifest Form Specifics
+  title?: string;
+  nama_paspor?: string;
+  no_paspor?: string;
+  tgl_issue_paspor?: string;
+  tgl_exp_paspor?: string;
+  kota_paspor?: string;
+  tempat_lahir?: string;
+  tanggal_lahir?: string;
+  kewarganegaraan?: string;
+  nama_ayah?: string;
+  alamat?: string;
+  alamat_tinggal?: string;
+  jenisKelamin?: 'L' | 'P' | string;
+  filePassport?: string;
+  fileKtp?: string;
+  fileVaccine?: string;
+  fileFoto?: string;
+  file_paspor?: string;
+  file_ktp?: string;
+  file_kk?: string;
+  file_buku_nikah?: string;
+  file_foto?: string;
+  docPassport?: string;
+  docKtp?: string;
+  docVaccine?: string;
+  docFoto?: string;
+  tglKeberangkatan?: string;
+  tgl_keberangkatan?: string;
+
+  // Additional payment / package fields
+  paketNama?: string;
+  paketLabel?: string;
+  statusPembayaran?: 'Lunas' | 'DP' | 'Belum Bayar' | 'pending' | string;
+  statusKeberangkatan?: string;
+  totalHarga?: number;
+  jumlahBayar?: number;
+}
+
+export interface JamaahSession {
+  id: string;
+  bookingId?: string;
+  kodeBooking: string;
+  uniqueCode: string;
+  namaJamaah: string;
+  nomorPassport?: string;
+}
+

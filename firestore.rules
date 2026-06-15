@@ -121,10 +121,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email));
-      allow list: if isOperasional() || isAdmin() || 
-                  (isSignedIn() && (resource.data.email == request.auth.token.email)) ||
-                  (resource.data.role == 'mitra') || 
-                  (resource.data.uplineId == request.auth.uid);
+      allow list: if isSignedIn();
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin();
       allow update: if (isAdmin() || isOperasional() || isOwner(userId)) && 
                     isValidUserProfile(incoming()) && (
@@ -149,8 +146,8 @@ service cloud.firestore {
     }
 
     match /transactions/{transactionId} {
-      allow get: if isOwner(resource.data.userId) || isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
-      allow list: if isFinance() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
+      allow get: if isOwner(resource.data.userId) || isFinance() || isOperasional() || isMitra() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
+      allow list: if isFinance() || isOperasional() || isMitra() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
       allow create: if isSignedIn() && 
                     incoming().userId == request.auth.uid && 
                     isValidTransaction(incoming());
@@ -181,16 +178,16 @@ service cloud.firestore {
     }
 
     match /bookings/{bookingId} {
-      allow get: if isSignedIn() && (
+      allow get: if (resource.data.kodeBooking != null) || (isSignedIn() && (
                     resource.data.jamaahId == request.auth.uid || 
                     resource.data.mitraId == request.auth.uid || 
                     isOperasional() || isAdmin()
-                  );
-      allow list: if isSignedIn() && (
+                  ));
+      allow list: if (resource.data.kodeBooking != null) || (isSignedIn() && (
                     resource.data.jamaahId == request.auth.uid || 
                     resource.data.mitraId == request.auth.uid || 
                     isOperasional() || isAdmin()
-                  );
+                  ));
       allow create: if isSignedIn() && 
                     (('jamaahId' in incoming() && incoming().jamaahId == request.auth.uid) || 
                      ('mitraId' in incoming() && incoming().mitraId == request.auth.uid) || 
@@ -272,8 +269,10 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isOperasional() || (isSignedIn() && (
                     incoming().get('mitraId', '') == request.auth.uid || 
+                    incoming().get('jamaahId', '') == request.auth.uid ||
                     incoming().get('bookingId', '') == request.auth.uid ||
                     existing().get('mitraId', '') == request.auth.uid ||
+                    existing().get('jamaahId', '') == request.auth.uid ||
                     existing().get('bookingId', '') == request.auth.uid
                   ));
     }

@@ -150,6 +150,8 @@ export const VendorPaymentTracker: React.FC = () => {
 
   // Pemasukan & Estimasi (Cashflow)
   const [totalPemasukanMitra, setTotalPemasukanMitra] = useState(1250000000); // Decoupled static/mock start
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rawMitraTrackers, setRawMitraTrackers] = useState<any[]>([]);
 
   // Real-time master sync states
   const [realPackages, setRealPackages] = useState<{ id: string; nama: string; tglBerangkat?: string }[]>([]);
@@ -651,17 +653,21 @@ export const VendorPaymentTracker: React.FC = () => {
       console.error("Firestore error loading airlines: ", err);
     });
 
-    // Sub to Mitra Tracker to get packages listed in Mitra tracker
+    // Sub to Mitra Tracker to get packages and total values listed in Mitra tracker
     const unsubMitraTracker = onSnapshot(collection(db, 'mitra_tracker'), (snap) => {
       const arr: string[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const trackingList: any[] = [];
       snap.forEach(d => {
         const data = d.data();
         const pkgName = data.paket_umroh;
         if (pkgName) {
           arr.push(pkgName);
         }
+        trackingList.push({ id: d.id, ...data });
       });
       setMitraPackages(Array.from(new Set(arr)).filter(Boolean));
+      setRawMitraTrackers(trackingList);
     }, (err) => {
       console.error("Firestore error loading mitra packages: ", err);
     });
@@ -737,13 +743,37 @@ export const VendorPaymentTracker: React.FC = () => {
     }).format(val || 0);
   };
 
+  // Dynamically calculate "setoran jemaah" based on the selected package in Mitra Tracker
+  const calculatedPemasukanMitra = React.useMemo(() => {
+    if (filterPackage) {
+      return rawMitraTrackers
+        .filter(m => m.paket_umroh === filterPackage)
+        .reduce((sum, m) => sum + (m.total_bayar || 0), 0);
+    } else {
+      return rawMitraTrackers
+        .reduce((sum, m) => sum + (m.total_bayar || 0), 0);
+    }
+  }, [rawMitraTrackers, filterPackage]);
+
+  // Automatically sync/set totalPemasukanMitra from the database calculations of mitra tracker
+  useEffect(() => {
+    setTotalPemasukanMitra(calculatedPemasukanMitra);
+  }, [calculatedPemasukanMitra]);
+
+  const activeCostComponents = React.useMemo(() => {
+    if (filterPackage) {
+      return costComponents.filter(c => c.package_id === filterPackage);
+    }
+    return costComponents;
+  }, [costComponents, filterPackage]);
+
   // Math metrics
-  const totalCost = costComponents.reduce((s, c) => s + c.total_biaya, 0);
-  const totalPaid = costComponents.reduce((s, c) => s + c.total_bayar, 0);
-  const totalDebt = costComponents.reduce((s, c) => s + c.sisa_tagihan, 0);
-  const totalKritikalCount = costComponents.filter(c => c.status_risiko === 'Kritikal').length;
-  const overdueCount = costComponents.filter(c => c.status_pembayaran === 'Overdue').length;
-  const highRiskVendorsCount = costComponents.filter(c => c.status_risiko === 'Risiko Tinggi').length;
+  const totalCost = activeCostComponents.reduce((s, c) => s + c.total_biaya, 0);
+  const totalPaid = activeCostComponents.reduce((s, c) => s + c.total_bayar, 0);
+  const totalDebt = activeCostComponents.reduce((s, c) => s + c.sisa_tagihan, 0);
+  const totalKritikalCount = activeCostComponents.filter(c => c.status_risiko === 'Kritikal').length;
+  const overdueCount = activeCostComponents.filter(c => c.status_pembayaran === 'Overdue').length;
+  const highRiskVendorsCount = activeCostComponents.filter(c => c.status_risiko === 'Risiko Tinggi').length;
 
   const estimatedProfit = totalPemasukanMitra - totalCost;
   const deficitAssessment = totalCost - totalPaid;

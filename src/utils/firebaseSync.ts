@@ -51,6 +51,7 @@ export async function syncBookingToTracker(bookingId: string, bookingData: any) 
     // 2. Draft matching manifest structure
     const trackerPayload = {
       bookingId: bookingId,
+      jamaahId: bookingData.jamaahId || '',
       mitraId: bookingData.mitraId || '',
       paketId: targetPaketId,
       title: bookingData.title || 'MR',

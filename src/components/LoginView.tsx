@@ -6,11 +6,12 @@ import { signInWithCredential, GoogleAuthProvider, User, sendPasswordResetEmail,
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
+import { JamaahSession, BookingRecord } from '../types';
 
 export type Role = 'operasional' | 'mitra' | 'jamaah' | 'admin' | 'vendor';
 
 interface LoginViewProps {
-  onLogin: (role: Role, subRole?: string) => void;
+  onLogin: (role: Role, subRole?: string, jamaahSession?: JamaahSession) => void;
   onGoToRegister?: (email?: string, name?: string, uid?: string) => void;
 }
 
@@ -24,6 +25,59 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Code-based log-in states for Jamaah
+  const [loginMode, setLoginMode] = useState<'email' | 'code'>('code');
+  const [inputKode, setInputKode] = useState('');
+  const [inputUniq, setInputUniq] = useState('');
+  const [showUniqCode, setShowUniqCode] = useState(false);
+
+  const handleCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputKode || !inputUniq) {
+      setError('Kode Booking dan Kode Unik wajib diisi');
+      return;
+    }
+    setError('');
+    setIsLoading(true);
+    try {
+      const { query, collection, where, getDocs, db } = await import('../firebase');
+      const q = query(
+        collection(db, 'bookings'), 
+        where('kodeBooking', '==', inputKode.trim().toUpperCase())
+      );
+      const querySnap = await getDocs(q);
+      
+      if (querySnap.empty) {
+        setError('Kode Booking tidak ditemukan. Pastikan format benar (Contoh: ORD-2026-UMR-004127).');
+        setIsLoading(false);
+        return;
+      }
+
+      let matchedBookingObj: BookingRecord | null = null;
+      querySnap.forEach((docSnap) => {
+        const data = docSnap.data() as Omit<BookingRecord, 'id'>;
+        const codeInDoc = (data.uniqueCode || '').trim().toUpperCase();
+        if (codeInDoc === inputUniq.trim().toUpperCase()) {
+          matchedBookingObj = { id: docSnap.id, ...data };
+        }
+      });
+
+      if (!matchedBookingObj) {
+        setError('Kode Unik tidak cocok dengan Kode Booking tersebut. Silakan cek kembali atau hubungi Agen Mitra Anda.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Successfully logged in! Call onLogin as 'jamaah' and pass data!
+      onLogin('jamaah', undefined, matchedBookingObj);
+    } catch (err: unknown) {
+      console.error(err);
+      setError('Terjadi kesalahan sistem saat otentikasi kode: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleForgotPassword = async () => {
     if (!email) {
@@ -471,102 +525,198 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
 
       <div className="mt-auto sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-white py-8 px-4 shadow-2xl rounded-t-[2.5rem] sm:rounded-2xl sm:px-10 border-t border-gray-100">
+          
+          {/* Tab Selector */}
+          <div className="flex border-b border-gray-100 mb-6 font-sans">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode('code');
+                setError('');
+              }}
+              className={`flex-1 pb-3 text-xs uppercase tracking-wider font-extrabold transition-all border-b-2 text-center ${
+                loginMode === 'code'
+                  ? 'border-amber-600 text-amber-700 font-black'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              🔑 Portal Kode Jamaah
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode('email');
+                setError('');
+              }}
+              className={`flex-1 pb-3 text-xs uppercase tracking-wider font-extrabold transition-all border-b-2 text-center ${
+                loginMode === 'email'
+                  ? 'border-amber-600 text-amber-700 font-black'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              ✉️ Akun Mandiri (Email / Google)
+            </button>
+          </div>
+
           {error && (
-            <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100 text-center">
+            <div className="mb-6 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100 text-center font-bold">
               {error}
             </div>
           )}
 
           <div className="space-y-6">
-            <form onSubmit={handleManualAction} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="contoh@gmail.com"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm"
-                    required
-                  />
+            {loginMode === 'code' ? (
+              /* Portal Jamaah Code-based Login Form */
+              <form onSubmit={handleCodeLogin} className="space-y-4 font-sans">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Kode Booking</label>
+                  <div className="relative">
+                    <LogIn className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={inputKode}
+                      onChange={(e) => setInputKode(e.target.value)}
+                      placeholder="Contoh: ORD-2026-UMR-004127"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-amber-500 focus:border-amber-500 text-sm font-bold tracking-wide placeholder-gray-300"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={isSignUp ? "Buat password baru" : "Masukkan password"}
-                    className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-450 hover:text-gray-600 focus:outline-none"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Kode Unik / Sandi</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type={showUniqCode ? "text" : "password"}
+                      value={inputUniq}
+                      onChange={(e) => setInputUniq(e.target.value)}
+                      placeholder="Contoh: 5Z97W1"
+                      className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-amber-500 focus:border-amber-500 text-sm font-mono tracking-widest placeholder-gray-300 font-bold"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowUniqCode(!showUniqCode)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-450 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showUniqCode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-              >
-                {isLoading ? 'Memproses...' : (
-                  <>
-                    {isSignUp ? 'Daftar Sekarang' : 'Login'}
-                    {!isSignUp && <LogIn className="ml-2 h-4 w-4" />}
-                  </>
-                )}
-              </button>
-              
-              <div className="flex items-center justify-between mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-xs text-amber-600 hover:text-amber-700 font-medium"
-                >
-                  {isSignUp ? 'Sudah punya akun? Login' : 'Buat akun manual baru'}
-                </button>
-                {!isSignUp && (
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="text-xs text-gray-500 hover:text-gray-700 font-medium"
-                  >
-                    Lupa Password? / Set Password
-                  </button>
-                )}
-              </div>
-            </form>
+                
+                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-[10px] text-amber-900 leading-normal mb-2 font-sans">
+                  🔑 <strong>Akses Khusus Berkas Mandiri:</strong> Akun Portal ini didaftarkan dari pihak Mitra/Agen Umaroh Anda. Paket Umroh Anda terkunci aman sesuai pilihan Mitra Anda dan tidak dapat diubah di sini. Silakan masukkan sandi untuk melengkapi biodata manifest & upload foto paspor/KTP.
+                </div>
 
-            <button
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className={`w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-xl shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-            >
-              {isLoading ? 'Memproses...' : (
-                <>
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-3" />
-                  Google
-                </>
-              )}
-            </button>
-            
-            {onGoToRegister && (
-              <button
-                onClick={() => onGoToRegister()}
-                className="mt-2 w-full flex justify-center items-center py-3 px-4 border border-amber-600 rounded-lg shadow-sm text-sm font-bold text-amber-600 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
-              >
-                Daftar sebagai Mitra
-              </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-black text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors cursor-pointer ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isLoading ? 'Memproses Otentikasi Kode...' : (
+                    <>
+                      Masuk Portal Mandiri Jamaah
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* Standard Email-based Login Form */
+              <form onSubmit={handleManualAction} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="contoh@gmail.com"
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={isSignUp ? "Buat password baru" : "Masukkan password"}
+                      className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-sm"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-450 hover:text-gray-600 focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isLoading ? 'Memproses...' : (
+                    <>
+                      {isSignUp ? 'Daftar Sekarang' : 'Login'}
+                      {!isSignUp && <LogIn className="ml-2 h-4 w-4" />}
+                    </>
+                  )}
+                </button>
+                
+                <div className="flex items-center justify-between mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+                  >
+                    {isSignUp ? 'Sudah punya akun? Login' : 'Buat akun manual baru'}
+                  </button>
+                  {!isSignUp && (
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                    >
+                      Lupa Password? / Set Password
+                    </button>
+                  )}
+                </div>
+              </form>
+            )}
+
+            {loginMode === 'email' && (
+              <>
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                  className={`w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-xl shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isLoading ? 'Memproses...' : (
+                    <>
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-3" />
+                      Google
+                    </>
+                  )}
+                </button>
+                
+                {onGoToRegister && (
+                  <button
+                    onClick={() => onGoToRegister()}
+                    className="mt-2 w-full flex justify-center items-center py-3 px-4 border border-amber-600 rounded-lg shadow-sm text-sm font-bold text-amber-600 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                  >
+                    Daftar sebagai Mitra
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

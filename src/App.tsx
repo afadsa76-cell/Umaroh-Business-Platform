@@ -38,6 +38,7 @@ import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { JamaahSession } from './types';
 
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
@@ -60,15 +61,43 @@ function App() {
 
 
 
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [isOffline, setIsOffline] = useState(!navigator.onLine || (typeof window !== 'undefined' && (!!(window as any).firestoreOfflineDetected || !!(window as any).firestoreQuotaExhausted)));
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
+    const handleFirestoreOffline = () => setIsOffline(true);
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('firestore-offline-detected', handleFirestoreOffline);
+    window.addEventListener('firestore-quota-exceeded', handleFirestoreOffline);
+
+    // Restore cached jamaah portal code session
+    const cachedSession = localStorage.getItem('jamaah_code_session');
+    if (cachedSession) {
+      try {
+        const session = JSON.parse(cachedSession);
+        setJamaahCodeSession(session);
+        setUserRole('jamaah');
+        setIsLoggedIn(true);
+        setIsAuthReady(true);
+        setActiveTab('dashboard' as TabType);
+      } catch (err) {
+        console.error("Failed to restore cached code session:", err);
+      }
+    }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // If currently logged in via a code session, prefer it to prevent overriding
+      if (localStorage.getItem('jamaah_code_session')) {
+        setIsLoggedIn(true);
+        setUserRole('jamaah');
+        setIsAuthReady(true);
+        return;
+      }
+
       if (user) {
         setIsLoggedIn(true);
         setUserEmail(user.email);
@@ -175,6 +204,8 @@ function App() {
       unsubscribe();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('firestore-offline-detected', handleFirestoreOffline);
+      window.removeEventListener('firestore-quota-exceeded', handleFirestoreOffline);
     };
   }, []);
 
@@ -281,12 +312,19 @@ function App() {
 
   const isMasterAdmin = userEmail ? (userEmail.toLowerCase() === 'operationalumaroh@gmail.com' || userEmail.toLowerCase() === 'afadsa76@gmail.com') : false;
 
-  const handleLogin = (role: Role, subRole?: string) => {
+  const [jamaahCodeSession, setJamaahCodeSession] = useState<JamaahSession | null>(null);
+
+  const handleLogin = (role: Role, subRole?: string, jamaahSession?: JamaahSession) => {
     setUserRole(role);
     if (subRole) {
       setSubRole(subRole);
     } else {
       setSubRole(null);
+    }
+    
+    if (role === 'jamaah' && jamaahSession) {
+      setJamaahCodeSession(jamaahSession);
+      localStorage.setItem('jamaah_code_session', JSON.stringify(jamaahSession));
     }
     
     if (role === 'mitra') setActiveTab('dashboard' as TabType);
@@ -305,6 +343,8 @@ function App() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      localStorage.removeItem('jamaah_code_session');
+      setJamaahCodeSession(null);
       setUserRole(null);
       setSubRole(null);
       setVendorName(null);
@@ -363,7 +403,7 @@ function App() {
   const renderContent = () => {
     if (isMasterAdmin) {
       if (adminViewMode === 'mitra') return <DashboardMitra />;
-      if (adminViewMode === 'jamaah') return <DashboardJamaah />;
+      if (adminViewMode === 'jamaah') return <DashboardJamaah jamaahCodeSession={null} onLogout={handleLogout} />;
       if (adminViewMode === 'vendor') {
         return <DashboardVendor vendorName="Master Admin" vendorType={null} onNavigate={handleTabChange} isMasterView={true} />;
       }
@@ -371,7 +411,7 @@ function App() {
     } else {
       // Route based on role first
       if (userRole === 'mitra') return <DashboardMitra />;
-      if (userRole === 'jamaah') return <DashboardJamaah />;
+      if (userRole === 'jamaah') return <DashboardJamaah jamaahCodeSession={jamaahCodeSession} onLogout={handleLogout} />;
       if (userRole === 'vendor') {
         if (activeTab === 'dashboard') {
           return <DashboardVendor vendorName={vendorName || userEmail?.split('@')[0] || 'Vendor'} vendorType={subRole || ''} onNavigate={handleTabChange} />;
@@ -540,6 +580,20 @@ function App() {
           >
             <Sliders className="w-3 h-3 md:w-4 md:h-4" /> Vendor
           </button>
+        </div>
+      )}
+
+      {/* Dynamic Offline / Connection Status indicator */}
+      {isOffline && (
+        <div className="fixed top-4 right-4 z-[100] flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl shadow-xl animate-bounce max-w-sm" style={{ animationDuration: '3s' }}>
+          <div className="relative flex h-3 w-3 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+          </div>
+          <div className="flex-1">
+            <p className="font-extrabold text-[11px] uppercase tracking-wider text-amber-800 leading-none">Status Koneksi Terganggu</p>
+            <p className="text-[10px] text-amber-700 font-semibold mt-1 leading-tight">Berjalan lancar dalam Mode Offline / Replika Lokal.</p>
+          </div>
         </div>
       )}
     </div>

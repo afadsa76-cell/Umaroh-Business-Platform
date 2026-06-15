@@ -273,7 +273,9 @@ export const MitraLiveMap: React.FC<MitraLiveMapProps> = ({ users }) => {
     if (urlOrPhone.startsWith('http')) {
       window.open(urlOrPhone, '_blank');
     } else {
-      window.open(`https://wa.me/${urlOrPhone}`, '_blank');
+      const cleaned = urlOrPhone.replace(/\D/g, '');
+      const waNumber = cleaned.startsWith('0') ? '62' + cleaned.substring(1) : cleaned;
+      window.open(`https://wa.me/${waNumber}`, '_blank');
     }
   };
 

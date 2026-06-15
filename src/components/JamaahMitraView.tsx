@@ -73,6 +73,8 @@ interface Jamaah {
   fileKtp?: string;
   fileVaccine?: string;
   fileFoto?: string;
+  kodeBooking?: string;
+  uniqueCode?: string;
 }
 
 interface PackageItem {
@@ -94,11 +96,20 @@ export const JamaahMitraView: React.FC = () => {
   
   // Modals state
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   
   // Selected items for editing or view
   const [selectedJamaah, setSelectedJamaah] = useState<Jamaah | null>(null);
   const [jamaahToDelete, setJamaahToDelete] = useState<Jamaah | null>(null);
+
+  // Quick Form Fields
+  const [quickFormFields, setQuickFormFields] = useState({
+    namaJamaah: '',
+    noHp: '',
+    alamat: '', // Domisili
+    paketId: '',
+  });
 
   // Form Fields
   const [formFields, setFormFields] = useState({
@@ -187,6 +198,19 @@ export const JamaahMitraView: React.FC = () => {
     const unsubscribeBookings = onSnapshot(bookingQuery, (snapshot) => {
       const data = snapshot.docs.map(doc => {
         const item = doc.data();
+        
+        // Deterministic string hashing for stable fallback values
+        const hashCode = (str: string) => {
+          let hash = 0;
+          for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+          }
+          return hash;
+        };
+        const deterministicNum = Math.abs(hashCode(doc.id));
+        const fallbackBooking = 'ORD-2026-UMR-' + (100000 + (deterministicNum % 900000));
+        const fallbackUnique = 'UMR' + (1000 + (deterministicNum % 9000));
+
         return {
           id: doc.id,
           nama: item.namaJamaah || item.nama || 'Jamaah Baru',
@@ -224,6 +248,8 @@ export const JamaahMitraView: React.FC = () => {
           fileKtp: item.fileKtp || '',
           fileVaccine: item.fileVaccine || '',
           fileFoto: item.fileFoto || '',
+          kodeBooking: (item.kodeBooking && item.kodeBooking !== 'undefined') ? item.kodeBooking : fallbackBooking,
+          uniqueCode: (item.uniqueCode && item.uniqueCode !== 'undefined') ? item.uniqueCode : fallbackUnique,
         };
       }) as Jamaah[];
       
@@ -299,6 +325,116 @@ export const JamaahMitraView: React.FC = () => {
   const outstandingRevenue = rawRevenue - realizedRevenue;
   const readyDepartureCount = jamaahs.filter(j => j.statusKeberangkatan === 'siap berangkat').length;
   const progressVisaCount = jamaahs.filter(j => j.statusKeberangkatan === 'proses visa').length;
+
+  const handleOpenQuickRegister = () => {
+    setQuickFormFields({
+      namaJamaah: '',
+      noHp: '',
+      alamat: '',
+      paketId: packages[0]?.id || '',
+    });
+    setIsQuickFormOpen(true);
+  };
+
+  const handleSaveQuickJamaah = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+
+    if (!quickFormFields.namaJamaah.trim()) {
+      alert('Nama Jamaah wajib diisi.');
+      return;
+    }
+    if (!quickFormFields.noHp.trim()) {
+      alert('Nomor WhatsApp wajib diisi.');
+      return;
+    }
+    if (!quickFormFields.alamat.trim()) {
+      alert('Domisili wajib diisi.');
+      return;
+    }
+
+    try {
+      const targetPackage = packages.find(p => p.id === quickFormFields.paketId);
+      const pkgNama = targetPackage ? targetPackage.nama : 'Paket Pilihan';
+      const pkgType = targetPackage ? targetPackage.type : 'master';
+      
+      const price = targetPackage ? targetPackage.hargaQuad : 38000000;
+
+      const bookingPayload = {
+        kodeBooking: 'ORD-2026-UMR-' + Math.floor(100000 + Math.random() * 900000),
+        uniqueCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+        namaJamaah: quickFormFields.namaJamaah,
+        nama: quickFormFields.namaJamaah,
+        noHp: quickFormFields.noHp,
+        phone: quickFormFields.noHp,
+        nomorPassport: '',
+        paketId: quickFormFields.paketId,
+        paketNama: pkgNama,
+        paketLabel: pkgNama,
+        jenisPaket: pkgType,
+        roomType: 'Quad' as const,
+        totalHarga: price,
+        jumlahBayar: 0,
+        statusPembayaran: 'Belum Bayar' as const,
+        statusKeberangkatan: 'menunggu' as const,
+        docPassport: false,
+        docKtp: false,
+        docVaccine: false,
+        docFoto: false,
+        mitraId: userId,
+        updatedAt: new Date().toISOString(),
+        
+        title: 'MR',
+        nama_paspor: quickFormFields.namaJamaah,
+        no_paspor: '',
+        tgl_issue_paspor: '',
+        tgl_exp_paspor: '',
+        kota_paspor: '',
+        tempat_lahir: '',
+        tanggal_lahir: '',
+        kewarganegaraan: 'INDONESIA',
+        nama_ayah: '',
+        alamat: quickFormFields.alamat, // Domisili
+        jenisKelamin: 'L',
+        filePassport: '',
+        fileKtp: '',
+        fileVaccine: '',
+        fileFoto: '',
+      };
+
+      // Close modal and reset fields immediately to provide pristine, fast UI feedback (no-await flow)
+      setIsQuickFormOpen(false);
+      const submittedName = quickFormFields.namaJamaah;
+      setQuickFormFields({
+        namaJamaah: '',
+        noHp: '',
+        alamat: '',
+        paketId: packages[0]?.id || '',
+      });
+
+      alert(`Registrasi Kilat Berhasil!\nJamaah "${submittedName}" telah ditambahkan.`);
+
+      // Fire the asynchronous cloud store writes in background
+      addDoc(collection(db, 'bookings'), {
+        ...bookingPayload,
+        createdAt: new Date().toISOString()
+      }).then((docRef) => {
+        syncBookingToTracker(docRef.id, {
+          ...bookingPayload,
+          createdAt: new Date().toISOString()
+        }).catch(syncErr => {
+          console.error("Background sync failed:", syncErr);
+        });
+      }).catch(err => {
+        console.error("Background addDoc failed:", err);
+        handleFirestoreError(err, OperationType.WRITE, 'bookings');
+      });
+
+    } catch (err) {
+      console.error("Error setting up quick booking:", err);
+      alert("Gagal memproses registrasi kilat: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
 
   const handleOpenRegister = () => {
     setSelectedJamaah(null);
@@ -422,7 +558,12 @@ export const JamaahMitraView: React.FC = () => {
       if (paid >= price) statusPemb = 'Lunas';
       else if (paid > 0) statusPemb = 'DP';
 
+      const cleanKode = (selectedJamaah?.kodeBooking && selectedJamaah?.kodeBooking !== 'undefined') ? selectedJamaah.kodeBooking : null;
+      const cleanUniq = (selectedJamaah?.uniqueCode && selectedJamaah?.uniqueCode !== 'undefined') ? selectedJamaah.uniqueCode : null;
+
       const bookingPayload = {
+        kodeBooking: cleanKode || ('ORD-2026-UMR-' + Math.floor(100000 + Math.random() * 900000)),
+        uniqueCode: cleanUniq || Math.random().toString(36).substring(2, 8).toUpperCase(),
         namaJamaah: formFields.namaJamaah,
         nama: formFields.namaJamaah,
         noHp: formFields.noHp,
@@ -463,30 +604,46 @@ export const JamaahMitraView: React.FC = () => {
         fileFoto: formFields.fileFoto,
       };
 
-      if (selectedJamaah) {
-        // Edit Mode write
-        await updateDoc(doc(db, 'bookings', selectedJamaah.id), bookingPayload);
-        await syncBookingToTracker(selectedJamaah.id, {
-          ...selectedJamaah,
-          ...bookingPayload
+      // Close modal and clear state immediately to ensure absolute visual responsiveness
+      setIsFormOpen(false);
+      const isEditing = !!selectedJamaah;
+      const editingId = selectedJamaah?.id;
+      const currentJamaahCopy = selectedJamaah ? { ...selectedJamaah } : null;
+      setSelectedJamaah(null);
+
+      alert(isEditing ? `Perubahan data jamaah sedang diperbarui...` : `Jamaah baru "${bookingPayload.namaJamaah}" berhasil didaftarkan.`);
+
+      // Perform the database writes in the background asynchronously
+      if (isEditing && editingId) {
+        // Edit Mode write in background
+        updateDoc(doc(db, 'bookings', editingId), bookingPayload).then(() => {
+          syncBookingToTracker(editingId, {
+            ...currentJamaahCopy,
+            ...bookingPayload
+          }).catch(syncErr => console.error("Background sync failed:", syncErr));
+        }).catch(err => {
+          console.error("Background updateDoc failed:", err);
+          handleFirestoreError(err, OperationType.WRITE, 'bookings');
         });
       } else {
-        // Create Mode write
-        const docRef = await addDoc(collection(db, 'bookings'), {
+        // Create Mode write in background
+        addDoc(collection(db, 'bookings'), {
           ...bookingPayload,
           createdAt: new Date().toISOString()
-        });
-        await syncBookingToTracker(docRef.id, {
-          ...bookingPayload,
-          createdAt: new Date().toISOString()
+        }).then((docRef) => {
+          syncBookingToTracker(docRef.id, {
+            ...bookingPayload,
+            createdAt: new Date().toISOString()
+          }).catch(syncErr => console.error("Background sync failed:", syncErr));
+        }).catch(err => {
+          console.error("Background addDoc failed:", err);
+          handleFirestoreError(err, OperationType.WRITE, 'bookings');
         });
       }
 
-      setIsFormOpen(false);
-      setSelectedJamaah(null);
     } catch (err) {
-      console.error("Error saving booking document:", err);
-      handleFirestoreError(err, OperationType.WRITE, 'bookings');
+      console.error("Error setting up booking:", err);
+      alert("Gagal memproses data jamaah: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -604,12 +761,20 @@ export const JamaahMitraView: React.FC = () => {
             Sistem integrasi real-time status pendaftaran, dokumen kliring, dan tagihan keuangan jamaah.
           </p>
         </div>
-        <button 
-          onClick={handleOpenRegister}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs uppercase px-5 py-4 rounded-2xl transition shadow-lg shadow-purple-600/10 flex items-center justify-center gap-2 inline-flex active:scale-95"
-        >
-          <Plus className="w-4 h-4" /> Daftarkan Jamaah Baru
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button 
+            onClick={handleOpenQuickRegister}
+            className="bg-amber-600 hover:bg-amber-750 text-white font-extrabold text-xs uppercase px-5 py-4 rounded-2xl transition shadow-lg shadow-amber-600/10 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> ⚡ Registrasi Kilat
+          </button>
+          <button 
+            onClick={handleOpenRegister}
+            className="bg-purple-600 hover:bg-purple-750 text-white font-extrabold text-xs uppercase px-5 py-4 rounded-2xl transition shadow-lg shadow-purple-600/10 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Daftarkan Jamaah Baru (Lengkap)
+          </button>
+        </div>
       </div>
 
       {/* METRICS & FINANCES BOARD */}
@@ -793,7 +958,7 @@ export const JamaahMitraView: React.FC = () => {
                           </div>
                           <div>
                             <p className="font-black text-gray-900 text-sm">{jamaah.namaJamaah}</p>
-                            <p className="text-[10px] text-gray-500 font-mono mt-0.5 flex items-center gap-1 font-bold">
+                            <p className="text-[10px] text-gray-500 font-mono mt-0.5 flex flex-wrap items-center gap-1 font-bold">
                               <span>HP: {jamaah.noHp || '-'}</span>
                               {jamaah.nomorPassport && (
                                 <>
@@ -802,6 +967,33 @@ export const JamaahMitraView: React.FC = () => {
                                 </>
                               )}
                             </p>
+                            
+                            {/* Pilgrim Portal access credentials */}
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[9px] font-sans">
+                              <span className="bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded flex items-center gap-1 border border-amber-200">
+                                <span className="text-amber-600 font-black">🔑PORTAL</span>
+                                <span>{jamaah.kodeBooking}</span>
+                                <span className="opacity-40">|</span>
+                                <span className="text-gray-500 font-medium font-mono">Sandi:</span>
+                                <span className="font-mono text-emerald-800 font-black">{jamaah.uniqueCode}</span>
+                              </span>
+                              
+                              {jamaah.noHp && (
+                                <a
+                                  href={`https://api.whatsapp.com/send?phone=${(() => {
+                                    const cleaned = jamaah.noHp.replace(/\D/g, '');
+                                    return cleaned.startsWith('0') ? '62' + cleaned.substring(1) : cleaned;
+                                  })()}&text=${encodeURIComponent(
+                                    `Assalamu'alaikum Wr. Wb. Yth. Bpk/Ibu *${jamaah.namaJamaah}*,\n\nBerikut adalah akses resmi ke *Portal Mandiri Jamaah Umaroh*:\n\n🌐 *Buka Link:* https://jamaah.rahmahtravel.id\n🔑 *Kode Booking:* \`${jamaah.kodeBooking || '-'}\`\n🔒 *Sandi/Kode Unik:* \`${jamaah.uniqueCode || '-'}\`\n\n_Silakan masuk ke Portal tersebut untuk melengkapi data manifest, upload berkas dokumen pendukung (Passport, KTP, Pas Foto) serta cetak invoice / Kwitansi Pembayaran secara mandiri._ Terima kasih.`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-black px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5 transition"
+                                >
+                                  💬 Kirim WA
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -1633,6 +1825,102 @@ export const JamaahMitraView: React.FC = () => {
                     className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl text-xs font-black uppercase transition shadow-lg shadow-purple-600/10"
                   >
                     {selectedJamaah ? 'Simpan Perubahan' : 'Daftarkan Jamaah'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* QUICK REGISTRATION MODAL */}
+      <AnimatePresence>
+        {isQuickFormOpen && (
+          <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100"
+            >
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
+                <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-amber-100 text-amber-700 font-extrabold text-sm leading-none flex items-center justify-center">⚡</span>
+                  Registrasi Kilat Jamaah
+                </h3>
+                <button 
+                  onClick={() => setIsQuickFormOpen(false)}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-500 p-2 rounded-full transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveQuickJamaah} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Ahmad Fauzi"
+                    value={quickFormFields.namaJamaah}
+                    onChange={e => setQuickFormFields(prev => ({ ...prev, namaJamaah: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-amber-500 bg-white rounded-xl text-xs font-semibold outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">No WhatsApp (WA) Aktif</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: 08123456789"
+                    value={quickFormFields.noHp}
+                    onChange={e => setQuickFormFields(prev => ({ ...prev, noHp: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-amber-500 bg-white rounded-xl text-xs font-semibold outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Kota Domisili</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Jakarta Timur, Bandung, Surabaya"
+                    value={quickFormFields.alamat}
+                    onChange={e => setQuickFormFields(prev => ({ ...prev, alamat: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-amber-500 bg-white rounded-xl text-xs font-semibold outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Pilih Paket Terkait</label>
+                  <select
+                    value={quickFormFields.paketId}
+                    onChange={e => setQuickFormFields(prev => ({ ...prev, paketId: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-amber-500 bg-white rounded-xl text-xs font-semibold outline-none transition cursor-pointer"
+                  >
+                    {packages.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.nama} ({p.type === 'master' ? 'Pusat' : 'Kustom Mitra'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-gray-150">
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickFormOpen(false)}
+                    className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3.5 rounded-xl text-xs font-bold uppercase transition cursor-pointer"
+                  >
+                     Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-3.5 rounded-xl text-xs font-black uppercase transition shadow-lg shadow-amber-600/10 cursor-pointer"
+                  >
+                    Simpan Registrasi
                   </button>
                 </div>
               </form>

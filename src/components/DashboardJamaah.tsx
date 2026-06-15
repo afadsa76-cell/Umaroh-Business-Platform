@@ -3,16 +3,17 @@ import {
   Search, Star, LayoutDashboard, Package, History, User,
   ShoppingCart, Tag, Compass, Sparkles, BookOpen,
   MessageCircle, CheckCircle, Info, Minus, Plus, Check,
-  BadgePercent, Send, X, Bell, AlertTriangle
+  BadgePercent, Send, X, Bell, AlertTriangle, Printer, Upload
 } from 'lucide-react';
 import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc } from '../firebase';
 import { KatalogPaketView } from './KatalogPaketView';
 import { RiwayatPemesananView } from './RiwayatPemesananView';
 import { ProfileView } from './ProfileView';
-import { AppNotification } from '../types';
+import { AppNotification, JamaahSession, BookingRecord } from '../types';
 import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
+import { PortalHomeTab, PortalInfoTab, PortalKeuanganTab, PortalLainnyaTab } from './PortalSubTabs';
 
-type JamaahTab = 'overview' | 'katalog' | 'riwayat' | 'profile';
+type JamaahTab = 'overview' | 'pendaftaran_mandiri' | 'katalog' | 'riwayat' | 'profile';
 
 interface ShopProduct {
   id: string;
@@ -51,8 +52,58 @@ interface ChatMessage {
   content: string;
 }
 
-export const DashboardJamaah = () => {
-  const [activeTab, setActiveTab] = useState<JamaahTab>('overview');
+interface DashboardJamaahProps {
+  jamaahCodeSession?: JamaahSession | BookingRecord | null;
+  onLogout?: () => void;
+}
+
+export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSession, onLogout }) => {
+  const [activeTab, setActiveTab] = useState<JamaahTab>(jamaahCodeSession ? 'pendaftaran_mandiri' : 'overview');
+  const [bookingData, setBookingData] = useState<BookingRecord | null>((jamaahCodeSession as BookingRecord) || null);
+  const [pilgrimBookings, setPilgrimBookings] = useState<BookingRecord[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(!jamaahCodeSession);
+  const [selectedBookingId, setSelectedBookingId] = useState<string>(jamaahCodeSession?.id || '');
+
+  const [savingManifest, setSavingManifest] = useState(false);
+  const [showPrintKwitansi, setShowPrintKwitansi] = useState(false);
+  const [portalTab, setPortalTab] = useState<'beranda' | 'info' | 'keuangan' | 'dokumen' | 'lainnya'>('beranda');
+  const [prepChecklist, setPrepChecklist] = useState<{[key: string]: boolean}>(() => {
+    try {
+      const cached = localStorage.getItem('umaroh_prep_checklist_' + (jamaahCodeSession?.id || 'default'));
+      return cached ? JSON.parse(cached) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const handleTogglePrepChecklist = (key: string) => {
+    setPrepChecklist(prev => {
+      const updated = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem('umaroh_prep_checklist_' + (jamaahCodeSession?.id || 'default'), JSON.stringify(updated));
+      } catch (err) {
+        console.error(err);
+      }
+      return updated;
+    });
+  };
+
+  const [manifestForm, setManifestForm] = useState({
+    title: '',
+    nama_paspor: '',
+    no_paspor: '',
+    tgl_issue_paspor: '',
+    tgl_exp_paspor: '',
+    kota_paspor: '',
+    tempat_lahir: '',
+    tanggal_lahir: '',
+    kewarganegaraan: 'Indonesia',
+    nama_ayah: '',
+    alamat: '',
+    jenisKelamin: '',
+    noHp: ''
+  });
+
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [katalogSearch, setKatalogSearch] = useState<string>('');
@@ -67,6 +118,107 @@ export const DashboardJamaah = () => {
     });
     return () => unsubscribeNotifications();
   }, [userId]);
+
+  // Synchronous manifestation updates
+  useEffect(() => {
+    if (bookingData) {
+      setManifestForm({
+        title: bookingData.title || '',
+        nama_paspor: bookingData.nama_paspor || bookingData.namaJamaah || '',
+        no_paspor: bookingData.no_paspor || bookingData.nomorPassport || '',
+        tgl_issue_paspor: bookingData.tgl_issue_paspor || '',
+        tgl_exp_paspor: bookingData.tgl_exp_paspor || '',
+        kota_paspor: bookingData.kota_paspor || '',
+        tempat_lahir: bookingData.tempat_lahir || '',
+        tanggal_lahir: bookingData.tanggal_lahir || '',
+        kewarganegaraan: bookingData.kewarganegaraan || 'Indonesia',
+        nama_ayah: bookingData.nama_ayah || '',
+        alamat: bookingData.alamat || '',
+        jenisKelamin: bookingData.jenisKelamin || '',
+        noHp: bookingData.noHp || ''
+      });
+    }
+  }, [bookingData]);
+
+  // Real-time listener for code session document
+  useEffect(() => {
+    if (!jamaahCodeSession?.id) return;
+    const unsubscribe = onSnapshot(doc(db, 'bookings', jamaahCodeSession.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const item = docSnap.data();
+        const hashCode = (str: string) => {
+          let hash = 0;
+          for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+          return hash;
+        };
+        const deterministicNum = Math.abs(hashCode(docSnap.id));
+        const fallbackBooking = 'ORD-2026-UMR-' + (100000 + (deterministicNum % 900000));
+        const fallbackUnique = 'UMR' + (1000 + (deterministicNum % 9000));
+
+        const data = { 
+          id: docSnap.id, 
+          ...item,
+          kodeBooking: (item.kodeBooking && item.kodeBooking !== 'undefined') ? item.kodeBooking : fallbackBooking,
+          uniqueCode: (item.uniqueCode && item.uniqueCode !== 'undefined') ? item.uniqueCode : fallbackUnique
+        };
+        setBookingData(data);
+      }
+    });
+    return () => unsubscribe();
+  }, [jamaahCodeSession?.id]);
+
+  // Real-time listener for standard logged-in user's bookings
+  useEffect(() => {
+    if (jamaahCodeSession) {
+      setLoadingBookings(false);
+      return;
+    }
+    if (!userId) {
+      setLoadingBookings(false);
+      return;
+    }
+    const q = query(collection(db, 'bookings'), where('jamaahId', '==', userId));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const list: BookingRecord[] = [];
+      snap.forEach(docSnap => {
+        const item = docSnap.data();
+        const hashCode = (str: string) => {
+          let hash = 0;
+          for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+          return hash;
+        };
+        const deterministicNum = Math.abs(hashCode(docSnap.id));
+        const fallbackBooking = 'ORD-2026-UMR-' + (100000 + (deterministicNum % 900000));
+        const fallbackUnique = 'UMR' + (1000 + (deterministicNum % 9000));
+
+        list.push({ 
+          id: docSnap.id, 
+          ...item,
+          kodeBooking: (item.kodeBooking && item.kodeBooking !== 'undefined') ? item.kodeBooking : fallbackBooking,
+          uniqueCode: (item.uniqueCode && item.uniqueCode !== 'undefined') ? item.uniqueCode : fallbackUnique
+        } as BookingRecord);
+      });
+      setPilgrimBookings(list);
+      setLoadingBookings(false);
+      
+      // Auto-select first booking if none selected
+      if (list.length > 0 && !selectedBookingId) {
+        setSelectedBookingId(list[0].id);
+        setBookingData(list[0]);
+      }
+    });
+    return () => unsubscribe();
+  }, [userId, jamaahCodeSession, selectedBookingId]);
+
+  // Update chosen bookingData when selectedBookingId changes for standard users
+  useEffect(() => {
+    if (jamaahCodeSession) return;
+    if (!selectedBookingId || pilgrimBookings.length === 0) return;
+    const found = pilgrimBookings.find(b => b.id === selectedBookingId);
+    if (found) {
+      setBookingData(found);
+    }
+  }, [selectedBookingId, pilgrimBookings, jamaahCodeSession]);
 
   // Real-time Database state
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
@@ -386,6 +538,476 @@ export const DashboardJamaah = () => {
     setKatalogSearch(filterText);
     setActiveTab('katalog');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveManifest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const id = bookingData?.id;
+    if (!id) {
+      alert("Pilih program keberangkatan terlebih dahulu.");
+      return;
+    }
+    setSavingManifest(true);
+    try {
+      const { updateDoc, doc, db } = await import('../firebase');
+      await updateDoc(doc(db, 'bookings', id), {
+        ...manifestForm,
+        namaJamaah: manifestForm.nama_paspor || bookingData.namaJamaah,
+        nama: manifestForm.nama_paspor || bookingData.namaJamaah,
+        updatedAt: new Date().toISOString()
+      });
+      alert("Sukses menyimpan data manifest!");
+    } catch (err) {
+      console.error("Gagal menyimpan manifest:", err);
+      alert("Error menyimpan data: " + err);
+    } finally {
+      setSavingManifest(false);
+    }
+  };
+
+  const fileToBase64Value = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if (typeof reader.result === 'string') resolve(reader.result);
+        else reject(new Error('Failed reading file'));
+      };
+      reader.onerror = e => reject(e);
+    });
+  };
+
+  const handleManifestFileChange = async (field: 'docPassport' | 'docKtp' | 'docVaccine' | 'docFoto' | 'filePassport' | 'fileKtp' | 'fileVaccine' | 'fileFoto', e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1200000) { 
+      alert('Ukuran berkas terlalu besar. Maksimal adalah 1.2 MB agar tersimpan optimal.');
+      return;
+    }
+    
+    try {
+      const base64 = await fileToBase64Value(file);
+      const targetDocId = bookingData?.id;
+      if (!targetDocId) return;
+
+      const { updateDoc, doc, db } = await import('../firebase');
+      
+      // Map correctly to make sure sync fields match both types of references in listings
+      const isFileField = field.startsWith('file');
+      const partnerField = isFileField ? field : ('file' + field.substring(3).charAt(0).toUpperCase() + field.substring(4));
+      const docField = isFileField ? ('doc' + field.substring(4).charAt(0).toUpperCase() + field.substring(5)) : field;
+
+      await updateDoc(doc(db, 'bookings', targetDocId), {
+        [partnerField]: base64,
+        [docField]: base64,
+        updatedAt: (new Date()).toISOString()
+      });
+      alert('Dokumen berhasil diunggah ke cloud database!');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengunggah berkas: ' + err);
+    }
+  };
+
+  const renderPendaftaranMandiri = () => {
+    if (loadingBookings) {
+      return (
+        <div className="p-12 text-center font-sans">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500 font-bold">Memuat portal kemandirian Anda...</p>
+        </div>
+      );
+    }
+
+    const currentBooking = bookingData;
+
+    if (!currentBooking) {
+      return (
+        <div className="p-6 max-w-md mx-auto text-center font-sans">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+            <AlertTriangle className="w-10 h-10 text-amber-600 mx-auto mb-3" />
+            <h4 className="text-sm font-black text-gray-901">Program Keberangkatan Tidak Ditemukan</h4>
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">Mohon daftarkan paket Anda atau hubungi mitra agen Umaroh terdekat untuk konfirmasi data.</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="max-w-4xl mx-auto w-full pb-24 animate-in fade-in duration-300 font-sans px-2 md:px-0">
+        
+        {/* TOP COMPRESS NAVIGATION ROW (Desktop Pills) */}
+        <div className="hidden md:flex items-center justify-between bg-white border border-gray-150 p-2.5 rounded-2xl shadow-xs mb-6 font-sans">
+          <div className="flex items-center gap-1">
+            <span className="bg-emerald-900 text-white p-2 rounded-xl text-xs font-black">🕌</span>
+            <div>
+              <p className="text-xs font-black text-emerald-950 font-sans">Portal Jamaah Mandiri</p>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider font-mono">Umaroh.com Synergy System</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 p-1 bg-gray-50 rounded-xl border border-gray-100">
+            {([
+              { id: 'beranda', label: 'Beranda', icon: '🏠' },
+              { id: 'info', label: 'Info Paket', icon: '📦' },
+              { id: 'keuangan', label: 'Keuangan', icon: '💳' },
+              { id: 'dokumen', label: 'Travel Dok', icon: '📝' },
+              { id: 'lainnya', label: 'Lainnya', icon: '💬' }
+            ] as const).map((tab) => {
+              const isActive = portalTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setPortalTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    isActive 
+                      ? 'bg-emerald-800 text-white shadow-xs' 
+                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-xl border border-red-100 transition-all cursor-pointer"
+            >
+              Keluar Portal
+            </button>
+          )}
+        </div>
+
+        {/* ACTIVE TAB RENDER ENGINE */}
+        <div className="space-y-6">
+          {portalTab === 'beranda' && (
+            <PortalHomeTab
+              bookingData={currentBooking}
+              prepChecklist={prepChecklist}
+              setPortalTab={setPortalTab}
+              setShowPrintKwitansi={setShowPrintKwitansi}
+            />
+          )}
+
+          {portalTab === 'info' && (
+            <PortalInfoTab
+              bookingData={currentBooking}
+              setPortalTab={setPortalTab}
+            />
+          )}
+
+          {portalTab === 'keuangan' && (
+            <PortalKeuanganTab
+              bookingData={currentBooking}
+              setShowPrintKwitansi={setShowPrintKwitansi}
+            />
+          )}
+
+          {portalTab === 'lainnya' && (
+            <PortalLainnyaTab
+              bookingData={currentBooking}
+              prepChecklist={prepChecklist}
+              handleTogglePrepChecklist={handleTogglePrepChecklist}
+            />
+          )}
+
+          {portalTab === 'dokumen' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start font-sans">
+              
+              {/* Left Column: Manifest & Biodata Form */}
+              <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-150 p-6 shadow-xs">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                  <span className="text-xl">📇</span>
+                  <div>
+                    <h3 className="text-sm font-black text-emerald-950">Manifest & Biodata Jamaah</h3>
+                    <p className="text-[10px] text-gray-400 font-bold">Harap isi sesuai paspor/KTP asli untuk manifest penerbangan</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSaveManifest} className="space-y-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Panggilan (Title)</label>
+                      <select
+                        value={manifestForm.title}
+                        onChange={(e) => setManifestForm({ ...manifestForm, title: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                      >
+                        <option value="">-- Pilih --</option>
+                        <option value="Tuan (Mr)">Mr (Tuan)</option>
+                        <option value="Nyonya (Mrs)">Mrs (Nyonya)</option>
+                        <option value="Nona (Ms)">Ms (Nona)</option>
+                        <option value="Anak (Child)">Child (Anak)</option>
+                        <option value="Bayi (Infant)">Infant (Bayi)</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nama Sesuai Paspor / KTP</label>
+                      <input
+                        type="text"
+                        value={manifestForm.nama_paspor}
+                        onChange={(e) => setManifestForm({ ...manifestForm, nama_paspor: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                        placeholder="Nama Lengkap"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nomor Paspor</label>
+                      <input
+                        type="text"
+                        value={manifestForm.no_paspor}
+                        onChange={(e) => setManifestForm({ ...manifestForm, no_paspor: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                        placeholder="Contoh: C123456"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Kota Penerbit Paspor</label>
+                      <input
+                        type="text"
+                        value={manifestForm.kota_paspor}
+                        onChange={(e) => setManifestForm({ ...manifestForm, kota_paspor: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                        placeholder="Kantor Imigrasi"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tanggal Terbit Paspor</label>
+                      <input
+                        type="date"
+                        value={manifestForm.tgl_issue_paspor}
+                        onChange={(e) => setManifestForm({ ...manifestForm, tgl_issue_paspor: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-mono text-gray-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tanggal Habis Berlaku</label>
+                      <input
+                        type="date"
+                        value={manifestForm.tgl_exp_paspor}
+                        onChange={(e) => setManifestForm({ ...manifestForm, tgl_exp_paspor: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-mono text-gray-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tempat Lahir</label>
+                      <input
+                        type="text"
+                        value={manifestForm.tempat_lahir}
+                        onChange={(e) => setManifestForm({ ...manifestForm, tempat_lahir: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                        placeholder="Kota Tempat Lahir"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tanggal Lahir</label>
+                      <input
+                        type="date"
+                        value={manifestForm.tanggal_lahir}
+                        onChange={(e) => setManifestForm({ ...manifestForm, tanggal_lahir: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-mono text-gray-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nama Ayah Kandung</label>
+                      <input
+                        type="text"
+                        value={manifestForm.nama_ayah}
+                        onChange={(e) => setManifestForm({ ...manifestForm, nama_ayah: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                        placeholder="Nama Ayah Kandung"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">No Handphone (WhatsApp)</label>
+                      <input
+                        type="text"
+                        value={manifestForm.noHp}
+                        onChange={(e) => setManifestForm({ ...manifestForm, noHp: e.target.value })}
+                        className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                        placeholder="No Handphone"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Alamat Tinggal / Pengiriman Koper</label>
+                    <textarea
+                      value={manifestForm.alamat}
+                      onChange={(e) => setManifestForm({ ...manifestForm, alamat: e.target.value })}
+                      rows={2}
+                      className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 font-bold"
+                      placeholder="Alamat Lengkap"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={savingManifest}
+                    className="w-full bg-emerald-700 text-white font-black hover:bg-emerald-800 py-3 rounded-xl shadow-md text-xs tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    {savingManifest ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <span>💾</span> Simpan Manifest Data
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+
+              {/* Right Column: Digital Travel Docs Synergizer */}
+              <div className="lg:col-span-5 space-y-6">
+                
+                {/* Visual Status File Summary */}
+                <div className="bg-white rounded-2xl border border-gray-150 p-6 shadow-xs">
+                  <h4 className="text-xs font-black text-emerald-950 uppercase mb-3 tracking-wider">Kelengkapan Berkas Dokumen</h4>
+                  
+                  {/* Progress Line */}
+                  {(() => {
+                    const hasPas = !!currentBooking.filePassport || !!currentBooking.docPassport;
+                    const hasKtp = !!currentBooking.fileKtp || !!currentBooking.docKtp;
+                    const hasVac = !!currentBooking.fileVaccine || !!currentBooking.docVaccine;
+                    const hasPic = !!currentBooking.fileFoto || !!currentBooking.docFoto;
+                    const count = (hasPas ? 1 : 0) + (hasKtp ? 1 : 0) + (hasVac ? 1 : 0) + (hasPic ? 1 : 0);
+                    const pct = Math.round((count / 4) * 100);
+
+                    return (
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center text-[10px] font-black text-gray-400 mb-1">
+                          <span>DOKUMEN TERUNGGAH</span>
+                          <span className={`text-emerald-600`}>{count} / 4 ({pct}%)</span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-500 rounded-full ${pct === 100 ? 'bg-emerald-600' : 'bg-emerald-500'}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-3.5 text-xs">
+                    {[
+                      { key: 'Passport', title: 'Paspor RI Asli', desc: 'Scan halaman depan nama lengkap tertera jelas', file: currentBooking.filePassport || currentBooking.docPassport, apiField: 'filePassport' },
+                      { key: 'Ktp', title: 'KTP & Kartu Keluarga', desc: 'Scan berwarna KTP & KK format JPG/PNG', file: currentBooking.fileKtp || currentBooking.docKtp, apiField: 'fileKtp' },
+                      { key: 'Vaccine', title: 'Sertifikat Vaksin', desc: 'Sertifikat Vaksin Covid dosis lengkap / Meningitis', file: currentBooking.fileVaccine || currentBooking.docVaccine, apiField: 'fileVaccine' },
+                      { key: 'Foto', title: 'Pasfoto Background Putih', desc: 'Ukuran 4x6 zoom muka 80% tanpa kaca mata', file: currentBooking.fileFoto || currentBooking.docFoto, apiField: 'fileFoto' },
+                    ].map((doc) => {
+                      const isUploaded = !!doc.file;
+                      return (
+                        <div key={doc.key} className="bg-gray-50 border border-gray-100 rounded-xl p-3.5 flex items-start gap-3 relative transition-all hover:bg-gray-100/50">
+                          <div className={`p-2 rounded-xl text-xs flex-shrink-0 ${isUploaded ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-600'}`}>
+                            {isUploaded ? '✓' : '⚠'}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-emerald-950 truncate leading-snug">{doc.title}</p>
+                            <p className="text-[10px] text-gray-400 font-bold leading-normal mt-0.5">{doc.desc}</p>
+                            
+                            {isUploaded ? (
+                              <div className="mt-2.5 flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                  ✓ Sudah Ada
+                                </span>
+                                <a 
+                                  href={doc.file} 
+                                  download={`dokumen_${doc.key.toLowerCase()}.jpg`}
+                                  className="text-[9px] font-bold text-gray-400 hover:text-emerald-700 underline truncate max-w-[120px]"
+                                >
+                                  Unduh File
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="mt-2 text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md inline-block">
+                                ⚠ Belum Unggah
+                              </div>
+                            )}
+                          </div>
+
+                          <label className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-200 transition-all cursor-pointer flex items-center justify-center self-center flex-shrink-0">
+                            <Upload className="w-3.5 h-3.5 text-gray-400 hover:text-emerald-800" />
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf"
+                              className="hidden"
+                              onChange={(e) => handleManifestFileChange(doc.apiField as 'filePassport' | 'fileKtp' | 'fileVaccine' | 'fileFoto', e)}
+                            />
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="bg-emerald-950 border border-emerald-900 rounded-2xl p-5 text-white shadow-sm font-sans relative overflow-hidden">
+                  <div className="absolute right-[-10px] bottom-[-10px] text-white/5 font-black text-8xl pointer-events-none select-none">
+                    🕋
+                  </div>
+                  <h4 className="text-xs font-black text-emerald-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <span>🛡</span> Garansi Dokumen Aman
+                  </h4>
+                  <p className="text-[10px] text-emerald-100 font-bold leading-relaxed">
+                    Sistem kemitraan Umaroh.com dilengkapi enkripsi database modern. Berkas fisik dokumen Anda hanya digunakan untuk manifestasi tiket, pengurusan visa haji/umroh, dan asuransi perjalanan muasassah secara legal.
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* BOTTOM NAVIGATION FOR MOBILE (Floating Sticky Tab bar matching App screenshots) */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-150 py-2.5 px-4 flex items-center justify-around shadow-lg z-50">
+          {([
+            { id: 'beranda', label: 'Beranda', icon: '🏠' },
+            { id: 'info', label: 'Info Paket', icon: '📦' },
+            { id: 'keuangan', label: 'Keuangan', icon: '💳' },
+            { id: 'dokumen', label: 'Travel Dok', icon: '📝' },
+            { id: 'lainnya', label: 'Lainnya', icon: '💬' }
+          ] as const).map((tab) => {
+            const isActive = portalTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setPortalTab(tab.id)}
+                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
+                  isActive ? 'text-emerald-700 font-black scale-105' : 'text-gray-400 hover:text-gray-650'
+                }`}
+              >
+                <span className="text-lg">{tab.icon}</span>
+                <span className="text-[10px] font-bold tracking-tight">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+      </div>
+    );
   };
 
   const renderOverview = () => (
@@ -984,6 +1606,236 @@ export const DashboardJamaah = () => {
     </div>
   );
 
+  if (jamaahCodeSession) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col w-full relative">
+        {/* Simple elegant sticky header for Portal Mandiri */}
+        <header className="bg-emerald-900 border-b border-emerald-800 text-white py-3.5 px-6 sticky top-0 z-40 shadow-sm flex items-center justify-between font-sans print:hidden">
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
+              🗝️ PORTAL KHUSUS JAMAAH
+            </div>
+            <span className="hidden sm:inline-block w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+            <span className="hidden sm:inline-block text-xs font-bold text-emerald-100">Informasi Keberangkatan & Isian Data Mandiri</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden md:block">
+              <p className="text-xs font-black">{bookingData?.namaJamaah || 'Calon Tamu Allah'}</p>
+              <p className="text-[10px] text-emerald-300 font-mono tracking-wider">Booking: {bookingData?.kodeBooking}</p>
+            </div>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="bg-red-500/95 hover:bg-red-650 text-white font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+              >
+                Keluar Portal
+              </button>
+            )}
+          </div>
+        </header>
+
+        <main className="flex-grow pb-16">
+          {renderPendaftaranMandiri()}
+        </main>
+
+        {/* PRINTABLE OFFICIAL OVERLAY MODAL */}
+        {showPrintKwitansi && bookingData && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto print:p-0 print:bg-white print:relative print:z-0 animate-in fade-in duration-200">
+            <div className="bg-white p-8 max-w-3xl w-full rounded-3xl shadow-2xl relative border border-gray-150 flex flex-col gap-6 print:shadow-none print:border-none print:p-0 animate-in zoom-in-95 duration-200">
+              
+              {/* MODAL CONTROL STRIP */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4 print:hidden">
+                <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold text-sm">
+                  <Printer className="w-5 h-5 text-emerald-600" />
+                  Kwitansi Pelunasan & Faktur Tagihan Jamaah
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      window.print();
+                    }}
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+                  >
+                    Print
+                  </button>
+                  <button
+                    onClick={() => setShowPrintKwitansi(false)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+
+              {/* INVOICE CONTENT (PAPER STYLE) */}
+              <div id="printable-kwitansi-area" className="bg-white p-6 md:p-8 border border-gray-300 md:border-2 border-dashed rounded-2xl relative w-full font-sans text-gray-800 print:border-none print:p-0">
+                <style dangerouslySetInnerHTML={{__html: `
+                  @media print {
+                    body * {
+                      visibility: hidden !important;
+                    }
+                    #printable-kwitansi-area, #printable-kwitansi-area * {
+                      visibility: visible !important;
+                    }
+                    #printable-kwitansi-area {
+                      position: absolute !important;
+                      left: 0 !important;
+                      top: 0 !important;
+                      width: 100% !important;
+                      border: none !important;
+                    }
+                  }
+                `}} />
+
+                <div className="flex flex-col md:flex-row justify-between gap-6 pb-6 border-b border-gray-200">
+                  <div className="space-y-1">
+                    <img 
+                      src="https://umaroh.com/assets/logo-light-D4UzTX0_.png" 
+                      alt="Logo" 
+                      className="h-10 object-contain bg-[#055734] p-2 rounded-lg pointer-events-none select-none"
+                      referrerPolicy="no-referrer"
+                    />
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">PT Nawaitul Umrah Haji</p>
+                  </div>
+                  <div className="md:text-right font-sans text-xs">
+                    <h3 className="text-sm font-black text-emerald-800">KWITANSI RESMI PELUNASAN</h3>
+                    <p className="font-mono text-gray-500 mt-1">No: {bookingData.kodeBooking || 'BELUM DIATUR'}</p>
+                    <p className="text-gray-400 mt-0.5 font-sans">Tanggal Cetak: {new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6 border-b border-gray-150 text-xs text-gray-600 font-sans">
+                  <div className="space-y-1.5">
+                    <p className="uppercase text-[9px] font-black text-gray-400 tracking-wider">Dibayarkan Oleh (Jamaah)</p>
+                    <p className="font-extrabold text-sm text-gray-901">{bookingData.nama_paspor || bookingData.namaJamaah}</p>
+                    <p>No. HP: {bookingData.noHp || 'Tidak Tercantum'}</p>
+                    <p className="line-clamp-2">Alamat: {bookingData.alamat || 'Tidak Tercantum'}</p>
+                  </div>
+                  <div className="md:text-right space-y-1.5">
+                    <p className="uppercase text-[9px] font-black text-gray-400 tracking-wider">Rincian Paket Terpilih</p>
+                    <p className="font-extrabold text-xs text-gray-901">{bookingData.paketNama}</p>
+                    <p>Konfigurasi: {bookingData.roomType} Room</p>
+                    <p>Status Seat: <span className="font-extrabold text-emerald-700 uppercase">{bookingData.statusKeberangkatan || 'TERDAFTAR'}</span></p>
+                  </div>
+                </div>
+
+                <div className="py-6 space-y-4">
+                  <div className="flex justify-between items-center text-xs font-sans">
+                    <span className="font-bold text-gray-500">Harga Paket Dasar:</span>
+                    <span className="font-mono font-bold text-gray-900">Rp {Number(bookingData.totalHarga || 0).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-emerald-800 font-bold border-t border-gray-100 pt-3 font-sans">
+                    <span>Jumlah yang Telah Dibayar:</span>
+                    <span className="font-mono font-black text-base text-emerald-700">Rp {Number(bookingData.jumlahBayar || 0).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs border-t border-gray-100 pt-3 font-sans">
+                    <span className="font-bold text-gray-500">Sisa Tagihan Pelunasan:</span>
+                    <span className={`font-mono font-black ${(bookingData.totalHarga - bookingData.jumlahBayar) > 0 ? 'text-amber-600' : 'text-emerald-700'}`}>
+                      Rp {Number(bookingData.totalHarga - bookingData.jumlahBayar).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-150 text-[10px] text-gray-400 font-sans leading-relaxed mt-4">
+                  <p className="font-bold text-gray-700 mb-1">Syarat & Ketentuan Penting:</p>
+                  <p>1. Kwitansi ini diterbitkan secara elektronik oleh sistem Umaroh Nawaitul dan sah sebagai tanda bukti pembayaran pelunasan resmi.</p>
+                  <p>2. Pembayaran yang sah wajib melalui transfer ke rekening penampungan resmi PT Nawaitul Umrah Haji atau Mitra berlisensi.</p>
+                  <p>3. Harap simpan cetakan fisik kwitansi ini untuk persiapan saat melakukan proses check-in keberangkatan paspor bandara.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Floating CS Bot button on the corner */}
+        <button
+          onClick={() => setShowAiChat(true)}
+          className="fixed bottom-6 right-6 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black p-4 rounded-full shadow-2xl z-40 flex items-center justify-center transition-all cursor-pointer border border-amber-400 animate-bounce"
+          title="Sahabat AI Assistant"
+        >
+          <Sparkles className="w-6 h-6" />
+        </button>
+
+        {/* CS Bot Drawer */}
+        {showAiChat && (
+          <div className="fixed inset-0 bg-black/50 z-[110] flex justify-end animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300">
+              
+              {/* Header CS bot */}
+              <div className="bg-gradient-to-r from-emerald-800 to-teal-700 text-white p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl">
+                    ✨
+                  </div>
+                  <div>
+                    <h3 className="font-black text-xs font-sans">NAWAITUL UMRAH AI</h3>
+                    <p className="text-[8px] text-emerald-25 tracking-wide flex items-center gap-1.5 mt-0.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE CS PINTAR
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowAiChat(false)}
+                  className="hover:bg-white/10 p-1.5 rounded-lg transition-colors cursor-pointer text-white border-none"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Chat body */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 font-sans">
+                {chatLog.map((log, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`flex ${log.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs font-medium space-y-1 ${
+                      log.role === 'user'
+                        ? 'bg-emerald-600 text-white rounded-tr-none'
+                        : 'bg-white border border-gray-150 text-gray-800 rounded-tl-none shadow-sm leading-relaxed'
+                    }`}>
+                      {log.content}
+                    </div>
+                  </div>
+                ))}
+
+                {isAiTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-white border border-gray-150 text-gray-400 rounded-2xl rounded-tl-none p-3 text-xs shadow-sm flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input for AI chatbot */}
+              <div className="p-4 border-t border-gray-150 bg-white flex items-center gap-2 font-sans">
+                <input
+                  type="text"
+                  placeholder="Ketik pesan konsultasi paspor, vaksin, hotel..."
+                  value={aiMessage}
+                  onChange={(e) => setAiMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSendPrompt();
+                  }}
+                  className="flex-grow bg-gray-55 border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+                <button
+                  onClick={() => handleSendPrompt()}
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider transition font-sans cursor-pointer"
+                >
+                  Kirim
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col lg:flex-row relative w-full">
       
@@ -1000,7 +1852,7 @@ export const DashboardJamaah = () => {
             />
           </div>
           <div className="mt-2 w-full text-center">
-            <span className="text-[10px] text-emerald-800 font-extrabold tracking-widest uppercase block font-sans">PORTAL JAMAAH SAHABAT</span>
+            <span className="text-[10px] text-emerald-800 font-extrabold tracking-widest uppercase block font-sans">PORTAL JAMAAH NAWAITUL</span>
           </div>
         </div>
 
@@ -1309,6 +2161,7 @@ export const DashboardJamaah = () => {
         ) : (
           <>
             {activeTab === 'overview' && renderOverview()}
+            {activeTab === 'pendaftaran_mandiri' && renderPendaftaranMandiri()}
             {activeTab === 'katalog' && (
               <div className="p-6 max-w-7xl mx-auto w-full">
                 <KatalogPaketView initialSearch={katalogSearch} onViewMitra={(mitraId) => setSelectedMitraId(mitraId)} />
@@ -1437,7 +2290,7 @@ export const DashboardJamaah = () => {
                   ✨
                 </div>
                 <div>
-                  <h3 className="font-black text-xs">SAHABAT UMAROH AI</h3>
+                  <h3 className="font-black text-xs">NAWAITUL UMRAH AI</h3>
                   <p className="text-[8px] text-emerald-25 tracking-wide flex items-center gap-1.5 mt-0.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE CS PINTAR
                   </p>
@@ -1687,6 +2540,7 @@ export const DashboardJamaah = () => {
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-[10px] font-bold">Rekomendasi</span>
           </button>
+
           
           <button
             onClick={() => {

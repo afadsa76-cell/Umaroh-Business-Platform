@@ -2,7 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { 
-  getFirestore, 
+  initializeFirestore,
   collection as origCollection, 
   onSnapshot as origOnSnapshot, 
   doc as origDoc, 
@@ -29,7 +29,9 @@ import {
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -105,14 +107,23 @@ function deleteLocalDoc(collectionName: string, id: string) {
   saveLocalCollection(collectionName, filtered);
 }
 
-// Check if an error is a Firebase resource quota exhausted error and set global indicator
+// Check if an error is a Firebase resource quota exhausted error or connection offline error and set global indicator
 function checkQuotaError(err: unknown): boolean {
   const errMsg = err instanceof Error ? err.message : String(err);
+  const errLower = errMsg.toLowerCase();
   const isQuota = errMsg.includes('resource-exhausted') || 
-                  errMsg.toLowerCase().includes('quota limit exceeded') || 
-                  errMsg.toLowerCase().includes('quota exceeded') ||
+                  errLower.includes('quota limit exceeded') || 
+                  errLower.includes('quota exceeded') ||
                   (err && typeof err === 'object' && ('code' in err) && (err as { code?: string }).code === 'resource-exhausted');
   
+  const isConnection = errLower.includes('could not reach cloud firestore backend') ||
+                       errLower.includes('unavailable') ||
+                       errLower.includes('failed-precondition') || 
+                       errLower.includes('offline') ||
+                       errLower.includes('network') ||
+                       errLower.includes('timeout') ||
+                       (err && typeof err === 'object' && ('code' in err) && (err as any).code === 'unavailable');
+
   if (isQuota) {
     if (typeof window !== 'undefined') {
       (window as any).firestoreQuotaExhausted = true;
@@ -128,7 +139,27 @@ function checkQuotaError(err: unknown): boolean {
       }
     }
   }
-  return isQuota;
+
+  if (isConnection) {
+    if (typeof window !== 'undefined') {
+      (window as any).firestoreOfflineDetected = true;
+      window.dispatchEvent(new CustomEvent('firestore-offline-detected'));
+    }
+  }
+
+  return isQuota || isConnection;
+}
+
+// Check if an error triggers local cache fallback (quota, network, or permission/restricted reads)
+function checkFallbackError(err: unknown): boolean {
+  if (!err) return false;
+  const errMsg = err instanceof Error ? err.message : String(err);
+  const errLower = errMsg.toLowerCase();
+  
+  const isQuotaOrConn = checkQuotaError(err);
+  const isPermission = errLower.includes('permission') || errLower.includes('insufficient');
+  
+  return isQuotaOrConn || isPermission;
 }
 
 // Wrappers for Firestore references creator functions (Type compatible with original Refs!)
@@ -514,8 +545,8 @@ export function onSnapshot(ref: any, ...args: any[]): any {
           onNext(snap);
         },
         (err: any) => {
-          if (checkQuotaError(err)) {
-            console.warn("onSnapshot failed due to Firestore quota. Falling back to local cache listener.");
+          if (checkFallbackError(err)) {
+            console.warn("onSnapshot failed. Falling back to local cache listener: ", err.message || err);
             if (unsubOrig) unsubOrig();
             isSubscribedToOrig = false;
             fallbackUnsub = setupFallbackListener();
@@ -525,7 +556,7 @@ export function onSnapshot(ref: any, ...args: any[]): any {
         }
       );
     } catch (err) {
-      if (checkQuotaError(err)) {
+      if (checkFallbackError(err)) {
         isSubscribedToOrig = false;
         fallbackUnsub = setupFallbackListener();
       } else if (onError) {
@@ -664,8 +695,12 @@ interface FirestoreErrorInfo {
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const isQuota = checkQuotaError(error);
+  const errMsg = error instanceof Error ? error.message : String(error);
+  const errLower = errMsg.toLowerCase();
+  const isPermissionDenied = errLower.includes('permission') || errLower.includes('insufficient');
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -680,9 +715,13 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   }
-  console.error('Firestore Error: ', errInfo.error);
+  console.warn('Firestore Warning: ', errInfo.error, operationType, path);
   if (isQuota) {
     console.warn("Quota exceeded error detected. Suppressing throw to enable seamless offline/read-only mode using local cache.");
+    return;
+  }
+  if (isPermissionDenied) {
+    console.warn(`Permission-denied on ${operationType} to path: ${path}. Suppressing throw to maintain standard offline/cache operation.`);
     return;
   }
   throw new Error(JSON.stringify(errInfo));
