@@ -62,7 +62,7 @@ export const AccurateIntegrationView: React.FC = () => {
   const [arAccount, setArAccount] = useState('1103.01 - Piutang Usaha');
   const [apAccount, setApAccount] = useState('2101.01 - Hutang Dagang');
   const [cashAccount, setCashAccount] = useState('1101.01 - Kas Besar');
-  const [bankAccount, setBankAccount] = useState('1102.01 - Bank BCA Marawa');
+  const [bankAccount, setBankAccount] = useState('1102.01 - Bank BCA Umaroh');
   
   // Data lists
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -697,7 +697,7 @@ export const AccurateIntegrationView: React.FC = () => {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
               <div>
                 <h3 className="text-sm font-black text-gray-900">Pemetaan Chart of Accounts (COA) / Akun Keuangan</h3>
-                <p className="text-xs text-gray-500">Petakan transaksi dari Marawa App ke Akun Pembukuan General Ledger di Accurate Online</p>
+                <p className="text-xs text-gray-500">Petakan transaksi dari Umaroh App ke Akun Pembukuan General Ledger di Accurate Online</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -757,7 +757,7 @@ export const AccurateIntegrationView: React.FC = () => {
                       onChange={(e) => setBankAccount(e.target.value)}
                       className="w-full text-xs font-bold px-3.5 py-3 border border-gray-200 bg-gray-50/50 rounded-xl focus:ring-1 focus:ring-indigo-600 outline-none"
                     >
-                      <option value="1102.01 - Bank BCA Marawa">1102.01 - Bank BCA Marawa</option>
+                      <option value="1102.01 - Bank BCA Umaroh">1102.01 - Bank BCA Umaroh</option>
                       <option value="1102.02 - Bank Syariah Indonesia BSI">1102.02 - Bank Syariah Indonesia BSI</option>
                       <option value="1102.03 - Bank Mandiri Giro">1102.03 - Bank Mandiri Giro</option>
                     </select>
@@ -838,7 +838,7 @@ export const AccurateIntegrationView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black tracking-tight text-lg">Accurate OAuth 2.0</h3>
-                  <p className="text-xs text-white/80">Otorisasi Hak Akses Aplikasi Marawa App</p>
+                  <p className="text-xs text-white/80">Otorisasi Hak Akses Aplikasi Umaroh App</p>
                 </div>
               </div>
               <Compass className="w-8 h-8 text-white/30 animate-spin" />
@@ -850,7 +850,7 @@ export const AccurateIntegrationView: React.FC = () => {
               {authStep === 1 && (
                 <div className="space-y-4 text-center">
                   <div className="bg-amber-50 text-amber-950 p-4 rounded-xl border border-amber-200 text-xs font-semibold leading-relaxed">
-                    Aplikasi <strong>Marawa App</strong> meminta hak akses untuk membaca dan menulis data transaksi, general ledger, invoice, dan data pelanggan di database Accurate Anda.
+                    Aplikasi <strong>Umaroh App</strong> meminta hak akses untuk membaca dan menulis data transaksi, general ledger, invoice, dan data pelanggan di database Accurate Anda.
                   </div>
 
                   <div className="border border-gray-100 rounded-2xl p-5 bg-gray-50/50 flex flex-col items-center gap-3">
@@ -863,7 +863,7 @@ export const AccurateIntegrationView: React.FC = () => {
                         A
                       </div>
                     </div>
-                    <p className="text-[11px] text-gray-500 font-bold">Marawa Executive Travel ✕ PT. CPSSoft Accurate Online</p>
+                    <p className="text-[11px] text-gray-500 font-bold">Umaroh Executive Travel ✕ PT. CPSSoft Accurate Online</p>
                   </div>
 
                   <div className="flex gap-3 justify-end pt-4">
@@ -889,14 +889,14 @@ export const AccurateIntegrationView: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-gray-900 font-extrabold text-sm mb-1">Pilih Database Accurate</h4>
-                    <p className="text-xs text-gray-500">Silakan pilih database perusahaan yang akan dihubungkan dengan Marawa App</p>
+                    <p className="text-xs text-gray-500">Silakan pilih database perusahaan yang akan dihubungkan dengan Umaroh App</p>
                   </div>
 
                   <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2">
                     {[
-                      { name: 'PT. Marawa Executive Al-Khair', id: 'DB-0193' },
-                      { name: 'PT. Marawa Cabang Surabaya', id: 'DB-0194' },
-                      { name: 'Grup Marawa Global Niaga', id: 'DB-0195' }
+                      { name: 'PT. Umaroh Executive Al-Khair', id: 'DB-0193' },
+                      { name: 'PT. Umaroh Cabang Surabaya', id: 'DB-0194' },
+                      { name: 'Grup Umaroh Global Niaga', id: 'DB-0195' }
                     ].map((dbItem) => (
                       <button
                         key={dbItem.id}

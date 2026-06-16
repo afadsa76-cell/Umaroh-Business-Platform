@@ -109,6 +109,7 @@ export const JamaahMitraView: React.FC = () => {
     noHp: '',
     alamat: '', // Domisili
     paketId: '',
+    roomType: 'Quad' as 'Double' | 'Triple' | 'Quad',
   });
 
   // Form Fields
@@ -325,6 +326,7 @@ export const JamaahMitraView: React.FC = () => {
   const outstandingRevenue = rawRevenue - realizedRevenue;
   const readyDepartureCount = jamaahs.filter(j => j.statusKeberangkatan === 'siap berangkat').length;
   const progressVisaCount = jamaahs.filter(j => j.statusKeberangkatan === 'proses visa').length;
+  const activeQuickPackage = packages.find(p => p.id === quickFormFields.paketId);
 
   const handleOpenQuickRegister = () => {
     setQuickFormFields({
@@ -332,6 +334,7 @@ export const JamaahMitraView: React.FC = () => {
       noHp: '',
       alamat: '',
       paketId: packages[0]?.id || '',
+      roomType: 'Quad',
     });
     setIsQuickFormOpen(true);
   };
@@ -358,7 +361,16 @@ export const JamaahMitraView: React.FC = () => {
       const pkgNama = targetPackage ? targetPackage.nama : 'Paket Pilihan';
       const pkgType = targetPackage ? targetPackage.type : 'master';
       
-      const price = targetPackage ? targetPackage.hargaQuad : 38000000;
+      let price = 38000000;
+      if (targetPackage) {
+        if (quickFormFields.roomType === 'Double') {
+          price = targetPackage.hargaDouble;
+        } else if (quickFormFields.roomType === 'Triple') {
+          price = targetPackage.hargaTriple;
+        } else {
+          price = targetPackage.hargaQuad;
+        }
+      }
 
       const bookingPayload = {
         kodeBooking: 'ORD-2026-UMR-' + Math.floor(100000 + Math.random() * 900000),
@@ -372,7 +384,7 @@ export const JamaahMitraView: React.FC = () => {
         paketNama: pkgNama,
         paketLabel: pkgNama,
         jenisPaket: pkgType,
-        roomType: 'Quad' as const,
+        roomType: quickFormFields.roomType,
         totalHarga: price,
         jumlahBayar: 0,
         statusPembayaran: 'Belum Bayar' as const,
@@ -410,6 +422,7 @@ export const JamaahMitraView: React.FC = () => {
         noHp: '',
         alamat: '',
         paketId: packages[0]?.id || '',
+        roomType: 'Quad',
       });
 
       alert(`Registrasi Kilat Berhasil!\nJamaah "${submittedName}" telah ditambahkan.`);
@@ -984,7 +997,7 @@ export const JamaahMitraView: React.FC = () => {
                                     const cleaned = jamaah.noHp.replace(/\D/g, '');
                                     return cleaned.startsWith('0') ? '62' + cleaned.substring(1) : cleaned;
                                   })()}&text=${encodeURIComponent(
-                                    `Assalamu'alaikum Wr. Wb. Yth. Bpk/Ibu *${jamaah.namaJamaah}*,\n\nBerikut adalah akses resmi ke *Portal Mandiri Jamaah Umaroh*:\n\n🌐 *Buka Link:* https://jamaah.rahmahtravel.id\n🔑 *Kode Booking:* \`${jamaah.kodeBooking || '-'}\`\n🔒 *Sandi/Kode Unik:* \`${jamaah.uniqueCode || '-'}\`\n\n_Silakan masuk ke Portal tersebut untuk melengkapi data manifest, upload berkas dokumen pendukung (Passport, KTP, Pas Foto) serta cetak invoice / Kwitansi Pembayaran secara mandiri._ Terima kasih.`
+                                    `Assalamu'alaikum Wr. Wb. Yth. Bpk/Ibu *${jamaah.namaJamaah}*,\n\nBerikut adalah akses resmi ke *Portal Mandiri Jamaah Umaroh*:\n\n🌐 *Buka Link:* https://jamaah.umaroh.com\n🔑 *Kode Booking:* \`${jamaah.kodeBooking || '-'}\`\n🔒 *Sandi/Kode Unik:* \`${jamaah.uniqueCode || '-'}\`\n\n_Silakan masuk ke Portal tersebut untuk melengkapi data manifest, upload berkas dokumen pendukung (Passport, KTP, Pas Foto) serta cetak invoice / Kwitansi Pembayaran secara mandiri._ Terima kasih.`
                                   )}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -1906,6 +1919,41 @@ export const JamaahMitraView: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Pilihan Tipe Kamar & Harga</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: 'Quad' as const, price: activeQuickPackage?.hargaQuad || 38000000 },
+                      { key: 'Triple' as const, price: activeQuickPackage?.hargaTriple || 41000000 },
+                      { key: 'Double' as const, price: activeQuickPackage?.hargaDouble || 45000000 },
+                    ].map(roomItem => {
+                      const isSelected = quickFormFields.roomType === roomItem.key;
+                      return (
+                        <button
+                          key={roomItem.key}
+                          type="button"
+                          onClick={() => setQuickFormFields(prev => ({ ...prev, roomType: roomItem.key }))}
+                          className={`flex flex-col items-center justify-between p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                            isSelected 
+                              ? 'border-amber-500 bg-amber-50/50 ring-1 ring-amber-500/20' 
+                              : 'border-gray-200 hover:border-gray-300 bg-white'
+                          }`}
+                        >
+                          <span className={`text-[10px] font-black tracking-tight ${isSelected ? 'text-amber-800' : 'text-gray-500'}`}>
+                            {roomItem.key}
+                          </span>
+                          <span className="text-[9px] text-gray-400 font-bold mt-0.5 leading-tight">
+                            {roomItem.key === 'Quad' ? 'Sekamar Ber-4' : roomItem.key === 'Triple' ? 'Sekamar Ber-3' : 'Sekamar Ber-2'}
+                          </span>
+                          <span className={`text-[10px] font-extrabold mt-1.5 ${isSelected ? 'text-amber-900' : 'text-gray-800'}`}>
+                            {formatCurrency(roomItem.price)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-gray-150">

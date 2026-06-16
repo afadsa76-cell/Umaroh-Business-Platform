@@ -101,6 +101,12 @@ export interface JamaahTracker {
   dokumenBukuKuning?: boolean;
   dokumenFoto?: boolean;
 
+  // Digital files
+  filePassport?: string;
+  fileKtp?: string;
+  fileVaccine?: string;
+  fileFoto?: string;
+
   // Perlengkapan fields
   perlengkapanKoper?: boolean;
   perlengkapanIhramMukena?: boolean;

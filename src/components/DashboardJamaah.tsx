@@ -12,6 +12,7 @@ import { ProfileView } from './ProfileView';
 import { AppNotification, JamaahSession, BookingRecord } from '../types';
 import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
 import { PortalHomeTab, PortalInfoTab, PortalKeuanganTab, PortalLainnyaTab } from './PortalSubTabs';
+import { logoBase64 } from '../utils/logoBase64';
 
 type JamaahTab = 'overview' | 'pendaftaran_mandiri' | 'katalog' | 'riwayat' | 'profile';
 
@@ -384,7 +385,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
   const [showAiChat, setShowAiChat] = useState<boolean>(false);
   const [aiMessage, setAiMessage] = useState<string>('');
   const [chatLog, setChatLog] = useState<ChatMessage[]>([
-    { role: 'assistant', content: 'Halo Kak! Selamat datang di Pusat Chat Sahabat Marawa. ✨ Ada yang bisa kami bantu seputar rencana perjalanan ibadah, rukun umroh, manasik, atau kelengkapan belanja baju ihram hari ini? 🙏🕌' }
+    { role: 'assistant', content: 'Halo Kak! Selamat datang di Pusat Chat Sahabat Umaroh. ✨ Ada yang bisa kami bantu seputar rencana perjalanan ibadah, rukun umroh, manasik, atau kelengkapan belanja baju ihram hari ini? 🙏🕌' }
   ]);
   const [isAiTyping, setIsAiTyping] = useState<boolean>(false);
 
@@ -473,7 +474,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
 
       const orderPayload = {
         jamaahId: userId,
-        jamaahName: auth.currentUser?.displayName || 'Jamaah Marawa',
+        jamaahName: auth.currentUser?.displayName || 'Jamaah Umaroh',
         mitraId: userMitraId || null,
         productName: selectedProduct.name,
         productPrice: selectedProduct.price,
@@ -1612,6 +1613,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
         {/* Simple elegant sticky header for Portal Mandiri */}
         <header className="bg-emerald-900 border-b border-emerald-800 text-white py-3.5 px-6 sticky top-0 z-40 shadow-sm flex items-center justify-between font-sans print:hidden">
           <div className="flex items-center gap-3">
+            <img src={logoBase64} alt="Umaroh Logo" className="h-6 md:h-7 object-contain" referrerPolicy="no-referrer" />
             <div className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
               🗝️ PORTAL KHUSUS JAMAAH
             </div>
@@ -2354,7 +2356,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
                   onClick={() => handleSendPrompt("Apakah koper kabin dapat tas jaring sandal gratis?")}
                   className="bg-gray-100 hover:bg-gray-150 text-gray-700 text-[10px] font-bold px-3 py-1.5 rounded-xl whitespace-nowrap cursor-pointer transition-colors border border-gray-200"
                 >
-                  Bonus Tas Marawa? 🎁
+                  Bonus Tas Umaroh? 🎁
                 </button>
               </div>
             </div>
@@ -2363,7 +2365,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
             <div className="p-3 bg-gray-50 border-t border-gray-150 flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Ketik pertanyaan untuk CS Sahabat Marawa..."
+                placeholder="Ketik pertanyaan untuk CS Sahabat Umaroh..."
                 value={aiMessage}
                 onChange={(e) => setAiMessage(e.target.value)}
                 onKeyDown={(e) => {
@@ -2483,7 +2485,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
                     >
                       <option value="Transfer Bank BSI">Transfer Virtual Account - Bank Syariah Indonesia (BSI)</option>
                       <option value="Transfer Bank BCA">BCA KlikPay / Transfer Virtual Account</option>
-                      <option value="Deposit Saldo Marawa">Potong Saldo Dompet Komisi Marawa</option>
+                      <option value="Deposit Saldo Marawa">Potong Saldo Dompet Komisi Umaroh</option>
                     </select>
                   </div>
 

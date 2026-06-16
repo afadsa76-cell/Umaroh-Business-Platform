@@ -879,7 +879,7 @@ export const FinanceDashboard: React.FC = () => {
                     <span className="text-gray-800 font-bold block text-[11px]">
                       {cashierName}
                     </span>
-                    <span className="text-[9px] text-gray-400 font-bold block mt-0.5">Kasir Keuangan Marawa</span>
+                    <span className="text-[9px] text-gray-400 font-bold block mt-0.5">Kasir Keuangan Umaroh</span>
                   </div>
                 </div>
 

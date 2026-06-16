@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
 import { db, collection, addDoc, updateDoc, doc, onSnapshot, query, where } from '../firebase';
 import { 
   CreditCard, ChevronRight, FileSpreadsheet, Video, 
@@ -9,6 +10,7 @@ import {
   ArrowRight, ExternalLink, Plane
 } from 'lucide-react';
 import { BookingRecord } from '../types';
+import { logoBase64 } from '../utils/logoBase64';
 
 interface PortalSubTabsProps {
   bookingData: BookingRecord | null;
@@ -42,7 +44,7 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
   const docCount = (isPassportUploaded ? 1 : 0) + (isKtpUploaded ? 1 : 0) + (isVaccineUploaded ? 1 : 0) + (isFotoUploaded ? 1 : 0);
   const docProgressPercent = Math.round((docCount / 4) * 100);
 
-  const totalHarga = Number(bookingData.totalHarga || 23900000);
+  const totalHarga = Number(bookingData.totalHarga || 35192675);
   const jumlahBayar = Number(bookingData.jumlahBayar || 7500000);
   const remainingBalance = totalHarga - jumlahBayar;
   const paymentPercent = Math.round((jumlahBayar / totalHarga) * 100);
@@ -82,7 +84,7 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
     { id: 13, title: 'Travel Document', sub: 'Hotel, Maskapai, Visa', icon: FileText, tab: 'info' as const, color: 'text-sky-600 bg-sky-50' },
     { id: 15, title: 'Kenangan Umroh', sub: 'Galeri foto perjalanan', icon: Heart, tab: 'lainnya' as const, color: 'text-rose-500 bg-rose-50', timeLock: true },
     { id: 16, title: 'Link Feedback', sub: 'Evaluasi masukan jamaah', icon: MessageCircle, tab: 'lainnya' as const, color: 'text-amber-500 bg-amber-100', timeLock: true },
-    { id: 17, title: 'Rahmah Miles', sub: 'Eksklusif alumni poin', icon: Award, tab: 'lainnya' as const, color: 'text-indigo-700 bg-indigo-50' }
+    { id: 17, title: 'Umaroh Miles', sub: 'Eksklusif alumni poin', icon: Award, tab: 'lainnya' as const, color: 'text-indigo-700 bg-indigo-50' }
   ];
 
   return (
@@ -298,7 +300,7 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
           
           <button
             onClick={() => setShowPrintKwitansi(true)}
-            className="bg-emerald-750 hover:bg-emerald-800 text-white font-extrabold py-3.5 px-5 rounded-xl text-xs uppercase tracking-wider text-center transition cursor-pointer border border-emerald-800"
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold py-3.5 px-5 rounded-xl text-xs uppercase tracking-wider text-center transition cursor-pointer border border-emerald-200 flex items-center justify-center gap-1 shadow-sm"
           >
             🖨️ Cetak Invoice
           </button>
@@ -374,12 +376,12 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
         </div>
         <div className="flex gap-2 shrink-0">
           <a
-            href="https://wa.me/628123456789"
+            href="https://wa.me/6283844974952?text=Assalamualaikum%20Admin%20Umaroh,%20saya%20terdaftar%20sebagai%20jamaah%20di%20portal"
             target="_blank"
             rel="noreferrer"
             className="bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider transition cursor-pointer"
           >
-            💬 Chat CS (Salsa)
+            💬 Chat Admin Umaroh
           </a>
           <button
             onClick={() => alert('Kebijakan Syarat & Ketentuan berlaku sesuai akad pendaftaran awal di kantor cabang.')}
@@ -404,7 +406,7 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
   if (!bookingData) return null;
 
   const packageName = bookingData.packageName || bookingData.paketNama || 'Umroh 9d City Tour Makkah + Madinah by Saudia';
-  const totalHarga = Number(bookingData.totalHarga || 23900000);
+  const totalHarga = Number(bookingData.totalHarga || 35192675);
   const jumlahBayar = Number(bookingData.jumlahBayar || 7500000);
   const kodeOrder = bookingData.kodeBooking || 'ORD-2026-UMR-004127';
 
@@ -467,7 +469,7 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
         </div>
 
         <p className="text-[11px] text-amber-50 font-bold leading-normal pt-1">
-          Paket umroh pilihan dengan pelayanan terbaik dari Rahmah Travel
+          Paket umroh pilihan dengan pelayanan terbaik dari Umaroh Travel
         </p>
 
         {/* Total Dibayar info inside orange card */}
@@ -783,7 +785,7 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
           <p className="text-xs font-extrabold text-emerald-950">Mau upgrade paket? ✨</p>
           <p className="text-[10px] text-gray-450 font-bold leading-relaxed">Hubungi admin untuk info pilihan upgrade paket umroh Anda.</p>
           <a
-            href="https://wa.me/628123456789?text=Assalamualaikum,%20saya%20ingin%20tanya%20upgrade%20paket%20Umroh"
+            href="https://wa.me/6283844974952?text=Assalamualaikum,%20saya%20ingin%20tanya%20upgrade%20paket%20Umroh"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-2.5 rounded-xl text-xs uppercase transition cursor-pointer w-full sm:w-auto"
@@ -910,18 +912,18 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
         <div className="space-y-1">
           <h4 className="text-sm font-black text-emerald-950">Butuh Bantuan?</h4>
           <p className="text-[11px] text-gray-600">
-            CS Anda: <strong className="text-emerald-900">Salsa</strong>
+            CS Anda: <strong className="text-emerald-900">Admin Umaroh</strong>
           </p>
           <p className="text-[10px] text-gray-450 leading-relaxed font-semibold">Siap membantu informasi paket Anda</p>
         </div>
         <div>
           <a
-            href="https://wa.me/628123456789?text=Assalamualaikum%20Salsa,%20saya%20ingin%20tanya%20detail%20info%20paket%20Umroh"
+            href="https://wa.me/6283844974952?text=Assalamualaikum%20Admin%20Umaroh,%20saya%20ingin%20tanya%20detail%20info%20paket%20Umroh"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 bg-emerald-750 hover:bg-emerald-800 text-white font-black px-6 py-2.5 rounded-full text-xs transition cursor-pointer"
           >
-            <MessageCircle className="w-4 h-4 fill-white text-emerald-750" /> Chat Salsa
+            <MessageCircle className="w-4 h-4 fill-white text-emerald-750" /> Chat Admin
           </a>
         </div>
       </div>
@@ -1069,14 +1071,14 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
 
               <div className="space-y-3 pt-2 text-xs">
                 <p className="font-bold text-gray-650 leading-relaxed">
-                  Perlengkapan fisik (Batik Rahmah, Koper Cabin, Kain Ihram/Mukena, & Tas Selempang) dapat diambil di Kantor Regional Cabang kami mulai <strong className="text-emerald-900">10 Agustus 2026</strong>.
+                  Perlengkapan fisik (Batik Umaroh, Koper Cabin, Kain Ihram/Mukena, & Tas Selempang) dapat diambil di Kantor Regional Cabang kami mulai <strong className="text-emerald-900">10 Agustus 2026</strong>.
                 </p>
                 <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl space-y-1 leading-relaxed">
                   <p className="font-extrabold text-gray-800">Syarat pengambilan:</p>
                   <ul className="list-disc list-inside text-gray-500 text-[10.5px] space-y-1 mt-1 font-sans">
                     <li>Membawa struk / kuitansi pembayaran DP</li>
                     <li>Membawa KTP asli pemohon</li>
-                    <li>Bisa dikirim via kurir ekspedisi (hubungi Salsa)</li>
+                    <li>Bisa dikirim via kurir ekspedisi (hubungi Admin)</li>
                   </ul>
                 </div>
               </div>
@@ -1153,7 +1155,7 @@ export const PortalKeuanganTab: React.FC<{
   if (!bookingData) return null;
 
   // Real or default values
-  const totalHarga = Number(bookingData.totalHarga || 23900000);
+  const totalHarga = Number(bookingData.totalHarga || 35192675);
   
   // State for payments to make it fully reactive
   const [payments, setPayments] = useState<UmarohPayment[]>(() => {
@@ -1379,7 +1381,7 @@ export const PortalKeuanganTab: React.FC<{
         {
           id: 'pemb-3',
           q: 'Jika invoice tidak saya terima, apa yang harus saya lakukan?',
-          a: 'Anda dapat langsung mengunduh invoice digital Anda melalu tombol \'Download Invoice\' di bagian atas sub-tab Keuangan ini, atau menghubungi CS Salsa untuk bantuan instan.'
+          a: 'Anda dapat langsung mengunduh invoice digital Anda melalu tombol \'Download Invoice\' di bagian atas sub-tab Keuangan ini, atau menghubungi Admin Umaroh untuk bantuan instan.'
         }
       ]
     }
@@ -1505,7 +1507,162 @@ export const PortalKeuanganTab: React.FC<{
       {/* 2. BLUE DOWNLOAD INVOICE ALERT BANNER */}
       <button
         onClick={() => {
-          alert(`Men-downlod Invoice digital #INV-20260526-4127...\n\nDetail Rekapitulasi:\n• Total tagihan: Rp ${totalHarga.toLocaleString('id-ID')}\n• Total dibayar: Rp ${totalBayar.toLocaleString('id-ID')}\n• Sisa tagihan: Rp ${remaining.toLocaleString('id-ID')}\n\nPdf berhasil disimpan.`);
+          const docPdf = new jsPDF();
+          
+          // Header background banner
+          docPdf.setFillColor(5, 87, 52); // emerald-900 / dark emerald
+          docPdf.rect(0, 0, 210, 40, 'F');
+          
+          // Header title
+          docPdf.setTextColor(255, 255, 255);
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.setFontSize(22);
+          docPdf.text('PT NAWAITUL UMRAH HAJI', 15, 18);
+          
+          docPdf.setFontSize(10);
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.text('Aplikasi Managemen Portal Jamaah Umaroh Indonesia', 15, 25);
+          docPdf.text('Sistem Invoice Pembayaran Digital', 15, 30);
+          
+          // Logo text/badge (Umaroh Logo)
+          try {
+            docPdf.addImage(logoBase64, 'PNG', 160, 10, 35, 18);
+          } catch (pdfLogoErr) {
+            console.error('Error drawing PDF logo:', pdfLogoErr);
+            docPdf.setFillColor(245, 158, 11); // amber-500
+            docPdf.rect(160, 12, 35, 16, 'F');
+            docPdf.setTextColor(15, 23, 42); // slate-900
+            docPdf.setFont('helvetica', 'bold');
+            docPdf.setFontSize(11);
+            docPdf.text('UMAROH', 168, 22);
+          }
+          
+          // Body Text colors & positioning
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.setFontSize(14);
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.text('INVOICE PEMBAYARAN RESMI', 15, 55);
+          
+          // Line separator
+          docPdf.setDrawColor(226, 232, 240); // border-slate-200
+          docPdf.setLineWidth(0.5);
+          docPdf.line(15, 60, 195, 60);
+          
+          // Info block
+          docPdf.setFontSize(10);
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.text('INFORMASI PELANGGAN / JAMAAH', 15, 70);
+          
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.setTextColor(71, 85, 105); // text-slate-600
+          docPdf.text(`Nama Jamaah  : ${(bookingData.nama_paspor || bookingData.namaJamaah || '-').toUpperCase()}`, 15, 78);
+          docPdf.text(`Kode Booking : ${bookingData.kodeBooking || '-'}`, 15, 84);
+          docPdf.text(`No. Handphone: ${bookingData.noHp || '-'}`, 15, 90);
+          docPdf.text(`Program Paket: ${bookingData.paketNama || bookingData.packageName || '-'}`, 15, 96);
+          docPdf.text(`Room Option  : ${bookingData.roomType || 'Quad'} Room`, 15, 102);
+          
+          // Right side info (Invoice metadata)
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.text('DETAIL DOKUMEN', 140, 70);
+          
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.setTextColor(71, 85, 105);
+          docPdf.text(`No. Invoice : INV-20260526-4127`, 140, 78);
+          docPdf.text(`Tgl Terbit  : 26 Mei 2026`, 140, 84);
+          docPdf.text(`Tgl Cetak   : ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}`, 140, 90);
+          docPdf.text(`Status      : ${remaining <= 0 ? 'LUNAS (VERIFIED)' : 'BELUM LUNAS'}`, 140, 96);
+          
+          // Transaction Summary box
+          docPdf.setFillColor(248, 250, 252); // bg-slate-50
+          docPdf.rect(15, 115, 180, 55, 'F');
+          docPdf.setDrawColor(203, 213, 225); // border-slate-300
+          docPdf.rect(15, 115, 180, 55, 'S');
+          
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.setFontSize(11);
+          docPdf.text('REKAPITULASI KEUANGAN (IDR)', 20, 125);
+          
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.setTextColor(71, 85, 105);
+          docPdf.setFontSize(10);
+          docPdf.text('1. Total Biaya Paket Umroh', 20, 134);
+          docPdf.text('2. Total Pembayaran Terverifikasi (DP + Cicilan)', 20, 142);
+          docPdf.text('3. Sisa Tagihan Pelunasan', 20, 150);
+          
+          // Money numbers right aligned
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.text(`Rp ${totalHarga.toLocaleString('id-ID')}`, 145, 134);
+          docPdf.setTextColor(5, 150, 105); // green
+          docPdf.text(`Rp ${totalBayar.toLocaleString('id-ID')}`, 145, 142);
+          
+          if (remaining > 0) {
+            docPdf.setTextColor(220, 38, 38); // red
+            docPdf.text(`Rp ${remaining.toLocaleString('id-ID')}`, 145, 150);
+          } else {
+            docPdf.setTextColor(5, 150, 105); // green
+            docPdf.text('LUNAS / Rp 0', 145, 150);
+          }
+          
+          // Bottom border line in the summary box
+          docPdf.setDrawColor(226, 232, 240);
+          docPdf.line(20, 156, 190, 156);
+          docPdf.setFontSize(9);
+          docPdf.setTextColor(100, 116, 139);
+          docPdf.setFont('helvetica', 'italic');
+          docPdf.text('* Pembayaran dinyatakan sah apabila telah diverifikasi oleh tim internal kasir PT Nawaitul Umrah Haji.', 20, 163);
+          
+          // Payment bank options
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.setFontSize(11);
+          docPdf.text('METODE TRANSFER PEMBAYARAN RESMI', 15, 185);
+          
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.setFontSize(9);
+          docPdf.setTextColor(71, 85, 105);
+          
+          docPdf.text('Berikut daftar rekening Penampungan Resmi (Wajib Transfer ke akun berlisensi di bawah ini):', 15, 192);
+          
+          // Bank 1
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.text('1. Bank Syariah Indonesia (BSI)', 15, 201);
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.setTextColor(71, 85, 105);
+          docPdf.text('    No. Rekening : 5577 7750 03', 15, 206);
+          docPdf.text('    Atas Nama    : PT NAWAITUL UMRAH HAJI', 15, 211);
+          
+          // Bank 2 (BCA from screenshot)
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.text('2. Bank Central Asia (BCA)', 15, 219);
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.setTextColor(71, 85, 105);
+          docPdf.text('    No. Rekening : 7180 5385 04', 15, 224);
+          docPdf.text('    Atas Nama    : PT UMAROH GRUP INTERNASIONAL', 15, 229);
+          
+          // Bank 3 (BNI from screenshot)
+          docPdf.setFont('helvetica', 'bold');
+          docPdf.setTextColor(15, 23, 42);
+          docPdf.text('3. Bank Negara Indonesia (BNI)', 15, 237);
+          docPdf.setFont('helvetica', 'normal');
+          docPdf.setTextColor(71, 85, 105);
+          docPdf.text('    No. Rekening : 3101 1133 39', 15, 242);
+          docPdf.text('    Atas Nama    : PT UMAROH GRUP INTERNASIONAL', 15, 247);
+          
+          // Footer watermark
+          docPdf.setDrawColor(241, 245, 249);
+          docPdf.line(15, 260, 195, 260);
+          docPdf.setFontSize(8);
+          docPdf.setFont('helvetica', 'italic');
+          docPdf.setTextColor(156, 163, 175);
+          docPdf.text('Dokumen invoice ini diterbitkan secara otomatis oleh sistem digital Cloud Umaroh Indonesia. Bukti sah transaksi finansial.', 15, 268);
+          docPdf.text(`ID Referensi Kuitansi: ${bookingData.id || 'N/A'} | Operator: Umaroh Auto-Bot`, 15, 273);
+          
+          docPdf.save(`Invoice-Umaroh-${bookingData.kodeBooking || 'INV'}.pdf`);
         }}
         className="w-full bg-blue-600 text-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-700 transition"
       >
@@ -1938,18 +2095,18 @@ export const PortalKeuanganTab: React.FC<{
         <div className="space-y-1">
           <h4 className="text-sm font-black text-emerald-950">Butuh Bantuan?</h4>
           <p className="text-[11px] text-gray-600">
-            CS Anda: <strong className="text-emerald-900">Salsa</strong>
+            CS Anda: <strong className="text-emerald-900">Admin Umaroh</strong>
           </p>
           <p className="text-[10px] text-gray-450 leading-relaxed font-semibold">Siap membantu informasi pembayaran Anda</p>
         </div>
         <div>
           <a
-            href="https://wa.me/628123456789?text=Assalamualaikum%20Salsa,%20konfirmasi%2520keuangan%20Umroh"
+            href="https://wa.me/6283844974952?text=Assalamualaikum%20Admin%20Umaroh,%20konfirmasi%2520keuangan%20Umroh"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 bg-emerald-750 hover:bg-emerald-800 text-white font-black px-6 py-2.5 rounded-full text-xs transition cursor-pointer"
           >
-            <MessageCircle className="w-4 h-4 fill-white text-emerald-750" /> Chat Salsa
+            <MessageCircle className="w-4 h-4 fill-white text-emerald-750" /> Chat Admin
           </a>
         </div>
       </div>
@@ -2184,7 +2341,7 @@ export const PortalLainnyaTab: React.FC<{
           <p className="text-xs text-emerald-100 font-bold leading-relaxed">Komunikasi antar pimpinan regu, mutawwif, coordinator batch, dan sesama anggota jamaah satu program.</p>
         </div>
         <a
-          href="https://wa.me/628123456789"
+          href="https://wa.me/6283844974952"
           target="_blank"
           rel="noreferrer"
           className="inline-block bg-white text-emerald-950 font-extrabold px-5 py-3 rounded-xl text-xs uppercase tracking-wider hover:scale-[1.02] transition shadow-md"

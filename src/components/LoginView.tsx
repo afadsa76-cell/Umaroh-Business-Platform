@@ -518,12 +518,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       <div className="absolute inset-0 opacity-5 bg-[url('https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center" />
       
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 flex flex-col items-center">
-        <div className="mb-12">
-          <img src={logoBase64} alt="Umaroh Logo" className="h-24 md:h-32 drop-shadow-2xl" />
+        <div className="mb-3">
+          <img src={logoBase64} alt="Umaroh Logo" className="h-20 md:h-28 drop-shadow-2xl" />
         </div>
       </div>
 
-      <div className="mt-auto sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+      <div className="mt-2 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-white py-8 px-4 shadow-2xl rounded-t-[2.5rem] sm:rounded-2xl sm:px-10 border-t border-gray-100">
           
           {/* Tab Selector */}
@@ -554,7 +554,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                   : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}
             >
-              ✉️ Akun Mandiri (Email / Google)
+              🤝 Mitra/Marketplace
             </button>
           </div>
 
@@ -718,6 +718,86 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                 )}
               </>
             )}
+          </div>
+
+          {/* Banner Lembaga Sertifikasi & Lisensi Resmi */}
+          <div className="mt-6 border-t border-gray-100 pt-5">
+            {/* Grid 6 Sertifikasi Logo */}
+            <div className="grid grid-cols-6 gap-2 items-center justify-items-center mb-4 leading-none">
+              {/* 1. 5 Pasti Umroh */}
+              <div className="flex flex-col items-center">
+                <svg className="w-8 h-8 md:w-9 md:h-9 drop-shadow-sm" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="32" cy="32" r="30" fill="#FFFBEB" stroke="#D97706" strokeWidth="2"/>
+                  <path d="M16 42C16 30 20 20 32 20C44 20 48 30 48 42H16Z" fill="#0F172A"/>
+                  <path d="M22 42V30H42V42H22Z" fill="#334155"/>
+                  <path d="M22 30H42V33H22V30Z" fill="#FBBF24"/>
+                  <circle cx="32" cy="32" r="10" fill="#FBBF24" stroke="#D97706" strokeWidth="1.5"/>
+                  <text x="32" y="36.5" fontSize="13" fontWeight="900" fill="#1E293B" textAnchor="middle" fontFamily="sans-serif">5</text>
+                </svg>
+                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">5 PASTI</span>
+              </div>
+
+              {/* 2. IATA */}
+              <div className="flex flex-col items-center">
+                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="32" cy="24" r="14" stroke="#0284C7" strokeWidth="2" strokeDasharray="2 2" fill="#F0F9FF"/>
+                  <path d="M10 24H54" stroke="#0284C7" strokeWidth="2"/>
+                  <path d="M14 20H50" stroke="#0284C7" strokeWidth="1.5"/>
+                  <path d="M18 28H46" stroke="#0284C7" strokeWidth="1.5"/>
+                  <text x="32" y="49" fontSize="13" fontWeight="900" fill="#0284C7" textAnchor="middle" fontFamily="sans-serif" letterSpacing="0.05em">IATA</text>
+                </svg>
+                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">MEMBER</span>
+              </div>
+
+              {/* 3. SISKOPATUH */}
+              <div className="flex flex-col items-center">
+                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="14" y="14" width="36" height="36" rx="6" fill="#0D9488"/>
+                  <path d="M23 31L29 37L41 25" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <text x="32" y="58" fontSize="7" fontWeight="900" fill="#0D9488" textAnchor="middle" fontFamily="sans-serif">SISKO</text>
+                </svg>
+                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">PATUH</span>
+              </div>
+
+              {/* 4. KEMENAG */}
+              <div className="flex flex-col items-center">
+                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="32,4 58,22 48,56 16,56 6,22" fill="#15803D" stroke="#EAB308" strokeWidth="2"/>
+                  <circle cx="32" cy="32" r="15" fill="#166534"/>
+                  <path d="M32 20V44M20 32H44" stroke="#EAB308" strokeWidth="1.5"/>
+                  <text x="32" y="35" fontSize="9" fontWeight="bold" fill="#FFFFFF" textAnchor="middle" fontFamily="serif">RI</text>
+                </svg>
+                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">KEMENAG</span>
+              </div>
+
+              {/* 5. SAPUHI */}
+              <div className="flex flex-col items-center">
+                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="32" cy="32" r="28" fill="#FFFFFF" stroke="#EAB308" strokeWidth="2"/>
+                  <rect x="22" y="22" width="20" height="20" fill="#1E293B" rx="1"/>
+                  <rect x="22" y="22" width="20" height="4" fill="#EAB308"/>
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="#EAB308" strokeWidth="1" strokeDasharray="3 3"/>
+                  <text x="32" y="54" fontSize="7.5" fontWeight="900" fill="#1E293B" textAnchor="middle" fontFamily="sans-serif">SAPUHI</text>
+                </svg>
+                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">SAPUHI</span>
+              </div>
+
+              {/* 6. KAN */}
+              <div className="flex flex-col items-center">
+                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 24L24 42L56 14" stroke="#DC2626" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <text x="32" y="52" fontSize="15" fontWeight="900" fill="#1E3A8A" textAnchor="middle" fontFamily="sans-serif">KAN</text>
+                </svg>
+                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">KAN</span>
+              </div>
+            </div>
+
+            {/* Bar Abu-Abu Credentials Lisensi Resmi */}
+            <div className="bg-gray-50 border border-gray-150 rounded-xl py-2 px-1 text-center shadow-inner">
+              <p className="text-[9.5px] font-black text-gray-700 tracking-wider uppercase font-sans leading-none">
+                PT. NAWAITUL UMRAH HAJI <span className="text-gray-300 mx-1">|</span> PPIU : 28092200496140003
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { generateWALink, getWATemplate, openWhatsApp } from '../../utils/whatsap
 import { JamaahTracker, PaketTracker } from './types';
 import { safeJsonParse } from '../../utils/firebaseSync';
 
-import { Camera, RefreshCw, Plus, MessageCircle, Package, FolderOpen, FileText, Edit2, Trash2, Save, X } from 'lucide-react';
+import { Camera, RefreshCw, Plus, MessageCircle, Package, FolderOpen, FileText, Edit2, Trash2, Save, X, Eye, Download } from 'lucide-react';
 
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -939,6 +939,60 @@ export const TrackerJamaah: React.FC = () => {
                   <span className="font-medium text-gray-700">Pas Foto 4x6</span>
                 </label>
               </div>
+
+              {/* Unduh & Pratinjau Berkas Digital (KTP, Paspor, dll) */}
+              <div className="mt-6 border-t border-gray-150 pt-5 space-y-3">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Berkas Digital Jamaah</h4>
+                
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    { label: 'Scan Paspor', val: dokumenData.filePassport, filename: `${dokumenData.namaLengkap || 'Jamaah'}_Paspor.jpg` },
+                    { label: 'Scan KTP', val: dokumenData.fileKtp, filename: `${dokumenData.namaLengkap || 'Jamaah'}_KTP.jpg` },
+                    { label: 'Scan Cetak Vaksin', val: dokumenData.fileVaccine, filename: `${dokumenData.namaLengkap || 'Jamaah'}_Vaksin.jpg` },
+                    { label: 'Pas Foto 4x6', val: dokumenData.fileFoto, filename: `${dokumenData.namaLengkap || 'Jamaah'}_Foto.jpg` },
+                  ].map((field, i) => {
+                    const hasFile = !!field.val;
+                    return (
+                      <div key={i} className="flex items-center justify-between p-3 border border-dashed rounded-lg bg-gray-50/50">
+                        <div className="min-w-0 flex-1 pr-2">
+                          <p className="text-xs font-semibold text-gray-700 truncate">{field.label}</p>
+                          <p className="text-[10px] text-gray-400">
+                            {hasFile ? 'Tersedia (Siap diunduh/dilihat)' : 'Belum diunggah'}
+                          </p>
+                        </div>
+                        {hasFile ? (
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const win = window.open();
+                                if (win) {
+                                  win.document.write(`<iframe src="${field.val}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                                }
+                              }}
+                              className="p-1 px-2.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded text-xs font-bold flex items-center gap-1 transition"
+                            >
+                              <Eye className="w-3 h-3" /> Lihat
+                            </button>
+                            <a
+                              href={field.val}
+                              download={field.filename}
+                              className="p-1 px-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded text-xs font-bold flex items-center gap-1 transition"
+                            >
+                              <Download className="w-3 h-3" /> Unduh
+                            </a>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 shrink-0 italic font-medium px-2 py-0.5 bg-gray-100 rounded">
+                            N/A
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
             
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">

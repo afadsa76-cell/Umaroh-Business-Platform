@@ -111,23 +111,23 @@ function App() {
             if (userDoc.exists()) {
               data = userDoc.data() as { role?: string; subRole?: string | null; [key: string]: unknown };
               // Cache values in localStorage for safety & offline robustness
-              localStorage.setItem(`marawa_cached_user_${user.uid}`, JSON.stringify(data));
-              if (data.role) localStorage.setItem(`marawa_cached_role_${user.uid}`, data.role);
+              localStorage.setItem(`umaroh_cached_user_${user.uid}`, JSON.stringify(data));
+              if (data.role) localStorage.setItem(`umaroh_cached_role_${user.uid}`, data.role);
               if (data.subRole) {
-                localStorage.setItem(`marawa_cached_subrole_${user.uid}`, data.subRole);
+                localStorage.setItem(`umaroh_cached_subrole_${user.uid}`, data.subRole);
               } else {
-                localStorage.removeItem(`marawa_cached_subrole_${user.uid}`);
+                localStorage.removeItem(`umaroh_cached_subrole_${user.uid}`);
               }
             }
           } catch (fetchErr) {
             console.warn("Failed fetching user role from network, trying cache:", fetchErr);
-            const cachedDataStr = localStorage.getItem(`marawa_cached_user_${user.uid}`);
+            const cachedDataStr = localStorage.getItem(`umaroh_cached_user_${user.uid}`);
             if (cachedDataStr) {
               data = JSON.parse(cachedDataStr);
             } else {
               // Create a minimal fake data based on fallback stored values
-              const cachedRole = localStorage.getItem(`marawa_cached_role_${user.uid}`) || 'jamaah';
-              const cachedSubRole = localStorage.getItem(`marawa_cached_subrole_${user.uid}`) || null;
+              const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`) || 'jamaah';
+              const cachedSubRole = localStorage.getItem(`umaroh_cached_subrole_${user.uid}`) || null;
               data = { role: cachedRole, subRole: cachedSubRole };
             }
           }
@@ -180,8 +180,8 @@ function App() {
             if (isErrorOffline) {
               setIsOffline(true);
               // Fallback default role for offline mode to prevent blank screen
-              const cachedRole = localStorage.getItem(`marawa_cached_role_${user.uid}`) as Role || 'jamaah';
-              const cachedSubRole = localStorage.getItem(`marawa_cached_subrole_${user.uid}`) || null;
+              const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`) as Role || 'jamaah';
+              const cachedSubRole = localStorage.getItem(`umaroh_cached_subrole_${user.uid}`) || null;
               setUserRole(cachedRole);
               setSubRole(cachedSubRole);
               setActiveTab('dashboard');
