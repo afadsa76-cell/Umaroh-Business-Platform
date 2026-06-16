@@ -3135,12 +3135,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       className="w-full p-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-medium appearance-none bg-white"
                     >
                       <option value="">-- Pilih Maskapai --</option>
-                      {filteredMaskapaiList.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name} ({m.programDays || 9} Hari) ({m.tanggalKeberangkatan}) - Sisa:{" "}
-                          {m.availableSeats}
-                        </option>
-                      ))}
+                      {filteredMaskapaiList.map((m) => {
+                        const cleanName = m.namaVendor
+                          ? m.name.replace(` (${m.namaVendor})`, '')
+                          : m.name.replace(/\s*\(Madani Tour\)/gi, '');
+                        return (
+                          <option key={m.id} value={m.id}>
+                            {cleanName} ({m.programDays || 9} Hari) ({m.tanggalKeberangkatan}) - Sisa:{" "}
+                            {m.availableSeats}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
