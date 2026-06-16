@@ -301,6 +301,13 @@ export interface BookingRecord {
   statusKeberangkatan?: string;
   totalHarga?: number;
   jumlahBayar?: number;
+  
+  // Perlengkapan shipping options
+  opsi_perlengkapan?: 'Ambil di Kantor' | 'Kirim Ekspedisi' | string;
+  penerima_perlengkapan?: string;
+  telp_penerima_perlengkapan?: string;
+  alamat_penerima_perlengkapan?: string;
+  status_pengiriman_perlengkapan?: string;
 }
 
 export interface JamaahSession {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
-import { db, collection, addDoc, updateDoc, doc, onSnapshot, query, where } from '../firebase';
+import { db, collection, addDoc, updateDoc, doc, onSnapshot, query, where, setDoc, deleteDoc } from '../firebase';
 import { 
   CreditCard, ChevronRight, FileSpreadsheet, Video, 
   Award, Heart, Package, ShoppingCart, 
@@ -402,6 +402,98 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
   const [showItineraryModal, setShowItineraryModal] = useState(false);
   const [showManasikModal, setShowManasikModal] = useState(false);
   const [showSuitcaseModal, setShowSuitcaseModal] = useState(false);
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [userShipment, setUserShipment] = useState<any | null>(null);
+  const [opsiPerlengkapan, setOpsiPerlengkapan] = useState<'Ambil di Kantor' | 'Kirim Ekspedisi'>(() => (bookingData?.opsi_perlengkapan as 'Ambil di Kantor' | 'Kirim Ekspedisi') || 'Ambil di Kantor');
+  const [penerimaName, setPenerimaName] = useState('');
+  const [penerimaTelp, setPenerimaTelp] = useState('');
+  const [penerimaAlamat, setPenerimaAlamat] = useState('');
+  const [isSavingPerlengkapan, setIsSavingPerlengkapan] = useState(false);
+
+  useEffect(() => {
+    if (bookingData) {
+      setOpsiPerlengkapan((bookingData.opsi_perlengkapan as 'Ambil di Kantor' | 'Kirim Ekspedisi') || 'Ambil di Kantor');
+      setPenerimaName(bookingData.penerima_perlengkapan || bookingData.nama_paspor || bookingData.namaJamaah || '');
+      setPenerimaTelp(bookingData.telp_penerima_perlengkapan || bookingData.noHp || '');
+      setPenerimaAlamat(bookingData.alamat_penerima_perlengkapan || bookingData.alamat_tinggal || bookingData.alamat || '');
+    }
+  }, [bookingData]);
+
+  useEffect(() => {
+    if (!bookingData?.id) return;
+    const unsub = onSnapshot(doc(db, 'perlengkapan_pengiriman', 'ship-' + bookingData.id), (docSnap) => {
+      if (docSnap.exists()) {
+        setUserShipment(docSnap.data());
+      } else {
+        setUserShipment(null);
+      }
+    });
+    return () => unsub();
+  }, [bookingData?.id]);
+
+  const handleSaveSuitcaseOpsi = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingData?.id) return;
+    setIsSavingPerlengkapan(true);
+    try {
+      const bookingRef = doc(db, 'bookings', bookingData.id);
+      
+      // Update the booking record
+      await updateDoc(bookingRef, {
+        opsi_perlengkapan: opsiPerlengkapan,
+        penerima_perlengkapan: opsiPerlengkapan === 'Kirim Ekspedisi' ? penerimaName : '',
+        telp_penerima_perlengkapan: opsiPerlengkapan === 'Kirim Ekspedisi' ? penerimaTelp : '',
+        alamat_penerima_perlengkapan: opsiPerlengkapan === 'Kirim Ekspedisi' ? penerimaAlamat : '',
+        status_pengiriman_perlengkapan: opsiPerlengkapan === 'Kirim Ekspedisi' ? 'Diperlukan Pengiriman' : 'Ambil Mandiri'
+      });
+
+      if (opsiPerlengkapan === 'Kirim Ekspedisi') {
+        // Automatically sync & upsert with perlengkapan_pengiriman collection for the Admin
+        const shipPayload = {
+          id: 'ship-' + bookingData.id,
+          packing_id: 'pack-' + bookingData.id,
+          package_id: bookingData.packageId || 'custom-pkg',
+          nama_paket: bookingData.packageName || bookingData.paketNama || 'Umroh Regular',
+          mitra_id: bookingData.id,
+          nama_mitra: penerimaName,
+          ekspedisi: userShipment?.ekspedisi || 'J&T Express (Umaroh Official)',
+          nomor_resi: userShipment?.nomor_resi || 'LOG-WAIT-' + bookingData.kodeBooking,
+          tanggal_kirim: userShipment?.tanggal_kirim || new Date().toISOString().split('T')[0],
+          estimasi_tiba: userShipment?.estimasi_tiba || 'Sedang Diproses Gudang',
+          penerima: penerimaName,
+          alamat_pengiriman: penerimaAlamat,
+          kota_pengiriman: 'Akan dikonfirmasi',
+          biaya_kirim: userShipment?.biaya_kirim || 0,
+          status_pengiriman: userShipment?.status_pengiriman || 'Diproses',
+          catatan: 'Pengiriman diajukan mandiri oleh jamaah di Portal. Telp: ' + penerimaTelp,
+          tracking_history: userShipment?.tracking_history || [
+            { 
+              waktu: new Date().toLocaleString('id-ID'), 
+              lokasi: 'Portal Mandiri', 
+              info: 'Jamaah mengajukan pengiriman logistik via ekspedisi' 
+            }
+          ],
+          created_at: userShipment?.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, 'perlengkapan_pengiriman', 'ship-' + bookingData.id), shipPayload);
+      } else {
+        // If they changed back to "Ambil di Kantor", we can delete the shipment from perlengkapan_pengiriman so it syncs clean
+        await deleteDoc(doc(db, 'perlengkapan_pengiriman', 'ship-' + bookingData.id));
+      }
+
+      alert('Alhamdulillah! Pilihan pengambilan perlengkapan Anda telah diperbarui dan langsung disinkronkan dengan sistem logistik gudang admin.');
+      setShowSuitcaseModal(false);
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat menyimpan data perlengkapan. Silakan coba kembali.');
+    } finally {
+      setIsSavingPerlengkapan(false);
+    }
+  };
 
   if (!bookingData) return null;
 
@@ -412,7 +504,7 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
 
   const itineraryDays = [
     { day: 1, title: 'Keberangkatan Jakarta - Jeddah - Madinah', detail: 'Penerbangan dengan Saudia Airlines SV-815 pukul 10.30 WIB dari Bandara Soekarno Hatta Terminal 3. Landing di Jeddah pukul 16.20 waktu setempat, kemudian dilanjutkan dengan Bus Eksekutif AC menuju Kota Suci Madinah untuk check-in hotel.' },
-    { day: 2, title: 'Ziarah Makam Rasulullah ﷺ & Raudhah', detail: 'Ziarah mendalam dipandu Mutawwif resmi ke makam Nabi Muhammad ﷺ, Abu Bakar, Umar, dan pemakaman Baki. Melaksanakan shalat malam dan Munajat di Raudhah (taman surga) sesuai waktu tasrih aplikasi resmi.' },
+    { day: 2, title: 'Ziarah Makam Rasulullah ﷺ & Raudhah', detail: 'Ziarah mendalam dipandu Mutawwif resmi ke makam Nabi Muhammad ﷺ, Abu Bakar, Umar, dan pemakaman Baki. Melaksanakan shalat malam and Munajat di Raudhah (taman surga) sesuai waktu tasrih aplikasi resmi.' },
     { day: 3, title: 'Ziarah Kota Madinah Al-Munawwarah', detail: 'Ziarah keliling kota suci Madinah mengunjungi Masjid Quba (shalat sunnah 2 rakaat fadhilah Umroh), kebun kurma, Jabal Uhud (perang bersejarah), dan Masjid Kiblatain.' },
     { day: 4, title: 'Persiapan Miqat & Perjalanan ke Makkah', detail: 'Mandi ihram, mempersiapkan baju ihram, dan check-out hotel Madinah. Menuju Masjid Bir Ali untuk meluruskan niat mengambil Miqat Ihram Umroh, kemudian perjalanan 5 jam ke Makkah Al-Mukarramah via bus AC.' },
     { day: 5, title: 'Ibadah Umroh Utama & Tawaf Sai', detail: 'Check-in hotel Makkah, istirahat sejenak, dilanjutkan melaksanakan rangkaian Rukun Ibadah Umroh Pertama (Tawaf, Sai, dan diakhiri Tahallul mencukur rambut) dipandu Mutawwif secara khusyuk.' },
@@ -421,6 +513,155 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
     { day: 8, title: 'Tawaf Wada & Persiapan Check-Out', detail: 'Melaksanakan rangkaian Tawaf Wada (tawaf perpisahan) mengitari Ka`bah sebelum check-out hotel Makkah. Bersiap menaiki bus menuju Bandara Internasional King Abdulaziz Jeddah.' },
     { day: 9, title: 'Kepulangan Jeddah - Flight ke Jakarta', detail: 'Proses check-in koper baggage dan boarding penerbangan luar negeri Saudia Airlines SV-816 menuju Soekarno Hatta Cengkareng. Landing dengan selamat serta membawa predikat Umroh Maqbullah, Amin Ya Rabbal Alamin.' }
   ];
+
+  const infoFaqData = [
+    {
+      category: 'Informasi Paket & Fasilitas',
+      countLabel: '3 materi tanya-jawab',
+      questions: [
+        {
+          id: 'inf-faq-1',
+          q: 'Fasilitas hotel apa saja yang didapatkan di Makkah & Madinah?',
+          a: 'Hotel bintang 5 di Madinah (Frontel Al Harithia / Setaraf) dan Makkah (Swissôtel Al Maqam / Setaraf) berjarak sangat dekat dari Masjidil Haram & Nabawi. Dilengkapi katering makanan menu khas Indonesia 3 kali sehari.'
+        },
+        {
+          id: 'inf-faq-2',
+          q: 'Kapan e-visa dan tiket pesawat saya diterbitkan?',
+          a: 'Tiket penerbangan Saudia Airlines dan dokumen E-Visa keberangkatan Anda akan diterbitkan secara otomatis oleh sistem Umaroh pada H-10 sebelum keberangkatan setelah status pelunasan terverifikasi.'
+        },
+        {
+          id: 'inf-faq-3',
+          q: 'Apakah bisa merubah pilihan tipe kamar (Quad ke Double/Triple)?',
+          a: 'Ya, Anda pengajuan perubahan tipe kamar (Quad ke Triple/Double) paling lambat dilakukan H-45 melalui sub-tab Keuangan atau menu Add-on Layanan untuk penyesuaian biaya paket.'
+        }
+      ]
+    },
+    {
+      category: 'Jadwal & Itinerary',
+      countLabel: '2 materi tanya-jawab',
+      questions: [
+        {
+          id: 'inf-faq-4',
+          q: 'Apakah bimbingan ibadah (manasik) didampingi mutawwif selama umroh?',
+          a: 'Tentu saja. Dari awal keberangkatan di bandara Jakarta, perjalanan bus, hingga pelaksanaan thawaf dan sa’i di Masjidil Haram akan dibimbing langsung oleh Mutawwif / Ustadz pembimbing tersertifikasi.'
+        },
+        {
+          id: 'inf-faq-5',
+          q: 'Bagaimana jika saya berhalangan hadir saat jadwal manasik tatap muka?',
+          a: 'Tenang, Anda dapat menyimak video rekamannya langsung di sub-tab Lainnya pada fitur Manasik Online & Penuntun Video Saku yang ramah kuota internet.'
+        }
+      ]
+    }
+  ];
+
+  const handleDownloadEVisa = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Background and Header
+      doc.setFillColor(11, 85, 59); // Deep Saudi Green
+      doc.rect(0, 0, 210, 30, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("KINGDOM OF SAUDI ARABIA", 105, 12, { align: "center" });
+      doc.setFontSize(9);
+      doc.setFont("Helvetica", "normal");
+      doc.text("MINISTRY OF HAJJ AND UMRAH - ELECTRONIC PORTAL VISA SERVICE", 105, 20, { align: "center" });
+      
+      // Draw gold-ish decorative bar
+      doc.setFillColor(212, 175, 55); 
+      doc.rect(0, 30, 210, 3, 'F');
+      
+      // Title
+      doc.setTextColor(11, 85, 59);
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("E-VISA SUMMARY & TRAVEL PERMIT", 15, 45);
+      
+      // Sub-header border box
+      doc.setDrawColor(220, 220, 220);
+      doc.setFillColor(248, 249, 250);
+      doc.rect(14, 52, 182, 32, 'FD');
+      
+      doc.setTextColor(50, 50, 50);
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("PASSPORT NAME / NAMA PASPOR:", 20, 60);
+      doc.setTextColor(11, 85, 59);
+      doc.setFontSize(12);
+      doc.text((bookingData.nama_paspor || bookingData.namaJamaah || 'JAMAAH UMROH').toUpperCase(), 20, 67);
+      
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(`Passport No: ${bookingData.no_paspor || 'C1234567'}`, 20, 78);
+      doc.text(`Booking Ref: ${bookingData.kodeBooking || 'ORD-2026-UMR-004127'}`, 100, 78);
+      
+      // Detailed grid
+      const startY = 95;
+      doc.setDrawColor(230, 230, 230);
+      
+      const fields = [
+        ["Visa Number / No Visa", "EV-99411270-KSA"],
+        ["Visa Type / Tipe Visa", "UMRAH MULTIPLE TRANSIT SUCCESS"],
+        ["Date of Issue / Tgl Terbit", "10 August 2026"],
+        ["Expiry Date / Tgl Kadaluarsa", "09 November 2026"],
+        ["Duration of Stay / Durasi", "30 Days maximum stay"],
+        ["Sponsor Company / Provider", "PT NAWAITUL UMRAH HAJI (KEMENAG REG: 912/2026)"],
+        ["Makkah Accommodation", "Swissôtel Al Maqam atau setaraf (Bintang 5)"],
+        ["Madinah Accommodation", "Frontel Al Harithia atau setaraf (Bintang 5)"],
+        ["Insurance ID / Asuransi", "TPL-881267-WASELA SAUDI CO"]
+      ];
+      
+      fields.forEach((item, index) => {
+        const cy = startY + (index * 11);
+        doc.line(14, cy - 6, 196, cy - 6);
+        
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("Helvetica", "bold");
+        doc.setFontSize(9);
+        doc.text(item[0], 20, cy);
+        
+        doc.setTextColor(30, 30, 30);
+        doc.setFont("Helvetica", "normal");
+        doc.text(item[1], 88, cy);
+      });
+      
+      // Bottom border line
+      doc.line(14, startY + (fields.length * 11) - 6, 196, startY + (fields.length * 11) - 6);
+      
+      // Barcode mock
+      doc.setDrawColor(0, 0, 0);
+      doc.setFillColor(30, 30, 30);
+      let barX = 14;
+      for (let i = 0; i < 35; i++) {
+        const width = Math.random() > 0.4 ? 2.5 : 1;
+        const skip = Math.random() > 0.35 ? true : false;
+        if (!skip) {
+          doc.rect(barX, 205, width, 12, 'F');
+        }
+        barX += width + 1.2;
+      }
+      doc.setTextColor(30, 30, 30);
+      doc.setFont("Courier", "bold");
+      doc.setFontSize(8.5);
+      doc.text("*EV-99411270-KSA*", 14, 222);
+      
+      // Footer notes
+      doc.setTextColor(120, 120, 120);
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Document was generated automatically and encrypted securely by Umaroh.com digital portal.", 14, 230);
+      doc.text("PT Nawaitul Umrah Haji guarantees all travelers data privacy rules standard compliance.", 14, 234);
+      
+      doc.save(`e_visa_${(bookingData.namaJamaah || 'jamaah').toLowerCase()}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert('Gagal membuat pdf visa.');
+    }
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -617,22 +858,70 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
           {/* Item 5 */}
           <div className="flex gap-4 relative">
             <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 border border-gray-200 flex items-center justify-center font-bold text-xs z-10 shrink-0 shadow-xs">⏳</div>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs z-10 shrink-0 shadow-xs ${
+                bookingData?.opsi_perlengkapan 
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-250' 
+                  : 'bg-gray-100 text-gray-400 border border-gray-200'
+              }`}>
+                {bookingData?.opsi_perlengkapan ? '✓' : '⏳'}
+              </div>
               <div className="w-0.5 bg-gray-200 grow h-full -mb-4"></div>
             </div>
             <div className="pb-6 grow">
               <div className="bg-white border border-gray-100 p-4 rounded-xl shadow-xs space-y-2 transition hover:border-gray-200">
                 <p className="font-extrabold text-sm text-gray-801 leading-tight">Penerimaan/Pengambilan Perlengkapan</p>
-                <p className="text-[10px] text-gray-400 font-semibold">0% selesai (0/1 jamaah)</p>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-gray-300 h-full w-0 rounded-full" />
-                </div>
+                
+                {bookingData?.opsi_perlengkapan ? (
+                  <div className="space-y-2 mt-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded ${
+                        bookingData.opsi_perlengkapan === 'Kirim Ekspedisi' 
+                          ? 'bg-blue-50 text-blue-800 border border-blue-100'
+                          : 'bg-emerald-50 text-emerald-800 border border-emerald-100'
+                      }`}>
+                        {bookingData.opsi_perlengkapan === 'Kirim Ekspedisi' ? '🚚 KIRIM EKSPEDISI' : '🏢 AMBIL DI KANTOR'}
+                      </span>
+                      {userShipment && (
+                        <span className="bg-amber-50 text-amber-800 border border-amber-100 text-[10px] font-black px-2 py-0.5 rounded">
+                          📦 {userShipment.status_pengiriman}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {bookingData.opsi_perlengkapan === 'Kirim Ekspedisi' ? (
+                      <div className="bg-gray-50 border border-gray-100 rounded-lg p-2.5 space-y-1 text-[11px] text-gray-600 font-sans leading-normal">
+                        <p><strong>Penerima:</strong> {bookingData.penerima_perlengkapan || '-'}</p>
+                        <p><strong>No. Telp:</strong> {bookingData.telp_penerima_perlengkapan || '-'}</p>
+                        <p className="line-clamp-2"><strong>Alamat:</strong> {bookingData.alamat_penerima_perlengkapan || '-'}</p>
+                        {userShipment && (
+                          <div className="mt-1.5 pt-1.5 border-t border-gray-200 space-y-0.5">
+                            <p><strong>Kurir:</strong> {userShipment.ekspedisi}</p>
+                            <p className="font-mono"><strong>No. Resi:</strong> {userShipment.nomor_resi}</p>
+                            <p><strong>Estimasi:</strong> {userShipment.estimasi_tiba}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 border border-gray-100 rounded-lg p-2.5 text-[11px] text-gray-600 font-sans leading-normal">
+                        <p>Akan diambil mandiri di Kantor Regional Cabang Umaroh terdekat mulai <strong>10 Agustus 2026</strong>.</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[10px] text-gray-400 font-semibold">0% selesai (Pilih opsi pengambilan / pengiriman)</p>
+                    <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-gray-300 h-full w-0 rounded-full" />
+                    </div>
+                  </>
+                )}
+
                 <button 
                   type="button"
                   onClick={() => setShowSuitcaseModal(true)}
-                  className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer"
+                  className="text-[11px] text-emerald-600 hover:underline font-bold inline-flex items-center gap-0.5 cursor-pointer pt-1"
                 >
-                  Lihat Detail Perlengkapan →
+                  {bookingData?.opsi_perlengkapan ? 'Ubah Opsi Perlengkapan ✎' : 'Atur Opsi Perlengkapan →'}
                 </button>
               </div>
             </div>
@@ -795,23 +1084,71 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
         </div>
       </div>
 
-      {/* 6. HOTEL & PENERBANGAN */}
+      {/* 6. HOTEL & PENERBANGAN & DOKUMEN REKOR */}
       <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
         <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5 border-b border-gray-50 pb-2.5">
-          <span className="text-amber-500">🏨</span> Hotel & Penerbangan
+          <span className="text-amber-500">🏨</span> Hotel, Penerbangan & Travel Doc
         </h3>
 
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs leading-relaxed font-sans">
           {/* Flight Card */}
-          <div className="border border-violet-100 bg-violet-50/10 p-4 rounded-2xl flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-100 text-violet-750 rounded-full flex items-center justify-center shrink-0">
-              <Plane className="w-5 h-5 rotate-45" />
+          <div className="border border-violet-100 bg-violet-50/10 p-4 rounded-2xl flex items-start gap-3">
+            <div className="w-9 h-9 bg-violet-100 text-violet-750 rounded-full flex items-center justify-center shrink-0 shadow-xs">
+              <Plane className="w-4.5 h-4.5 rotate-45" />
             </div>
-            <div>
-              <p className="text-[10px] text-violet-700 uppercase font-bold tracking-wider leading-none">Penerbangan</p>
-              <p className="text-xs font-black text-gray-800 mt-1.5 leading-none">Saudia</p>
+            <div className="space-y-1">
+              <p className="text-[10px] text-violet-700 uppercase font-bold tracking-wider leading-none">Penerbangan Resmi</p>
+              <p className="text-xs font-black text-gray-801">Saudia Airlines (SV-815 / SV-816)</p>
+              <p className="text-[10px] text-gray-450 font-bold leading-normal">
+                • Jakarta (CGK) ➔ Jeddah (JED) | SV-815 (10.30 WIB)<br />
+                • Jeddah (JED) ➔ Jakarta (CGK) | SV-816 (19.40 KSA)
+              </p>
+              <span className="inline-block bg-violet-100 text-violet-850 font-black text-[9px] px-2 py-0.5 rounded">
+                ✈️ KELAS EKONOMI (PROMO)
+              </span>
             </div>
           </div>
+
+          {/* Hotel Card */}
+          <div className="border border-amber-100 bg-amber-50/15 p-4 rounded-2xl flex items-start gap-3">
+            <div className="w-9 h-9 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center shrink-0 shadow-xs">
+              <span>🏨</span>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-amber-700 uppercase font-bold tracking-wider leading-none">Akomodasi Bintang 5</p>
+              <p className="text-xs font-black text-gray-801">Makkah & Madinah Luxury</p>
+              <p className="text-[10px] text-gray-450 font-bold leading-normal">
+                • Madinah: Frontel Al Harithia / Setaraf (3 Malam)<br />
+                • Makkah: Swissôtel Al Maqam / Setaraf (4 Malam)<br />
+                • Layanan katering full-board menu rasa Indonesia 3x sehari.
+              </p>
+              <span className="inline-block bg-amber-100 text-amber-900 font-black text-[9px] px-2 py-0.5 rounded">
+                Quad Room (Sekamar Berempat)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* E-Visa Section with real download ticket permit */}
+        <div className="bg-emerald-50/40 border border-emerald-100 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 font-sans text-xs">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center shrink-0 text-base">
+              🛡️
+            </div>
+            <div className="space-y-0.5">
+              <p className="font-extrabold text-emerald-950">E-Visa Saudi & Asuransi Perjalanan</p>
+              <p className="text-[10px] text-gray-500 font-semibold">Telah terbit & aktif secara legal di sistem Kementrian Haji & Umroh KSA.</p>
+              <p className="text-[9px] text-emerald-700 font-mono font-black uppercase">NO VISA: EV-99411270-KSA</p>
+            </div>
+          </div>
+          
+          <button
+            type="button"
+            onClick={handleDownloadEVisa}
+            className="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 text-white font-black px-4 py-2.5 rounded-xl text-[10.5px] uppercase tracking-wider text-center transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+          >
+            <Download className="w-3.5 h-3.5" /> Unduh Dokumen E-Visa
+          </button>
         </div>
       </div>
 
@@ -1052,49 +1389,206 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
       {/* MODAL 3: SUITCASE PREPARATION CHECKLIST */}
       {showSuitcaseModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-sm w-full relative shadow-2xl p-5 overflow-y-auto max-h-[85vh] font-sans">
+          <div className="bg-white rounded-3xl max-w-md w-full relative shadow-2xl p-6 overflow-y-auto max-h-[85vh] font-sans">
             <button
+              type="button"
               onClick={() => setShowSuitcaseModal(false)}
               className="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm z-10 transition cursor-pointer"
             >
               ✖
             </button>
             
-            <div className="space-y-4">
+            <form onSubmit={handleSaveSuitcaseOpsi} className="space-y-4">
               <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-                <span className="text-lg">💼</span>
+                <span className="text-xl">💼</span>
                 <div>
                   <h4 className="text-sm font-black text-emerald-950">Detail Pengambilan Perlengkapan</h4>
                   <p className="text-[10px] text-gray-400 mt-0.5 font-bold">Koper, kain ihram, sabuk, & seragam batik</p>
                 </div>
               </div>
 
-              <div className="space-y-3 pt-2 text-xs">
+              <div className="space-y-3 pt-1 text-xs">
                 <p className="font-bold text-gray-650 leading-relaxed">
-                  Perlengkapan fisik (Batik Umaroh, Koper Cabin, Kain Ihram/Mukena, & Tas Selempang) dapat diambil di Kantor Regional Cabang kami mulai <strong className="text-emerald-900">10 Agustus 2026</strong>.
+                  Pilih metode pengambilan perlengkapan fisik Anda (Batik Umaroh, Koper Kabin, Kain Ihram/Mukena, & Tas Selempang):
                 </p>
-                <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl space-y-1 leading-relaxed">
-                  <p className="font-extrabold text-gray-800">Syarat pengambilan:</p>
-                  <ul className="list-disc list-inside text-gray-500 text-[10.5px] space-y-1 mt-1 font-sans">
-                    <li>Membawa struk / kuitansi pembayaran DP</li>
-                    <li>Membawa KTP asli pemohon</li>
-                    <li>Bisa dikirim via kurir ekspedisi (hubungi Admin)</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-              <button
-                onClick={() => setShowSuitcaseModal(false)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold px-4 py-2 rounded-xl text-xs cursor-pointer uppercase transition"
-              >
-                Mengerti
-              </button>
-            </div>
+                {/* TWO OPTIONS RADIO BUTTONS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-sans">
+                  <button
+                    type="button"
+                    onClick={() => setOpsiPerlengkapan('Ambil di Kantor')}
+                    className={`p-3.5 rounded-xl border text-left transition flex items-start gap-2.5 ${
+                      opsiPerlengkapan === 'Ambil di Kantor'
+                        ? 'bg-emerald-50/60 border-emerald-550 text-emerald-950'
+                        : 'bg-white border-gray-150 text-gray-650 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-lg">🏢</span>
+                    <div className="space-y-0.5">
+                      <p className="font-extrabold text-[11px]">Ambil Mandiri</p>
+                      <p className="text-[9px] text-gray-500 font-bold leading-normal">Diambil langsung di Kantor Regional</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setOpsiPerlengkapan('Kirim Ekspedisi')}
+                    className={`p-3.5 rounded-xl border text-left transition flex items-start gap-2.5 ${
+                      opsiPerlengkapan === 'Kirim Ekspedisi'
+                        ? 'bg-blue-50/60 border-blue-400 text-blue-950'
+                        : 'bg-white border-gray-150 text-gray-650 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-lg">🚚</span>
+                    <div className="space-y-0.5">
+                      <p className="font-extrabold text-[11px]">Kirim Ekspedisi</p>
+                      <p className="text-[9px] text-gray-500 font-bold leading-normal">Kirim via kurir langsung ke rumah</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* CONDITIONAL INPUT FOR SHIPPING */}
+                {opsiPerlengkapan === 'Kirim Ekspedisi' ? (
+                  <div className="bg-gray-50 border border-gray-150 rounded-2xl p-4 space-y-3 mt-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-extrabold text-[10.5px] text-gray-700 uppercase tracking-wider">📦 ALAMAT PENERIMA EXPEDISI</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPenerimaName(bookingData.namaJamaah || '');
+                          setPenerimaTelp(bookingData.noHp || '');
+                          setPenerimaAlamat(bookingData.alamat_tinggal || bookingData.alamat || '');
+                        }}
+                        className="text-[9px] text-emerald-700 hover:underline font-black uppercase"
+                      >
+                        Salin Data Akun
+                      </button>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div>
+                        <label className="block text-[9.5px] text-gray-500 font-bold mb-1 uppercase tracking-wide">Nama Lengkap Penerima</label>
+                        <input
+                          type="text"
+                          required={opsiPerlengkapan === 'Kirim Ekspedisi'}
+                          value={penerimaName}
+                          onChange={(e) => setPenerimaName(e.target.value)}
+                          placeholder="Contoh: Muhammad Wildan"
+                          className="w-full bg-white border border-gray-200 px-3 py-2 rounded-xl text-xs font-bold font-sans text-gray-800 outline-none focus:ring-2 focus:ring-blue-500/15"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9.5px] text-gray-500 font-bold mb-1 uppercase tracking-wide">No. Handphone / WhatsApp</label>
+                        <input
+                          type="tel"
+                          required={opsiPerlengkapan === 'Kirim Ekspedisi'}
+                          value={penerimaTelp}
+                          onChange={(e) => setPenerimaTelp(e.target.value)}
+                          placeholder="Contoh: 08123456789"
+                          className="w-full bg-white border border-gray-200 px-3 py-2 rounded-xl text-xs font-bold font-sans text-gray-800 outline-none focus:ring-2 focus:ring-blue-500/15"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9.5px] text-gray-500 font-bold mb-1 uppercase tracking-wide">Alamat Lengkap Pengiriman</label>
+                        <textarea
+                          rows={3}
+                          required={opsiPerlengkapan === 'Kirim Ekspedisi'}
+                          value={penerimaAlamat}
+                          onChange={(e) => setPenerimaAlamat(e.target.value)}
+                          placeholder="Tuliskan nama jalan, No. Rumah, RT/RW, Dusun, Kelurahan & Kecamatan secara detail"
+                          className="w-full bg-white border border-gray-200 p-3 rounded-xl text-xs font-bold font-sans text-gray-800 leading-relaxed outline-none focus:ring-2 focus:ring-blue-500/15"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl text-[10px] text-blue-900 leading-normal flex items-start gap-1.5 font-bold">
+                      <span>✓</span>
+                      <span>
+                        Pengiriman menggunakan ekspedisi rekanan (J&T Express / Sicepat). Berat koper & perlengkapan akan dihitung otomatis. No. Resi otomatis muncul setelah diverifikasi admin.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-150 rounded-2xl p-4 space-y-2.5 mt-2">
+                    <p className="font-extrabold text-[10.5px] text-gray-700 uppercase tracking-wider">🏢 PENGAMBILAN DI KANTOR</p>
+                    <div className="space-y-1 text-gray-500 leading-relaxed text-[11px]">
+                      <p>Perlengkapan fisik dapat diambil secara mandiri di <strong>Kantor Regional Cabang Umaroh terdekat</strong> mulai <strong className="text-emerald-900">10 Agustus 2026</strong>.</p>
+                      <ul className="list-disc list-inside text-[10px] text-gray-400 space-y-1 mt-1.5">
+                        <li>Membawa Bukti Cetak invoice pembayaran</li>
+                        <li>Membawa KTP asli / Identitas Jemaah</li>
+                        <li>Mengonfirmasi ke Admin 1 hari sebelumnya</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-105 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSuitcaseModal(false)}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold px-4 py-2 rounded-xl text-xs cursor-pointer uppercase transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingPerlengkapan}
+                  className="bg-emerald-750 hover:bg-emerald-800 text-white font-extrabold px-4 py-2 rounded-xl text-xs cursor-pointer uppercase transition disabled:opacity-50"
+                >
+                  {isSavingPerlengkapan ? 'Menyimpan...' : 'Simpan Opsi'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
+
+      {/* 10. COLLAPSIBLE FAQs FOR INFO PAKET */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4 font-sans mt-6">
+        <div className="border-b border-gray-50 pb-2.5">
+          <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+            💬 FAQ Seputar Informasi Paket & Itinerary
+          </h3>
+          <p className="text-[10px] text-gray-400 font-bold mt-0.5">Pertanyaan umum jamaah mengenai jadwal penerbangan, hotel & manasik.</p>
+        </div>
+
+        <div className="space-y-3.5">
+          {infoFaqData.map((categoryObj, catIdx) => (
+            <div key={catIdx} className="space-y-2">
+              <p className="text-[10px] font-black uppercase text-emerald-800 tracking-wider bg-emerald-50 px-2.5 py-1 rounded w-max">
+                {categoryObj.category}
+              </p>
+              
+              <div className="space-y-2">
+                {categoryObj.questions.map((item) => {
+                  const isOpen = expandedFaqId === item.id;
+                  return (
+                    <div key={item.id} className="border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedFaqId(isOpen ? null : item.id)}
+                        className="w-full bg-gray-50/40 p-3.5 text-left flex items-center justify-between text-xs font-extrabold text-gray-800 gap-3 hover:bg-gray-50 transition cursor-pointer"
+                      >
+                        <span className="leading-snug">{item.q}</span>
+                        {isOpen ? <ChevronUp className="w-4 h-4 text-emerald-700 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
+                      </button>
+                      
+                      {isOpen && (
+                        <div className="p-4 bg-white border-t border-gray-50 text-[11px] leading-relaxed text-gray-500 font-medium">
+                          {item.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
     </div>
   );
@@ -1141,6 +1635,7 @@ export const PortalKeuanganTab: React.FC<{
 
   // Accordion state for FAQs
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+  const [activeAddons, setActiveAddons] = useState<string[]>([]);
 
   const handleCopy = (text: string, id: string) => {
     try {
@@ -1155,7 +1650,7 @@ export const PortalKeuanganTab: React.FC<{
   if (!bookingData) return null;
 
   // Real or default values
-  const totalHarga = Number(bookingData.totalHarga || 35192675);
+  const totalHargaBase = Number(bookingData.totalHarga || 35192675);
   
   // State for payments to make it fully reactive
   const [payments, setPayments] = useState<UmarohPayment[]>(() => {
@@ -1234,12 +1729,43 @@ export const PortalKeuanganTab: React.FC<{
     return () => unsubscribe();
   }, [bookingData.id, bookingData.jumlahBayar, bookingData.namaJamaah, bookingData.nama_paspor, bookingData.paketNama]);
 
+  const availableAddons = [
+    {
+      id: "double-room",
+      label: "Upgrade Kamar Double (Dual Bed)",
+      desc: "Kamar eksklusif berdua dengan pasangan / keluarga inti tercinta.",
+      price: 8500000,
+      icon: "👥"
+    },
+    {
+      id: "wheelchair",
+      label: "Jasa Muthawwif Pendorong Kursi Roda",
+      desc: "Layanan pendorong kursi roda selama Thawaf dan Sa'i dari tim resmi.",
+      price: 1250000,
+      icon: "♿"
+    },
+    {
+      id: "badal-umroh",
+      label: "Paket Jasa Badal Umroh Tambahan",
+      desc: "Membadalkan keluarga/almarhum terdalam, bersertifikat & dokumentasi video amanah.",
+      price: 1500000,
+      icon: "📜"
+    }
+  ];
+
+  const addonCost = activeAddons.reduce((sum, id) => {
+    const item = availableAddons.find(a => a.id === id);
+    return sum + (item ? item.price : 0);
+  }, 0);
+
   // Derived financial computations
+  const totalHarga = totalHargaBase + addonCost;
+
   const totalBayar = payments
     .filter(p => p.status === 'Verified')
     .reduce((sum, p) => sum + p.jumlah, 0);
 
-  const remaining = totalHarga - totalBayar;
+  const remaining = Math.max(0, totalHarga - totalBayar);
   const progressPercent = Math.min(100, Math.round((totalBayar / totalHarga) * 100));
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1626,41 +2152,23 @@ export const PortalKeuanganTab: React.FC<{
           
           docPdf.text('Berikut daftar rekening Penampungan Resmi (Wajib Transfer ke akun berlisensi di bawah ini):', 15, 192);
           
-          // Bank 1
+          // Bank 1 (Keep only BSI as per user request)
           docPdf.setFont('helvetica', 'bold');
           docPdf.setTextColor(15, 23, 42);
-          docPdf.text('1. Bank Syariah Indonesia (BSI)', 15, 201);
+          docPdf.text('Bank Syariah Indonesia (BSI)', 15, 201);
           docPdf.setFont('helvetica', 'normal');
           docPdf.setTextColor(71, 85, 105);
           docPdf.text('    No. Rekening : 5577 7750 03', 15, 206);
           docPdf.text('    Atas Nama    : PT NAWAITUL UMRAH HAJI', 15, 211);
           
-          // Bank 2 (BCA from screenshot)
-          docPdf.setFont('helvetica', 'bold');
-          docPdf.setTextColor(15, 23, 42);
-          docPdf.text('2. Bank Central Asia (BCA)', 15, 219);
-          docPdf.setFont('helvetica', 'normal');
-          docPdf.setTextColor(71, 85, 105);
-          docPdf.text('    No. Rekening : 7180 5385 04', 15, 224);
-          docPdf.text('    Atas Nama    : PT UMAROH GRUP INTERNASIONAL', 15, 229);
-          
-          // Bank 3 (BNI from screenshot)
-          docPdf.setFont('helvetica', 'bold');
-          docPdf.setTextColor(15, 23, 42);
-          docPdf.text('3. Bank Negara Indonesia (BNI)', 15, 237);
-          docPdf.setFont('helvetica', 'normal');
-          docPdf.setTextColor(71, 85, 105);
-          docPdf.text('    No. Rekening : 3101 1133 39', 15, 242);
-          docPdf.text('    Atas Nama    : PT UMAROH GRUP INTERNASIONAL', 15, 247);
-          
           // Footer watermark
           docPdf.setDrawColor(241, 245, 249);
-          docPdf.line(15, 260, 195, 260);
+          docPdf.line(15, 240, 195, 240);
           docPdf.setFontSize(8);
           docPdf.setFont('helvetica', 'italic');
           docPdf.setTextColor(156, 163, 175);
-          docPdf.text('Dokumen invoice ini diterbitkan secara otomatis oleh sistem digital Cloud Umaroh Indonesia. Bukti sah transaksi finansial.', 15, 268);
-          docPdf.text(`ID Referensi Kuitansi: ${bookingData.id || 'N/A'} | Operator: Umaroh Auto-Bot`, 15, 273);
+          docPdf.text('Dokumen invoice ini diterbitkan secara otomatis oleh sistem digital Cloud Umaroh Indonesia. Bukti sah transaksi finansial.', 15, 248);
+          docPdf.text(`ID Referensi Kuitansi: ${bookingData.id || 'N/A'} | Operator: Umaroh Auto-Bot`, 15, 253);
           
           docPdf.save(`Invoice-Umaroh-${bookingData.kodeBooking || 'INV'}.pdf`);
         }}
@@ -1679,6 +2187,57 @@ export const PortalKeuanganTab: React.FC<{
           <Download className="w-4 h-4 text-white" />
         </div>
       </button>
+
+      {/* ADD-ON UPGRADE LAYANAN */}
+      <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4 font-sans">
+        <div>
+          <h3 className="text-sm font-black text-emerald-950 flex items-center gap-1.5 border-b border-gray-50 pb-2">
+            ✨ Add-on Layanan Tambahan (Opsional)
+          </h3>
+          <p className="text-[10px] text-gray-450 font-bold mt-1 leading-relaxed">
+            Pilihlah layanan premium tambahan untuk kenyamanan perjalanan ibadah Anda. Biaya di bawah otomatis diakumulasi langsung pada Sisa & Total Tagihan secara real-time.
+          </p>
+        </div>
+
+        <div className="space-y-2.5">
+          {availableAddons.map((addon) => {
+            const isSelected = activeAddons.includes(addon.id);
+            return (
+              <div 
+                key={addon.id} 
+                onClick={() => {
+                  if (isSelected) {
+                    setActiveAddons(activeAddons.filter(id => id !== addon.id));
+                  } else {
+                    setActiveAddons([...activeAddons, addon.id]);
+                  }
+                }}
+                className={`p-3.5 border rounded-2xl cursor-pointer transition flex items-start gap-3 select-none ${
+                  isSelected 
+                    ? 'border-emerald-700 bg-emerald-50/25 shadow-xs' 
+                    : 'border-gray-105 bg-gray-50/15 hover:border-gray-200'
+                }`}
+              >
+                <div className="text-lg shrink-0 mt-0.5">{addon.icon}</div>
+                <div className="flex-1 space-y-0.5">
+                  <div className="flex justify-between items-start gap-2">
+                    <p className="text-[11px] font-extrabold text-gray-800 leading-snug">{addon.label}</p>
+                    <p className="text-[11px] font-black text-emerald-700 shrink-0 font-mono">+Rp {addon.price.toLocaleString('id-ID')}</p>
+                  </div>
+                  <p className="text-[9.5px] text-gray-400 font-bold leading-normal">{addon.desc}</p>
+                </div>
+                <div className="shrink-0 mt-1">
+                  <div className={`w-4.5 h-4.5 rounded-lg border flex items-center justify-center transition-colors ${
+                    isSelected ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-gray-300 bg-white'
+                  }`}>
+                    {isSelected && <span className="text-[9px] font-black leading-none">✓</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* 3. RINGKASAN KEUANGAN CARD */}
       <div className="bg-white border border-gray-150 rounded-2xl p-5 shadow-sm space-y-4">
