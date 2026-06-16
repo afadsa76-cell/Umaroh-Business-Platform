@@ -5,7 +5,7 @@ import {
   MessageCircle, CheckCircle, Info, Minus, Plus, Check,
   BadgePercent, Send, X, Bell, AlertTriangle, Printer, Upload
 } from 'lucide-react';
-import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc } from '../firebase';
+import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc, limit } from '../firebase';
 import { KatalogPaketView } from './KatalogPaketView';
 import { RiwayatPemesananView } from './RiwayatPemesananView';
 import { ProfileView } from './ProfileView';
@@ -110,6 +110,10 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
   const [katalogSearch, setKatalogSearch] = useState<string>('');
   const [selectedMitraId, setSelectedMitraId] = useState<string | null>(null);
   const userId = auth.currentUser?.uid;
+  const isMasterAdmin = auth.currentUser?.email ? (
+    auth.currentUser.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+    auth.currentUser.email.toLowerCase() === 'afadsa76@gmail.com'
+  ) : false;
 
   // Real-time Notifications Listener for Jamaah
   useEffect(() => {
@@ -168,7 +172,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
     return () => unsubscribe();
   }, [jamaahCodeSession?.id]);
 
-  // Real-time listener for standard logged-in user's bookings
+  // Real-time listener for standard logged-in user's bookings (or all system bookings for master admin)
   useEffect(() => {
     if (jamaahCodeSession) {
       setLoadingBookings(false);
@@ -178,7 +182,11 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
       setLoadingBookings(false);
       return;
     }
-    const q = query(collection(db, 'bookings'), where('jamaahId', '==', userId));
+    // Query either user's bookings or all bookings if Master Admin
+    const q = isMasterAdmin 
+      ? query(collection(db, 'bookings'), limit(250))
+      : query(collection(db, 'bookings'), where('jamaahId', '==', userId));
+
     const unsubscribe = onSnapshot(q, (snap) => {
       const list: BookingRecord[] = [];
       snap.forEach(docSnap => {
@@ -209,7 +217,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
       }
     });
     return () => unsubscribe();
-  }, [userId, jamaahCodeSession, selectedBookingId]);
+  }, [userId, jamaahCodeSession, selectedBookingId, isMasterAdmin]);
 
   // Update chosen bookingData when selectedBookingId changes for standard users
   useEffect(() => {
@@ -1860,6 +1868,22 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
 
         {/* Sidebar Navigation Items */}
         <nav className="flex-1 p-4 space-y-1">
+          {bookingData && (
+            <button
+              onClick={() => {
+                setActiveTab('pendaftaran_mandiri');
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                activeTab === 'pendaftaran_mandiri' 
+                  ? 'bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-600/10 font-black' 
+                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+              }`}
+            >
+              <span className="text-sm">🕌</span>
+              Portal Mandiri
+            </button>
+          )}
+
           <button
             onClick={() => {
               setActiveTab('overview');
@@ -1937,6 +1961,39 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
 
       {/* Right-side Main Content Pane */}
       <div className="flex-1 lg:pl-72 flex flex-col min-h-screen w-full">
+        
+        {/* Master Admin Switcher Banner */}
+        {isMasterAdmin && pilgrimBookings.length > 0 && (
+          <div className="bg-amber-400 text-slate-950 px-4 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-amber-500 shadow-sm sticky top-0 z-45 shrink-0 font-sans">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">🛠️</span>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider">MASTER ADMIN PREVIEW MODE</p>
+                <p className="text-[10px] text-zinc-900 font-bold">Pilih booking jamaah di bawah ini untuk melihat portofolio portal jamaahnya.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-xs font-extrabold whitespace-nowrap">Pilih Jamaah:</span>
+              <select
+                value={selectedBookingId}
+                onChange={(e) => {
+                  setSelectedBookingId(e.target.value);
+                  const found = pilgrimBookings.find(b => b.id === e.target.value);
+                  if (found) {
+                    setBookingData(found);
+                  }
+                }}
+                className="text-xs font-black bg-white text-gray-900 border border-amber-500 rounded-xl px-3 py-2 outline-none focus:ring-1 focus:ring-amber-600 w-full sm:w-72 cursor-pointer shadow-xs"
+              >
+                {pilgrimBookings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.namaJamaah || b.nama_paspor || 'Tanpa Nama'} ({b.kodeBooking || b.id}) - {b.packageName || 'No Paket'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
         
         {/* Search Header (Shopee Style) */}
       <div className="bg-emerald-800 text-white pt-4 pb-5 px-4 md:px-6 sticky top-0 z-40 shadow-md">
@@ -2532,6 +2589,16 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-around items-center h-16">
+          {bookingData && (
+            <button
+              onClick={() => setActiveTab('pendaftaran_mandiri')}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'pendaftaran_mandiri' ? 'text-emerald-700 font-extrabold' : 'text-gray-400'}`}
+            >
+              <span className="text-base">🕌</span>
+              <span className="text-[10px] font-bold">Portal Mandiri</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               setActiveTab('overview');
