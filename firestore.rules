@@ -155,7 +155,7 @@ service cloud.firestore {
     }
 
     match /paket_master/{paketId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if (isOperasional() || isMitra()) && isValidId(paketId) && isValidPaketMaster(incoming());
       allow update: if isValidId(paketId) && (
         isAdmin() || 
@@ -261,12 +261,12 @@ service cloud.firestore {
     }
 
     match /tracker_paket/{paketId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(paketId);
     }
 
     match /tracker_jamaah/{jamaahId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() || (isSignedIn() && (
                     incoming().get('mitraId', '') == request.auth.uid || 
                     incoming().get('jamaahId', '') == request.auth.uid ||
@@ -278,17 +278,17 @@ service cloud.firestore {
     }
 
     match /tracker_keberangkatan/{keberangkatanId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(keberangkatanId);
     }
 
     match /tracking_group/{groupId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() || (isMitra() && incoming().leader_id == request.auth.uid);
+      allow read: if true;
+      allow write: if isOperasional() || (isSignedIn() && incoming().leader_id == request.auth.uid) || isValidId(groupId);
     }
 
     match /mitra_tracker/{trackerId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if (isFinance() || isOperasional()) && isValidId(trackerId);
     }
 
@@ -383,8 +383,8 @@ service cloud.firestore {
     }
 
     match /tracker_bagasi/{baggageId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && isValidId(baggageId);
+      allow read: if true;
+      allow write: if isValidId(baggageId);
     }
   }
 }

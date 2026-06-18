@@ -7,85 +7,111 @@ import { TrackerBagasi } from './tracker/TrackerBagasi';
 
 type TabType = 'paket' | 'jamaah' | 'keberangkatan' | 'bagasi';
 
-export const TrackerView: React.FC = () => {
-  const [activeTab, setActiveTab ] = useState<TabType>('paket');
+interface TrackerViewProps {
+  subRole?: string | null;
+}
+
+export const TrackerView: React.FC<TrackerViewProps> = ({ subRole }) => {
+  const isBaggageStaff = subRole === 'petugas_bandara' || subRole === 'tour_leader';
+  const [activeTab, setActiveTab ] = useState<TabType>(isBaggageStaff ? 'bagasi' : 'paket');
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Mapping & Tracker</h1>
-        <p className="text-gray-600">Pantau dan kelola mapping paket, data jamaah, logistik, dan status bagasi barcode jemaah.</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Paket Card */}
-        <div 
-          onClick={() => setActiveTab('paket')}
-          className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'paket' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-blue-300'}`}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className={`p-3 rounded-lg ${activeTab === 'paket' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
-              <Package className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900">Tracker Paket</h2>
+      {isBaggageStaff ? (
+        <div className="mb-6 bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-indigo-950 flex items-center gap-2">
+              <Barcode className="w-5 h-5 text-indigo-600" />
+              Sistem Pelacakan Bagasi Rombongan
+            </h1>
+            <p className="text-xs text-indigo-800/80 mt-1">
+              Gunakan kamera handphone atau scanner barcode untuk mencatat bagasi koper di bandara keberangkatan & bandara tujuan.
+            </p>
           </div>
-          <p className="text-gray-650 text-sm mb-4">Monitoring status paket perjalanan umrah yang sedang berjalan atau direncanakan.</p>
-          <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'paket' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
-            Lihat Detail Paket
-          </button>
-        </div>
-
-        {/* Jamaah Card */}
-        <div 
-          onClick={() => setActiveTab('jamaah')}
-          className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'jamaah' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-gray-200 hover:border-emerald-300'}`}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className={`p-3 rounded-lg ${activeTab === 'jamaah' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
-              <Users className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900">Tracker Jamaah</h2>
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 rounded border border-indigo-200">
+              Akses: {subRole === 'petugas_bandara' ? 'Petugas Bandara' : 'Tour Leader'}
+            </span>
           </div>
-          <p className="text-gray-650 text-sm mb-4">Pantau kelengkapan dokumen, pembayaran, dan status masing-masing jamaah.</p>
-          <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'jamaah' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
-            Lihat Data Jamaah
-          </button>
         </div>
-
-        {/* Keberangkatan Card */}
-        <div 
-          onClick={() => setActiveTab('keberangkatan')}
-          className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'keberangkatan' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-gray-200 hover:border-amber-300'}`}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className={`p-3 rounded-lg ${activeTab === 'keberangkatan' ? 'bg-amber-600 text-white' : 'bg-amber-55 text-amber-600'}`}>
-              <PlaneTakeoff className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900">Tracker Keberangkatan</h2>
+      ) : (
+        <>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Mapping & Tracker</h1>
+            <p className="text-gray-600">Pantau dan kelola mapping paket, data jamaah, logistik, dan status bagasi barcode jemaah.</p>
           </div>
-          <p className="text-gray-650 text-sm mb-4">Jadwal penerbangan, status visa, dan persiapan keberangkatan rombongan.</p>
-          <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'keberangkatan' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
-            Lihat Jadwal Keberangkatan
-          </button>
-        </div>
 
-        {/* Bagasi Card */}
-        <div 
-          onClick={() => setActiveTab('bagasi')}
-          className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'bagasi' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200 hover:border-indigo-300'}`}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className={`p-3 rounded-lg ${activeTab === 'bagasi' ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-              <Barcode className="w-6 h-6" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Paket Card */}
+            <div 
+              onClick={() => setActiveTab('paket')}
+              className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'paket' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-blue-300'}`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-3 rounded-lg ${activeTab === 'paket' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                  <Package className="w-6 h-6" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Tracker Paket</h2>
+              </div>
+              <p className="text-gray-650 text-sm mb-4">Monitoring status paket perjalanan umrah yang sedang berjalan atau direncanakan.</p>
+              <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'paket' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
+                Lihat Detail Paket
+              </button>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Tracker Bagasi</h2>
+
+            {/* Jamaah Card */}
+            <div 
+              onClick={() => setActiveTab('jamaah')}
+              className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'jamaah' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-gray-200 hover:border-emerald-300'}`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-3 rounded-lg ${activeTab === 'jamaah' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-600'}`}>
+                  <Users className="w-6 h-6" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Tracker Jamaah</h2>
+              </div>
+              <p className="text-gray-650 text-sm mb-4">Pantau kelengkapan dokumen, pembayaran, dan status masing-masing jamaah.</p>
+              <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'jamaah' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
+                Lihat Data Jamaah
+              </button>
+            </div>
+
+            {/* Keberangkatan Card */}
+            <div 
+              onClick={() => setActiveTab('keberangkatan')}
+              className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'keberangkatan' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-gray-200 hover:border-amber-300'}`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-3 rounded-lg ${activeTab === 'keberangkatan' ? 'bg-amber-600 text-white' : 'bg-amber-55 text-amber-600'}`}>
+                  <PlaneTakeoff className="w-6 h-6" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Tracker Keberangkatan</h2>
+              </div>
+              <p className="text-gray-650 text-sm mb-4">Jadwal penerbangan, status visa, dan persiapan keberangkatan rombongan.</p>
+              <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'keberangkatan' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
+                Lihat Jadwal Keberangkatan
+              </button>
+            </div>
+
+            {/* Bagasi Card */}
+            <div 
+              onClick={() => setActiveTab('bagasi')}
+              className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'bagasi' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200 hover:border-indigo-300'}`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-3 rounded-lg ${activeTab === 'bagasi' ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <Barcode className="w-6 h-6" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Tracker Bagasi</h2>
+              </div>
+              <p className="text-gray-650 text-sm mb-4">Monitoring barcode koper group, register boarding, dan kliring tiba di tujuan.</p>
+              <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'bagasi' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
+                Lihat Tracker Bagasi
+              </button>
+            </div>
           </div>
-          <p className="text-gray-650 text-sm mb-4">Monitoring barcode koper group, register boarding, dan kliring tiba di tujuan.</p>
-          <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'bagasi' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
-            Lihat Tracker Bagasi
-          </button>
-        </div>
-      </div>
+        </>
+      )}
 
       <div className="mt-8">
         {activeTab === 'paket' && <TrackerPaket />}

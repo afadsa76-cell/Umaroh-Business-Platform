@@ -357,7 +357,13 @@ export const UserDatabaseView: React.FC = () => {
                       {user.role === 'admin' && user.subRole && (
                         <div className="mt-1">
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
-                            {user.subRole === 'mitra_dev' ? 'MITRA DEV' : user.subRole}
+                            {user.subRole === 'mitra_dev' 
+                              ? 'MITRA DEV' 
+                              : user.subRole === 'tour_leader'
+                                ? 'TOUR LEADER (BAGASI)'
+                                : user.subRole === 'petugas_bandara'
+                                  ? 'PETUGAS BANDARA (BAGASI)'
+                                  : user.subRole}
                           </span>
                         </div>
                       )}
@@ -563,6 +569,8 @@ export const UserDatabaseView: React.FC = () => {
                     <option value="operasional">2. OPERASIONAL ONLY</option>
                     <option value="finance">3. FINANCE ONLY</option>
                     <option value="marketing">4. DIGITAL MARKETING ONLY</option>
+                    <option value="tour_leader">5. TOUR LEADER ONLY (BAGASI)</option>
+                    <option value="petugas_bandara">6. PETUGAS BANDARA ONLY (BAGASI)</option>
                   </select>
                   <p className="text-[10px] text-amber-800/80 mt-1.5 font-semibold font-sans">
                     *Membatasi dashboard agar admin ini hanya dapat mengakses kategori menu yang ditentukan.

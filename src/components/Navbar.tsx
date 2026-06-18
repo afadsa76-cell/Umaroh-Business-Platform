@@ -25,7 +25,7 @@ import {
 import { Role } from './LoginView';
 
 export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative';
-export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing';
+export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing' | 'tour_leader' | 'petugas_bandara';
 
 interface NavbarProps {
   activeTab: TabType;
@@ -92,6 +92,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       label: '4. DIGITAL MARKETING',
       icon: Megaphone,
       items: ['templates', 'ad-management', 'profile']
+    },
+    {
+      id: 'tour_leader',
+      label: 'PORTAL TOUR LEADER',
+      icon: MapPin,
+      items: ['tracker']
+    },
+    {
+      id: 'petugas_bandara',
+      label: 'PORTAL PETUGAS BANDARA',
+      icon: Sliders,
+      items: ['tracker']
     }
   ];
 
@@ -120,7 +132,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     })
     .filter(category => category.allowedItems.length > 0);
 
-  const allowedTabIds = ['dashboard', ...visibleCategories.flatMap(c => c.allowedItems)];
+  const isBaggageStaff = subRole === 'tour_leader' || subRole === 'petugas_bandara';
+  const allowedTabIds = isBaggageStaff
+    ? [...visibleCategories.flatMap(c => c.allowedItems)]
+    : ['dashboard', ...visibleCategories.flatMap(c => c.allowedItems)];
   const activeNavItems = navItems.filter(item => allowedTabIds.includes(item.id));
 
   return (
@@ -151,10 +166,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] font-black text-gray-800 truncate uppercase mt-0.5 leading-none">
-              {userRole === 'vendor' ? (subRole === 'vendor_maskapai' ? 'Vendor Maskapai' : 'Vendor Hotel') : (userRole === 'admin' ? 'Administrator' : (subRole ? `Ops - ${subRole}` : 'Operasional'))}
+              {userRole === 'vendor' 
+                ? (subRole === 'vendor_maskapai' ? 'Vendor Maskapai' : 'Vendor Hotel') 
+                : (userRole === 'admin' 
+                  ? (subRole === 'tour_leader' 
+                    ? 'Tour Leader' 
+                    : subRole === 'petugas_bandara' 
+                      ? 'Petugas Bandara' 
+                      : 'Administrator') 
+                  : (subRole ? `Ops - ${subRole}` : 'Operasional'))}
             </p>
             <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap block mt-1">
-              {userRole === 'vendor' ? 'VENDOR LIMITED ACCESS' : 'SYSTEM LEVEL ACCESS'}
+              {isBaggageStaff ? 'MAPPING & TRACKER ACCESS' : (userRole === 'vendor' ? 'VENDOR LIMITED ACCESS' : 'SYSTEM LEVEL ACCESS')}
             </span>
           </div>
         </div>
@@ -162,21 +185,23 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
         {/* Sidebar Items Sorted by Category */}
         <div className="flex-grow p-4 overflow-y-auto space-y-4 no-scrollbar">
           {/* Standalone Dashboard menu item, always visible at the very top */}
-          <div className="space-y-1">
-            <button
-              onClick={() => handleTabClick('dashboard')}
-              className={`
-                w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-black transition-all duration-200 cursor-pointer justify-start
-                ${activeTab === 'dashboard'
-                  ? 'bg-indigo-600 text-white shadow-md' 
-                  : 'bg-indigo-50/55 hover:bg-indigo-50 text-indigo-950 border border-indigo-100/50 shadow-sm'
-                }
-              `}
-            >
-              <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-white' : 'text-indigo-600'}`} />
-              <span className="truncate text-left leading-tight py-0.5 uppercase tracking-wide">Dashboard</span>
-            </button>
-          </div>
+          {!isBaggageStaff && (
+            <div className="space-y-1">
+              <button
+                onClick={() => handleTabClick('dashboard')}
+                className={`
+                  w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-black transition-all duration-200 cursor-pointer justify-start
+                  ${activeTab === 'dashboard'
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'bg-indigo-50/55 hover:bg-indigo-50 text-indigo-950 border border-indigo-100/50 shadow-sm'
+                  }
+                `}
+              >
+                <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-white' : 'text-indigo-600'}`} />
+                <span className="truncate text-left leading-tight py-0.5 uppercase tracking-wide">Dashboard</span>
+              </button>
+            </div>
+          )}
 
           {userRole === 'vendor' && (
             <div className="space-y-1.5">
@@ -316,21 +341,23 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
             </div>
             <div className="flex-grow overflow-y-auto p-4 space-y-5">
               {/* Standalone Dashboard menu item, always visible at the very top */}
-              <div className="space-y-1 bg-indigo-50/50 p-1.5 rounded-xl border border-indigo-100/30">
-                <button
-                  onClick={() => handleTabClick('dashboard')}
-                  className={`
-                    w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-black transition-all justify-start
-                    ${activeTab === 'dashboard' 
-                      ? 'bg-indigo-600 text-white shadow-sm' 
-                      : 'text-indigo-950 hover:bg-gray-50'
-                    }
-                  `}
-                >
-                  <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-white' : 'text-indigo-600'}`} />
-                  <span>DASHBOARD</span>
-                </button>
-              </div>
+              {!isBaggageStaff && (
+                <div className="space-y-1 bg-indigo-50/50 p-1.5 rounded-xl border border-indigo-100/30">
+                  <button
+                    onClick={() => handleTabClick('dashboard')}
+                    className={`
+                      w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-black transition-all justify-start
+                      ${activeTab === 'dashboard' 
+                        ? 'bg-indigo-600 text-white shadow-sm' 
+                        : 'text-indigo-950 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-white' : 'text-indigo-600'}`} />
+                    <span>DASHBOARD</span>
+                  </button>
+                </div>
+              )}
 
               {visibleCategories.map((cat) => {
                 const CatIcon = cat.icon;

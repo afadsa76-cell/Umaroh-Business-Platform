@@ -44,7 +44,9 @@ const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
   operasional: ['dashboard', 'owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
   finance: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor', 'finance-cumulative'],
-  marketing: ['templates', 'ad-management', 'profile']
+  marketing: ['templates', 'ad-management', 'profile'],
+  tour_leader: ['tracker'],
+  petugas_bandara: ['tracker']
 };
 
 function App() {
@@ -448,7 +450,7 @@ function App() {
       case 'flights':
         return <FlightMonitoringView />;
       case 'tracker':
-        return <TrackerView />;
+        return <TrackerView subRole={subRole} />;
       case 'manifest':
         return <ManifestPage />;
       case 'revenue':

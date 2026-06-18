@@ -1,5 +1,59 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
+import QRCode from 'qrcode';
+
+interface QRCodeImageProps {
+  value: string;
+  size?: number;
+}
+
+const QRCodeImage: React.FC<QRCodeImageProps> = ({ value, size = 64 }) => {
+  const [src, setSrc] = useState<string>('');
+
+  useEffect(() => {
+    let isMounted = true;
+    QRCode.toDataURL(value, {
+      margin: 1,
+      width: size,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    })
+    .then(url => {
+      if (isMounted) setSrc(url);
+    })
+    .catch(err => {
+      console.error('Failed to generate QR Code:', err);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [value, size]);
+
+  if (!src) {
+    return (
+      <div 
+        style={{ width: `${size}px`, height: `${size}px` }} 
+        className="bg-gray-100 animate-pulse rounded border border-gray-200 flex items-center justify-center text-[8px] text-gray-400"
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt={value} 
+      width={size} 
+      height={size} 
+      className="object-contain border border-gray-100 p-0.5 bg-white rounded shadow-xs"
+      referrerPolicy="no-referrer"
+    />
+  );
+};
+
 import { 
   collection, 
   onSnapshot, 
@@ -23,6 +77,9 @@ import {
   UserCheck
 } from 'lucide-react';
 import { PaketTracker, JamaahTracker, KeberangkatanTracker } from './types';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { downloadFile } from '../../utils/fileUtils';
 
 // Types inside file to prevent import path complexities
 interface BaggageItem {
@@ -108,7 +165,9 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
   // Live Camera Scanner States
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string>('');
+  const [bagIdToDelete, setBagIdToDelete] = useState<string | null>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const processBarcodeScanRef = useRef<((code: string, overrideBagType?: 'check-in' | 'cabin', overrideScanStep?: 'boarding' | 'unboarding') => Promise<void>) | null>(null);
 
   // Sync prop changes
   useEffect(() => {
@@ -422,7 +481,11 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
   };
 
   // Master controller for processing barcode scans
-  const processBarcodeScan = async (code: string) => {
+  const processBarcodeScan = async (
+    code: string,
+    overrideBagType?: 'check-in' | 'cabin',
+    overrideScanStep?: 'boarding' | 'unboarding'
+  ) => {
     if (!selectedPaketId) {
       setScanStatus({ type: 'error', msg: 'Mohon pilih rombongan paket terlebih dahulu.' });
       playBeep(440, 0.3); // Low buzzer error tone
@@ -438,10 +501,13 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
       return;
     }
 
+    const activeScanStep = overrideScanStep || currentScanStep;
+    const activeBagType = overrideBagType || scanType;
+
     try {
       const existingBag = baggages.find(b => b.id === sanitizedCode);
 
-      if (currentScanStep === 'boarding') {
+      if (activeScanStep === 'boarding') {
         // Mode 1: Registrasi di Bandara Asal (Boarding)
         if (existingBag) {
           setScanStatus({ type: 'error', msg: `Bagasi ${sanitizedCode} sudah terdaftar sebelumnya di bandara keberangkatan.` });
@@ -452,30 +518,30 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
         const newBag: BaggageItem = {
           id: sanitizedCode,
           paketId: selectedPaketId,
-          bagType: scanType,
+          bagType: activeBagType,
           status: 'REGISTERED',
           registeredAt: new Date().toISOString(),
           scannedBy: scannedBy,
-          jamaahNama: simNameTag || undefined
+          jamaahNama: simNameTag || ""
         };
 
         await setDoc(doc(db, 'tracker_bagasi', sanitizedCode), newBag);
-        setScanStatus({ type: 'success', msg: `BERHASIL DAFTAR: ${sanitizedCode} (${scanType === 'check-in' ? 'Bagasi Koper' : 'Kabin carry-on'})` });
+        setScanStatus({ type: 'success', msg: `BERHASIL DAFTAR: ${sanitizedCode} (${activeBagType === 'check-in' ? 'Bagasi Koper' : 'Kabin carry-on'})` });
         playBeep(1000, 0.1); 
         setSimNameTag(''); // Reset simulated nametag input
       } else {
         // Mode 2: Verifikasi Kedatangan di Tujuan (Unboarding / Destination Check)
         if (!existingBag) {
-          // Auto register as check-in first if it wasn't scanned at origin (Airport error fallback)
+          // Auto register as check-in/cabin first if it wasn't scanned at origin (Airport error fallback)
           const newVerifiedBag: BaggageItem = {
             id: sanitizedCode,
             paketId: selectedPaketId,
-            bagType: scanType,
+            bagType: activeBagType,
             status: 'ARRIVED_DESTINATION',
             registeredAt: new Date().toISOString(),
             arrivedAt: new Date().toISOString(),
             scannedBy: scannedBy,
-            jamaahNama: simNameTag || undefined
+            jamaahNama: simNameTag || ""
           };
           await setDoc(doc(db, 'tracker_bagasi', sanitizedCode), newVerifiedBag);
           setScanStatus({ type: 'success', msg: `TIBA & VERIFIKASI SEKETIKA: ${sanitizedCode} (tidak sempat diskor di awal)` });
@@ -490,7 +556,8 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             const updatedBag: BaggageItem = {
               ...existingBag,
               status: 'ARRIVED_DESTINATION',
-              arrivedAt: new Date().toISOString()
+              arrivedAt: new Date().toISOString(),
+              jamaahNama: existingBag.jamaahNama || ""
             };
             await setDoc(doc(db, 'tracker_bagasi', sanitizedCode), updatedBag);
             setScanStatus({ type: 'success', msg: `SELESAI VERIFIKASI TIBA: ${sanitizedCode} (${existingBag.bagType === 'check-in' ? 'Bagasi Koper' : 'Kabin'})` });
@@ -503,6 +570,11 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
       setScanStatus({ type: 'error', msg: 'Gagal mengupdate database bagasi.' });
     }
   };
+
+  // Sync scan reference to prevent stale closure in camera callbacks
+  useEffect(() => {
+    processBarcodeScanRef.current = processBarcodeScan;
+  });
 
   // Manage Html5Qrcode camera stream lifecycle
   useEffect(() => {
@@ -524,9 +596,6 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             return;
           }
 
-          htQr = new Html5Qrcode(readerId);
-          html5QrCodeRef.current = htQr;
-
           const config = {
             fps: 15,
             qrbox: (w: number, h: number) => {
@@ -541,7 +610,9 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             playBeep(880, 0.12);
             
             const sanitized = decodedText.trim();
-            processBarcodeScan(sanitized);
+            if (processBarcodeScanRef.current) {
+              processBarcodeScanRef.current(sanitized);
+            }
 
             setScanStatus({
               type: 'success',
@@ -556,48 +627,92 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             }, 3000);
           };
 
-          try {
-            // Priority 1: Environment (Back camera)
-            await htQr.start(
-              { facingMode: "environment" },
-              config,
-              handleScanSuccess,
-              () => {}
-            );
-          } catch (errEnvironment) {
-            console.warn("Could not start with environment camera, trying user camera", errEnvironment);
-            if (!isMounted) return;
-            
-            try {
-              // Priority 2: User (Front camera as fallback)
-              await htQr.start(
-                { facingMode: "user" },
-                config,
-                handleScanSuccess,
-                () => {}
-              );
-            } catch (errUser) {
-              console.warn("Could not start with user camera, enumerating devices", errUser);
-              if (!isMounted) return;
-              
-              // Priority 3: Grab any listed camera device
-              const devices = await Html5Qrcode.getCameras().catch(() => []);
-              if (devices && devices.length > 0) {
-                // Choose the last device (often the primary back camera on modern multi-lens phones)
-                const chosenDevice = devices[devices.length - 1];
-                await htQr.start(
-                  chosenDevice.id,
-                  config,
-                  handleScanSuccess,
-                  () => {}
-                );
-              } else {
-                throw new Error(
-                  "Tidak menemukan hardware kamera di perangkat ini. " + (errUser instanceof Error ? errUser.message : String(errUser)),
-                  { cause: errUser }
-                );
+          // Factory function to stop any existing scanner and start a new scanner instance
+          const createAndStartScanner = async (cameraConfig: string | MediaTrackConstraints): Promise<boolean> => {
+            if (!isMounted) return false;
+
+            // Stop/clean up previous active instance if present
+            if (html5QrCodeRef.current) {
+              const prevScanner = html5QrCodeRef.current;
+              html5QrCodeRef.current = null;
+              try {
+                if (prevScanner.isScanning) {
+                  await prevScanner.stop();
+                }
+                prevScanner.clear();
+              } catch (prevErr) {
+                console.warn("Failed clearing previous scanner instance:", prevErr);
               }
             }
+
+            // Create a fresh new instance to avoid "already under transition" error
+            const scanner = new Html5Qrcode(readerId);
+            html5QrCodeRef.current = scanner;
+            htQr = scanner; // update local pointer for hook cleanups
+
+            try {
+              await scanner.start(
+                cameraConfig,
+                config,
+                handleScanSuccess,
+                () => {} // Silent default frames with no found bounds
+              );
+              return true;
+            } catch (err) {
+              console.warn("Failed starting scanner for config:", cameraConfig, err);
+              return false;
+            }
+          };
+
+          let devices: Array<{ id: string; label: string }> = [];
+          try {
+            devices = await Html5Qrcode.getCameras().catch(() => []);
+          } catch (e) {
+            console.warn("Enumerate devices failed:", e);
+          }
+
+          let started = false;
+
+          if (devices && devices.length > 0) {
+            // Priority 1: Back/environment cameras
+            const backCam = devices.find(
+              (d) =>
+                d.label?.toLowerCase().includes("back") ||
+                d.label?.toLowerCase().includes("rear") ||
+                d.label?.toLowerCase().includes("environment")
+            );
+            if (backCam) {
+              started = await createAndStartScanner(backCam.id);
+            }
+
+            // Priority 2: Last camera (often primary back lens on mob devices)
+            if (!started && (!backCam || devices.length > 1)) {
+              const lastCam = devices[devices.length - 1];
+              if (!backCam || lastCam.id !== backCam.id) {
+                started = await createAndStartScanner(lastCam.id);
+              }
+            }
+
+            // Priority 3: Loop any listed devices
+            if (!started) {
+              for (const dev of devices) {
+                started = await createAndStartScanner(dev.id);
+                if (started) break;
+              }
+            }
+          }
+
+          // Priority 4: FacingMode fallbacks
+          if (!started) {
+            started = await createAndStartScanner({ facingMode: "environment" });
+          }
+
+          if (!started) {
+            started = await createAndStartScanner({ facingMode: "user" });
+          }
+
+          if (!started) {
+            throw new Error("Tidak dapat mengaktifkan hardware kamera atau mengakses video stream.");
           }
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
@@ -628,13 +743,11 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
 
     return () => {
       isMounted = false;
-      if (htQr) {
-        try {
-          if (htQr.isScanning) {
-            htQr.stop().catch((e) => console.warn("Clean up on unmount fail:", e));
-          }
-        } catch (e) {
-          console.warn(e);
+      const scannerInstance = html5QrCodeRef.current || htQr;
+      if (scannerInstance) {
+        html5QrCodeRef.current = null;
+        if (scannerInstance.isScanning) {
+          scannerInstance.stop().catch((e: unknown) => console.warn("Clean up on unmount fail:", e));
         }
       }
     };
@@ -648,7 +761,8 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
       await setDoc(doc(db, 'tracker_bagasi', bagId), {
         ...bagObj,
         status: 'ARRIVED_DESTINATION',
-        arrivedAt: new Date().toISOString()
+        arrivedAt: new Date().toISOString(),
+        jamaahNama: bagObj.jamaahNama || ""
       });
       playBeep(1200, 0.08);
     } catch (error) {
@@ -656,13 +770,246 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
     }
   };
 
-  const removeBaggage = async (bagId: string) => {
-    if (!confirm(`Hapus registrasi bagasi ${bagId}?`)) return;
+  const removeBaggage = (bagId: string) => {
+    setBagIdToDelete(bagId);
+  };
+
+  const confirmDeleteBaggage = async () => {
+    if (!bagIdToDelete) return;
     try {
-      await deleteDoc(doc(db, 'tracker_bagasi', bagId));
+      await deleteDoc(doc(db, 'tracker_bagasi', bagIdToDelete));
       playBeep(350, 0.2);
     } catch (e) {
       console.error(e);
+    } finally {
+      setBagIdToDelete(null);
+    }
+  };
+
+  const handleExportBaggagePdf = async () => {
+    try {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      
+      // Page size dimensions inside A4 (210 x 297mm)
+      // We will place beautiful header decoration banner
+      doc.setFillColor(67, 56, 202); // indigo-700
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      // Umaroh Logo and Title
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.text("UMAROH", 15, 18);
+      
+      doc.setFontSize(10);
+      doc.setFont("Helvetica", "normal");
+      doc.setTextColor(224, 231, 255); // indigo-100
+      doc.text("Platform Digital Penyedia Layanan Satu Atap Perjalanan Umrah", 15, 23);
+      
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      doc.text("LAPORAN PELACAKAN BAGASI ROMBONGAN", 15, 33);
+      
+      // Draw metadata panel
+      let currentY = 50;
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(30, 41, 59); // slate-800
+      doc.text("INFORMASI ROMBONGAN & DETAIL PETUGAS", 15, currentY);
+      
+      // Horizontal Line
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.setLineWidth(0.5);
+      doc.line(15, currentY + 2, 195, currentY + 2);
+      
+      currentY += 8;
+      
+      // Key Values as bullet lists or 2 Column Text
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text("Nama Paket Umrah :", 15, currentY);
+      doc.text("Petugas Operator   :", 15, currentY + 6);
+      doc.text("Logistik Flight        :", 15, currentY + 12);
+      
+      doc.setFont("Helvetica", "bold");
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.text(selectedPaket?.namaPaket || 'Umaroh Group Rombongan', 48, currentY);
+      doc.text(scannedBy || 'Tour Leader / Petugas Bandara', 48, currentY + 6);
+      doc.text(keberangkatan ? `${keberangkatan.maskapai} (${keberangkatan.nomorPenerbangan})` : 'Belum di-mapping', 48, currentY + 12);
+      
+      // Second Column for Metadata
+      doc.setFont("Helvetica", "bold");
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text("Tanggal Cetak     :", 115, currentY);
+      doc.text("Peserta Group     :", 115, currentY + 6);
+      doc.text("Sistem Pelacakan :", 115, currentY + 12);
+      
+      doc.setFont("Helvetica", "normal");
+      doc.setTextColor(15, 23, 42); // slate-900
+      const formattedCetakDate = new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' }) + ' WIB';
+      doc.text(formattedCetakDate, 146, currentY);
+      doc.text(`${jamaahs.length} Jamaah Terdaftar`, 146, currentY + 6);
+      doc.text("QR Barcode Multi-Scan", 146, currentY + 12);
+      
+      currentY += 22;
+      
+      // Stats Summary Box
+      // Light purple background box for stats summary
+      doc.setFillColor(243, 244, 246); // gray-100
+      doc.setDrawColor(229, 231, 235); // gray-200
+      doc.roundedRect(15, currentY, 180, 20, 3, 3, 'FD');
+      
+      const totalBagasi = baggages.length;
+      const arrivedCount = baggages.filter(b => b.status === 'ARRIVED_DESTINATION').length;
+      const pendingCount = baggages.filter(b => b.status === 'REGISTERED').length;
+      const checkInCount = baggages.filter(b => b.bagType === 'check-in').length;
+      const cabinCount = baggages.filter(b => b.bagType === 'cabin').length;
+      
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(75, 85, 99); // gray-600
+      doc.text("TOTAL BAGASI", 20, currentY + 6);
+      doc.text("TIBA DI TUJUAN", 55, currentY + 6);
+      doc.text("DI BANDARA AWAL", 95, currentY + 6);
+      doc.text("KOPER PESAWAT", 135, currentY + 6);
+      doc.text("KOPER KABIN", 168, currentY + 6);
+      
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(67, 56, 202); // indigo-700
+      doc.text(`${totalBagasi} Koper`, 20, currentY + 14);
+      doc.setTextColor(16, 185, 129); // emerald-500
+      doc.text(`${arrivedCount} Koper`, 55, currentY + 14);
+      doc.setTextColor(245, 158, 11); // amber-500
+      doc.text(`${pendingCount} Koper`, 95, currentY + 14);
+      doc.setTextColor(30, 41, 59); // slate-800
+      doc.text(`${checkInCount} Pcs`, 135, currentY + 14);
+      doc.text(`${cabinCount} Pcs`, 168, currentY + 14);
+      
+      currentY += 28;
+      
+      // Baggage List Table Section Title
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(30, 41, 59); // slate-800
+      doc.text("DAFTAR RINCIAN ITEM KOPER & BARCODE", 15, currentY);
+      
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.line(15, currentY + 2, 195, currentY + 2);
+      
+      currentY += 6;
+      
+      // Table Headers
+      const headers = [['No', 'Barcode ID', 'Tipe Bagasi', 'Nama Jamaah / Label', 'Status Alur', 'Ditandai Oleh', 'Waktu Registrasi']];
+      
+      // Table Body
+      const tableData = baggages.map((bag, index) => {
+        const typeStr = bag.bagType === 'check-in' ? 'Koper Bagasi (Check-In)' : 'Bawaan Kabin (Cabin)';
+        const jamaahStr = bag.jamaahNama || 'Polos (Tanpa data penempel)';
+        const statusStr = bag.status === 'ARRIVED_DESTINATION' ? '✓ TIBA DI TUJUAN' : '✈ BANDARA AWAL';
+        
+        let tglStr: string;
+        try {
+          tglStr = new Date(bag.registeredAt).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) + ' WIB';
+        } catch {
+          tglStr = bag.registeredAt;
+        }
+        
+        return [
+          (index + 1).toString(),
+          bag.id,
+          typeStr,
+          jamaahStr,
+          statusStr,
+          bag.scannedBy || '-',
+          tglStr
+        ];
+      });
+      
+      autoTable(doc, {
+        head: headers,
+        body: tableData,
+        startY: currentY,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2.5, font: 'Helvetica' },
+        headStyles: { fillColor: [67, 56, 202] }, // Indigo header
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 32, fontStyle: 'bold' },
+          2: { cellWidth: 35 },
+          3: { cellWidth: 42, fontStyle: 'bold' },
+          4: { cellWidth: 26, fontStyle: 'bold' },
+          5: { cellWidth: 20 },
+          6: { cellWidth: 23 }
+        },
+        didParseCell: (data) => {
+          // Highlight status
+          if (data.column.index === 4) {
+            const val = data.cell.raw as string;
+            if (val && val.includes('✓')) {
+              data.cell.styles.textColor = [16, 185, 129]; // emerald text
+            } else {
+              data.cell.styles.textColor = [67, 56, 202]; // indigo text
+            }
+          }
+        }
+      });
+      
+      // Get bottom Y-coordinate
+      interface jsPDFWithAutoTable extends jsPDF {
+        lastAutoTable?: {
+          finalY: number;
+        };
+      }
+      const docWithTable = doc as jsPDFWithAutoTable;
+      let finalY = docWithTable.lastAutoTable?.finalY ?? currentY + 40;
+      
+      // Add signature at the bottom
+      if (finalY > 230) {
+        doc.addPage();
+        finalY = 20;
+      }
+      
+      finalY += 15;
+      
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.line(15, finalY, 195, finalY);
+      
+      finalY += 8;
+      
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text("Laporan ini dicetak secara realtime menggunakan Umaroh Baggage Tracker System.", 15, finalY);
+      doc.text("Seluruh kecocokan data koper dijamin aman dan terverifikasi secara digital.", 15, finalY + 4);
+      
+      // Signature lines
+      const sigX = 145;
+      doc.setFont("Helvetica", "bold");
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.text("Hormat Kami,", sigX, finalY);
+      doc.text("Petugas Operator Lapangan", sigX, finalY + 4);
+      
+      doc.setFont("Helvetica", "bold");
+      doc.setTextColor(67, 56, 202); // indigo-700
+      doc.text(scannedBy || 'Tour Leader', sigX, finalY + 25);
+      
+      doc.line(sigX, finalY + 26, sigX + 45, finalY + 26);
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text("Tanda Tangan & Nama Terang", sigX, finalY + 30);
+      
+      // Convert to DataURL and Download / Share using the fileUtils downloadFile method
+      const pdfDataUrl = doc.output('datauristring');
+      const cleanFileName = `Laporan_Bagasi_${(selectedPaket?.namaPaket || 'Umaroh').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      await downloadFile(pdfDataUrl, cleanFileName);
+    } catch (e) {
+      console.error("Gagal mengekspor PDF koper bagasi:", e);
+      alert("Gagal membuat laporan PDF: " + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -692,11 +1039,14 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
     }
     
     // Set parameters
-    setScanType(num % 3 === 0 ? 'cabin' : 'check-in');
-    setCurrentScanStep(simulateAtDestination ? 'unboarding' : 'boarding');
+    const mockBagType = scanType; // Respect the active user selected scanType
+    const mockScanStep = simulateAtDestination ? 'unboarding' : 'boarding';
     
-    // Trigger
-    processBarcodeScan(generatedCode);
+    setScanType(mockBagType);
+    setCurrentScanStep(mockScanStep);
+    
+    // Trigger with overrides to prevent async state-lag!
+    processBarcodeScan(generatedCode, mockBagType, mockScanStep);
   };
 
   // Generate label cards sheet layout helper
@@ -735,7 +1085,7 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-150 p-6">
+    <div className="bg-white rounded-3xl shadow-sm border border-gray-150 p-4 sm:p-6">
       
       {/* Dynamic Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-gray-100 pb-5 mb-6">
@@ -748,12 +1098,12 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
         </div>
 
         {/* Group Selector */}
-        <div className="flex items-center gap-2 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Rombongan:</span>
           <select 
             value={selectedPaketId}
             onChange={(e) => setSelectedPaketId(e.target.value)}
-            className="flex-1 lg:flex-none py-2 px-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-colors"
+            className="w-full lg:w-auto max-w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-colors truncate"
           >
             {computedUnifiedPakets.map(p => (
               <option key={p.id} value={p.id}>{p.namaPaket} ({p.terdaftar} Pax/Jamaah)</option>
@@ -776,7 +1126,7 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             </div>
           </div>
 
-          <div className="flex items-center gap-3 border-t md:border-t-0 md:border-x border-gray-200 md:px-4">
+          <div className="flex items-center gap-3 border-t pt-3 md:pt-0 md:border-t-0 md:border-x border-gray-200 md:px-4">
             <div className="bg-amber-100 text-amber-700 p-2.5 rounded-lg shrink-0">
               <PlaneTakeoff className="w-5 h-5" />
             </div>
@@ -788,7 +1138,7 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             </div>
           </div>
 
-          <div className="flex items-center gap-3 border-t md:border-t-0 border-gray-200 md:pl-2">
+          <div className="flex items-center gap-3 border-t pt-3 md:pt-0 md:border-t-0 border-gray-200 md:pl-2">
             <div className="bg-emerald-100 text-emerald-700 p-2.5 rounded-lg shrink-0">
               <UserCheck className="w-5 h-5" />
             </div>
@@ -801,10 +1151,10 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
       )}
 
       {/* Sub-tab Navigation */}
-      <div className="flex border-b border-gray-150 mb-6 font-medium text-xs">
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none flex-nowrap border-b border-gray-150 mb-6 font-medium text-xs -mx-4 px-4 sm:mx-0 sm:px-0">
         <button 
           onClick={() => setActiveSubTab('status')}
-          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] ${activeSubTab === 'status' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] shrink-0 ${activeSubTab === 'status' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
         >
           📈 Status & Grafik Ringkasan
         </button>
@@ -814,19 +1164,19 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             // Enable visual simulator focus
             setScannerFocused(true);
           }}
-          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] ${activeSubTab === 'scanner' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] shrink-0 ${activeSubTab === 'scanner' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
         >
           📷 Scan Barcode Simulator
         </button>
         <button 
           onClick={() => setActiveSubTab('daftar')}
-          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] ${activeSubTab === 'daftar' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] shrink-0 ${activeSubTab === 'daftar' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
         >
           📂 Daftar Bagasi Terpindai ({baggages.length})
         </button>
         <button 
           onClick={() => setActiveSubTab('cetak')}
-          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] ${activeSubTab === 'cetak' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+          className={`pb-3 px-4 uppercase tracking-wider font-extrabold transition-colors border-b-2 -mb-[2px] shrink-0 ${activeSubTab === 'cetak' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
         >
           🖨️ Cetak Label Sticker
         </button>
@@ -835,6 +1185,22 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
       {/* SUB-TAB 1: STATUS & CHART */}
       {activeSubTab === 'status' && (
         <div className="space-y-6 animate-in fade-in duration-300">
+          
+          {/* Header Action Section */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl border border-gray-150">
+            <div>
+              <h3 className="font-extrabold text-sm text-gray-800 uppercase tracking-wide">Analisis Grafik & Ringkasan</h3>
+              <p className="text-xs text-gray-400 font-semibold">Tinjau seluruh ringkasan pelacakan status bagasi hari ini.</p>
+            </div>
+            
+            <button
+              onClick={handleExportBaggagePdf}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black rounded-xl border border-indigo-700 flex items-center gap-2 shadow-md transition-all cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-indigo-200" />
+              UNDUH LAPORAN PDF (SHARE GRUP)
+            </button>
+          </div>
           
           {/* Bento summary stat cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1184,7 +1550,7 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
               <form onSubmit={handleUSBScanSubmit} className="space-y-3">
                 <p className="text-[11px] text-gray-500 leading-normal mb-2">Gunakan input berikut jika Anda menggunakan <strong>pistol scanner USB/Bluetooth</strong> atau masukkan kode barcode secara manual (Contoh: <code>{getBaggagePrefix()}-001</code>).</p>
                 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     ref={scannerInputRef}
                     type="text"
@@ -1193,22 +1559,22 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
                     onFocus={() => setScannerFocused(true)}
                     onBlur={() => setScannerFocused(false)}
                     placeholder="Masukan manual / scan disini..."
-                    className="flex-1 py-3 px-3.5 border border-gray-200 rounded-xl text-sm font-mono font-bold uppercase placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                    className="w-full sm:flex-1 py-2.5 px-3 border border-gray-200 rounded-xl text-xs font-mono font-bold uppercase placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                   />
                   <button
                     type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs uppercase px-4 rounded-xl transition-colors cursor-pointer shrink-0"
+                    className="w-full sm:w-auto py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-[11px] uppercase rounded-xl transition-all active:scale-95 cursor-pointer shrink-0"
                   >
                     Kirim scan
                   </button>
                 </div>
                 
-                <div className="flex items-center justify-between text-[10px] text-gray-400">
-                  <span>Status Fokus: {scannerFocused ? '🟢 SIAP TERIMA PHYSICAL GUN' : '⚪ KLIK INPUT UNTUK MEMPERSIAPKAN'}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-gray-100 text-[10px] text-gray-400">
+                  <span className="leading-tight">Status Fokus: {scannerFocused ? '🟢 SIAP TERIMA PHYSICAL GUN' : '⚪ KLIK INPUT SIAP SCAN'}</span>
                   <button 
                     type="button" 
                     onClick={() => scannerInputRef.current?.focus()}
-                    className="text-xs text-indigo-600 font-extrabold hover:underline"
+                    className="text-xs text-indigo-600 font-black hover:underline text-left sm:text-right cursor-pointer"
                   >
                     Ambil Fokus Scanner
                   </button>
@@ -1226,9 +1592,18 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
         <div className="space-y-4 animate-in fade-in duration-300">
           
           {/* Filters / Search */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-150">
-            <div className="font-extrabold text-xs text-gray-700 uppercase">
-              REPLIKA DATA BAGASI GROUP ({baggages.length} item koper terdaftar)
+          <div className="flex flex-col sm:flex-row gap-3 justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-150 w-full animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+              <span className="font-extrabold text-xs text-gray-750 uppercase">
+                REPLIKA DATA BAGASI GROUP ({baggages.length} item koper terdaftar)
+              </span>
+              <button
+                onClick={handleExportBaggagePdf}
+                className="px-3 py-1.5 bg-indigo-650 hover:bg-indigo-700 hover:scale-102 active:scale-95 text-white font-extrabold text-[10px] uppercase rounded-xl border border-indigo-750 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer w-fit"
+              >
+                <Printer className="w-3.5 h-3.5 text-indigo-200" />
+                Laporan PDF
+              </button>
             </div>
             
             <div className="flex gap-2 items-center text-xs">
@@ -1242,7 +1617,8 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             </div>
           </div>
 
-          <div className="overflow-x-auto border border-gray-150 rounded-xl">
+          {/* Desktop Table View (Hidden on Mobile) */}
+          <div className="hidden md:block overflow-x-auto border border-gray-150 rounded-xl">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 text-gray-650 border-b border-gray-150 font-bold uppercase tracking-wider">
                 <tr>
@@ -1333,6 +1709,88 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             </table>
           </div>
 
+          {/* Mobile Baggage Cards View (Hidden on Desktop) */}
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            {baggages.map((bag) => (
+              <div key={bag.id} className="bg-white p-4 rounded-xl border border-gray-150 flex flex-col gap-3.5 shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-1.5">
+                    <Barcode className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span className="font-extrabold text-gray-900 font-mono text-xs uppercase">{bag.id}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                    bag.bagType === 'check-in' 
+                      ? 'bg-blue-50 text-blue-700 border border-blue-150' 
+                      : 'bg-purple-50 text-purple-700 border border-purple-150'
+                  }`}>
+                    {bag.bagType === 'check-in' ? '🧳 KOPER BAGASI' : '🎒 KABIN'}
+                  </span>
+                </div>
+                
+                <div>
+                  <label className="text-[9px] font-bold text-gray-400 block uppercase">NAMA JAMAAH / LABEL</label>
+                  <p className="font-black text-sm text-gray-800 mt-0.5 leading-snug">
+                    {bag.jamaahNama || 'Polos (Tanpa data penempel)'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 bg-gray-50 p-2.5 rounded-lg border border-gray-150/40">
+                  <div>
+                    <span className="text-[8px] text-gray-400 font-bold uppercase block">REGISTRASI</span>
+                    <span className="font-mono text-[9px] text-gray-700 block font-bold mt-0.5">
+                      {new Date(bag.registeredAt).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] text-gray-400 font-bold uppercase block">TAHAP SELESAI TIBA</span>
+                    <span className="font-mono text-[9px] text-gray-700 block font-bold mt-0.5">
+                      {bag.arrivedAt ? (
+                        new Date(bag.arrivedAt).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                      ) : (
+                        <span className="text-gray-300 italic">--</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-gray-100 pt-3 mt-1">
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase border ${
+                    bag.status === 'ARRIVED_DESTINATION'
+                      ? 'bg-emerald-50 border-emerald-150 text-emerald-800'
+                      : 'bg-indigo-50 border-indigo-150 text-indigo-800'
+                  }`}>
+                    <span className={`w-1 h-1 rounded-full ${bag.status === 'ARRIVED_DESTINATION' ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
+                    {bag.status === 'ARRIVED_DESTINATION' ? 'Tiba di Tujuan' : 'Pos Bandara'}
+                  </span>
+
+                  <div className="flex gap-2">
+                    {bag.status !== 'ARRIVED_DESTINATION' && (
+                      <button
+                        onClick={() => markAsArrived(bag.id)}
+                        className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Tandai Tiba
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeBaggage(bag.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-rose-50 p-2 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {baggages.length === 0 && (
+              <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <Luggage className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-400 text-xs font-bold uppercase">Belum ada bagasi terdaftar</p>
+              </div>
+            )}
+          </div>
+
         </div>
       )}
 
@@ -1397,18 +1855,14 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
                       <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">UMAROH BAGGAGE TAG</p>
                     </div>
 
-                    {/* Standard looking simulated barcode vector */}
-                    <div className="my-2 flex flex-col items-center">
-                      <div className="flex items-end gap-[2px] h-12 mb-1.5">
-                        {[1, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 1, 2].map((w, barIdx) => (
-                          <div 
-                            key={barIdx} 
-                            style={{ width: `${w * 1.3}px` }} 
-                            className={`h-full ${barIdx % 2 === 0 ? 'bg-black' : 'bg-transparent'}`} 
-                          />
-                        ))}
+                    {/* Dynamically generated scannable QR Code */}
+                    <div className="my-1.5 flex flex-col items-center">
+                      <div className="mb-1">
+                        <QRCodeImage value={barcodeStr} size={70} />
                       </div>
-                      <span className="font-mono text-xs font-extrabold text-gray-800 tracking-wider bg-gray-100 px-2 py-0.5 rounded uppercase">{barcodeStr}</span>
+                      <span className="font-mono text-[11px] font-black text-gray-800 tracking-widest bg-gray-100 px-2 py-0.5 rounded uppercase border border-gray-150">
+                        {barcodeStr}
+                      </span>
                     </div>
 
                     {/* Footer writeable tags */}
@@ -1432,6 +1886,40 @@ export const TrackerBagasi: React.FC<TrackerBagasiProps> = ({ paketIdProp, defau
             </div>
           </div>
           
+        </div>
+      )}
+
+      {/* Modern, Stateless React Dialog Overlay for Delete Confirmation */}
+      {bagIdToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-150 transform transition-all scale-100 ease-out animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 mb-4 shrink-0">
+                <Trash2 className="w-6 h-6 animate-pulse" />
+              </div>
+              <h3 className="text-base font-black text-gray-950 uppercase tracking-tight mb-2">Konfirmasi Hapus Bagasi</h3>
+              <p className="text-xs text-gray-500 leading-relaxed mb-6">
+                Apakah Anda yakin ingin menghapus registrasi bagasi <code className="font-mono bg-rose-50 border border-rose-100/50 px-1.5 py-0.5 rounded text-rose-700 font-extrabold uppercase text-[10px]">{bagIdToDelete}</code>? Tindakan ini permanen dan akan menghapus data pelacakan koper ini dari rombongan.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setBagIdToDelete(null)}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteBaggage}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white transition-all shadow-md active:scale-95 cursor-pointer"
+                >
+                  Ya, Hapus Data
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
