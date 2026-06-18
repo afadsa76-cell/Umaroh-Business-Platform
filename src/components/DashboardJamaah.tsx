@@ -3,8 +3,9 @@ import {
   Search, Star, LayoutDashboard, Package, History, User,
   ShoppingCart, Tag, Compass, Sparkles, BookOpen,
   MessageCircle, CheckCircle, Info, Minus, Plus, Check,
-  BadgePercent, Send, X, Bell, AlertTriangle, Printer, Upload
+  BadgePercent, Send, X, Bell, AlertTriangle, Printer, Upload, FileText
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc, limit } from '../firebase';
 import { KatalogPaketView } from './KatalogPaketView';
 import { RiwayatPemesananView } from './RiwayatPemesananView';
@@ -104,6 +105,13 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
     jenisKelamin: '',
     noHp: ''
   });
+
+  const [suratType, setSuratType] = useState<'paspor' | 'cuti'>('paspor');
+  const [kantorImigrasi, setKantorImigrasi] = useState('Kantor Imigrasi Kelas I TPI Jakarta Selatan');
+  const [instansiNama, setInstansiNama] = useState('PT Solusi Sukses Digital');
+  const [tglMulaiCuti, setTglMulaiCuti] = useState('');
+  const [tglSelesaiCuti, setTglSelesaiCuti] = useState('');
+  const [isGeneratingSurat, setIsGeneratingSurat] = useState(false);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
@@ -618,6 +626,170 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
     }
   };
 
+  const handleGenerateSuratPDF = () => {
+    if (!bookingData) {
+      alert("Data pendaftaran Anda belum lengkap.");
+      return;
+    }
+    setIsGeneratingSurat(true);
+    try {
+      const docPdf = new jsPDF();
+      
+      // Set fonts
+      docPdf.setFont("helvetica", "bold");
+      
+      // 1. Draw Kop Surat (Letterhead)
+      docPdf.setFontSize(16);
+      docPdf.setTextColor(4, 120, 87); // emerald color
+      docPdf.text("PT UMAROH WISATA INTERNASIONAL", 105, 20, { align: "center" });
+      
+      docPdf.setFont("helvetica", "normal");
+      docPdf.setFontSize(8);
+      docPdf.setTextColor(100, 116, 139);
+      docPdf.text("Izin PPIU Kemenag RI No. 912/2024 | Biro Perjalanan Haji & Umroh Terpercaya", 105, 25, { align: "center" });
+      docPdf.text("Gedung Umaroh Utama Lt. 5, Jl. HR Rasuna Said, Jakarta Selatan | Telp: (021) 835-2952 | www.umaroh.com", 105, 29, { align: "center" });
+      
+      // Draw double horizontal line
+      docPdf.setLineWidth(1);
+      docPdf.setDrawColor(4, 120, 87);
+      docPdf.line(15, 33, 195, 33);
+      docPdf.setLineWidth(0.2);
+      docPdf.line(15, 34.5, 195, 34.5);
+      
+      // 2. Letter Meta Details
+      docPdf.setFont("helvetica", "normal");
+      docPdf.setFontSize(10);
+      docPdf.setTextColor(30, 41, 59);
+      
+      const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      docPdf.text(`Jakarta, ${todayStr}`, 15, 45);
+      
+      docPdf.setFont("helvetica", "bold");
+      docPdf.text("Nomor  : Ref/UMR-OPS/SR/VI/2026/00147", 15, 52);
+      docPdf.text("Lampir : -", 15, 58);
+      
+      if (suratType === 'paspor') {
+        docPdf.text("Perihal : Surat Rekomendasi Pembuatan Paspor Baru", 15, 64);
+        
+        // Recipient
+        docPdf.text("Kepada Yang Terhormat,", 15, 75);
+        docPdf.text("Kepala Kantor Imigrasi", 15, 81);
+        docPdf.text(kantorImigrasi || "Kantor Imigrasi Kelas I TPI Terdekat", 15, 87);
+        docPdf.text("Di Tempat", 15, 93);
+        
+        // Body
+        docPdf.setFont("helvetica", "normal");
+        docPdf.setFontSize(10.5);
+        docPdf.text("Assalamu'alaikum Warahmatullahi Wabarakatuh,", 15, 105);
+        
+        const bodyText = `Dengan hormat, kami dari PT Umaroh Wisata Internasional (Penyelenggara Perjalanan Ibadah Umroh Resmi) menerangkan dengan sebenarnya bahwa calon Jamaah kami di bawah ini:`;
+        const lines = docPdf.splitTextToSize(bodyText, 180);
+        docPdf.text(lines, 15, 112);
+        
+        // Table Details
+        docPdf.setFont("helvetica", "bold");
+        docPdf.text("Nama Lengkap", 25, 130);
+        docPdf.text("No. NIK / KTP", 25, 136);
+        docPdf.text("Paket Umroh", 25, 142);
+        docPdf.text("Tanggal Berangkat", 25, 148);
+        
+        docPdf.setFont("helvetica", "normal");
+        docPdf.text(`:  ${bookingData.namaJamaah || manifestForm.nama_paspor || 'Nama Sesuai KTP'}`, 75, 130);
+        docPdf.text(`:  ${bookingData.nik || '317xxxxxxxxxxxxx'}`, 75, 136);
+        docPdf.text(`:  ${bookingData.paketNama || 'Paket Umroh Umaroh VIP'}`, 75, 142);
+        docPdf.text(`:  ${bookingData.tglKeberangkatan || bookingData.tgl_keberangkatan || '2026-08-08'}`, 75, 148);
+        
+        docPdf.setFont("helvetica", "normal");
+        const p2Text = `Adalah benar-benar terdaftar sebagai calon jemaah Umroh kami untuk keberangkatan tersebut di atas. Sehubungan dengan hal itu, kami memohon bantuan Bapak/Ibu Kepala Kantor Imigrasi kiranya dapat memberikan kemudahan layanan pembuatan/perpanjangan Paspor RI kepada yang bersangkutan.`;
+        const linesP2 = docPdf.splitTextToSize(p2Text, 180);
+        docPdf.text(linesP2, 15, 158);
+        
+        const p3Text = `Demikian surat rekomendasi formal ini kami sampaikan atas kerja sama dan bantuannya, kami ucapkan Jazakumullah Khairan Katsiran.\n\nWassalamu'alaikum Warahmatullahi Wabarakatuh.`;
+        const linesP3 = docPdf.splitTextToSize(p3Text, 180);
+        docPdf.text(linesP3, 15, 178);
+        
+      } else {
+        // Cuti
+        docPdf.text("Perihal : Permohonan Izin / Cuti Perjalanan Umroh", 15, 64);
+        
+        // Recipient
+        docPdf.text("Kepada Yang Terhormat,", 15, 75);
+        docPdf.text("Pimpinan / Kepala HRD", 15, 81);
+        docPdf.text(instansiNama || "Pimpinan Instansi / Sekolah / Perusahaan", 15, 87);
+        docPdf.text("Di Tempat", 15, 93);
+        
+        // Body
+        docPdf.setFont("helvetica", "normal");
+        docPdf.setFontSize(10.5);
+        docPdf.text("Assalamu'alaikum Warahmatullahi Wabarakatuh,", 15, 105);
+        
+        const bodyText = `Dengan hormat, kami dari PT Umaroh Wisata Internasional menginformasikan bahwa staf / karyawan / siswa Bapak/Ibu di bawah ini:`;
+        const lines = docPdf.splitTextToSize(bodyText, 180);
+        docPdf.text(lines, 15, 112);
+        
+        // Table Details
+        docPdf.setFont("helvetica", "bold");
+        docPdf.text("Nama Lengkap", 25, 130);
+        docPdf.text("No. NIK / KTP", 25, 136);
+        docPdf.text("Paket Perjalanan", 25, 142);
+        docPdf.text("Durasi Izin Cuti", 25, 148);
+        
+        const tglMulai = tglMulaiCuti || bookingData.tglKeberangkatan || bookingData.tgl_keberangkatan || '2026-08-08';
+        const tglSelesai = tglSelesaiCuti || '2026-08-19';
+        
+        docPdf.setFont("helvetica", "normal");
+        docPdf.text(`:  ${bookingData.namaJamaah || manifestForm.nama_paspor || 'Nama Sesuai KTP'}`, 75, 130);
+        docPdf.text(`:  ${bookingData.nik || '317xxxxxxxxxxxxx'}`, 75, 136);
+        docPdf.text(`:  ${bookingData.paketNama || 'Paket Umroh Umaroh VIP'}`, 75, 142);
+        docPdf.text(`:  ${tglMulai} s.d. ${tglSelesai}`, 75, 148);
+        
+        docPdf.setFont("helvetica", "normal");
+        const p2Text = `Telah terdaftar secara sah sebagai jemaah Umroh kami dan dijadwalkan melaksanakan ibadah suci di Makkah & Madinah pada tanggal tersebut. Sehubungan dengan hal tersebut, kami memohon kebijakan Bapak/Ibu pimpinan untuk memberikan dispensasi cuti/izin tidak masuk selama rentang waktu pengerjaan ibadah di atas.`;
+        const linesP2 = docPdf.splitTextToSize(p2Text, 180);
+        docPdf.text(linesP2, 15, 158);
+        
+        const p3Text = `Demikian permohonan ini kami sampaikan secara resmi, atas perhatian, kemudahan, dan kebaikan Bapak/Ibu pimpinan instansi kami ucapkan banyak terima kasih.\n\nWassalamu'alaikum Warahmatullahi Wabarakatuh.`;
+        const linesP3 = docPdf.splitTextToSize(p3Text, 180);
+        docPdf.text(linesP3, 15, 178);
+      }
+      
+      // Signature Block
+      docPdf.setFont("helvetica", "bold");
+      docPdf.text("PT UMAROH WISATA INTERNASIONAL", 120, 215);
+      docPdf.setFont("helvetica", "normal");
+      docPdf.text("Direktur Operasional & Layanan Haji", 120, 221);
+      
+      // Simulated Stamp Circle & Signature Hand-line
+      docPdf.setDrawColor(29, 78, 216); // Blue color stamp
+      docPdf.setLineWidth(0.8);
+      docPdf.ellipse(145, 238, 24, 11);
+      
+      docPdf.setFont("helvetica", "bold");
+      docPdf.setFontSize(7.5);
+      docPdf.setTextColor(29, 78, 216);
+      docPdf.text("UMAROH WISATA", 145, 237, { align: "center" });
+      docPdf.text("★ VERIFIED STAMP ★", 145, 241, { align: "center" });
+      
+      // Signature text
+      docPdf.setTextColor(17, 24, 39);
+      docPdf.setFontSize(10.5);
+      docPdf.setFont("helvetica", "bold");
+      docPdf.text("H. Muhammad Afif, Lc., M.A.", 120, 255);
+      docPdf.setLineWidth(0.3);
+      docPdf.line(120, 256.5, 175, 256.5);
+      
+      // Save PDF
+      const filename = suratType === 'paspor' ? 'Surat_Rekomendasi_Paspor_Umaroh.pdf' : 'Surat_Izin_Cuti_Umaroh.pdf';
+      docPdf.save(filename);
+      alert("Alhamdulillah! Surat rekomendasi berhasil diunduh secara instan pelunasan.");
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengunduh dokumen: " + err);
+    } finally {
+      setIsGeneratingSurat(false);
+    }
+  };
+
   const renderPendaftaranMandiri = () => {
     if (loadingBookings) {
       return (
@@ -981,6 +1153,123 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
                   <p className="text-[10px] text-emerald-100 font-bold leading-relaxed">
                     Sistem kemitraan Umaroh.com dilengkapi enkripsi database modern. Berkas fisik dokumen Anda hanya digunakan untuk manifestasi tiket, pengurusan visa haji/umroh, dan asuransi perjalanan muasassah secara legal.
                   </p>
+                </div>
+
+                {/* Surat Rekomendasi & Izin Mandiri Card */}
+                <div className="bg-white rounded-2xl border border-gray-150 p-6 shadow-xs space-y-4 font-sans">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-emerald-50 text-emerald-850 rounded-lg">
+                      <FileText className="w-4.5 h-4.5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider">Surat Menyurat Mandiri</h4>
+                      <p className="text-[10px] text-gray-400 font-bold">Rekomendasi imigrasi & izin cuti diterbitkan otomatis</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-1">
+                    {/* Select Letter Type */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pilih Jenis Surat</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSuratType('paspor')}
+                          className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                            suratType === 'paspor'
+                              ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+                              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          🎫 Rekomendasi Paspor
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSuratType('cuti')}
+                          className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                            suratType === 'cuti'
+                              ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+                              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          🏢 Izin Cuti Kerja
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Dynamic Inputs */}
+                    {suratType === 'paspor' ? (
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Kantor Imigrasi Tujuan</label>
+                        <input
+                          type="text"
+                          value={kantorImigrasi}
+                          onChange={(e) => setKantorImigrasi(e.target.value)}
+                          className="w-full text-xs font-bold bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                          placeholder="Misal: Kantor Imigrasi Jakarta Selatan"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nama Instansi / Perusahaan</label>
+                          <input
+                            type="text"
+                            value={instansiNama}
+                            onChange={(e) => setInstansiNama(e.target.value)}
+                            className="w-full text-xs font-bold bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                            placeholder="Misal: PT Solusi Sukses Digital"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Mulai Cuti (Dep Date)</label>
+                            <input
+                              type="date"
+                              value={tglMulaiCuti || currentBooking.tglKeberangkatan || currentBooking.tgl_keberangkatan || ''}
+                              onChange={(e) => setTglMulaiCuti(e.target.value)}
+                              className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-750 font-mono focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Selesai Cuti</label>
+                            <input
+                              type="date"
+                              value={tglSelesaiCuti}
+                              onChange={(e) => setTglSelesaiCuti(e.target.value)}
+                              className="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-750 font-mono focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pre-filled info helper */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10px] text-gray-500 font-medium space-y-1">
+                      <p>✨ <strong className="text-gray-700">Sinkronisasi Keberangkatan:</strong></p>
+                      <p>• Nama: <strong className="text-gray-700">{currentBooking.namaJamaah}</strong></p>
+                      <p>• Paket: <strong className="text-gray-700">{currentBooking.paketNama || "VIP Al-Ibrah"}</strong></p>
+                      <p>• Rencana Terbang: <strong className="text-gray-700">{currentBooking.tglKeberangkatan || currentBooking.tgl_keberangkatan || "2026-08-08"}</strong></p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isGeneratingSurat}
+                      onClick={handleGenerateSuratPDF}
+                      className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-3 rounded-xl shadow-md text-xs tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-55"
+                    >
+                      {isGeneratingSurat ? (
+                        <>
+                          <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
+                          Menghasilkan Surat...
+                        </>
+                      ) : (
+                        <>
+                          <span>📄</span> Cetak & Unduh Surat Formal PDF
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
               </div>

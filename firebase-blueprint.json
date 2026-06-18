@@ -559,6 +559,22 @@
         "senderId": { "type": "string" }
       },
       "required": ["id", "title", "message", "type", "targetRole", "createdAt"]
+    },
+    "BaggageTracker": {
+      "title": "BaggageTracker",
+      "description": "Pelacakan bagasi grup / rombongan umroh berbasis barcode",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID Barcode unik (e.g. BAGG-PK01-001)" },
+        "paketId": { "type": "string" },
+        "bagType": { "type": "string", "enum": ["check-in", "cabin"] },
+        "status": { "type": "string", "enum": ["REGISTERED", "ARRIVED_DESTINATION"] },
+        "registeredAt": { "type": "string" },
+        "arrivedAt": { "type": "string" },
+        "scannedBy": { "type": "string" },
+        "jamaahNama": { "type": "string" }
+      },
+      "required": ["id", "paketId", "bagType", "status", "registeredAt"]
     }
   },
   "firestore": {
@@ -595,6 +611,7 @@
     "/package_cost_audit_logs/{id}": { "schema": "PackageCostAuditLogs", "description": "Koleksi riwayat audit biaya komponen paket vendor" },
     "/ad_network_config/{id}": { "schema": "AdNetworkConfig", "description": "Koleksi konfigurasi Google AdSense & setelan" },
     "/ad_campaigns/{id}": { "schema": "AdCampaign", "description": "Koleksi kampanye iklan promo internal & mitra" },
-    "/ad_performance_logs/{id}": { "schema": "AdPerformanceLog", "description": "Koleksi log telemetri kinerja iklan (impressions & clicks)" }
+    "/ad_performance_logs/{id}": { "schema": "AdPerformanceLog", "description": "Koleksi log telemetri kinerja iklan (impressions & clicks)" },
+    "/tracker_bagasi/{baggageId}": { "schema": "BaggageTracker", "description": "Koleksi item bagasi rombongan berbasis barcode" }
   }
 }

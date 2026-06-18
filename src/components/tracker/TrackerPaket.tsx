@@ -10,6 +10,7 @@ import { ManifestGenerator } from './ManifestGenerator';
 import { TrackerTimeline } from './TrackerTimeline';
 import { ProgressSummary } from './ProgressSummary';
 import { MapTracking } from './MapTracking';
+import { DataSyncPanel } from './DataSyncPanel';
 
 export const TrackerPaket: React.FC = () => {
   const [pakets, setPakets] = useState<PaketTracker[]>([]);
@@ -173,6 +174,8 @@ export const TrackerPaket: React.FC = () => {
         </div>
 
         <AlertBox jamaahs={jamaahs} estimasi={selectedPaket.timeline_estimasi} actual={computedActual} tanggalBerangkat={selectedPaket.tanggalBerangkat} />
+
+        <DataSyncPanel paket={selectedPaket} />
 
         <ChecklistOperasional paket={selectedPaket} />
 

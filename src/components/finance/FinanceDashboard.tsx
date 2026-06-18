@@ -46,6 +46,32 @@ export const FinanceDashboard: React.FC = () => {
   const [vendorServices, setVendorServices] = useState<VendorService[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  interface CostComponent {
+    id: string;
+    nama_komponen?: string;
+    vendor_id?: string;
+    package_id?: string;
+    total_biaya?: number;
+    total_bayar?: number;
+    status_pembayaran?: string;
+    [key: string]: unknown;
+  }
+
+  interface MitraRecord {
+    id: string;
+    nama_mitra?: string;
+    nama_brand?: string;
+    pic?: string;
+    paket_umroh?: string;
+    jumlah_seat?: number;
+    total_tagihan?: number;
+    total_bayar?: number;
+    status_pembayaran?: string;
+    [key: string]: unknown;
+  }
+
+  const [costComponents, setCostComponents] = useState<CostComponent[]>([]);
+  const [mitras, setMitras] = useState<MitraRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Invoice state variables inside FinanceDashboard.tsx
@@ -124,6 +150,16 @@ export const FinanceDashboard: React.FC = () => {
       setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
     });
 
+    // Fetch Tracker Vendor (Cost Components)
+    const unsubCostComp = onSnapshot(collection(db, 'package_cost_components'), (snapshot) => {
+      setCostComponents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // Fetch Tracker Mitra
+    const unsubMitra = onSnapshot(collection(db, 'mitra_tracker'), (snapshot) => {
+      setMitras(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     // Fetch Tracker Jamaah for human readable pilgrim names
     const unsubJamaah = onSnapshot(collection(db, 'tracker_jamaah'), (snapshot) => {
       setJamaahs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -140,6 +176,8 @@ export const FinanceDashboard: React.FC = () => {
     return () => {
       unsubAP();
       unsubAR();
+      unsubCostComp();
+      unsubMitra();
       unsubJamaah();
       unsubTrans();
     };
@@ -214,24 +252,127 @@ export const FinanceDashboard: React.FC = () => {
   };
 
   const renderAP = () => {
-    const totalHutang = vendorServices.filter(i => i.statusPembayaran !== 'Lunas').reduce((sum, i) => sum + (i.estimasiBiaya || 0), 0);
+    const totalHutangTracker = costComponents
+      .filter(i => i.status_pembayaran !== 'Lunas')
+      .reduce((sum, i) => sum + ((i.total_biaya || 0) - (i.total_bayar || 0)), 0);
+    const totalHutangUmum = vendorServices
+      .filter(i => i.statusPembayaran !== 'Lunas')
+      .reduce((sum, i) => sum + (i.estimasiBiaya || 0), 0);
+    const totalHutangCombined = totalHutangTracker + totalHutangUmum;
 
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <p className="text-sm text-gray-500 font-medium mb-1">Total Hutang Berjalan (AP)</p>
             <p className="text-3xl font-black text-rose-600">
-              {formatCurrency(totalHutang)}
+              {formatCurrency(totalHutangCombined)}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              HPP Tracker Vendor: <span className="font-semibold text-gray-700">{formatCurrency(totalHutangTracker)}</span> | Umum: <span className="font-semibold text-gray-700">{formatCurrency(totalHutangUmum)}</span>
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500 font-medium mb-1">Total Tagihan</p>
-            <p className="text-xl font-bold text-gray-900">{vendorServices.length} Invoice</p>
+            <p className="text-sm text-gray-500 font-medium mb-1">Total Item Tagihan</p>
+            <p className="text-xl font-extrabold text-gray-900">
+              {costComponents.length + vendorServices.length} Invoice / Komponen
+            </p>
           </div>
         </div>
 
+        {/* Section A: Synced HPP Cost Components */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-rose-50/40 flex justify-between items-center text-xs">
+            <h3 className="font-bold uppercase tracking-wider text-rose-900 flex items-center gap-1.5 font-mono">
+              <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+              A. Hutang Komponen HPP Vendor (Synced Tracker Vendor)
+            </h3>
+            <span className="text-[10px] uppercase font-bold text-rose-800 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">
+              Real-time Tracker Sync
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th className="p-4">Komponen & Vendor</th>
+                  <th className="p-4">Paket Acuan</th>
+                  <th className="p-4 text-right">Total Anggaran</th>
+                  <th className="p-4 text-right">Telah Dibayar</th>
+                  <th className="p-4 text-right">Sisa Tagihan</th>
+                  <th className="p-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-55 text-xs">
+                {costComponents.map(comp => {
+                  const sisa = (comp.total_biaya || 0) - (comp.total_bayar || 0);
+                  return (
+                    <tr key={comp.id} className="hover:bg-gray-50/50">
+                      <td className="p-4">
+                        <p className="font-bold text-gray-905 uppercase">{comp.nama_komponen}</p>
+                        <p className="text-[10px] text-gray-500 font-mono">Vendor: {comp.vendor_id || '-'}</p>
+                      </td>
+                      <td className="p-4 font-mono font-bold text-slate-700">
+                        {comp.package_id || 'Umum'}
+                      </td>
+                      <td className="p-4 text-right font-semibold text-gray-950">
+                        {formatCurrency(comp.total_biaya || 0)}
+                      </td>
+                      <td className="p-4 text-right text-emerald-600 font-semibold">
+                        {formatCurrency(comp.total_bayar || 0)}
+                      </td>
+                      <td className="p-4 text-right font-black text-rose-600">
+                        {formatCurrency(sisa)}
+                      </td>
+                      <td className="p-4 text-center">
+                        <select 
+                          value={comp.status_pembayaran || 'Belum Bayar'}
+                          onChange={async (e) => {
+                            try {
+                              const newStatus = e.target.value;
+                              await updateDoc(doc(db, 'package_cost_components', comp.id), { 
+                                status_pembayaran: newStatus,
+                                updated_at: new Date().toISOString()
+                              });
+                            } catch (err) {
+                              console.error("Error updating component status:", err);
+                            }
+                          }}
+                          className={`text-[10px] font-bold rounded-lg px-2 py-1 border cursor-pointer outline-none font-sans
+                            ${comp.status_pembayaran === 'Lunas' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 
+                              comp.status_pembayaran === 'DP' || comp.status_pembayaran === 'Cicilan' ? 'bg-blue-50 text-blue-800 border-blue-100' : 
+                              'bg-rose-50 text-rose-800 border-rose-100'}`}
+                        >
+                          <option value="Belum Bayar">Belum Bayar</option>
+                          <option value="DP">DP</option>
+                          <option value="Cicilan">Cicilan</option>
+                          <option value="Lunas">Lunas</option>
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {costComponents.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-gray-500 font-medium">Belum ada data komponen biaya tracker vendor.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Section B: General Vendor Services */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center text-xs">
+            <h3 className="font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1.5 font-mono">
+              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+              B. Tagihan Vendor Umum / Lainnya (Koleksi Internal)
+            </h3>
+            <span className="text-[10px] font-semibold text-gray-500 bg-slate-100 px-2 py-0.5 rounded">
+              Standard Record
+            </span>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -277,7 +418,7 @@ export const FinanceDashboard: React.FC = () => {
                 ))}
                 {vendorServices.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">Belum ada data tagihan vendor.</td>
+                    <td colSpan={5} className="p-8 text-center text-gray-500 font-medium">Belum ada data tagihan vendor.</td>
                   </tr>
                 )}
               </tbody>
@@ -289,24 +430,120 @@ export const FinanceDashboard: React.FC = () => {
   };
 
   const renderAR = () => {
-    const totalPiutang = bookings.filter(i => i.statusPembayaran !== 'lunas').reduce((sum, i) => sum + (i.totalHarga || 0), 0);
+    const totalPiutangMitra = mitras
+      .filter(i => i.status_pembayaran !== 'Lunas')
+      .reduce((sum, i) => sum + ((i.total_tagihan || 0) - (i.total_bayar || 0)), 0);
+    const totalPiutangDirect = bookings
+      .filter(i => i.statusPembayaran !== 'lunas')
+      .reduce((sum, i) => sum + (i.totalHarga || 0), 0);
+    const totalPiutangCombined = totalPiutangMitra + totalPiutangDirect;
 
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Total Piutang Jamaah (AR)</p>
+            <p className="text-sm text-gray-500 font-medium mb-1">Total Piutang Berjalan (AR)</p>
             <p className="text-3xl font-black text-emerald-600">
-              {formatCurrency(totalPiutang)}
+              {formatCurrency(totalPiutangCombined)}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Tracker Mitra: <span className="font-semibold text-gray-700">{formatCurrency(totalPiutangMitra)}</span> | Jamaah Mandiri: <span className="font-semibold text-gray-700">{formatCurrency(totalPiutangDirect)}</span>
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500 font-medium mb-1">Total Booking</p>
-            <p className="text-xl font-bold text-gray-900">{bookings.length} Booking</p>
+            <p className="text-sm text-gray-500 font-medium mb-1">Total Entri Piutang</p>
+            <p className="text-xl font-extrabold text-gray-900">
+              {mitras.length + bookings.length} Rekor Pelanggan
+            </p>
           </div>
         </div>
 
+        {/* Section A: Synced Mitra Tracker AR */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-emerald-50/40 flex justify-between items-center text-xs">
+            <h3 className="font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5 font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              A. Piutang & Setoran Keagenan Kemitraan (Synced Tracker Mitra)
+            </h3>
+            <span className="text-[10px] uppercase font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-100 shadow-xs">
+              Real-time Tracker Sync
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th className="p-4">Nama Mitra & Brand</th>
+                  <th className="p-4">Paket Acuan</th>
+                  <th className="p-4 text-center">Seat Booking</th>
+                  <th className="p-4 text-right">Total Tagihan</th>
+                  <th className="p-4 text-right">Telah Disetor</th>
+                  <th className="p-4 text-right">Sisa Piutang</th>
+                  <th className="p-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-55 text-xs text-gray-900">
+                {mitras.map(mitra => {
+                  const sisa = (mitra.total_tagihan || 0) - (mitra.total_bayar || 0);
+                  return (
+                    <tr key={mitra.id} className="hover:bg-gray-50/50">
+                      <td className="p-4">
+                        <p className="font-bold text-gray-900">{mitra.nama_mitra}</p>
+                        <p className="text-[10px] text-gray-550">{mitra.nama_brand} (PIC: {mitra.pic || '-'})</p>
+                      </td>
+                      <td className="p-4 font-mono font-bold text-indigo-900">{mitra.paket_umroh}</td>
+                      <td className="p-4 text-center font-bold text-indigo-700">{mitra.jumlah_seat || 0} Pax</td>
+                      <td className="p-4 text-right font-semibold">{formatCurrency(mitra.total_tagihan || 0)}</td>
+                      <td className="p-4 text-right font-semibold text-emerald-600">{formatCurrency(mitra.total_bayar || 0)}</td>
+                      <td className="p-4 text-right font-black text-rose-600">{formatCurrency(sisa)}</td>
+                      <td className="p-4 text-center">
+                        <select 
+                          value={mitra.status_pembayaran || 'Belum Bayar'}
+                          onChange={async (e) => {
+                            try {
+                              const newStatus = e.target.value;
+                              await updateDoc(doc(db, 'mitra_tracker', mitra.id), { 
+                                status_pembayaran: newStatus,
+                                updated_at: new Date().toISOString()
+                              });
+                            } catch (err) {
+                              console.error("Error updating mitra status in Firestore:", err);
+                            }
+                          }}
+                          className={`text-[10px] font-bold rounded-lg px-2.5 py-1 border cursor-pointer outline-none font-sans
+                            ${mitra.status_pembayaran === 'Lunas' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 
+                              mitra.status_pembayaran === 'DP' ? 'bg-blue-50 text-blue-800 border-blue-105' : 
+                              'bg-rose-50 text-rose-800 border-rose-100'}`}
+                        >
+                          <option value="Belum Bayar">Belum Bayar</option>
+                          <option value="DP">DP</option>
+                          <option value="Lunas">Lunas</option>
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {mitras.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-gray-500 font-medium">Belum ada piutang keagenan mitra.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Section B: Direct Pilgrim Bookings (AR) */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center text-xs">
+            <h3 className="font-bold uppercase tracking-wider text-gray-700 flex items-center gap-1.5 font-mono">
+              <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+              B. Piutang Jamaah Individu / Mandiri (Standard Bookings)
+            </h3>
+            <span className="text-[10px] font-semibold text-gray-500 bg-slate-100 px-2 py-0.5 rounded">
+              Standard Booking Invoice
+            </span>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -322,14 +559,14 @@ export const FinanceDashboard: React.FC = () => {
                 {bookings.map(booking => (
                   <tr key={booking.id} className="hover:bg-gray-50">
                     <td className="p-4">
-                      <p className="font-bold text-gray-900">{booking.id.substring(0, 8)}</p>
+                      <p className="font-bold text-gray-900">{(booking.id || '').substring(0, 8)}</p>
                       <p className="text-xs text-gray-500">{booking.jenisPaket}</p>
                     </td>
                     <td className="p-4">
                       <p className="text-sm font-bold text-gray-800">
-                        {jamaahs.find(j => j.id === booking.id)?.nama_paspor || jamaahs.find(j => j.id === booking.jamaahId)?.nama_paspor || `Jamaah ${booking.jamaahId.substring(0, 8)}`}
+                        {jamaahs.find(j => j.id === booking.id)?.nama_paspor || jamaahs.find(j => j.id === booking.jamaahId)?.nama_paspor || `Jamaah ${(booking.jamaahId || '').substring(0, 8)}`}
                       </p>
-                      <p className="text-[10px] text-gray-400 font-mono">ID: {booking.jamaahId}</p>
+                      <p className="text-[10px] text-gray-400 font-mono">ID: {booking.jamaahId || '-'}</p>
                     </td>
                     <td className="p-4 text-right font-black text-slate-900 font-sans">
                       {formatCurrency(booking.totalHarga || 0)}
@@ -353,7 +590,7 @@ export const FinanceDashboard: React.FC = () => {
                         <button 
                           onClick={() => {
                             setSelectedInvoiceBooking(booking);
-                            setInvoiceCustomNum(`INV/${new Date().getFullYear()}/UMR/${booking.id.substring(0, 6).toUpperCase()}`);
+                            setInvoiceCustomNum(`INV/${new Date().getFullYear()}/UMR/${(booking.id || '').substring(0, 6).toUpperCase()}`);
                             setIsInvoiceOpen(true);
                           }}
                           className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm border border-indigo-100"
@@ -368,7 +605,7 @@ export const FinanceDashboard: React.FC = () => {
                 ))}
                 {bookings.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-500">Belum ada data booking jamaah.</td>
+                    <td colSpan={5} className="p-8 text-center text-gray-500 font-medium">Belum ada data booking jamaah.</td>
                   </tr>
                 )}
               </tbody>

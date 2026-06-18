@@ -381,5 +381,10 @@ service cloud.firestore {
       );
       allow write: if isSignedIn() && isValidId(notificationId);
     }
+
+    match /tracker_bagasi/{baggageId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(baggageId);
+    }
   }
 }

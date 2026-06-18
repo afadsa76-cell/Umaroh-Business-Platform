@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, onSnapshot, updateDoc, doc, setDoc, handleFirestoreError, OperationType } from '../firebase';
 import { KeberangkatanTracker, PaketTracker, JamaahTracker } from './tracker/types';
+import { TrackerBagasi } from './tracker/TrackerBagasi';
 import { 
   ChevronRight, 
   Calendar, 
@@ -10,10 +11,11 @@ import {
   CheckCircle2, 
   Phone, 
   AlertTriangle, 
-  MessageSquare 
+  MessageSquare,
+  Barcode
 } from 'lucide-react';
 
-type TLTab = 'jadwal' | 'jamaah' | 'info';
+type TLTab = 'jadwal' | 'jamaah' | 'bagasi' | 'info';
 
 export const TourLeaderPortal: React.FC = () => {
   const [keberangkatans, setKeberangkatans] = useState<KeberangkatanTracker[]>([]);
@@ -292,6 +294,12 @@ export const TourLeaderPortal: React.FC = () => {
       <div className="flex-grow p-4 overflow-y-auto pb-24">
         {activeTab === 'jadwal' && renderJadwal()}
         {activeTab === 'jamaah' && renderJamaah()}
+        {activeTab === 'bagasi' && (
+          <TrackerBagasi 
+            paketIdProp={selectedKeberangkatan.paketId} 
+            defaultOperator={selectedKeberangkatan.tourLeader || 'Tour Leader'} 
+          />
+        )}
         {activeTab === 'info' && renderInfo()}
       </div>
 
@@ -300,21 +308,28 @@ export const TourLeaderPortal: React.FC = () => {
         <div className="max-w-md mx-auto flex justify-around p-2">
           <button 
             onClick={() => setActiveTab('jadwal')}
-            className={`flex flex-col items-center p-2 min-w-[80px] rounded-xl transition-colors ${activeTab === 'jadwal' ? 'text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+            className={`flex flex-col items-center p-2 min-w-[70px] rounded-xl transition-colors ${activeTab === 'jadwal' ? 'text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <Calendar className={`w-6 h-6 mb-1 ${activeTab === 'jadwal' ? 'fill-emerald-100' : ''}`} />
             <span className="text-[10px] font-bold">Jadwal</span>
           </button>
           <button 
             onClick={() => setActiveTab('jamaah')}
-            className={`flex flex-col items-center p-2 min-w-[80px] rounded-xl transition-colors ${activeTab === 'jamaah' ? 'text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+            className={`flex flex-col items-center p-2 min-w-[70px] rounded-xl transition-colors ${activeTab === 'jamaah' ? 'text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <Users className={`w-6 h-6 mb-1 ${activeTab === 'jamaah' ? 'fill-emerald-100' : ''}`} />
             <span className="text-[10px] font-bold">Jamaah</span>
           </button>
           <button 
+            onClick={() => setActiveTab('bagasi')}
+            className={`flex flex-col items-center p-2 min-w-[70px] rounded-xl transition-colors ${activeTab === 'bagasi' ? 'text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+          >
+            <Barcode className={`w-6 h-6 mb-1 ${activeTab === 'bagasi' ? 'fill-emerald-100' : ''}`} />
+            <span className="text-[10px] font-bold">Bagasi</span>
+          </button>
+          <button 
             onClick={() => setActiveTab('info')}
-            className={`flex flex-col items-center p-2 min-w-[80px] rounded-xl transition-colors ${activeTab === 'info' ? 'text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
+            className={`flex flex-col items-center p-2 min-w-[70px] rounded-xl transition-colors ${activeTab === 'info' ? 'text-emerald-600' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <AlertTriangle className={`w-6 h-6 mb-1 ${activeTab === 'info' ? 'fill-emerald-100' : ''}`} />
             <span className="text-[10px] font-bold">Info</span>

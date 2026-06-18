@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Activity, Radio, Search, Clock, Sparkles, RefreshCw, MessageSquare } from 'lucide-react';
-import indonesiaMapImg from '../../assets/images/indonesia_map_1780935734269.png';
+import indonesiaMapImg from '../../assets/images/indonesia_map_1781713529511.jpg';
 
 interface UserRecord {
   id: string;

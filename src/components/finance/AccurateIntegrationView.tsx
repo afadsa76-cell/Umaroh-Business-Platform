@@ -205,7 +205,7 @@ export const AccurateIntegrationView: React.FC = () => {
     }
     
     setIsSyncing(booking.id);
-    addLog(`Memulai transfer data Booking #${booking.id.substring(0, 8)} ke Accurate...`, 'info');
+    addLog(`Memulai transfer data Booking #${(booking.id || '').substring(0, 8)} ke Accurate...`, 'info');
     
     // Simulate API delay
     setTimeout(async () => {
@@ -218,7 +218,7 @@ export const AccurateIntegrationView: React.FC = () => {
         });
         
         const payloadStr = JSON.stringify({
-          customerName: `Jamaah ID - ${booking.jamaahId.substring(0,6)}`,
+          customerName: `Jamaah ID - ${(booking.jamaahId || '').substring(0,6)}`,
           transDate: new Date().toLocaleDateString('id-ID'),
           docNumber: docNo,
           glAccount: booking.statusPembayaran === 'lunas' ? bankAccount : arAccount,
@@ -248,7 +248,7 @@ export const AccurateIntegrationView: React.FC = () => {
     }
 
     setIsSyncing(service.id);
-    addLog(`Memulai transfer Tagihan Vendor #${service.id.substring(0, 8)} (${service.vendor}) ke Accurate...`, 'info');
+    addLog(`Memulai transfer Tagihan Vendor #${(service.id || '').substring(0, 8)} (${service.vendor || 'Vendor'}) ke Accurate...`, 'info');
 
     // Simulate API delay
     setTimeout(async () => {
@@ -531,10 +531,10 @@ export const AccurateIntegrationView: React.FC = () => {
                       return (
                         <tr key={booking.id} className="hover:bg-slate-50/50">
                           <td className="p-4 text-gray-900 font-mono font-bold">
-                            #{booking.id.substring(0, 8).toUpperCase()}
+                            #{ (booking.id || '').substring(0, 8).toUpperCase() }
                           </td>
                           <td className="p-4">
-                            <span className="text-gray-800">Jamaah ID {booking.jamaahId.substring(0, 8)}...</span>
+                            <span className="text-gray-800">Jamaah ID { (booking.jamaahId || '').substring(0, 8) }...</span>
                           </td>
                           <td className="p-4">
                             <span className="bg-amber-100/75 text-amber-850 text-[10px] font-black uppercase px-2 py-0.5 rounded border border-amber-200">
@@ -631,7 +631,7 @@ export const AccurateIntegrationView: React.FC = () => {
                         <tr key={service.id} className="hover:bg-slate-50/50">
                           <td className="p-4">
                             <span className="text-gray-900 font-extrabold block">{service.vendor}</span>
-                            <span className="text-[10px] text-indigo-600 font-mono">#{service.id.substring(0, 8)}</span>
+                            <span className="text-[10px] text-indigo-600 font-mono">#{(service.id || '').substring(0, 8)}</span>
                           </td>
                           <td className="p-4">
                             <span className="text-gray-800">{service.namaLayanan || '-'}</span>

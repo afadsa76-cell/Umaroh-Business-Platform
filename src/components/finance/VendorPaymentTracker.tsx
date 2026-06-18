@@ -4,7 +4,7 @@ import {
   Trash2, Edit, Plus, Download, Printer, Eye, X, Search, 
   Hotel, Plane, FileText, CheckCircle2, 
   Bell, ShieldAlert, Sparkles, DollarSign, Upload, Activity,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, MessageCircle
 } from 'lucide-react';
 import { db, collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, updateDoc, handleFirestoreError, OperationType, getDocs } from '../../firebase';
 import * as XLSX from 'xlsx';
@@ -41,6 +41,9 @@ export interface CostComponent {
   created_by: string;
   created_at: string;
   updated_at: string;
+  tgl_keberangkatan?: string;
+  pic_name?: string;
+  pic_phone?: string;
 
   // Maskapai Specific
   airline_name?: string;
@@ -2141,11 +2144,22 @@ export const VendorPaymentTracker: React.FC = () => {
               <button
                 onClick={() => {
                   setSelectedItem(null);
+                  const defaultPkg = 'UMROH-VIP-AGUSTUS';
+                  const matchedPkg = realPackages.find(p => p.nama === defaultPkg);
+                  const depDate = matchedPkg ? matchedPkg.tglBerangkat || '' : '';
+                  let initialDeadline = '';
+                  if (depDate) {
+                    const dVal = new Date(depDate);
+                    if (!isNaN(dVal.getTime())) {
+                      dVal.setDate(dVal.getDate() - 45);
+                      initialDeadline = dVal.toISOString().split('T')[0];
+                    }
+                  }
                   setFormData({
                     nama_komponen: '',
                     kategori_komponen: 'Maskapai',
                     vendor_id: '',
-                    package_id: 'UMROH-VIP-AGUSTUS',
+                    package_id: defaultPkg,
                     qty: 1,
                     qty_used: 1,
                     harga_satuan: 0,
@@ -2155,7 +2169,11 @@ export const VendorPaymentTracker: React.FC = () => {
                     pelunasan: 0,
                     status_operasional: 'Pending',
                     approval_status: 'Approved',
-                    catatan: ''
+                    catatan: '',
+                    tgl_keberangkatan: depDate,
+                    tanggal_jatuh_tempo: initialDeadline,
+                    pic_name: '',
+                    pic_phone: ''
                   });
                   setIsManualPackage(false);
                   setShowFormModal(true);
@@ -2385,6 +2403,23 @@ export const VendorPaymentTracker: React.FC = () => {
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           
+                          <button
+                            onClick={() => {
+                              const sisa = item.total_biaya - item.total_bayar;
+                              const contactPhone = item.pic_phone ? item.pic_phone.replace(/[^0-9]/g, '') : '6283844974952';
+                              const finalPhone = contactPhone.startsWith('0') ? '62' + contactPhone.slice(1) : contactPhone;
+                              const displayPicName = item.pic_name || 'Vendor PIC';
+                              
+                              const waText = `Assalamualaikum Wr Wb. Yth PIC Bapak/Ibu ${displayPicName}. Kami dari Tim Keuangan & Ops Umaroh.com menginfokan rincian tagihan termin/angsuran untuk komponen biaya *${item.nama_komponen}* (Paket: *${item.package_id || '-'}*).\n\n• Total Biaya: *${formatCurrency(item.total_biaya)}*\n• Berhasil Dibayar: *${formatCurrency(item.total_bayar)}*\n• Sisa Dues Tagihan: *${formatCurrency(sisa)}*\n• Batas Jatuh Tempo (Deadline): *${item.tanggal_jatuh_tempo || '-'}*\n\nMohon sisa tagihan tersebut segera dilunasi agar koordinasi serta operasional keberangkatan jamaah berjalan lancar. Terima kasih atas perhatiannya.`;
+                              const waUrl = `https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(waText)}`;
+                              window.open(waUrl, '_blank');
+                            }}
+                            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-1.5 rounded-lg transition"
+                            title={`Kirim Pengingat WA ke PIC: ${item.pic_name || 'System Ops'}`}
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </button>
+                          
                           {canWrite && (
                             <>
                               <button
@@ -2569,6 +2604,23 @@ export const VendorPaymentTracker: React.FC = () => {
                                   title="Lihat Rincian Teknis & Approval File"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    const sisa = item.total_biaya - item.total_bayar;
+                                    const contactPhone = item.pic_phone ? item.pic_phone.replace(/[^0-9]/g, '') : '6283844974952';
+                                    const finalPhone = contactPhone.startsWith('0') ? '62' + contactPhone.slice(1) : contactPhone;
+                                    const displayPicName = item.pic_name || 'Vendor PIC';
+                                    
+                                    const waText = `Assalamualaikum Wr Wb. Yth PIC Bapak/Ibu ${displayPicName}. Kami dari Tim Keuangan & Ops Umaroh.com menginfokan rincian tagihan termin/angsuran untuk komponen biaya *${item.nama_komponen}* (Paket: *${item.package_id || '-'}*).\n\n• Total Biaya: *${formatCurrency(item.total_biaya)}*\n• Berhasil Dibayar: *${formatCurrency(item.total_bayar)}*\n• Sisa Dues Tagihan: *${formatCurrency(sisa)}*\n• Batas Jatuh Tempo (Deadline): *${item.tanggal_jatuh_tempo || '-'}*\n\nMohon sisa tagihan tersebut segera dilunasi agar koordinasi serta operasional keberangkatan jamaah berjalan lancar. Terima kasih atas perhatiannya.`;
+                                    const waUrl = `https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(waText)}`;
+                                    window.open(waUrl, '_blank');
+                                  }}
+                                  className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-1.5 rounded-lg transition"
+                                  title={`Kirim Pengingat WA ke PIC: ${item.pic_name || 'System Ops'}`}
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5" />
                                 </button>
                                 
                                 {canWrite && (
@@ -2816,13 +2868,34 @@ export const VendorPaymentTracker: React.FC = () => {
                       required
                       placeholder="Ketik nama paket keberangkatan..."
                       value={formData.package_id || ''}
-                      onChange={e => setFormData({ ...formData, package_id: e.target.value })}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, package_id: val });
+                      }}
                       className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500"
                     />
                   ) : (
                     <select
                       value={formData.package_id || ''}
-                      onChange={e => setFormData({ ...formData, package_id: e.target.value })}
+                      onChange={e => {
+                        const selectedPkgName = e.target.value;
+                        const pkgObj = realPackages.find(p => p.nama === selectedPkgName);
+                        const departureDate = pkgObj ? pkgObj.tglBerangkat || '' : '';
+                        let autoDeadline = formData.tanggal_jatuh_tempo || '';
+                        if (departureDate) {
+                          const dateVal = new Date(departureDate);
+                          if (!isNaN(dateVal.getTime())) {
+                            dateVal.setDate(dateVal.getDate() - 45);
+                            autoDeadline = dateVal.toISOString().split('T')[0];
+                          }
+                        }
+                        setFormData({
+                          ...formData,
+                          package_id: selectedPkgName,
+                          tgl_keberangkatan: departureDate,
+                          tanggal_jatuh_tempo: autoDeadline
+                        });
+                      }}
                       required
                       className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500 cursor-pointer"
                     >
@@ -2838,6 +2911,56 @@ export const VendorPaymentTracker: React.FC = () => {
                       ))}
                     </select>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Tanggal Keberangkatan Paket</label>
+                  <input
+                    type="date"
+                    value={formData.tgl_keberangkatan || ''}
+                    onChange={e => {
+                      const depDate = e.target.value;
+                      let autoDeadline = formData.tanggal_jatuh_tempo || '';
+                      if (depDate) {
+                        const dateVal = new Date(depDate);
+                        if (!isNaN(dateVal.getTime())) {
+                          dateVal.setDate(dateVal.getDate() - 45);
+                          autoDeadline = dateVal.toISOString().split('T')[0];
+                        }
+                      }
+                      setFormData({ 
+                        ...formData, 
+                        tgl_keberangkatan: depDate,
+                        tanggal_jatuh_tempo: autoDeadline 
+                      });
+                    }}
+                    className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none"
+                  />
+                  <p className="text-[9px] text-teal-650 font-bold mt-0.5">
+                    *Sinkronisasi tanggal berangkat. Mengubah tanggal ini akan menghitung otomatis Deadline jatuh tempo (H-45).
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nama PIC Vendor / Staff Ops</label>
+                  <input
+                    type="text"
+                    value={formData.pic_name || ''}
+                    onChange={e => setFormData({ ...formData, pic_name: e.target.value })}
+                    placeholder="Contoh: Heru (Staff Garuda)"
+                    className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">WhatsApp PIC Vendor / Staff Ops</label>
+                  <input
+                    type="text"
+                    value={formData.pic_phone || ''}
+                    onChange={e => setFormData({ ...formData, pic_phone: e.target.value })}
+                    placeholder="Contoh: 08123456789"
+                    className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none"
+                  />
                 </div>
 
                 <div>

@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
-import { Users, Package, PlaneTakeoff } from 'lucide-react';
+import { Users, Package, PlaneTakeoff, Barcode } from 'lucide-react';
 import { TrackerPaket } from './tracker/TrackerPaket';
 import { TrackerJamaah } from './tracker/TrackerJamaah';
 import { TrackerKeberangkatan } from './tracker/TrackerKeberangkatan';
+import { TrackerBagasi } from './tracker/TrackerBagasi';
 
-type TabType = 'paket' | 'jamaah' | 'keberangkatan';
+type TabType = 'paket' | 'jamaah' | 'keberangkatan' | 'bagasi';
 
 export const TrackerView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('paket');
+  const [activeTab, setActiveTab ] = useState<TabType>('paket');
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Mapping & Tracker</h1>
-        <p className="text-gray-600">Pantau dan kelola mapping paket, data jamaah, dan status keberangkatan.</p>
+        <p className="text-gray-600">Pantau dan kelola mapping paket, data jamaah, logistik, dan status bagasi barcode jemaah.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Paket Card */}
         <div 
           onClick={() => setActiveTab('paket')}
@@ -28,7 +29,7 @@ export const TrackerView: React.FC = () => {
             </div>
             <h2 className="text-lg font-semibold text-gray-900">Tracker Paket</h2>
           </div>
-          <p className="text-gray-600 text-sm mb-4">Monitoring status paket perjalanan umrah yang sedang berjalan atau direncanakan.</p>
+          <p className="text-gray-650 text-sm mb-4">Monitoring status paket perjalanan umrah yang sedang berjalan atau direncanakan.</p>
           <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'paket' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
             Lihat Detail Paket
           </button>
@@ -45,7 +46,7 @@ export const TrackerView: React.FC = () => {
             </div>
             <h2 className="text-lg font-semibold text-gray-900">Tracker Jamaah</h2>
           </div>
-          <p className="text-gray-600 text-sm mb-4">Pantau kelengkapan dokumen, pembayaran, dan status masing-masing jamaah.</p>
+          <p className="text-gray-650 text-sm mb-4">Pantau kelengkapan dokumen, pembayaran, dan status masing-masing jamaah.</p>
           <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'jamaah' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
             Lihat Data Jamaah
           </button>
@@ -57,14 +58,31 @@ export const TrackerView: React.FC = () => {
           className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'keberangkatan' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-gray-200 hover:border-amber-300'}`}
         >
           <div className="flex items-center gap-3 mb-4">
-            <div className={`p-3 rounded-lg ${activeTab === 'keberangkatan' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-600'}`}>
+            <div className={`p-3 rounded-lg ${activeTab === 'keberangkatan' ? 'bg-amber-600 text-white' : 'bg-amber-55 text-amber-600'}`}>
               <PlaneTakeoff className="w-6 h-6" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900">Tracker Keberangkatan</h2>
           </div>
-          <p className="text-gray-600 text-sm mb-4">Jadwal penerbangan, status visa, dan persiapan keberangkatan rombongan.</p>
+          <p className="text-gray-650 text-sm mb-4">Jadwal penerbangan, status visa, dan persiapan keberangkatan rombongan.</p>
           <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'keberangkatan' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
             Lihat Jadwal Keberangkatan
+          </button>
+        </div>
+
+        {/* Bagasi Card */}
+        <div 
+          onClick={() => setActiveTab('bagasi')}
+          className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${activeTab === 'bagasi' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200 hover:border-indigo-300'}`}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`p-3 rounded-lg ${activeTab === 'bagasi' ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
+              <Barcode className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900">Tracker Bagasi</h2>
+          </div>
+          <p className="text-gray-650 text-sm mb-4">Monitoring barcode koper group, register boarding, dan kliring tiba di tujuan.</p>
+          <button className={`w-full py-2 rounded-lg text-sm font-medium transition-colors border ${activeTab === 'bagasi' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'}`}>
+            Lihat Tracker Bagasi
           </button>
         </div>
       </div>
@@ -73,6 +91,7 @@ export const TrackerView: React.FC = () => {
         {activeTab === 'paket' && <TrackerPaket />}
         {activeTab === 'jamaah' && <TrackerJamaah />}
         {activeTab === 'keberangkatan' && <TrackerKeberangkatan />}
+        {activeTab === 'bagasi' && <TrackerBagasi />}
       </div>
     </div>
   );
