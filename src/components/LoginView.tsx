@@ -1,12 +1,41 @@
 import React, { useState } from 'react';
-import { Code2, ArrowRight, User as UserIcon } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
+import { Code2, ArrowRight, User as UserIcon } from 'lucide-react';
 import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, handleFirestoreError, OperationType } from '../firebase';
 import { signInWithCredential, GoogleAuthProvider, User, sendPasswordResetEmail, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { JamaahSession, BookingRecord } from '../types';
+
+const AutoplayVideoLogo: React.FC<{ className?: string }> = ({ className = '' }) => {
+  return (
+    <div className={`relative flex items-center justify-center select-none ${className}`} style={{ perspective: '1000px' }}>
+      <style>{`
+        @keyframes u-rotate-logo {
+          0% {
+            transform: rotateY(0deg);
+          }
+          10% {
+            transform: rotateY(360deg);
+          }
+          100% {
+            transform: rotateY(360deg);
+          }
+        }
+        .u-animated-logo {
+          animation: u-rotate-logo 15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          transform-style: preserve-3d;
+        }
+      `}</style>
+      <img
+        src={logoBase64}
+        alt="Umaroh Logo"
+        className={`u-animated-logo w-full h-full object-contain pointer-events-none`}
+      />
+    </div>
+  );
+};
 
 export type Role = 'operasional' | 'mitra' | 'jamaah' | 'admin' | 'vendor';
 
@@ -450,7 +479,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         
         <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
           <div className="flex justify-center">
-            <img src={logoBase64} alt="Umaroh Logo" className="h-16" />
+            <AutoplayVideoLogo className="w-[280px] sm:w-[350px] md:w-[400px] h-auto" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Selesaikan Pendaftaran
@@ -518,8 +547,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       <div className="absolute inset-0 opacity-5 bg-[url('https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center" />
       
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 flex flex-col items-center">
-        <div className="mb-3">
-          <img src={logoBase64} alt="Umaroh Logo" className="h-20 md:h-28 drop-shadow-2xl" />
+        <div className="mb-3 flex justify-center w-full px-4">
+          <AutoplayVideoLogo className="w-[300px] sm:w-[380px] md:w-[440px] h-auto drop-shadow-2xl" />
         </div>
       </div>
 

@@ -10,6 +10,15 @@ async function startServer() {
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
+  // Serve the video logo explicitly to ensure Range requests are supported correctly (essential for iOS/macOS Safari & Chrome)
+  app.get('/umaroh_logo.mp4', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'umaroh_logo.mp4'), {
+      headers: {
+        'Content-Type': 'video/mp4'
+      }
+    });
+  });
+
   // Use lazy initialization for Gemini to avoid crashing when the API key is not yet set at startup
   let aiClient: GoogleGenAI | null = null;
   const getAIClient = (): GoogleGenAI => {

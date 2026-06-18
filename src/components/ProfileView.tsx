@@ -98,19 +98,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobileViewport(window.innerWidth < 768);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
     const unsub = auth.onAuthStateChanged((u) => {
       setCurrentUser(u);
     });
     return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const user = currentUser;
