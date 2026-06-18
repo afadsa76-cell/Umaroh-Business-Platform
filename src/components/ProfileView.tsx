@@ -95,6 +95,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   forceRole
 }) => {
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((u) => {
@@ -679,7 +689,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     );
   }
 
-  if (isDesktop) {
+  const renderDesktop = isDesktop && !isMobileViewport;
+
+  if (renderDesktop) {
     return (
       <div className="w-full bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm font-sans space-y-8">
         {/* Header Title */}
@@ -797,7 +809,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {/* Score and Stats Panel */}
               <div className="space-y-4">
                 {/* Score */}
-                <div className="p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-50 border border-amber-200/65 rounded-2xl flex items-center justify-between">
+                <div className="p-4 bg-gradient-to-r from-[#FFFCEB] via-[#FFFDF5] to-[#F8FAFC] border border-[#FDE68A] rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-amber-400 rounded-xl text-slate-950 flex items-center justify-center font-black text-md shadow-sm shrink-0">
                       {profile.performanceScore}
@@ -817,7 +829,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#047857]/10 text-[#047857] flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#E6F2EE] text-[#047857] flex items-center justify-center shrink-0">
                       <Users size={16} />
                     </div>
                     <div className="min-w-0">
@@ -829,7 +841,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#ECFDF5] text-emerald-700 flex items-center justify-center shrink-0">
                       <Plane size={16} />
                     </div>
                     <div className="min-w-0">
@@ -841,7 +853,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#FEF8E6] text-[#B45309] flex items-center justify-center shrink-0">
                       <Calendar size={16} />
                     </div>
                     <div className="min-w-0">
@@ -851,7 +863,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-100/80 rounded-xl flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#FFF7ED] text-orange-600 flex items-center justify-center shrink-0">
                       <Star className="fill-orange-500 stroke-orange-500" size={14} />
                     </div>
                     <div className="min-w-0">
@@ -1573,7 +1585,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </div>
 
               {/* Dynamic Score Ribbon */}
-              <div className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-50 border border-amber-200/60 rounded-xl flex items-center justify-between">
+              <div className="mt-4 p-3 bg-gradient-to-r from-[#FFFCEB] via-[#FFFDF5] to-[#F8FAFC] border border-[#FDE68A] rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 bg-amber-400 rounded-lg text-slate-950 flex items-center justify-center font-black text-sm shadow-sm shrink-0">
                     {profile.performanceScore}
@@ -1586,7 +1598,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] bg-slate-900 text-amber-400 font-black px-2 py-0.5 rounded-full uppercase scale-90">
+                  <span className="text-[10px] bg-slate-900 text-amber-504 font-black px-2 py-0.5 rounded-full uppercase scale-90">
                     Sangat Layak
                   </span>
                 </div>
@@ -1595,7 +1607,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {/* Grid 2x2 Stats */}
               <div className="grid grid-cols-2 gap-2.5 mt-3">
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#047857]/10 text-[#047857] flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-[#E6F2EE] text-[#047857] flex items-center justify-center shrink-0">
                     <Users size={18} />
                   </div>
                   <div>
@@ -1607,7 +1619,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-[#ECFDF5] text-emerald-700 flex items-center justify-center shrink-0">
                     <Plane size={18} />
                   </div>
                   <div>
@@ -1619,7 +1631,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#F5B800]/10 text-amber-700 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-[#FEF8E6] text-[#B45309] flex items-center justify-center shrink-0">
                     <Calendar size={18} />
                   </div>
                   <div>
@@ -1629,7 +1641,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-[#FFF7ED] text-orange-600 flex items-center justify-center shrink-0">
                     <Star className="fill-orange-500 stroke-orange-500" size={16} />
                   </div>
                   <div>

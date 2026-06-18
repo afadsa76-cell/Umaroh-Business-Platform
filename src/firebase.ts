@@ -29,9 +29,10 @@ import {
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
+const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId || 'ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393';
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
-}, firebaseConfig.firestoreDatabaseId);
+}, firestoreDbId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -343,8 +344,8 @@ export async function getDoc(docRef: any): Promise<any> {
       }
       return snap;
     } catch (err) {
-      if (checkQuotaError(err)) {
-        console.warn("getDoc failed due to Firebase quota. Falling back to local cache.");
+      if (checkFallbackError(err)) {
+        console.warn("getDoc failed. Falling back to local cache.");
         const localData = getLocalDoc(path, id);
         return {
           exists: () => !!localData,
@@ -388,8 +389,8 @@ export async function getDocs(ref: any): Promise<any> {
 
       return snap;
     } catch (err) {
-      if (checkQuotaError(err)) {
-        console.warn("getDocs failed due to Firebase quota. Falling back to local replication cache.");
+      if (checkFallbackError(err)) {
+        console.warn("getDocs failed. Falling back to local replication cache.");
       } else {
         throw err;
       }

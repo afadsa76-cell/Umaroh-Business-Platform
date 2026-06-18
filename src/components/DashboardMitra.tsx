@@ -14,6 +14,8 @@ import { FeedKolaborasiView } from './FeedKolaborasiView';
 import { AIMarketingView } from './AIMarketingView';
 import { AISmartAnalyticsView } from './AISmartAnalyticsView';
 import { FlightTrackerWidget } from './FlightTrackerWidget';
+import { ELearningMitraView } from './ELearningMitraView';
+import { BookOpen } from 'lucide-react';
 
 interface MitraBooking {
   id: string;
@@ -98,7 +100,7 @@ interface WalletTransaction {
   createdAt?: string;
 }
 
-type MitraTab = 'overview' | 'feed' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet';
+type MitraTab = 'overview' | 'feed' | 'elearning' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet';
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
@@ -1439,6 +1441,18 @@ export const DashboardMitra = () => {
           </button>
 
           <button
+            onClick={() => setActiveTab('elearning')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+              activeTab === 'elearning' 
+                ? 'bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-600/10' 
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <BookOpen className={`w-4 h-4 ${activeTab === 'elearning' ? 'text-emerald-700' : 'text-gray-505'}`} />
+            E-Learning Akademi
+          </button>
+
+          <button
             onClick={() => setActiveTab('katalog')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
               activeTab === 'katalog' 
@@ -1590,6 +1604,13 @@ export const DashboardMitra = () => {
             >
               <Zap className="w-5 h-5 text-amber-500 fill-amber-300/20" />
               <span className="text-[10px] font-bold">Feed</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('elearning')}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'elearning' ? 'text-emerald-600' : 'text-gray-400'}`}
+            >
+              <BookOpen className="w-5 h-5 text-emerald-505" />
+              <span className="text-[10px] font-bold">Belajar</span>
             </button>
             <button
               onClick={() => setActiveTab('katalog')}
@@ -1778,6 +1799,7 @@ export const DashboardMitra = () => {
 
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'feed' && <FeedKolaborasiView onNavigateToCatalog={() => setActiveTab('katalog')} />}
+          {activeTab === 'elearning' && <ELearningMitraView />}
           {activeTab === 'katalog' && <KatalogPaketView />}
           {activeTab === 'paket' && <PaketMitraView />}
           {activeTab === 'validasi' && <ValidasiPaketMitraView />}

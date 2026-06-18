@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, collection, onSnapshot, doc, updateDoc, setDoc, handleFirestoreError, OperationType } from '../../firebase';
-import { Edit2, CheckCircle, XCircle, Users, Package, Save, X } from 'lucide-react';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc, handleFirestoreError, OperationType } from '../../firebase';
+import { Edit2, CheckCircle, XCircle, Users, Package, Save, X, Trash2 } from 'lucide-react';
 
 type AdminTab = 'paket' | 'pendaftaran';
 
@@ -38,6 +38,18 @@ export const KemitraanAdminView: React.FC = () => {
   const [editingPaketId, setEditingPaketId] = useState<string | null>(null);
   const [editHarga, setEditHarga] = useState<number>(0);
   const [editDeskripsi, setEditDeskripsi] = useState<string>('');
+
+  // Sandbox-safe overlay state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string;
+    type: 'paket' | 'pendaftaran';
+    name: string;
+  } | null>(null);
+
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   useEffect(() => {
     // Fetch Paket Kemitraan
@@ -93,10 +105,44 @@ export const KemitraanAdminView: React.FC = () => {
         deskripsi: editDeskripsi
       });
       setEditingPaketId(null);
+      showNotification("Perubahan paket kemitraan berhasil disimpan.", "success");
     } catch (error) {
       console.error("Error updating paket:", error);
-      alert("Gagal menyimpan perubahan.");
+      showNotification("Gagal menyimpan perubahan.", "error");
     }
+  };
+
+  const triggerDeletePaket = (id: string, name: string) => {
+    setDeleteConfirm({ id, type: 'paket', name });
+  };
+
+  const triggerDeletePendaftaran = (id: string, name: string) => {
+    setDeleteConfirm({ id, type: 'pendaftaran', name });
+  };
+
+  const executeDelete = async () => {
+    if (!deleteConfirm) return;
+    const { id, type } = deleteConfirm;
+    setDeleteConfirm(null);
+    try {
+      if (type === 'paket') {
+        await deleteDoc(doc(db, 'paket_kemitraan', id));
+        showNotification("Paket kemitraan berhasil dihapus.", "success");
+      } else {
+        await deleteDoc(doc(db, 'pendaftaran_mitra', id));
+        showNotification("Pendaftaran mitra berhasil dihapus.", "success");
+      }
+    } catch (error) {
+      console.error(`Error deleting ${type}:`, error);
+      showNotification(`Gagal menghapus ${type === 'paket' ? 'paket kemitraan' : 'pendaftaran mitra'}.`, "error");
+    }
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4000);
   };
 
   const formatCurrency = (amount: number) => {
@@ -164,9 +210,14 @@ export const KemitraanAdminView: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => handleEditClick(paket)} className="p-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 inline-flex">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => handleEditClick(paket)} className="p-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 inline-flex" title="Edit">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => triggerDeletePaket(paket.id, paket.nama)} className="p-1.5 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 inline-flex" title="Hapus Paket">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>
@@ -237,18 +288,21 @@ export const KemitraanAdminView: React.FC = () => {
                   </span>
                 </td>
                 <td className="p-4 text-center">
-                  {p.status === 'pending_validation' ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <button className="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200" title="Validasi & Aktifkan">
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                      <button className="p-1.5 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200" title="Tolak">
-                        <XCircle className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-xs">-</span>
-                  )}
+                  <div className="flex items-center justify-center gap-2">
+                    {p.status === 'pending_validation' && (
+                      <>
+                        <button className="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200" title="Validasi & Aktifkan">
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                        <button className="p-1.5 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200" title="Tolak">
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                    <button onClick={() => triggerDeletePendaftaran(p.id, p.namaLengkap)} className="p-1.5 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 inline-flex" title="Hapus Pendaftaran">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -302,6 +356,48 @@ export const KemitraanAdminView: React.FC = () => {
 
       {activeTab === 'paket' && renderPaket()}
       {activeTab === 'pendaftaran' && renderPendaftaran()}
+
+      {/* Toast Notification */}
+      {notification && (
+        <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg border animate-in slide-in-from-bottom duration-300 ${
+          notification.type === 'success' 
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+            : 'bg-rose-50 border-rose-200 text-rose-800'
+        }`}>
+          {notification.type === 'success' ? (
+            <CheckCircle className="w-5 h-5 text-emerald-600" />
+          ) : (
+            <XCircle className="w-5 h-5 text-rose-600" />
+          )}
+          <span className="text-sm font-medium">{notification.message}</span>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-250">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl border border-gray-100 animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Hapus</h3>
+            <p className="text-sm text-gray-650 text-gray-600 mb-6 font-normal">
+              Apakah Anda yakin ingin menghapus {deleteConfirm.type === 'paket' ? 'paket kemitraan' : 'pendaftaran mitra'} <strong className="text-gray-900">"{deleteConfirm.name}"</strong>? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-55 hover:bg-gray-50 text-sm font-semibold transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={executeDelete}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-2"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

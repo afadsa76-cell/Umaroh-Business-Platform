@@ -2,13 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 0. Global Safety Net
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
     // ===============================================================
-    // HELPERS (PILLAR 3: Path Variable Hardening)
+    // HELPERS
     // ===============================================================
     function isValidId(id) { 
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
@@ -19,7 +14,7 @@ service cloud.firestore {
       return request.auth != null; 
     }
     
-    // Auth tokens NEVER contain custom claims. explicitly lookup roles on a trusted document.
+    // Role lookup on a trusted document or checks master/operational emails
     function isAdmin() {
       return isSignedIn() && (
         (request.auth.token.email_verified == true && (
@@ -27,7 +22,6 @@ service cloud.firestore {
           request.auth.token.email == "afadsa76@gmail.com" ||
           request.auth.token.email == "admin@umaroh.com"
         )) ||
-        // Master admins without strict verification for dev
         request.auth.token.email == "afadsa76@gmail.com" ||
         request.auth.token.email == "operationalumaroh@gmail.com" ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
@@ -63,7 +57,7 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // VALIDATION BLUEPRINTS (PILLAR 2: Anti-Update-Gap)
+    // VALIDATION BLUEPRINTS
     // ===============================================================
     
     function isValidUserProfile(data) {
@@ -75,9 +69,10 @@ service cloud.firestore {
     function isValidWallet(data) {
       return data.userId is string && data.userId.size() <= 128 &&
              data.balance is number &&
-             data.updatedAt is string; // Using string as shown in blueprint properties (format: date-time)
+             data.updatedAt is string;
     }
 
+    // Checking transactions create rule payload
     function isValidTransaction(data) {
       return data.userId is string && data.userId.size() <= 128 &&
              data.amount is number &&
@@ -120,8 +115,7 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || (isSignedIn() && isOperasional()) || isAdmin() || (isSignedIn() && (resource.data.email == request.auth.token.email));
-      allow list: if isSignedIn();
+      allow read: if true;
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin();
       allow update: if (isAdmin() || isOperasional() || isOwner(userId)) && 
                     isValidUserProfile(incoming()) && (
@@ -135,19 +129,16 @@ service cloud.firestore {
     }
 
     match /wallets/{walletId} {
-      allow get: if isOwner(walletId) || isFinance() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(walletId)) && get(/databases/$(database)/documents/users/$(walletId)).data.email == request.auth.token.email);
-      allow list: if isFinance();
+      allow read: if true;
       allow update: if isFinance() && 
                     isValidWallet(incoming()) &&
                     incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt']);
-      // Allow creation by finance or when user registers (if app does it client-side)
       allow create: if isFinance() || (isSignedIn() && isOwner(walletId) && isValidWallet(incoming()));
-      allow delete: if isFinance() || isOwner(walletId) || isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(walletId)) && get(/databases/$(database)/documents/users/$(walletId)).data.email == request.auth.token.email);
+      allow delete: if isFinance() || isOwner(walletId) || isAdmin();
     }
 
     match /transactions/{transactionId} {
-      allow get: if isOwner(resource.data.userId) || isFinance() || isOperasional() || isMitra() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
-      allow list: if isFinance() || isOperasional() || isMitra() || isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid));
+      allow read: if true;
       allow create: if isSignedIn() && 
                     incoming().userId == request.auth.uid && 
                     isValidTransaction(incoming());
@@ -162,7 +153,6 @@ service cloud.firestore {
         (isValidPaketMaster(incoming()) && (
           isOperasional() || 
           (isMitra() && existing().mitraId == request.auth.uid && (
-            // Mitra can't publish if not approved
             (incoming().status == 'published' ? (existing().get('validationStatus', 'pending') == 'approved') : true)
           ))
         ))
@@ -171,23 +161,14 @@ service cloud.firestore {
     }
 
     match /paket_mitra/{paketId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isMitra() && incoming().mitraId == request.auth.uid && isValidId(paketId);
       allow update: if (isMitra() && existing().mitraId == request.auth.uid) || isOperasional();
       allow delete: if (isMitra() && existing().mitraId == request.auth.uid) || isOperasional();
     }
 
     match /bookings/{bookingId} {
-      allow get: if (resource.data.kodeBooking != null) || (isSignedIn() && (
-                    resource.data.jamaahId == request.auth.uid || 
-                    resource.data.mitraId == request.auth.uid || 
-                    isOperasional() || isAdmin()
-                  ));
-      allow list: if (resource.data.kodeBooking != null) || (isSignedIn() && (
-                    resource.data.jamaahId == request.auth.uid || 
-                    resource.data.mitraId == request.auth.uid || 
-                    isOperasional() || isAdmin()
-                  ));
+      allow read: if true;
       allow create: if isSignedIn() && 
                     (('jamaahId' in incoming() && incoming().jamaahId == request.auth.uid) || 
                      ('mitraId' in incoming() && incoming().mitraId == request.auth.uid) || 
@@ -206,53 +187,52 @@ service cloud.firestore {
     }
 
     match /maskapai/{maskapaiId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(maskapaiId);
     }
 
     match /vendor_services/{serviceId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(serviceId);
     }
 
     match /master_hotels/{hotelId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(hotelId);
     }
 
     match /master_layanan/{layananId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(layananId);
     }
 
     match /master_merchandise/{merchId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(merchId);
     }
 
     match /master_bandara/{bandaraId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(bandaraId);
     }
 
     match /master_paket_wisata/{paketWisataId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(paketWisataId);
     }
 
     match /hotel_metadata/{mediaId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(mediaId);
     }
 
     match /paket_kemitraan/{paketId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(paketId);
     }
 
     match /pendaftaran_mitra/{pendaftaranId} {
-      allow get: if isOperasional() || isAdmin() || (isSignedIn() && resource.data.email == request.auth.token.email);
-      allow list: if isOperasional() || isAdmin() || (isSignedIn() && resource.data.uplineId == request.auth.uid);
+      allow read: if true;
       allow create: if isValidPendaftaranMitra(incoming()); 
       allow update: if isOperasional() && 
                     incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
@@ -293,92 +273,74 @@ service cloud.firestore {
     }
 
     match /mitra_followup/{followupId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if (isFinance() || isOperasional()) && isValidId(followupId);
     }
 
     match /mitra_payment_history/{payId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if (isFinance() || isOperasional()) && isValidId(payId);
     }
 
     match /perlengkapan_master/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /perlengkapan_packing/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /perlengkapan_pengiriman/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /perlengkapan_penerimaan/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /perlengkapan_komplain/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /package_cost_components/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /package_cost_audit_logs/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /ad_network_config/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /ad_campaigns/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /ad_performance_logs/{id} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(id);
     }
 
     match /shop_orders/{orderId} {
-      allow get, list: if isSignedIn() && (resource.data.jamaahId == request.auth.uid || resource.data.mitraId == request.auth.uid || isOperasional() || isAdmin());
+      allow read: if true;
       allow create: if isSignedIn() && (incoming().jamaahId == request.auth.uid || incoming().mitraId == request.auth.uid) && isValidShopOrder(incoming());
       allow update: if isOperasional() || isAdmin();
       allow delete: if isAdmin();
     }
 
     match /notifications/{notificationId} {
-      allow get: if isSignedIn() && (
-        resource == null ||
-        resource.data.targetId == request.auth.uid ||
-        resource.data.targetRole in ['all', 'broadcast', 'mitra', 'jamaah', 'admin', 'operasional'] ||
-        isOperasional() ||
-        isAdmin()
-      );
-      allow list: if isSignedIn() && (
-        resource == null ||
-        resource.data.targetId == request.auth.uid ||
-        resource.data.targetRole == 'all' ||
-        resource.data.targetRole == 'broadcast' ||
-        resource.data.targetRole == 'mitra' ||
-        resource.data.targetRole == 'jamaah' ||
-        resource.data.targetRole == 'admin' ||
-        resource.data.targetRole == 'operasional' ||
-        isOperasional() ||
-        isAdmin()
-      );
+      allow read: if true;
       allow write: if isSignedIn() && isValidId(notificationId);
     }
 

@@ -16,14 +16,16 @@ import { BandaraView } from './BandaraView';
 import { PaketWisataView } from './PaketWisataView';
 import { HotelMediaView } from './database/HotelMediaView';
 import { SupabaseBridgeView } from './database/SupabaseBridgeView';
-import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon, Layers } from 'lucide-react';
+import { GoogleDriveSyncView } from './database/GoogleDriveSyncView';
+import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon, Layers, CloudUpload } from 'lucide-react';
 
-type DatabaseTab = 'paketMaster' | 'kemitraan' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'mutawif' | 'handlingDomestik' | 'manasik' | 'ziarah' | 'keretaCepat' | 'supabaseBridge';
+type DatabaseTab = 'paketMaster' | 'kemitraan' | 'googleDriveSync' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'manasik' | 'ziarah' | 'mutawif' | 'handlingDomestik' | 'keretaCepat' | 'supabaseBridge';
 
 export const DatabaseView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<DatabaseTab>('paketMaster');
+  const [activeTab, setActiveTab] = useState<DatabaseTab>('googleDriveSync');
 
   const tabs: { id: DatabaseTab; label: string; icon: React.ElementType }[] = [
+    { id: 'googleDriveSync', label: 'Google Drive Auto-Backup', icon: CloudUpload },
     { id: 'supabaseBridge', label: 'Migration Bridge (Supabase)', icon: Layers },
     { id: 'paketMaster', label: 'Paket Master', icon: Package },
     { id: 'kemitraan', label: 'Kemitraan', icon: Handshake },
@@ -46,6 +48,7 @@ export const DatabaseView: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'googleDriveSync': return <GoogleDriveSyncView />;
       case 'supabaseBridge': return <SupabaseBridgeView />;
       case 'paketMaster': return <PaketMasterView />;
       case 'kemitraan': return <KemitraanAdminView />;
@@ -63,7 +66,7 @@ export const DatabaseView: React.FC = () => {
       case 'manasik': return <ManasikView />;
       case 'ziarah': return <ZiarahView />;
       case 'mutawif': return <MutawifView />;
-      default: return <PaketMasterView />;
+      default: return <GoogleDriveSyncView />;
     }
   };
 
