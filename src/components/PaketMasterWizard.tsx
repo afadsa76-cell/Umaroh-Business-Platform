@@ -552,6 +552,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [hotelSearchTerm, setHotelSearchTerm] = useState("");
   const [hotelFilterBintang, setHotelFilterBintang] = useState("ALL");
+  const [hotelSort, setHotelSort] = useState<"default" | "lowest" | "highest">("default");
   const [hotelPage, setHotelPage] = useState(1);
 
   const targetJamaah = Number(formData.targetJamaah) || 35;
@@ -903,7 +904,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
   useEffect(() => {
     setHotelPage(1);
-  }, [hotelSearchTerm, hotelFilterBintang, hotelStep]);
+  }, [hotelSearchTerm, hotelFilterBintang, hotelStep, hotelSort]);
 
   useEffect(() => {
     const unsubMaskapai = onSnapshot(
@@ -1385,7 +1386,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
     if (type === 'pdf') {
       const opt = {
-        margin: 10,
+        margin: 0,
         filename: `${filename}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { 
@@ -1406,6 +1407,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               el.style.width = '210mm';
               el.style.backgroundColor = '#ffffff';
               el.style.color = '#111827';
+
+              if (el.parentElement) {
+                el.parentElement.style.height = 'auto';
+                el.parentElement.style.overflow = 'visible';
+                el.parentElement.style.position = 'relative';
+                el.parentElement.style.visibility = 'visible';
+                el.parentElement.style.display = 'block';
+              }
             }
             
             // Sanitize colors for html2canvas compatibility
@@ -1415,7 +1424,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           }
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
       try {
@@ -3313,8 +3322,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <option value="4">Bintang 4</option>
                   <option value="3">Bintang 3</option>
                 </select>
-                <select className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none appearance-none">
-                  <option>Harga Terendah</option>
+                <select
+                  value={hotelSort}
+                  onChange={(e) => setHotelSort(e.target.value as "default" | "lowest" | "highest")}
+                  className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none appearance-none"
+                >
+                  <option value="default">Tanpa Filter (Default)</option>
+                  <option value="lowest">Harga Terendah</option>
+                  <option value="highest">Harga Tertinggi</option>
                 </select>
               </div>
             </div>
@@ -3336,9 +3351,42 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     String(h.bintang) === hotelFilterBintang,
                 );
 
+              const getPriceForWisataSort = (hotel: WizardHotel) => {
+                const dyn = getHotelPriceDynamic(hotel, formData.tglBerangkat, 'Quad');
+                if (dyn > 0) return dyn;
+                return hotel.priceQuad || 0;
+              };
+
+              // 1. Group/deduplicate by name, keeping only the highest price item for each unique name
+              const uniqueWisataMap = new window.Map<string, { hotel: WizardHotel, index: number }>();
+              filtered.forEach((h, index) => {
+                const normalizedName = (h.nama || h.name || "").trim().toLowerCase();
+                const price = getPriceForWisataSort(h);
+                
+                if (!uniqueWisataMap.has(normalizedName)) {
+                  uniqueWisataMap.set(normalizedName, { hotel: h, index });
+                } else {
+                  const existing = uniqueWisataMap.get(normalizedName)!;
+                  if (price > getPriceForWisataSort(existing.hotel)) {
+                    uniqueWisataMap.set(normalizedName, { hotel: h, index });
+                  }
+                }
+              });
+
+              // Convert the map back to array and restore relative original order
+              const sorted = (Array.from(uniqueWisataMap.values()) as Array<{ hotel: WizardHotel; index: number }>)
+                .sort((a, b) => a.index - b.index)
+                .map((item) => item.hotel);
+
+              if (hotelSort === "highest") {
+                sorted.sort((a, b) => getPriceForWisataSort(b) - getPriceForWisataSort(a));
+              } else if (hotelSort === "lowest") {
+                sorted.sort((a, b) => getPriceForWisataSort(a) - getPriceForWisataSort(b));
+              }
+
               const pageSize = 10;
-              const totalPages = Math.ceil(filtered.length / pageSize);
-              const paginated = filtered.slice(
+              const totalPages = Math.ceil(sorted.length / pageSize);
+              const paginated = sorted.slice(
                 (hotelPage - 1) * pageSize,
                 hotelPage * pageSize,
               );
@@ -3893,8 +3941,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <option value="4">Bintang 4</option>
                   <option value="3">Bintang 3</option>
                 </select>
-                <select className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none appearance-none">
-                  <option>Harga Terendah</option>
+                <select
+                  value={hotelSort}
+                  onChange={(e) => setHotelSort(e.target.value as "default" | "lowest" | "highest")}
+                  className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none appearance-none"
+                >
+                  <option value="default">Tanpa Filter (Default)</option>
+                  <option value="lowest">Harga Terendah</option>
+                  <option value="highest">Harga Tertinggi</option>
                 </select>
               </div>
             </div>
@@ -3923,9 +3977,42 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     String(h.bintang) === hotelFilterBintang,
                 );
 
+              const getPriceForSort = (hotel: WizardHotel) => {
+                const dyn = getHotelPriceDynamic(hotel, checkDate, 'Quad');
+                if (dyn > 0) return dyn;
+                return hotel.priceQuad || 0;
+              };
+
+              // 1. Group/deduplicate by name, keeping only the highest price item for each unique name
+              const uniqueMap = new window.Map<string, { hotel: WizardHotel, index: number }>();
+              filtered.forEach((h, index) => {
+                const normalizedName = (h.nama || h.name || "").trim().toLowerCase();
+                const price = getPriceForSort(h);
+                
+                if (!uniqueMap.has(normalizedName)) {
+                  uniqueMap.set(normalizedName, { hotel: h, index });
+                } else {
+                  const existing = uniqueMap.get(normalizedName)!;
+                  if (price > getPriceForSort(existing.hotel)) {
+                    uniqueMap.set(normalizedName, { hotel: h, index });
+                  }
+                }
+              });
+
+              // Convert the map back to array and restore relative original order
+              const sorted = (Array.from(uniqueMap.values()) as Array<{ hotel: WizardHotel; index: number }>)
+                .sort((a, b) => a.index - b.index)
+                .map((item) => item.hotel);
+
+              if (hotelSort === "highest") {
+                sorted.sort((a, b) => getPriceForSort(b) - getPriceForSort(a));
+              } else if (hotelSort === "lowest") {
+                sorted.sort((a, b) => getPriceForSort(a) - getPriceForSort(b));
+              }
+
               const pageSize = 10;
-              const totalPages = Math.ceil(filtered.length / pageSize);
-              const paginated = filtered.slice(
+              const totalPages = Math.ceil(sorted.length / pageSize);
+              const paginated = sorted.slice(
                 (hotelPage - 1) * pageSize,
                 hotelPage * pageSize,
               );
@@ -6005,7 +6092,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       )}
 
       {/* HIDDEN PDF TEMPLATE */}
-      <div id="pdf-export-content" className="fixed -left-[9999px] top-0 bg-white text-gray-900 p-10 w-[210mm] min-h-[297mm]">
+      <div style={{ height: 0, overflow: 'hidden', position: 'absolute', top: 0, left: 0, width: '100%', pointerEvents: 'none' }}>
+        <div id="pdf-export-content" className="bg-white text-gray-900 p-10 w-[210mm] min-h-[297mm]">
         {/* HEADER AREA */}
         <div className="flex items-center justify-center mb-10 pb-8 border-b-2 border-dashed border-gray-100">
            <div className="text-center">
@@ -6020,7 +6108,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         </div>
 
         {/* 1. INFORMASI DASAR PAKET (CARD) */}
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8">
+        <div style={{ pageBreakInside: 'avoid' }} className="bg-white rounded-3xl p-8 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8">
           <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-50">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
               <FileText className="w-5 h-5" />
@@ -6094,7 +6182,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
         {/* 2. FASILITAS (CARD) */}
         <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
+          <div style={{ pageBreakInside: 'avoid' }} className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
               <Check className="w-5 h-5" />
             </div>
@@ -6104,7 +6192,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+            <div style={{ pageBreakInside: 'avoid' }} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                    <Plane className="w-5 h-5" />
@@ -6117,7 +6205,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             </div>
 
             {pricingSummary.hMadinah && (
-              <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+              <div style={{ pageBreakInside: 'avoid' }} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
                      <Building2 className="w-5 h-5" />
@@ -6131,7 +6219,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             )}
 
             {pricingSummary.hMakkah && (
-              <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+              <div style={{ pageBreakInside: 'avoid' }} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
                      <Building2 className="w-5 h-5" />
@@ -6145,7 +6233,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             )}
 
             {pricingSummary.selectedLayananItems.map((item) => (
-              <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+              <div key={item.id} style={{ pageBreakInside: 'avoid' }} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
                      <Check className="w-5 h-5" />
@@ -6159,7 +6247,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
             {(pricingSummary.totalKomisiMitra > 0) && (
               <>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                <div style={{ pageBreakInside: 'avoid' }} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
                        <Banknote className="w-5 h-5" />
@@ -6170,7 +6258,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   </div>
                   <span className="font-black text-blue-700 italic">Rp {pricingSummary.totalKomisiMitra.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                <div style={{ pageBreakInside: 'avoid' }} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
                        <Banknote className="w-5 h-5" />
@@ -6185,7 +6273,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         </div>
 
         {/* 3. HARGA FINAL (DARK CARD) */}
-        <div className="bg-[#111424] rounded-[2.5rem] p-10 border border-gray-800 shadow-2xl relative overflow-hidden text-white">
+        <div style={{ pageBreakInside: 'avoid' }} className="bg-[#111424] rounded-[2.5rem] p-10 border border-gray-800 shadow-2xl relative overflow-hidden text-white">
            <Receipt className="absolute -right-12 -top-12 w-48 h-48 text-blue-900/10" />
            
            <div className="text-center mb-10 pb-8 border-b border-white/5 relative z-10">
@@ -6221,7 +6309,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         </div>
 
         {/* Footer info */}
-        <div className="mt-auto pt-20 grid grid-cols-2 gap-10">
+        <div style={{ pageBreakInside: 'avoid' }} className="mt-auto pt-20 grid grid-cols-2 gap-10">
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-20 underline decoration-gray-100 underline-offset-8">Diketahui Oleh,</p>
             <div className="w-40 h-[2px] bg-gray-900/10 mx-auto mb-2"></div>
@@ -6234,6 +6322,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

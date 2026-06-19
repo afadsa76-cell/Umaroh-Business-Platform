@@ -20,6 +20,15 @@ export const sanitizeForHtml2Canvas = (clonedDoc: Document, originalElement: HTM
     clonedTarget.style.margin = '0 auto';
     clonedTarget.style.left = '0';
     clonedTarget.style.top = '0';
+
+    // Ensure parent layout bounds don't truncate or clip our element in the clone
+    if (clonedTarget.parentElement) {
+      clonedTarget.parentElement.style.height = 'auto';
+      clonedTarget.parentElement.style.overflow = 'visible';
+      clonedTarget.parentElement.style.position = 'relative';
+      clonedTarget.parentElement.style.visibility = 'visible';
+      clonedTarget.parentElement.style.display = 'block';
+    }
   }
 
   // 2. Inject "Blueprint" styles that override colors but keep layout

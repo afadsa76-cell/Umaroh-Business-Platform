@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell, Check, Info, AlertTriangle, X } from 'lucide-react';
-import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc, signOut } from '../firebase';
+import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell, Check, Info, AlertTriangle, X, ShoppingCart, ShoppingBag, Star } from 'lucide-react';
+import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc, signOut, serverTimestamp } from '../firebase';
 import { AppNotification } from '../types';
 import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, sendNotification } from '../services/notificationService';
 import { PaketMitraView } from './PaketMitraView';
@@ -100,7 +100,37 @@ interface WalletTransaction {
   createdAt?: string;
 }
 
-type MitraTab = 'overview' | 'feed' | 'elearning' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet';
+interface MitraShopOrder {
+  id: string;
+  mitraId?: string | null;
+  mitraBrand?: string;
+  jamaahId?: string | null;
+  jamaahName?: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  totalCost: number;
+  paymentMethod: string;
+  shippingVendor: string;
+  shippingAddress: string;
+  status: string;
+  createdAt?: { seconds: number; nanoseconds: number } | string | null;
+  noResi?: string;
+}
+
+interface TokoProduct {
+  id: string;
+  name: string;
+  price: number;
+  weight: string;
+  rating: number;
+  sold: number;
+  stock: number;
+  image: string;
+  desc: string;
+}
+
+type MitraTab = 'overview' | 'feed' | 'elearning' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet' | 'toko';
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
@@ -139,6 +169,19 @@ export const DashboardMitra = () => {
   const [currentUserData, setCurrentUserData] = useState<CurrentUserData | null>(null);
   const [sentTransactions, setSentTransactions] = useState<WalletTransaction[]>([]);
   const [recvTransactions, setRecvTransactions] = useState<WalletTransaction[]>([]);
+  
+  // Toko Perlengkapan & Aksesoris States
+  const [mitraShopOrders, setMitraShopOrders] = useState<MitraShopOrder[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<TokoProduct | null>(null);
+  const [buyQty, setBuyQty] = useState<number>(1);
+  const [shippingAddress, setShippingAddress] = useState<string>('');
+  const [shippingVendor, setShippingVendor] = useState<string>('J&T Express');
+  const [paymentMethod, setPaymentMethod] = useState<string>('Transfer Bank BSI');
+  const [orderForJamaahId, setOrderForJamaahId] = useState<string>('mitra'); // 'mitra' or booking ID
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState<boolean>(false);
+  const [orderSuccess, setOrderSuccess] = useState<boolean>(false);
+  const [isTokoHistoryOpen, setIsTokoHistoryOpen] = useState<boolean>(false);
+  const [tokoSearch, setTokoSearch] = useState<string>('');
   
   // Real-time collections for dynamic dashboard
   const [bookings, setBookings] = useState<MitraBooking[]>([]);
@@ -227,6 +270,24 @@ export const DashboardMitra = () => {
       setNotifications(notifs);
     });
 
+    // Real-time shop_orders for current Mitra
+    const qShopOrders = query(collection(db, 'shop_orders'), where('mitraId', '==', userId));
+    const unsubscribeShopOrders = onSnapshot(qShopOrders, (snapshot) => {
+      const arr: MitraShopOrder[] = [];
+      snapshot.forEach(d => {
+        arr.push({ id: d.id, ...d.data() } as MitraShopOrder);
+      });
+      arr.sort((a, b) => {
+        const secondsA = a.createdAt && typeof a.createdAt === 'object' && 'seconds' in a.createdAt ? a.createdAt.seconds : 0;
+        const secondsB = b.createdAt && typeof b.createdAt === 'object' && 'seconds' in b.createdAt ? b.createdAt.seconds : 0;
+        
+        const timeA = secondsA ? secondsA * 1000 : new Date((a.createdAt as string) || 0).getTime();
+        const timeB = secondsB ? secondsB * 1000 : new Date((b.createdAt as string) || 0).getTime();
+        return timeB - timeA;
+      });
+      setMitraShopOrders(arr);
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeWallet();
@@ -239,6 +300,7 @@ export const DashboardMitra = () => {
       unsubscribeHotels();
       unsubscribeMaskapai();
       unsubscribeNotifications();
+      unsubscribeShopOrders();
     };
   }, [userId]);
 
@@ -458,6 +520,623 @@ export const DashboardMitra = () => {
     } finally {
       setIsSubmittingTransfer(false);
     }
+  };
+
+  const renderToko = () => {
+    const shopProductsList = [
+      {
+        id: "prod-1",
+        name: "Kain Ihram Katun Al-Mansuur Premium",
+        price: 185000,
+        weight: "1.2 kg",
+        rating: 4.9,
+        sold: 342,
+        stock: 45,
+        image: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=300&auto=format&fit=crop",
+        desc: "Kain Ihram katun premium dengan ketebalan terbaik, menyerap keringat optimal, tidak menerawang, sangat nyaman dipakai selama ritual ihram di cuaca panas jazirah Arab."
+      },
+      {
+        id: "prod-2",
+        name: "Mukena Silk Travel Ringan Anti-Kusut",
+        price: 290000,
+        weight: "0.4 kg",
+        rating: 4.8,
+        sold: 198,
+        stock: 32,
+        image: "https://images.unsplash.com/photo-1535252151047-35ad8970ac9e?q=80&w=300&auto=format&fit=crop",
+        desc: "Mukena berbahan sutra satin berkualitas tinggi, adem, sangat fungsional dilengkapi pouch mini fungsional agar mudah dimasukkan ke tas saku selama perjalanan ziarah."
+      },
+      {
+        id: "prod-3",
+        name: "Sabuk Tawaf Thawaf Anti-Copot & Kantong Serbaguna",
+        price: 75000,
+        weight: "0.2 kg",
+        rating: 4.7,
+        sold: 520,
+        stock: 80,
+        image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=300&auto=format&fit=crop",
+        desc: "Sabuk kain Ihram tanpa jahitan dengan sistem klip pengunci super kuat dilengkapi saku ritsleting aman tahan air untuk menaruh handphone, dompet kecil, dan paspor."
+      },
+      {
+        id: "prod-4",
+        name: "Sandal Masjid Ringan & Tas Kantong Serut",
+        price: 35000,
+        weight: "0.15 kg",
+        rating: 4.9,
+        sold: 812,
+        stock: 120,
+        image: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=300&auto=format&fit=crop",
+        desc: "Sandal masjid anti slip dari karet ultra ringan lengkap dengan pouch jaring agar sandal tidak hilang dan siap digantungkan di punggung tas saat sedang melakukan thawaf."
+      },
+      {
+        id: "prod-5",
+        name: "Buku Panduan Doa & Wirid Saku Lengkap",
+        price: 20000,
+        weight: "0.1 kg",
+        rating: 4.9,
+        sold: 1040,
+        stock: 300,
+        image: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?q=80&w=300&auto=format&fit=crop",
+        desc: "Buku doa saku eksklusif cetakan jernih materi thariqah lengkap doa-doa mutholaah Miqat, Thawaf, Putaran Sa'i lengkap teks arab, transliterasi latin dan arti bahasa indonesia."
+      },
+      {
+        id: "prod-6",
+        name: "Koper Hardcase Fiber TSA 24 Inch",
+        price: 420000,
+        weight: "3.5 kg",
+        rating: 4.8,
+        sold: 95,
+        stock: 15,
+        image: "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?q=80&w=300&auto=format&fit=crop",
+        desc: "Koper perlengkapan bagasi kuat anti retak fiber ABS bersertifikasi kunci TSA standar penerbangan internasional Arab Saudi. Roda ganda 360 derajat lincah."
+      }
+    ];
+
+    const filteredProducts = shopProductsList.filter(p => 
+      p.name.toLowerCase().includes(tokoSearch.toLowerCase()) || 
+      p.desc.toLowerCase().includes(tokoSearch.toLowerCase())
+    );
+
+    const handleCheckoutMitraOrder = async () => {
+      if (!selectedProduct || !userId) return;
+      
+      if (!shippingAddress.trim()) {
+        alert("Mohon masukkan alamat lengkap pengiriman.");
+        return;
+      }
+
+      setIsSubmittingOrder(true);
+      try {
+        const totalProductCost = selectedProduct.price * buyQty;
+        const totalCost = totalProductCost + 20000; // Flat Rp 20,000 shipping
+        
+        let targetJamaahName = "Stok Kemitraan (Mandiri)";
+        let targetJamaahIdRef = null;
+
+        if (orderForJamaahId !== 'mitra') {
+          const matchedBooking = bookings.find(b => b.id === orderForJamaahId);
+          if (matchedBooking) {
+            targetJamaahName = matchedBooking.namaJamaah || matchedBooking.nama || "Jamaah Saya";
+            targetJamaahIdRef = matchedBooking.id;
+          }
+        }
+
+        const payload = {
+          mitraId: userId,
+          mitraBrand: currentUserData?.brandName || 'Mitra Agen',
+          jamaahId: targetJamaahIdRef,
+          jamaahName: targetJamaahName,
+          productName: selectedProduct.name,
+          productPrice: selectedProduct.price,
+          quantity: buyQty,
+          totalCost: totalCost,
+          paymentMethod: paymentMethod,
+          shippingVendor: shippingVendor,
+          shippingAddress: shippingAddress.trim(),
+          status: 'Diproses Seller',
+          createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, 'shop_orders'), payload);
+        
+        await sendNotification({
+          targetId: userId,
+          targetRole: 'mitra',
+          title: 'Pesanan Perlengkapan Berhasil',
+          message: `Berhasil memesan ${buyQty}x ${selectedProduct.name} untuk ${targetJamaahName}. Pesanan diproses oleh admin Umaroh.`,
+          type: 'info'
+        });
+
+        setOrderSuccess(true);
+        setTimeout(() => {
+          setOrderSuccess(false);
+          setSelectedProduct(null);
+          setBuyQty(1);
+          setShippingAddress('');
+          setOrderForJamaahId('mitra');
+          setIsTokoHistoryOpen(true);
+        }, 2000);
+
+      } catch (err) {
+        console.error("Order error:", err);
+        alert("Gagal memproses pesanan. Silakan coba lagi.");
+      } finally {
+        setIsSubmittingOrder(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="bg-gradient-to-r from-emerald-800 to-teal-700 text-white rounded-3xl p-6 relative overflow-hidden shadow-md">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+          
+          <div className="max-w-3xl relative z-10">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/20 px-2.5 py-1 rounded text-emerald-100">UMAROH EXCLUSIVE SHOP</span>
+            <h2 className="text-xl md:text-2xl font-black mt-2 leading-tight">Belanja Aksesoris & Perlengkapan Umroh</h2>
+            <p className="text-xs text-emerald-100/90 mt-2 leading-relaxed">
+              Pesan dan salurkan perlengkapan umroh premium langsung dari gudang pusat Umaroh. Mitra dapat mendistribusikan langsung ke jemaah atau membeli untuk stok kantor dengan harga keagenan.
+            </p>
+            
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <button 
+                onClick={() => setIsTokoHistoryOpen(false)}
+                className={`text-xs font-black px-4.5 py-2.5 rounded-xl transition-all uppercase tracking-wider ${
+                  !isTokoHistoryOpen 
+                    ? 'bg-amber-400 text-emerald-950 shadow-md scale-102 font-extrabold' 
+                    : 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
+                }`}
+              >
+                Katalog Produk & Iklan
+              </button>
+              <button 
+                onClick={() => setIsTokoHistoryOpen(true)}
+                className={`text-xs font-black px-4.5 py-2.5 rounded-xl transition-all uppercase tracking-wider ${
+                  isTokoHistoryOpen 
+                    ? 'bg-amber-400 text-emerald-950 shadow-md scale-102 font-extrabold' 
+                    : 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
+                }`}
+              >
+                Riwayat Pesanan Saya ({mitraShopOrders.length})
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {!isTokoHistoryOpen ? (
+          <>
+            {/* SPONSOR & PROMO ADS */}
+            <div className="bg-white rounded-2xl border border-amber-100 p-5 shadow-sm relative overflow-hidden">
+              <div className="absolute top-2 right-2 bg-amber-500/10 text-amber-800 text-[8px] font-extrabold px-1.5 py-0.5 rounded border border-amber-300/20 uppercase tracking-widest font-mono">
+                SPONSOR AD
+              </div>
+              <div className="flex flex-col md:flex-row items-center gap-5">
+                <div className="w-full md:w-32 h-24 bg-amber-50 rounded-xl overflow-hidden flex-shrink-0 border border-amber-100 relative">
+                  <img src="https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200&auto=format&fit=crop" className="w-full h-full object-cover" alt="Ad ihram" referrerPolicy="no-referrer" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <p className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest">PROMO BUNDLING MINGGU INI</p>
+                  <h3 className="text-sm font-black text-gray-850 mt-1">Grosir Kain Ihram Katun Al-Mansuur Premium x Sabuk Thawaf</h3>
+                  <p className="text-xs text-gray-500 mt-1 leading-snug">
+                    Dapatkan harga hemat paket komplit (Kain Ihram + Sabuk Tawaf) hemat Rp 20.000 untuk pengiriman massal ke alamat Kantor Mitra. Stok terbatas sebelum keberangkatan musim Syawal!
+                  </p>
+                  <div className="mt-3 flex items-center justify-center md:justify-start gap-3">
+                    <span className="text-xs font-black text-amber-600">Diskon 10% Khusus Mitra</span>
+                    <button 
+                      onClick={() => {
+                        const ihram = shopProductsList.find(p => p.id === 'prod-1');
+                        if (ihram) {
+                          setSelectedProduct(ihram);
+                          setBuyQty(1);
+                        }
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all uppercase tracking-wider"
+                    >
+                      Buka Pesanan Ad
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-150/80 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="relative w-full sm:max-w-md">
+                <input 
+                  type="text"
+                  placeholder="Cari aksesoris (misal: Ihram, Mukena, Sabuk, Koper...)"
+                  value={tokoSearch}
+                  onChange={(e) => setTokoSearch(e.target.value)}
+                  className="w-full bg-gray-50/50 border border-gray-200 rounded-xl py-2 px-4 pr-10 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition-all font-medium"
+                />
+                <Search className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <p className="text-xs font-bold text-gray-450 uppercase tracking-wider">
+                Menampilkan {filteredProducts.length} Produk Aksesoris
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {filteredProducts.map((p) => (
+                <div 
+                  key={p.id}
+                  onClick={() => {
+                    setSelectedProduct(p);
+                    setBuyQty(1);
+                  }}
+                  className="bg-white rounded-2xl overflow-hidden border border-gray-150/60 shadow-sm hover:shadow-lg hover:border-emerald-200 transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+                >
+                  <div className="h-44 bg-gray-50 relative overflow-hidden border-b border-gray-150">
+                    <img 
+                      src={p.image} 
+                      alt={p.name} 
+                      className="w-full h-full object-cover group-hover:scale-104 transition-all duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-2 left-2 bg-emerald-600/95 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow">
+                      STOK READY
+                    </div>
+                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white text-[8px] font-mono font-bold px-1.5 py-0.5 rounded">
+                      {p.weight}
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 flex-grow flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-extrabold text-xs text-gray-800 line-clamp-2 leading-snug group-hover:text-emerald-700 transition-colors">
+                        {p.name}
+                      </h3>
+                      
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="text-[10px] font-bold text-gray-650">{p.rating}</span>
+                        <span className="text-gray-300 text-[10px]">|</span>
+                        <span className="text-[10px] text-gray-400">{p.sold} Terjual</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3.5 pt-2 border-t border-gray-50 flex items-end justify-between">
+                      <div>
+                        <p className="text-[10px] text-gray-400 leading-none">Harga Mitra</p>
+                        <p className="text-sm font-black text-amber-600 mt-1">Rp {p.price.toLocaleString('id-ID')}</p>
+                      </div>
+                      <span className="text-[9px] text-emerald-600 bg-emerald-50 font-bold px-2 py-0.5 rounded border border-emerald-100">
+                        Pesan
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-sm font-black text-gray-800 uppercase tracking-tight">Riwayat Pemesanan Perlengkapan Mitra</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Daftar pesanan Anda yang dikirim ke kantor atau langsung ke jamaah</p>
+              </div>
+              <button 
+                onClick={() => {}} 
+                className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-gray-650 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {mitraShopOrders.length === 0 ? (
+              <div className="py-12 text-center text-gray-400">
+                <ShoppingBag className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-xs font-bold uppercase tracking-wider">Belum Ada Riwayat Pesanan</p>
+                <p className="text-[11px] mt-1 max-w-sm mx-auto">Silakan lihat Katalog Produk untuk melakukan pemesanan aksesoris & perlengkapan bagi jamaah Anda.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-150 bg-gray-50/50">
+                      <th className="p-3 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Tanggal</th>
+                      <th className="p-3 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Produk</th>
+                      <th className="p-3 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Penerima / Jamaah</th>
+                      <th className="p-3 text-[10px] font-extrabold uppercase tracking-wider text-gray-505 text-center">Qty</th>
+                      <th className="p-3 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Total Biaya</th>
+                      <th className="p-3 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">Status</th>
+                      <th className="p-3 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">No. Resi Pengiriman</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {mitraShopOrders.map((ord) => {
+                      const secondsVal = ord.createdAt && typeof ord.createdAt === 'object' && 'seconds' in ord.createdAt 
+                        ? ord.createdAt.seconds 
+                        : 0;
+                      const dateObj = secondsVal 
+                        ? new Date(secondsVal * 1000) 
+                        : (typeof ord.createdAt === 'string' ? new Date(ord.createdAt) : new Date());
+                      
+                      const fmtDate = dateObj.toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      });
+
+                      return (
+                        <tr key={ord.id} className="hover:bg-gray-55/50 transition-colors text-xs">
+                          <td className="p-3 font-medium text-gray-500 whitespace-nowrap">{fmtDate}</td>
+                          <td className="p-3 font-extrabold text-gray-805">
+                            {ord.productName}
+                          </td>
+                          <td className="p-3">
+                            <div>
+                              <p className="font-extrabold text-gray-700 leading-snug">{ord.jamaahName}</p>
+                              <p className="text-[9px] text-gray-400 mt-0.5 line-clamp-1">{ord.shippingAddress}</p>
+                            </div>
+                          </td>
+                          <td className="p-3 font-extrabold text-gray-800 text-center">{ord.quantity}x</td>
+                          <td className="p-3 font-extrabold text-amber-600 whitespace-nowrap">
+                            Rp {(ord.totalCost || (ord.productPrice * ord.quantity + 20000)).toLocaleString('id-ID')}
+                          </td>
+                          <td className="p-3">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap border ${
+                              ord.status === 'Selesai' 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                : ord.status === 'Dikirim' 
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                  : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}>
+                              {ord.status || 'Diproses Seller'}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            {ord.noResi ? (
+                              <div className="flex items-center gap-1.5 font-mono text-[10px] text-gray-700 bg-gray-50 px-2 py-1 rounded border border-gray-200 max-w-fit">
+                                <span className="font-extrabold">{ord.noResi}</span>
+                                <button 
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(ord.noResi || '');
+                                    alert('Nomor Resi disalin: ' + ord.noResi);
+                                  }}
+                                  className="text-[9px] text-indigo-600 hover:text-indigo-850 font-bold active:scale-90 transition-all cursor-pointer"
+                                >
+                                  Copy
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-gray-400 italic">Menunggu Resi</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {selectedProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-in fade-in duration-350">
+            <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl border border-gray-150 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+              
+              <div className="p-5 border-b border-gray-150 flex items-center justify-between bg-emerald-50/15">
+                <div>
+                  <h3 className="text-base font-black uppercase tracking-tight text-emerald-950 italic">Form Pemesanan Aksesoris</h3>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-0.5">Dikirim langsung oleh Umaroh Admin</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedProduct(null)}
+                  className="p-1 hover:bg-gray-100 rounded-lg active:scale-90 transition-all text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto space-y-5 flex-1">
+                {orderSuccess ? (
+                  <div className="py-12 text-center animate-in zoom-in-95">
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-250 animate-bounce">
+                      <Check className="w-8 h-8" />
+                    </div>
+                    <h4 className="text-base font-black text-emerald-950">PESANAN BERHASIL KIRIM!</h4>
+                    <p className="text-xs text-gray-500 mt-2 max-w-sm mx-auto">Pesanan Anda telah didaftarkan ke sistem Umaroh ERP. Admin kami akan segera mengepak barang dan memposting no resi kurir.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex gap-4 p-4.5 bg-gray-50 rounded-2xl border border-gray-100">
+                      <img 
+                        src={selectedProduct.image} 
+                        alt={selectedProduct.name} 
+                        className="w-16 h-16 rounded-xl object-cover border border-gray-200"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div>
+                        <h4 className="text-xs font-extrabold text-gray-800 leading-snug">{selectedProduct.name}</h4>
+                        <p className="text-xs font-black text-amber-600 mt-1">Rp {selectedProduct.price.toLocaleString('id-ID')}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Berat: {selectedProduct.weight} | Stok: {selectedProduct.stock}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1.5">Tujuan Pembelian</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setOrderForJamaahId('mitra');
+                              setShippingAddress(currentUserData?.namaLengkap || 'Kantor Cabang Agen Mitra');
+                            }}
+                            className={`p-3 rounded-xl border text-left transition-all ${
+                              orderForJamaahId === 'mitra'
+                                ? 'border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600'
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            <p className="text-[10px] font-black text-emerald-950 uppercase tracking-wider">Stok Kemitraan</p>
+                            <p className="text-[9px] text-gray-400 mt-1 leading-normal">Kirim ke alamat Kantor Agen Mitra Anda</p>
+                          </button>
+                          
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              if (bookings.length > 0) {
+                                const b = bookings[0];
+                                setOrderForJamaahId(b.id);
+                                if (b.namaJamaah) {
+                                  setShippingAddress(`Alamat ${b.namaJamaah}\n(Isi Alamat Lengkap Pengiriman)`);
+                                }
+                              } else {
+                                setOrderForJamaahId('direct_input');
+                                setShippingAddress('');
+                              }
+                            }}
+                            className={`p-3 rounded-xl border text-left transition-all ${
+                              orderForJamaahId !== 'mitra'
+                                ? 'border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600'
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            <p className="text-[10px] font-black text-emerald-950 uppercase tracking-wider font-extrabold">Kirim ke Jamaah Saya</p>
+                            <p className="text-[9px] text-gray-400 mt-1 leading-normal">Kirim langsung ke alamat rumah jamaah Anda</p>
+                          </button>
+                        </div>
+                      </div>
+
+                      {orderForJamaahId !== 'mitra' && bookings.length > 0 && (
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Pilih Jamaah Saya</label>
+                          <select 
+                            value={orderForJamaahId}
+                            onChange={(e) => {
+                              setOrderForJamaahId(e.target.value);
+                              const b = bookings.find(item => item.id === e.target.value);
+                              if (b) {
+                                setShippingAddress(`Alamat ${b.namaJamaah || b.nama}\n(Tolong perbarui alamat lengkap disini Kakak)`);
+                              }
+                            }}
+                            className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          >
+                            <option value="direct_input">-- Ketik Alamat/Kirim Langsung --</option>
+                            {bookings.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.namaJamaah || b.nama} - (Paket ID: {b.paketId?.slice(0, 6) || 'Paket'})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span className="text-xs font-extrabold text-gray-700">Jumlah Pesanan (Qty)</span>
+                        <div className="flex items-center gap-2.5">
+                          <button 
+                            type="button"
+                            onClick={() => setBuyQty(Math.max(1, buyQty - 1))}
+                            className="w-7 h-7 bg-white rounded-lg border border-gray-250 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-50 active:scale-90 transition-all font-mono"
+                          >
+                            -
+                          </button>
+                          <span className="text-xs font-black min-w-4 text-center">{buyQty}</span>
+                          <button 
+                            type="button"
+                            onClick={() => setBuyQty(Math.min(selectedProduct.stock, buyQty + 1))}
+                            className="w-7 h-7 bg-white rounded-lg border border-gray-250 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-50 active:scale-90 transition-all font-mono"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Alamat Penerima Lengkap & No. HP</label>
+                        <textarea 
+                          rows={3}
+                          value={shippingAddress}
+                          onChange={(e) => setShippingAddress(e.target.value)}
+                          placeholder="Masukkan Alamat Lengkap Pengiriman (Jalan, No Rumah, RT/RW, Kelurahan, Kecamatan, Kabupaten/Kota, Kode Pos) & No. Handphone aktif."
+                          className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-500 transition-all"
+                        ></textarea>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Kurir Pengiriman</label>
+                          <select 
+                            value={shippingVendor}
+                            onChange={(e) => setShippingVendor(e.target.value)}
+                            className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          >
+                            <option value="J&T Express">J&T Express (Regular)</option>
+                            <option value="JNE Reguler">JNE Reguler</option>
+                            <option value="Sicepat Cargo">Sicepat Cargo</option>
+                            <option value="Umaroh Delivery Service">Umaroh Delivery Service</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Metode Pembayaran</label>
+                          <select 
+                            value={paymentMethod}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                            className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                          >
+                            <option value="Transfer Bank BSI">Transfer Bank BSI</option>
+                            <option value="Transfer Bank Mandiri">Transfer Bank Mandiri</option>
+                            <option value="Transfer Bank BCA">Transfer Bank BCA</option>
+                            <option value="Potong Saldo Komisi">Potong Saldo Komisi</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-xs text-amber-900 space-y-1.5">
+                        <div className="flex justify-between">
+                          <span>Subtotal Produk:</span>
+                          <span className="font-bold">Rp {(selectedProduct.price * buyQty).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] text-amber-800">
+                          <span>Ongkos Kirim Flat Jarak Jauh:</span>
+                          <span>Rp 20.000</span>
+                        </div>
+                        <div className="flex justify-between pt-1.5 border-t border-amber-250 font-black text-amber-950 text-sm">
+                          <span>Total Pembayaran:</span>
+                          <span>Rp {(selectedProduct.price * buyQty + 20000).toLocaleString('id-ID')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {!orderSuccess && (
+                <div className="p-4 border-t border-gray-150 flex gap-3 bg-gray-50">
+                  <button 
+                    type="button"
+                    onClick={() => setSelectedProduct(null)}
+                    className="w-1/2 bg-white hover:bg-gray-100 text-gray-600 border border-gray-300 text-xs font-bold py-2.5 rounded-xl active:scale-95 transition-all text-center"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleCheckoutMitraOrder}
+                    disabled={isSubmittingOrder}
+                    className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-2.5 rounded-xl active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow"
+                  >
+                    {isSubmittingOrder ? (
+                      <span className="w-4.5 h-4.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4" />
+                        Konfirmasi Order
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderWallet = () => {
@@ -1549,6 +2228,18 @@ export const DashboardMitra = () => {
           </button>
 
           <button
+            onClick={() => setActiveTab('toko')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+              activeTab === 'toko' 
+                ? 'bg-[#055734]/10 text-[#055734] shadow-sm ring-1 ring-[#055734]/20' 
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <ShoppingCart className={`w-4 h-4 ${activeTab === 'toko' ? 'text-[#055734]' : 'text-gray-500'}`} />
+            Belanja Perlengkapan
+          </button>
+
+          <button
             onClick={() => setActiveTab('profile')}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
               activeTab === 'profile' 
@@ -1809,6 +2500,7 @@ export const DashboardMitra = () => {
           {activeTab === 'analytics' && <AISmartAnalyticsView />}
           {activeTab === 'profile' && <ProfileView isDesktop={true} />}
           {activeTab === 'wallet' && renderWallet()}
+          {activeTab === 'toko' && renderToko()}
         </div>
       </div>
 
