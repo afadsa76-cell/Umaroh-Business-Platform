@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity, Archive } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity, Archive, FileText } from 'lucide-react';
 import { db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, handleFirestoreError, OperationType } from '../firebase';
 import { Maskapai } from '../data/maskapai';
 
@@ -43,6 +43,7 @@ export const PaketMasterView: React.FC = () => {
   
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [isReviewing, setIsReviewing] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<PaketMaster>>({});
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [notification, setNotification] = useState<{type: 'success'|'error', message: string} | null>(null);
@@ -116,6 +117,13 @@ export const PaketMasterView: React.FC = () => {
     setIsEditing(paket.id);
     setFormData(paket);
     setIsAdding(false);
+  };
+
+  const startReview = (paket: PaketMaster) => {
+    setIsReviewing(paket.id);
+    setFormData(paket);
+    setIsAdding(false);
+    setIsEditing(null);
   };
 
   const handleValidate = async (paket: PaketMaster) => {
@@ -252,19 +260,22 @@ export const PaketMasterView: React.FC = () => {
     }
   };
 
-  if (isAdding || isEditing) {
+  if (isAdding || isEditing || isReviewing) {
     return (
       <div className="p-0 sm:p-6 sm:max-w-7xl sm:mx-auto relative">
         <PaketMasterWizard 
-          initialData={isEditing ? formData : undefined}
+          initialData={isReviewing || isEditing ? formData : undefined}
+          initialStepName={isReviewing ? "REVIEW FASILITAS" : undefined}
           onCancel={() => {
             setIsAdding(false);
             setIsEditing(null);
+            setIsReviewing(null);
             setFormData({});
           }}
           onSuccess={() => {
             setIsAdding(false);
             setIsEditing(null);
+            setIsReviewing(null);
             setFormData({});
             showNotification('success', 'Paket berhasil disimpan!');
           }}
@@ -560,6 +571,15 @@ export const PaketMasterView: React.FC = () => {
                           <button onClick={() => startEdit(paket)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
                             <Edit2 className="w-4 h-4" />
                           </button>
+
+                          <button 
+                            onClick={() => startReview(paket)} 
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" 
+                            title="Unduh / Preview Deskripsi"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+
                           <button onClick={() => setDeleteConfirm(paket.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
                             <Trash2 className="w-4 h-4" />
                           </button>

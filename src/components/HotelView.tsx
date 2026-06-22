@@ -6,8 +6,7 @@ import { HotelDetailModal } from './HotelDetailModal';
 import { Building2, Download, RefreshCw } from 'lucide-react';
 import { isDateInRange, parseDate, parseDateRange } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
-import { db } from '../firebase';
-import { doc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
+import { db, doc, writeBatch, collection, getDocs, query, where } from '../firebase';
 
 const MASTER_PERIODS = [
   { name: 'LOW SEASON JUN–JUL 2026', start: '16 Jun 2026', end: '31 Jul 2026', hijri: '1 Muharram 1448 – 15 Safar 1448' },

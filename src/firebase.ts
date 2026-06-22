@@ -36,15 +36,53 @@ export const db = initializeFirestore(app, {
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Prevent background Firestore assertion errors from disrupting the UX or crashing the app
+// Prevent background Firestore assertion errors and reachability logs from disrupting the UX or appearing as red-critical errors
 if (typeof window !== 'undefined') {
+  const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+
+  console.error = function (...args) {
+    const msg = args.map(arg => String(arg)).join(' ');
+    const isConnIssue = msg.includes('@firebase/firestore') && (
+      msg.includes('Could not reach Cloud Firestore backend') || 
+      msg.includes('Backend didn\'t respond within 10 seconds') || 
+      msg.toLowerCase().includes('failed to connect')
+    );
+
+    if (isConnIssue) {
+      originalConsoleWarn.apply(console, ["[Firestore Offline Notice] Operating in offline-safe state. Caching/replication active.", ...args]);
+      (window as any).firestoreOfflineDetected = true;
+      window.dispatchEvent(new CustomEvent('firestore-offline-detected'));
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+
+  console.warn = function (...args) {
+    const msg = args.map(arg => String(arg)).join(' ');
+    const isConnIssue = msg.includes('@firebase/firestore') && (
+      msg.includes('Could not reach Cloud Firestore backend') || 
+      msg.includes('Backend didn\'t respond within 10 seconds') || 
+      msg.toLowerCase().includes('failed to connect')
+    );
+
+    if (isConnIssue) {
+      originalConsoleWarn.apply(console, ["[Firestore Offline Notice] Operating in offline-safe state. Caching/replication active.", ...args]);
+      (window as any).firestoreOfflineDetected = true;
+      window.dispatchEvent(new CustomEvent('firestore-offline-detected'));
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+
   window.addEventListener('error', (event) => {
     const isFirestoreAssertion = event.error && event.error.message && (
       event.error.message.includes('FIRESTORE') || 
-      event.error.message.includes('INTERNAL ASSERTION FAILED')
+      event.error.message.includes('INTERNAL ASSERTION FAILED') ||
+      event.error.message.includes('Could not reach Cloud Firestore backend')
     );
     if (isFirestoreAssertion) {
-      console.warn("Muted background Firestore assertion error:", event.error.message);
+      console.warn("Muted background Firestore error event:", event.error.message);
       event.preventDefault(); // Stop propagating to console/error boundaries
       event.stopPropagation();
     }
@@ -53,10 +91,11 @@ if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     const isFirestoreAssertion = event.reason && event.reason.message && (
       event.reason.message.includes('FIRESTORE') || 
-      event.reason.message.includes('INTERNAL ASSERTION FAILED')
+      event.reason.message.includes('INTERNAL ASSERTION FAILED') ||
+      event.reason.message.includes('Could not reach Cloud Firestore backend')
     );
     if (isFirestoreAssertion) {
-      console.warn("Muted background Firestore assertion promise rejection:", event.reason.message);
+      console.warn("Muted background Firestore promise rejection:", event.reason.message);
       event.preventDefault(); // Stop propagating to console/error boundaries
       event.stopPropagation();
     }

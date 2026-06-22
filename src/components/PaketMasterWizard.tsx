@@ -52,6 +52,7 @@ import {
   db,
   handleFirestoreError,
   OperationType,
+  auth,
 } from "../firebase";
 import { generateWALink, openWhatsApp } from "../utils/whatsapp";
 import { hotels } from "../data/hotels";
@@ -98,6 +99,7 @@ interface PaketMasterWizardProps {
   isMitraContext?: boolean;
   onCancel: () => void;
   onSuccess: () => void;
+  initialStepName?: string;
 }
 
 const getSteps = (kategori: string) => {
@@ -290,8 +292,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   isMitraContext = false,
   onCancel,
   onSuccess,
+  initialStepName,
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (initialStepName) {
+      const steps = getSteps(initialData?.kategori || "UMRAH REGULAR");
+      const idx = steps.indexOf(initialStepName);
+      if (idx !== -1) {
+        return idx + 1;
+      }
+    }
+    return 1;
+  });
   const [hotelStep, setHotelStep] = useState<"madinah" | "makkah">("madinah");
   const [maskapaiList, setMaskapaiList] = useState<Maskapai[]>([]);
   const [hotelsList, setHotelsList] = useState<WizardHotel[]>([]);
@@ -304,6 +316,39 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
   const pdfExportRef = React.useRef<HTMLDivElement>(null);
+  const [userName, setUserName] = useState("Paket Master System");
+
+  useEffect(() => {
+    let unsubUser: () => void = () => {};
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      if (currentUser.displayName) {
+        setUserName(currentUser.displayName);
+      } else if (currentUser.email) {
+        setUserName(currentUser.email.split("@")[0]);
+      }
+
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        unsubUser = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const fullName = data.namaLengkap || data.name || data.displayName;
+            if (fullName) {
+              setUserName(fullName);
+            }
+          }
+        }, (err) => {
+          console.warn("Could not fetch user name from firestore:", err);
+        });
+      } catch (err) {
+        console.warn("Error setting up user listener:", err);
+      }
+    }
+    return () => {
+      unsubUser();
+    };
+  }, []);
 
   const parseNum = (val: string | number | undefined, def = 0): number => {
     const n = Number(val);
@@ -866,7 +911,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     else if (roomType === 'Triple') divisor = 3;
     else if (roomType === 'Double') divisor = 2;
     
-    return ((priceEntry.price * kurs) / divisor) * margin;
+    const price = ((priceEntry.price * kurs) / divisor) * margin;
+    return price > 0 ? Math.ceil(price / 1000) * 1000 : 0;
   };
 
   const pricingSummary = useMemo(() => {
@@ -910,19 +956,23 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             formData.selectedLayanan?.includes(opt.id)
           );
           if (selectedOpt) {
+            const rawPrice = selectedOpt.price;
+            const roundedPrice = rawPrice > 0 ? Math.ceil(rawPrice / 1000) * 1000 : 0;
             acc.push({
               id: selectedOpt.id,
               nama: `${item.nama}: ${selectedOpt.label}`,
-              harga: selectedOpt.price,
+              harga: roundedPrice,
             });
           }
         }
       } else {
         if (formData.selectedLayanan?.includes(item.id)) {
+          const rawPrice = item.harga || 0;
+          const roundedPrice = rawPrice > 0 ? Math.ceil(rawPrice / 1000) * 1000 : 0;
           acc.push({
             id: item.id,
             nama: item.nama,
-            harga: item.harga || 0
+            harga: roundedPrice
           });
         }
       }
@@ -4196,6 +4246,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       const currentPriceTriple = getHotelPriceDynamic(hotel, checkDate, 'Triple');
                       const currentPriceDouble = getHotelPriceDynamic(hotel, checkDate, 'Double');
 
+                      const displayPriceQuad = currentPriceQuad > 0 ? Math.ceil(currentPriceQuad / 1000) * 1000 : 0;
+                      const displayPriceTriple = currentPriceTriple > 0 ? Math.ceil(currentPriceTriple / 1000) * 1000 : 0;
+                      const displayPriceDouble = currentPriceDouble > 0 ? Math.ceil(currentPriceDouble / 1000) * 1000 : 0;
+
                       let seasonText = null;
                       if (checkDate && hotel.seasons && hotel.seasons.length > 0) {
                         const dateObj = new Date(checkDate);
@@ -4299,10 +4353,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   </div>
                                   <div
                                     className="text-emerald-400 font-bold text-[8px] sm:text-xs whitespace-nowrap leading-tight"
-                                    title={`Rp ${Math.round(currentPriceQuad || 0).toLocaleString("id-ID")}`}
+                                    title={`Rp ${Math.round(displayPriceQuad || 0).toLocaleString("id-ID")}`}
                                   >
                                     <span className="text-[6px] md:text-[7px] mr-0.5 text-emerald-400/70">Rp</span>
-                                    {Math.round(currentPriceQuad || 0).toLocaleString(
+                                    {Math.round(displayPriceQuad || 0).toLocaleString(
                                       "id-ID",
                                     )}
                                   </div>
@@ -4316,10 +4370,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   </div>
                                   <div
                                     className="text-emerald-400 font-bold text-[8px] sm:text-xs whitespace-nowrap leading-tight"
-                                    title={`Rp ${Math.round(currentPriceTriple || 0).toLocaleString("id-ID")}`}
+                                    title={`Rp ${Math.round(displayPriceTriple || 0).toLocaleString("id-ID")}`}
                                   >
                                     <span className="text-[6px] md:text-[7px] mr-0.5 text-emerald-400/70">Rp</span>
-                                    {Math.round(currentPriceTriple || 0).toLocaleString(
+                                    {Math.round(displayPriceTriple || 0).toLocaleString(
                                       "id-ID",
                                     )}
                                   </div>
@@ -4333,10 +4387,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   </div>
                                   <div
                                     className="text-emerald-400 font-bold text-[8px] sm:text-xs whitespace-nowrap leading-tight"
-                                    title={`Rp ${Math.round(currentPriceDouble || 0).toLocaleString("id-ID")}`}
+                                    title={`Rp ${Math.round(displayPriceDouble || 0).toLocaleString("id-ID")}`}
                                   >
                                     <span className="text-[6px] md:text-[7px] mr-0.5 text-emerald-400/70">Rp</span>
-                                    {Math.round(currentPriceDouble || 0).toLocaleString(
+                                    {Math.round(displayPriceDouble || 0).toLocaleString(
                                       "id-ID",
                                     )}
                                   </div>
@@ -4531,18 +4585,19 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   item.nama.toLowerCase().includes("wisata/ziarah");
 
                 // For grouped items, if selected, find the active option's price. Otherwise show minimum price.
-                let displayPrice = item.harga || 0;
+                let rawPrice = item.harga || 0;
                 if (isGroup) {
                   const activeOpt = item.options?.find((opt) =>
                     formData.selectedLayanan?.includes(opt.id),
                   );
                   if (activeOpt) {
-                    displayPrice = activeOpt.price;
+                    rawPrice = activeOpt.price;
                   } else {
                     // Defaults to first price, or 0 if empty
-                    displayPrice = item.options?.[0]?.price || 0;
+                    rawPrice = item.options?.[0]?.price || 0;
                   }
                 }
+                const displayPrice = rawPrice > 0 ? Math.ceil(rawPrice / 1000) * 1000 : 0;
 
                 // Helper to map realistic UI icons based on the real service name from the db:
                 let Icon = ListCheck;
@@ -4818,26 +4873,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     </span>
                   </div>
                   <div className="text-white font-black text-xl md:text-4xl tabular-nums tracking-tight">
-                    {(() => {
-                      // Total sum correctly retrieves `.harga` from DB items explicitly matching ID
-                      const total = layananList.reduce((sum, item) => {
-                        let itemCost = 0;
-                        if (item.isGroup) {
-                          if (formData.selectedLayanan?.includes(item.id)) {
-                            const selectedOpt = item.options?.find((opt: LayananOption) =>
-                              formData.selectedLayanan?.includes(opt.id),
-                            );
-                            if (selectedOpt) itemCost = selectedOpt.price;
-                          }
-                        } else {
-                          if (formData.selectedLayanan?.includes(item.id)) {
-                            itemCost = Number(item.harga) || 0;
-                          }
-                        }
-                        return sum + itemCost;
-                      }, 0);
-                      return `Rp ${Math.round(total).toLocaleString("id-ID")}`;
-                    })()}
+                    Rp {pricingSummary.layananTotal.toLocaleString("id-ID")}
                   </div>
                 </div>
               </div>
@@ -6503,7 +6539,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           <div className="text-center">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-20 underline decoration-gray-100 underline-offset-8">Disusun Oleh,</p>
             <div className="w-40 h-[2px] bg-gray-900/10 mx-auto mb-2"></div>
-            <p className="text-[11px] font-black text-gray-900 uppercase">Paket Master System</p>
+            <p className="text-[11px] font-black text-gray-900 uppercase">{userName}</p>
           </div>
         </div>
       </div>
