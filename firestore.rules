@@ -110,6 +110,18 @@ service cloud.firestore {
              data.status is string;
     }
 
+    function isValidBlueprintNode(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.step is number &&
+             data.title is string && data.title.size() <= 255 &&
+             data.role in ['mitra_dev', 'operasional', 'finance', 'marketing', 'owner', 'jamaah', 'mitra', 'admin'] &&
+             data.roleLabel is string && data.roleLabel.size() <= 255 &&
+             data.status in ['active', 'warning', 'completed'] &&
+             data.get('description', '') is string && data.get('description', '').size() <= 1000 &&
+             data.get('inputFrom', '') is string && data.get('inputFrom', '').size() <= 1000 &&
+             data.get('outputTo', '') is string && data.get('outputTo', '').size() <= 1000;
+    }
+
     // ===============================================================
     // COLLECTIONS
     // ===============================================================
@@ -347,6 +359,11 @@ service cloud.firestore {
     match /tracker_bagasi/{baggageId} {
       allow read: if true;
       allow write: if isValidId(baggageId);
+    }
+
+    match /system_blueprint_nodes/{nodeId} {
+      allow read: if true;
+      allow write: if isValidId(nodeId) && isValidBlueprintNode(incoming());
     }
   }
 }

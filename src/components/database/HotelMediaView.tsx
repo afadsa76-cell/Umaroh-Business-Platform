@@ -4,6 +4,78 @@ import { hotels as staticHotelsList } from '../../data/hotels';
 import { Image, MapPin, Search, Edit3, X, Save, Upload, Sparkles, Loader2 } from 'lucide-react';
 import { safeJsonParse } from '../../utils/firebaseSync';
 
+export const getFallbackDistance = (id: string, name?: string): string => {
+  const norm = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (norm.includes("millenniumalaqeeq") || id === "millennium-al-aqeeq-diar") return "50m ke Pelataran";
+  if (norm.includes("harithia") || norm.includes("haritzia") || id === "al-harithia-diar") return "70m ke Pelataran";
+  if (norm.includes("daraleiman") || id === "dar-al-eiman-al-haram") return "100m ke Pelataran";
+  if (norm.includes("rotana")) return "50m ke Pelataran";
+  if (norm.includes("movenpick") || norm.includes("moevenpick")) return "50m ke Pelataran";
+  if (norm.includes("safwa")) return "50m ke Pelataran";
+  if (norm.includes("taibafront") || norm.includes("taibahfront")) return "120m ke Pelataran";
+  if (norm.includes("shazaregency")) return "100m ke Pelataran";
+  if (norm.includes("rove")) return "150m ke Pelataran";
+  if (norm.includes("makkah") && norm.includes("tower")) return "80m ke Pelataran";
+  if (norm.includes("azka")) return "150m ke Pelataran";
+  if (norm.includes("massa") || norm.includes("masah")) return "200m ke Pelataran";
+  if (norm.includes("meridien") || norm.includes("miredien")) return "250m ke Pelataran";
+  if (norm.includes("pullman") || norm.includes("zamzam")) return "50m ke Pelataran";
+  return "";
+};
+
+export const getNormalizedHotelNameKey = (name?: string): string => {
+  if (!name) return "";
+  let words = name.toLowerCase().split(/[\s.-]+/);
+  
+  // Filter out common stop-words
+  const stopwords = ["hotel", "the", "int", "group", "plaza", "by", "ex", "standard", "setaraf"];
+  words = words.filter(w => w && !stopwords.includes(w));
+  
+  // Remove common Arabic prefixes
+  words = words.map(w => {
+    if ((w.startsWith("al") || w.startsWith("el")) && w.length > 2) {
+      return w.slice(2);
+    }
+    return w;
+  });
+  
+  let clean = words.join("");
+  
+  // Generic phonetic/spelling collapse
+  clean = clean
+    .replace(/harithia/g, "haritsia")
+    .replace(/haritzia/g, "haritsia")
+    .replace(/harith/g, "harits")
+    .replace(/misk/g, "mysk")
+    .replace(/maqom/g, "maqam")
+    .replace(/madina/g, "madinah")
+    .replace(/taiba/g, "taibah")
+    .replace(/sofua/g, "sofwa")
+    .replace(/sofwah/g, "sofwa")
+    .replace(/movenpick/g, "moevenpick")
+    .replace(/e/g, "i")
+    .replace(/y/g, "i")
+    .replace(/u/g, "o")
+    .replace(/a/g, "o")
+    .replace(/h/g, "")
+    .replace(/z/g, "s")
+    .replace(/f/g, "p")
+    .replace(/v/g, "p")
+    .replace(/g/g, "k")
+    .replace(/j/g, "s")
+    .replace(/d/g, "t");
+    
+  return clean;
+};
+
+const getBetterErrorMessage = (error: unknown): string => {
+  const msg = error instanceof Error ? error.message : String(error || "");
+  if (msg.includes("429") || msg.toLowerCase().includes("quota") || msg.toLowerCase().includes("exhausted") || msg.toLowerCase().includes("billing")) {
+    return "Kuota Gemini API gratis atau berbayar Anda di Google AI Studio telah habis (RESOURCE_EXHAUSTED). Anda dapat menginput jarak and URL foto secara manual dengan mengklik tombol Edit (ikon Pensil) di sebelah kanan hotel, lalu menekan Simpan.";
+  }
+  return `Gagal memproses AI: ${msg}`;
+};
+
 interface HotelItem {
   id: string;
   name: string;
@@ -26,6 +98,7 @@ export const HotelMediaView: React.FC = () => {
   const [dbHotels, setDbHotels] = useState<HotelItem[]>([]);
   const [mediaList, setMediaList] = useState<HotelMedia[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editData, setEditData] = useState<{photoUrl: string, distance: string}>({ photoUrl: '', distance: '' });
@@ -62,8 +135,10 @@ export const HotelMediaView: React.FC = () => {
   }, []);
 
   const allHotelsRaw = [...staticHotels, ...dbHotels];
-  // Deduplicate by name
-  const allHotels = allHotelsRaw.filter((v, i, a) => a.findIndex(t => (t.name === v.name)) === i);
+  // Deduplicate by normalized name key so "Grand Plaza Badr Al Maqom" and "Grand Plaza Badr Maqom" are grouped
+  const allHotels = allHotelsRaw.filter((v, i, a) => 
+    a.findIndex(t => getNormalizedHotelNameKey(t.name) === getNormalizedHotelNameKey(v.name)) === i
+  );
 
   const filteredHotels = allHotels.filter(h => 
     h.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -71,7 +146,12 @@ export const HotelMediaView: React.FC = () => {
   );
 
   const getMediaForHotel = (hotelId: string, hotelName: string) => {
-    return mediaList.find(m => m.hotelId === hotelId || m.hotelName === hotelName);
+    const targetNorm = getNormalizedHotelNameKey(hotelName);
+    return mediaList.find(m => 
+      m.hotelId === hotelId || 
+      m.hotelName === hotelName || 
+      getNormalizedHotelNameKey(m.hotelName) === targetNorm
+    );
   };
 
   const handleEdit = (hotel: HotelItem) => {
@@ -210,9 +290,10 @@ export const HotelMediaView: React.FC = () => {
 
   const handleAiAssist = async (hotel: HotelItem) => {
     setIsGenerating(hotel.id);
+    setErrorMessage(null);
     try {
       const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
-Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
+Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
       const resData = await fetchWithRetryAndFallback(prompt, true);
       if (resData && resData.text) {
@@ -224,7 +305,8 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
       }
     } catch (error) {
       console.error("AI Error", error);
-      console.log("Gagal menggunakan AI.");
+      const betterMsg = getBetterErrorMessage(error);
+      setErrorMessage(betterMsg);
     } finally {
       setIsGenerating(null);
     }
@@ -246,11 +328,14 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, and berasal dari sum
     }
 
     try {
-      window.confirm(`Akan melengkapi data untuk ${hotelsToProcess.length} hotel yang belum lengkap. Proses ini akan memakan waktu. Lanjutkan?`);
+      if (!window.confirm(`Akan melengkapi data untuk ${hotelsToProcess.length} hotel yang belum lengkap. Proses ini akan memakan waktu. Lanjutkan?`)) {
+        return;
+      }
     } catch {
       // In some sandboxed iframes, window.confirm throws
     }
 
+    setErrorMessage(null);
     setIsGeneratingAll(true);
     setGenerationProgress({ current: 0, total: hotelsToProcess.length });
 
@@ -285,6 +370,9 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
         }
       } catch (error) {
         console.error("AI Error for", hotel.name, error);
+        const betterMsg = getBetterErrorMessage(error);
+        setErrorMessage(betterMsg);
+        break; // Stop bulk generation since quota is depleted!
       }
       processedCount++;
       setGenerationProgress({ current: processedCount, total: hotelsToProcess.length });
@@ -313,6 +401,16 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
           <p className="text-sm text-gray-500 mt-1">Kelola foto dan jarak hotel ke pelataran/masjid.</p>
         </div>
       </div>
+
+      {errorMessage && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-amber-800 text-sm">
+          <div className="font-semibold shrink-0">Peringatan:</div>
+          <div className="flex-1">{errorMessage}</div>
+          <button onClick={() => setErrorMessage(null)} className="text-amber-500 hover:text-amber-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-center justify-between">
         <div className="relative flex-1 max-w-md">
@@ -448,6 +546,11 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                           <div className="flex items-center gap-1.5 text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-lg inline-flex">
                             <MapPin className="w-4 h-4" />
                             {media.distance}
+                          </div>
+                        ) : getFallbackDistance(hotel.id, hotel.name) ? (
+                          <div className="flex items-center gap-1.5 text-indigo-700 font-medium bg-indigo-50 px-2.5 py-1 rounded-lg inline-flex">
+                            <MapPin className="w-4 h-4 text-indigo-500" />
+                            {getFallbackDistance(hotel.id, hotel.name)} (Default)
                           </div>
                         ) : (
                           <span className="text-gray-400 italic text-xs">Belum diatur</span>

@@ -19,7 +19,7 @@ export interface Maskapai {
   tipePenerbangan?: 'DIRECT' | 'TRANSIT';
 }
 
-export const maskapaiData: Maskapai[] = [
+const rawMaskapaiData: Maskapai[] = [
   {"id":"1","name":"AIR ASIA BPN-KUL-JED","hargaJual":17861850,"hargaBeli":17685000,"margin":176850,"persen":1,"programDays":9,"tanggalKeberangkatan":"2025-08-01","tanggalKepulangan":"2025-08-09","originCityName":"BALIKPAPAN (BPN)","destinationCityName":"JEDDAH (JED)","namaVendor":"PT Cemerlang","totalSeats":45,"availableSeats":12},
   {"id":"2","name":"AIR ASIA BPN-KUL-JED","hargaJual":15841850,"hargaBeli":15685000,"margin":156850,"persen":1,"programDays":9,"tanggalKeberangkatan":"2025-09-01","tanggalKepulangan":"2025-09-09","originCityName":"BALIKPAPAN (BPN)","destinationCityName":"JEDDAH (JED)","namaVendor":"PT Cemerlang","totalSeats":45,"availableSeats":45},
   {"id":"3","name":"AIR ASIA BPN-KUL-JED","hargaJual":15841850,"hargaBeli":15685000,"margin":156850,"persen":1,"programDays":9,"tanggalKeberangkatan":"2025-10-01","tanggalKepulangan":"2025-10-09","originCityName":"BALIKPAPAN (BPN)","destinationCityName":"JEDDAH (JED)","namaVendor":"PT Cemerlang","totalSeats":45,"availableSeats":30},
@@ -901,3 +901,12 @@ export const maskapaiData: Maskapai[] = [
   {"id":"nqh_new_1087","name":"LION AIR SUB-JED (JT106/101) (NQH WISATA)","hargaJual":19250000,"hargaBeli":19000000,"margin":250000,"persen":1.32,"programDays":16,"tanggalKeberangkatan":"2026-12-27","tanggalKepulangan":"2027-01-11","originCityName":"SURABAYA (SUB)","destinationCityName":"JEDDAH (JED)","namaVendor":"NQH WISATA","totalSeats":150,"availableSeats":90},
   {"id":"nqh_new_1088","name":"LION AIR SUB-JED (JT100/101) (NQH WISATA)","hargaJual":19250000,"hargaBeli":19000000,"margin":250000,"persen":1.32,"programDays":16,"tanggalKeberangkatan":"2026-12-31","tanggalKepulangan":"2027-01-15","originCityName":"SURABAYA (SUB)","destinationCityName":"JEDDAH (JED)","namaVendor":"NQH WISATA","totalSeats":150,"availableSeats":90}
 ];
+
+// Map rawMaskapaiData to guarantee unique IDs
+export const maskapaiData: Maskapai[] = rawMaskapaiData.map((item) => {
+  const vendorPrefix = item.namaVendor ? item.namaVendor.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : 'vendor';
+  return {
+    ...item,
+    id: `${vendorPrefix}-${item.id}`
+  };
+});

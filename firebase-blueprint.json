@@ -575,6 +575,23 @@
         "jamaahNama": { "type": "string" }
       },
       "required": ["id", "paketId", "bagType", "status", "registeredAt"]
+    },
+    "BlueprintNode": {
+      "title": "BlueprintNode",
+      "description": "Node arsitektur diagram sistem ERP Umaroh",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "step": { "type": "number" },
+        "title": { "type": "string" },
+        "role": { "type": "string", "enum": ["mitra_dev", "operasional", "finance", "marketing", "owner", "jamaah", "mitra", "admin"] },
+        "roleLabel": { "type": "string" },
+        "description": { "type": "string" },
+        "inputFrom": { "type": "string" },
+        "outputTo": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "warning", "completed"] }
+      },
+      "required": ["id", "step", "title", "role", "roleLabel", "status"]
     }
   },
   "firestore": {
@@ -612,6 +629,7 @@
     "/ad_network_config/{id}": { "schema": "AdNetworkConfig", "description": "Koleksi konfigurasi Google AdSense & setelan" },
     "/ad_campaigns/{id}": { "schema": "AdCampaign", "description": "Koleksi kampanye iklan promo internal & mitra" },
     "/ad_performance_logs/{id}": { "schema": "AdPerformanceLog", "description": "Koleksi log telemetri kinerja iklan (impressions & clicks)" },
-    "/tracker_bagasi/{baggageId}": { "schema": "BaggageTracker", "description": "Koleksi item bagasi rombongan berbasis barcode" }
+    "/tracker_bagasi/{baggageId}": { "schema": "BaggageTracker", "description": "Koleksi item bagasi rombongan berbasis barcode" },
+    "/system_blueprint_nodes/{nodeId}": { "schema": "BlueprintNode", "description": "Koleksi node bagan arsitektur sistem ERP Umaroh" }
   }
 }

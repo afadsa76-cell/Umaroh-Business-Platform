@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { hotels, Hotel, newRowaHotels, newAlharmainHotels } from '../data/hotels';
+import { hotels, Hotel, newRowaHotels, newAlharmainHotels, defaultHotels } from '../data/hotels';
 import { HotelCard } from './HotelCard';
 import { FilterBar } from './FilterBar';
 import { HotelDetailModal } from './HotelDetailModal';
@@ -19,7 +19,9 @@ const MASTER_PERIODS = [
   { name: 'LONG SEASON 2026', start: '01 Jun 2026', end: '15 Dec 2026', hijri: '15 Dzulhijjah 1447 – 5 Jumadil Akhir 1448' },
 ];
 
-const newMaysanHotels: Hotel[] = [
+const newMaysanHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Maysan Int. Group');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+const oldMaysanHotelsUnused: any[] = [
   {
     "id": "al-harithia-madinah",
     "name": "The Venue Al Harithia",
@@ -411,7 +413,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         const q = query(collection(db, 'master_hotels'), where('vendor', '==', 'Maysan Int. Group'));
         const snapshot = await getDocs(q);
         // If Firestore master_hotels has outdated count or missing hotels, auto-sync them seamlessly
-        if (snapshot.size < 11) {
+        if (snapshot.size < 25) {
           console.log('Automated silent sync: Maysan Int. Group hotels missing in Firestore database. Populating...');
           const batch = writeBatch(db);
           newMaysanHotels.forEach((hotel) => {

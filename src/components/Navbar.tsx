@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { Role } from './LoginView';
 
-export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative';
+export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative' | 'blueprint-flow';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing' | 'tour_leader' | 'petugas_bandara';
 
 interface NavbarProps {
@@ -61,6 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'profile', label: 'Profil Saya', icon: Users },
     { id: 'vendor-maskapai', label: 'Update Data Maskapai', icon: Plane },
     { id: 'vendor-hotel', label: 'Update Data Hotel', icon: Database },
+    { id: 'blueprint-flow', label: 'Flowchart & Blueprint ERP', icon: Layers },
   ];
 
   const CATEGORIES: {
@@ -79,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'operasional',
       label: '2. OPERASIONAL',
       icon: Sliders,
-      items: ['owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan']
+      items: ['owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan', 'blueprint-flow']
     },
     {
       id: 'finance',

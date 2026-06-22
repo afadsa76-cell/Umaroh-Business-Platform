@@ -70,6 +70,7 @@ import { sanitizeForHtml2Canvas, captureToDataUrl } from "../utils/exportUtils";
 import { Capacitor } from '@capacitor/core';
 import html2pdf from 'html2pdf.js';
 import { INDONESIA_EMBARKASI, KATEGORI_PROGRAM } from '../constants';
+import { getNormalizedHotelNameKey } from "./database/HotelMediaView";
 
 import {
   Maskapai,
@@ -81,6 +82,15 @@ import {
   WizardFormData,
   VisaData
 } from "../types";
+
+interface HotelMetaItem {
+  id: string;
+  hotelId: string;
+  hotelName: string;
+  city: string;
+  photoUrl: string;
+  distance: string;
+}
 
 interface PaketMasterWizardProps {
   initialData?: Partial<WizardFormData> & { id?: string; paketMasterId?: string; namaPaketMitra?: string };
@@ -255,6 +265,25 @@ const getHotelImage = (id: string, nama?: string, kota?: string) => {
   }
 };
 
+const getFallbackDistance = (id: string, name?: string): string => {
+  const norm = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (norm.includes("millenniumalaqeeq") || id === "millennium-al-aqeeq-diar") return "50m ke Pelataran";
+  if (norm.includes("harithia") || norm.includes("haritzia") || id === "al-harithia-diar") return "70m ke Pelataran";
+  if (norm.includes("daraleiman") || id === "dar-al-eiman-al-haram") return "100m ke Pelataran";
+  if (norm.includes("rotana")) return "50m ke Pelataran";
+  if (norm.includes("movenpick") || norm.includes("moevenpick")) return "50m ke Pelataran";
+  if (norm.includes("safwa")) return "50m ke Pelataran";
+  if (norm.includes("taibafront") || norm.includes("taibahfront")) return "120m ke Pelataran";
+  if (norm.includes("shazaregency")) return "100m ke Pelataran";
+  if (norm.includes("rove")) return "150m ke Pelataran";
+  if (norm.includes("makkah") && norm.includes("tower")) return "80m ke Pelataran";
+  if (norm.includes("azka")) return "150m ke Pelataran";
+  if (norm.includes("massa") || norm.includes("masah")) return "200m ke Pelataran";
+  if (norm.includes("meridien") || norm.includes("miredien")) return "250m ke Pelataran";
+  if (norm.includes("pullman") || norm.includes("zamzam")) return "50m ke Pelataran";
+  return "";
+};
+
 export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   initialData,
   isMitraContext = false,
@@ -265,6 +294,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [hotelStep, setHotelStep] = useState<"madinah" | "makkah">("madinah");
   const [maskapaiList, setMaskapaiList] = useState<Maskapai[]>([]);
   const [hotelsList, setHotelsList] = useState<WizardHotel[]>([]);
+  const [hotelMetas, setHotelMetas] = useState<HotelMetaItem[]>([]);
   const [dbLayananList, setDbLayananList] = useState<Layanan[]>([]);
   const [bandaraList, setBandaraList] = useState<Bandara[]>([]);
   const [paketWisataList, setPaketWisataList] = useState<PaketWisata[]>([]);
@@ -949,10 +979,21 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const unsubHotels = onSnapshot(
       collection(db, "master_hotels"),
       (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        } as WizardHotel));
+        const data = snapshot.docs.map((doc) => {
+          const d = doc.data();
+          const bintangVal = Number(d.bintang || d.stars || d.star || 5);
+          return {
+            id: doc.id,
+            nama: d.name || d.nama || "",
+            kota: (d.city || d.kota || "").toLowerCase(),
+            bintang: bintangVal,
+            priceQuad: Number(d.priceQuad || d.pricePerNight || 0),
+            priceTriple: Number(d.priceTriple || 0),
+            priceDouble: Number(d.priceDouble || 0),
+            vendor: d.vendor || "",
+            seasons: d.seasons || [],
+          } as WizardHotel;
+        });
         setHotelsList([...staticHotels, ...data]);
       },
       (error) =>
@@ -998,12 +1039,26 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         handleFirestoreError(error, OperationType.GET, "master_paket_wisata"),
     );
 
+    const unsubHotelMetas = onSnapshot(
+      collection(db, "hotel_metadata"),
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        } as HotelMetaItem));
+        setHotelMetas(data);
+      },
+      (error) =>
+        handleFirestoreError(error, OperationType.GET, "hotel_metadata"),
+    );
+
     return () => {
       unsubMaskapai();
       unsubHotels();
       unsubLayanan();
       unsubBandara();
       unsubPaketWisata();
+      unsubHotelMetas();
     };
   }, []);
 
@@ -3415,6 +3470,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 hotel.kota,
                               )}
                               alt={hotel.nama}
+                              referrerPolicy="no-referrer"
                               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                             />
 
@@ -4041,6 +4097,16 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         }
                       }
 
+                      const targetNorm = getNormalizedHotelNameKey(hotel.nama);
+                      const metaObj = hotelMetas?.find(
+                        (m) =>
+                          m.hotelId === hotel.id ||
+                          m.hotelName?.toLowerCase() === hotel.nama?.toLowerCase() ||
+                          getNormalizedHotelNameKey(m.hotelName) === targetNorm
+                      );
+                      const distanceStr = metaObj?.distance || getFallbackDistance(hotel.id, hotel.nama) || "";
+                      const hotelImgSrc = metaObj?.photoUrl || getHotelImage(hotel.id, hotel.nama, hotel.kota);
+
                       return (
                         <div
                           key={hotel.id}
@@ -4049,6 +4115,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                               setFormData({
                                 ...formData,
                                 hotelMadinahId: hotel.id,
+                                // Automatically copy over stars if needed or rely on dynamic lookup
                               });
                             else
                               setFormData({
@@ -4061,12 +4128,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           {/* FULL BACKGROUND IMAGE */}
                           <div className="absolute inset-0">
                             <img
-                              src={getHotelImage(
-                                hotel.id,
-                                hotel.nama,
-                                hotel.kota,
-                              )}
+                              src={hotelImgSrc}
                               alt={hotel.nama}
+                              referrerPolicy="no-referrer"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                             />
                             <div
@@ -4080,9 +4144,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 <h4 className="text-white font-black uppercase text-[10px] sm:text-xs md:text-sm mb-1 line-clamp-2 drop-shadow-md">
                                   {hotel.nama}
                                 </h4>
-                                <p className="text-[8px] sm:text-[10px] text-gray-300 font-bold uppercase tracking-wider drop-shadow">
-                                  {hotel.kota}
-                                </p>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-[8px] sm:text-[10px] text-gray-300 font-bold uppercase tracking-wider drop-shadow">
+                                    {hotel.kota}
+                                  </span>
+                                  {distanceStr && (
+                                    <span className="text-[8px] sm:text-[9px] text-emerald-400 font-black tracking-wide drop-shadow flex items-center gap-0.5 bg-emerald-950/40 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
+                                      <MapPin className="w-2.5 h-2.5 shrink-0 text-emerald-400" />
+                                      {distanceStr}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               <div
                                 className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-lg ${isSelected ? "bg-blue-500 text-white" : "bg-black/50 text-gray-400 border border-white/20"}`}
@@ -4099,6 +4171,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <Star className="w-2.5 h-2.5 fill-amber-400" />{" "}
                                   {hotel.bintang || 5}
                                 </span>
+                                {distanceStr && (
+                                  <span className="bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm shrink-0">
+                                    <MapPin className="w-2.5 h-2.5 shrink-0 text-sky-450" />
+                                    <span>{distanceStr}</span>
+                                  </span>
+                                )}
                                 {seasonText && (
                                   <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm min-w-0 flex-1">
                                     <Calendar className="w-2.5 h-2.5 shrink-0" />

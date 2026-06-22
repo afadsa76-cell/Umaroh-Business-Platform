@@ -10,6 +10,7 @@ import { generateMarketingCopy } from '../services/aiService';
 import { db, collection, onSnapshot, query, where, doc } from '../firebase';
 import { JamaahTracker } from './tracker/types';
 import { hotels as staticHotels } from '../data/hotels';
+import { getNormalizedHotelNameKey } from './database/HotelMediaView';
 
 interface PaketDetailViewProps {
   paket: PaketMaster;
@@ -208,12 +209,24 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   ];
 
   const hotelMakkahObj = getHotelObject(paket.hotelMakkahId);
-  const makkahMetaObj = hotelMetas?.find(m => m.hotelId === paket.hotelMakkahId || m.hotelName === (hotelMakkahObj?.name || (hotelMakkahObj as unknown as Record<string, unknown>)?.nama as string));
+  const makkahHotelName = hotelMakkahObj?.name || (hotelMakkahObj as unknown as Record<string, unknown>)?.nama as string || "";
+  const makkahTargetNorm = getNormalizedHotelNameKey(makkahHotelName);
+  const makkahMetaObj = hotelMetas?.find(m => 
+    m.hotelId === paket.hotelMakkahId || 
+    m.hotelName === makkahHotelName || 
+    (makkahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === makkahTargetNorm)
+  );
   const makkahDistanceStr = makkahMetaObj?.distance || 'Sangat dekat dengan pelataran';
   const makkahStarsNum = hotelMakkahObj?.stars || hotelMakkahObj?.bintang || 5;
 
   const hotelMadinahObj = getHotelObject(paket.hotelMadinahId);
-  const madinahMetaObj = hotelMetas?.find(m => m.hotelId === paket.hotelMadinahId || m.hotelName === (hotelMadinahObj?.name || (hotelMadinahObj as unknown as Record<string, unknown>)?.nama as string));
+  const madinahHotelName = hotelMadinahObj?.name || (hotelMadinahObj as unknown as Record<string, unknown>)?.nama as string || "";
+  const madinahTargetNorm = getNormalizedHotelNameKey(madinahHotelName);
+  const madinahMetaObj = hotelMetas?.find(m => 
+    m.hotelId === paket.hotelMadinahId || 
+    m.hotelName === madinahHotelName || 
+    (madinahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === madinahTargetNorm)
+  );
   const madinahDistanceStr = madinahMetaObj?.distance || 'Sangat dekat dengan pelataran';
   const madinahStarsNum = hotelMadinahObj?.stars || hotelMadinahObj?.bintang || 5;
 

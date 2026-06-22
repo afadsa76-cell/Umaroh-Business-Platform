@@ -32,6 +32,7 @@ import { ProfileView } from './components/ProfileView';
 import { AdManagementView } from './components/AdManagementView';
 import { OwnerKpiDashboard } from './components/OwnerKpiDashboard';
 import { MaskapaiView } from './components/MaskapaiView';
+import { BlueprintFlowView } from './components/BlueprintFlowView';
 import { HotelView } from './components/HotelView';
 import { DashboardVendor } from './components/DashboardVendor';
 import { logoBase64 } from './utils/logoBase64';
@@ -471,6 +472,8 @@ function App() {
         return <CumulativeFinanceReport />;
       case 'ad-management':
         return <AdManagementView />;
+      case 'blueprint-flow':
+        return <BlueprintFlowView />;
       case 'profile':
         return <ProfileView />;
       default:
