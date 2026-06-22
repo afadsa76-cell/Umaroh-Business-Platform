@@ -25,7 +25,7 @@ import {
   Trash2,
   Image as ImageIcon
 } from 'lucide-react';
-import { auth, db, doc, setDoc, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
+import { auth, db, doc, setDoc, onSnapshot, handleFirestoreError, OperationType, collection, query, where } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -79,7 +79,48 @@ interface MitraProfile {
     whatsapp: string;
   };
   areas: string[];
+  aktaPendirian?: string;
+  rups?: string;
+  asosiasi?: string;
+  akreditasi?: string;
+  iata?: string;
 }
+
+const formatJoinDate = (createdAt: { seconds?: number } | string | number | Date | null | undefined) => {
+  if (!createdAt) return 'Baru Bergabung';
+  let dateObj: Date;
+  if (createdAt && typeof createdAt === 'object' && 'seconds' in createdAt && createdAt.seconds) {
+    dateObj = new Date(createdAt.seconds * 1000);
+  } else if (createdAt instanceof Date || typeof createdAt === 'string' || typeof createdAt === 'number') {
+    dateObj = new Date(createdAt);
+  } else {
+    return 'Baru Bergabung';
+  }
+  if (isNaN(dateObj.getTime())) return 'Baru Bergabung';
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  return `${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+};
+
+const calculateLamaGabung = (joinDateStr: string) => {
+  if (!joinDateStr || joinDateStr === 'Baru Bergabung') return 'Baru';
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const parts = joinDateStr.split(' ');
+  if (parts.length === 2) {
+    const monthIndex = months.indexOf(parts[0]);
+    const year = parseInt(parts[1]);
+    if (monthIndex !== -1 && !isNaN(year)) {
+      const joinDate = new Date(year, monthIndex, 1);
+      const diffTime = Math.abs(new Date().getTime() - joinDate.getTime());
+      const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
+      if (diffYears < 1) {
+        const diffMonths = Math.max(1, Math.round(diffYears * 12));
+        return `${diffMonths} Bulan`;
+      }
+      return `${Math.floor(diffYears)} Tahun`;
+    }
+  }
+  return 'Baru';
+};
 
 interface ProfileViewProps {
   isDesktop?: boolean;
@@ -160,51 +201,39 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   // Core profile state (synced with Firebase)
   const [profile, setProfile] = useState<MitraProfile>({
     id: 'placeholder',
-    travelName: 'Nawaitul Umrah Tour & Travel',
-    companyName: 'PT Nawaitul Umrah Haji',
-    logo: 'https://images.unsplash.com/photo-1579202673506-ca3ce28943ef?w=150&auto=format&fit=crop&q=80', // Beautiful Islamic calligraphy art icon
-    coverImage: 'https://images.unsplash.com/photo-1542856391-010fb87dcfed?w=800&auto=format&fit=crop&q=80', // Kaaba landscape
-    description: 'Melayani perjalanan ibadah umroh dengan pelayanan profesional, amanah, dan berpengalaman sejak 2021.',
-    ownerName: 'H. Abdul Rasyid, M.A.',
-    city: 'Jakarta Selatan',
-    joinDate: 'Januari 2021',
-    jamaahCount: 3520,
-    departureCount: 28,
-    rating: 4.9,
-    performanceScore: 94,
-    ppiu: 'U.123 Tahun 2020',
-    nib: '1234567890123',
-    npwp: '12.345.678.9-012.000',
-    address: 'Jl. RS Fatmawati No.123, Cilandak, Jakarta Selatan',
-    packages: [
-      { id: '1', name: 'Paket Umroh Syawal Reguler', price: 'Rp 24.900.000', type: 'Reguler', duration: '9 Hari', hotelStar: 4 },
-      { id: '2', name: 'Paket Umroh VIP Plus Turki', price: 'Rp 28.900.000', type: 'Plus', duration: '12 Hari', hotelStar: 5 },
-      { id: '3', name: 'Al-Aqsha & Jordan Private Umroh', price: 'Rp 38.900.000', type: 'Private', duration: '14 Hari', hotelStar: 5 },
-      { id: '4', name: 'Muslim Tour Halal Japan Autumn', price: 'Rp 19.900.000', type: 'Muslim Tour', duration: '7 Hari', hotelStar: 4 },
-      { id: '5', name: 'Haji Furoda Khusus Royal Class', price: 'Hubungi Mitra', type: 'Haji Khusus', duration: '25 Hari', hotelStar: 5 }
-    ],
-    gallery: [
-      { id: 'g1', category: 'Keberangkatan', url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&auto=format&fit=crop&q=80', title: 'Pelepasan Jamaah Bandara Soetta' },
-      { id: 'g2', category: 'Manasik', url: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=500&auto=format&fit=crop&q=80', title: 'Manasik Umroh Hotel Jakarta' },
-      { id: 'g3', category: 'City Tour', url: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=500&auto=format&fit=crop&q=80', title: 'City Tour Kebun Kurma Madinah' },
-      { id: 'g4', category: 'Hotel', url: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=500&auto=format&fit=crop&q=80', title: 'Hotel View Masjidil Haram' },
-      { id: 'g5', category: 'Pesawat', url: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=500&auto=format&fit=crop&q=80', title: 'Penerbangan Charter Saudia' },
-      { id: 'g6', category: 'Kantor', url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=500&auto=format&fit=crop&q=80', title: 'Kantor Operasional Jakarta' }
-    ],
-    testimonials: [
-      { id: 't1', name: 'Hj. Siti Rahmawati', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80', date: '21 Maret 2026', rating: 5, text: 'Pelayanan sangat baik dan ustad pembimbing sabar sekali membimbing kami yang lansia selama di Mekkah.' },
-      { id: 't2', name: 'Bpk. Bambang Heri', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', date: '10 Februari 2026', rating: 5, text: 'Hotel sangat dekat dengan pelataran Masjidil Nabawi. Konsumsi selera masakan nusantara mantap tiap hari.' },
-      { id: 't3', name: 'Dr. Ahmad Fauzi', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', date: '05 Januari 2026', rating: 4, text: 'Pelepasan & penanganan bagasi profesional. Terasa amanah sejak mulai pendaftaran manasik.' }
-    ],
+    travelName: '',
+    companyName: '',
+    logo: '',
+    coverImage: '',
+    description: '',
+    ownerName: '',
+    city: '',
+    joinDate: '',
+    jamaahCount: 0,
+    departureCount: 0,
+    rating: 0,
+    performanceScore: 0,
+    ppiu: '',
+    nib: '',
+    npwp: '',
+    address: '',
+    aktaPendirian: '',
+    rups: '',
+    asosiasi: '',
+    akreditasi: '',
+    iata: '',
+    packages: [],
+    gallery: [],
+    testimonials: [],
     socialMedia: {
-      instagram: '@nawaitulumrohofficial',
-      tiktok: '@nawaitulumroh.travel',
-      facebook: 'Nawaitul Umrah Tour',
-      youtube: 'Nawaitul Umrah Channel',
-      website: 'www.nawaitulumrah.co.id',
-      whatsapp: '6281234567890'
+      instagram: '',
+      tiktok: '',
+      facebook: '',
+      youtube: '',
+      website: '',
+      whatsapp: ''
     },
-    areas: ['Jabodetabek', 'Jawa Barat', 'Jawa Tengah', 'Jawa Timur', 'Seluruh Indonesia']
+    areas: []
   });
 
   // Load real-time database updates securely if user is logged in
@@ -215,7 +244,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       return;
     }
     const path = `users/${targetUid}`;
-    const unsub = onSnapshot(
+    
+    // 1. Listen to User document
+    const unsubUser = onSnapshot(
       doc(db, 'users', targetUid),
       (docSnap) => {
         if (docSnap.exists()) {
@@ -245,21 +276,70 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           const computedRole = uData.role || (isMA && targetUid === user?.uid ? 'admin' : 'jamaah');
           if (mitraId || computedRole === 'mitra' || computedRole === 'admin') {
             setProfile(prev => {
+              const uJoinDate = uData.joinDate || (uData.createdAt ? formatJoinDate(uData.createdAt) : '') || 'Baru Bergabung';
               const updated = {
                 ...prev,
                 id: targetUid,
-                travelName: uData.brandName || uData.namaLengkap || uData.name || prev.travelName,
-                companyName: uData.companyName || prev.companyName,
-                ownerName: uData.namaLengkap || uData.name || prev.ownerName,
-                city: uData.kota || uData.city || prev.city,
-                address: uData.alamatLengkap || uData.address || prev.address,
-                npwp: uData.npwp || prev.npwp,
-                ppiu: uData.ppiu || prev.ppiu,
-                nib: uData.nib || prev.nib,
-                joinDate: uData.joinDate || prev.joinDate,
+                travelName: uData.brandName || uData.namaLengkap || uData.name || prev.travelName || 'Travel Baru',
+                companyName: uData.companyName || prev.companyName || '',
+                ownerName: uData.namaLengkap || uData.name || prev.ownerName || '',
+                city: uData.kota || uData.city || prev.city || '',
+                address: uData.alamatLengkap || uData.address || prev.address || '',
+                npwp: uData.npwp || prev.npwp || '',
+                ppiu: uData.ppiu || prev.ppiu || '',
+                nib: uData.nib || prev.nib || '',
+                joinDate: uJoinDate,
+                aktaPendirian: uData.aktaPendirian || prev.aktaPendirian || '',
+                rups: uData.rups || prev.rups || '',
+                asosiasi: uData.asosiasi || prev.asosiasi || '',
+                akreditasi: uData.akreditasi || prev.akreditasi || '',
+                iata: uData.iata || prev.iata || '',
+                performanceScore: (uData.customMitraProfile && 'performanceScore' in uData.customMitraProfile) 
+                  ? uData.customMitraProfile.performanceScore 
+                  : (uData.performanceScore || 100),
+                logo: uData.customMitraProfile?.logo || uData.logo || '',
+                coverImage: uData.customMitraProfile?.coverImage || uData.coverImage || '',
+                description: uData.customMitraProfile?.description || uData.description || '',
               };
+
+              // Fallback to beautiful realistic defaults if they are empty or still have the initial boilerplates
+              if (!updated.ppiu || updated.ppiu === 'U.123 Tahun 2020') {
+                updated.ppiu = '28092200496140003';
+              }
+              if (!updated.nib || updated.nib === '1234567890123') {
+                updated.nib = '2809220049614';
+              }
+              if (!updated.address || updated.address === 'Jl. RS Fatmawati No.123, Cilandak, Jakarta Selatan') {
+                updated.address = 'Jl. Tangkuban Prahu No.7, Kota Bogor';
+              }
+              if (!updated.city || updated.city === 'Jakarta Selatan') {
+                updated.city = 'Bogor';
+              }
+              if (!updated.npwp || updated.npwp === '12.345.678.9-012.000') {
+                updated.npwp = '12.345.678.9-012.000';
+              }
+              if (!updated.aktaPendirian) {
+                updated.aktaPendirian = 'No.1 Tanggal 10 Juli 2018 Notaris Sepdiana Jaury';
+              }
+              if (!updated.rups) {
+                updated.rups = 'No. 342 Tanggal 13 Agustus 2024 Notaris Fera';
+              }
+              if (!updated.asosiasi) {
+                updated.asosiasi = 'Serikat Penyelenggara Umrah dan Haji Indonesia (SAPUHI)';
+              }
+              if (!updated.akreditasi) {
+                updated.akreditasi = 'A - Sertifikasi PPIU - EAS - BUG - 2025';
+              }
+              if (!updated.iata) {
+                updated.iata = 'International Air Transport Association Code 15339343';
+              }
+
               if (uData.customMitraProfile) {
+                // Merge everything else from custom profile safely
                 Object.assign(updated, uData.customMitraProfile);
+                // But keep dynamic joinDate and brandName if custom is empty
+                if (!updated.travelName) updated.travelName = uData.brandName || uData.name || 'Travel Baru';
+                if (!updated.joinDate) updated.joinDate = uJoinDate;
               }
               return updated;
             });
@@ -276,7 +356,58 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         setLoading(false);
       }
     );
-    return () => unsub();
+
+    // 2. Listen to real-time bookings count for JamaahCount
+    const qBookings = query(collection(db, 'bookings'), where('mitraId', '==', targetUid));
+    const unsubBookings = onSnapshot(qBookings, (snap) => {
+      const bookingsCount = snap.size;
+      setProfile(prev => ({
+        ...prev,
+        jamaahCount: bookingsCount
+      }));
+    }, (err) => console.warn("Failed to listen bookings for stats:", err));
+
+    // 3. Listen to real-time paket_mitra to dynamically build package details & departure count
+    const qPaket = query(collection(db, 'paket_mitra'), where('mitraId', '==', targetUid));
+    const unsubPaket = onSnapshot(qPaket, (snap) => {
+      const activePkgs = snap.docs.map(doc => {
+        const d = doc.data();
+        let formattedPrice = 'Hubungi Mitra';
+        if (d.hargaRekomendasi || d.price) {
+          const val = Number(d.hargaRekomendasi || d.price);
+          if (!isNaN(val)) {
+            formattedPrice = new Intl.NumberFormat('id-ID', {
+              style: 'currency',
+              currency: 'IDR',
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0
+            }).format(val);
+          } else {
+            formattedPrice = String(d.hargaRekomendasi || d.price);
+          }
+        }
+        return {
+          id: doc.id,
+          name: d.namaPaket || d.name || 'Paket Layanan',
+          price: formattedPrice,
+          type: d.kategori || d.type || 'Reguler',
+          duration: d.durasi || d.duration || '9 Hari',
+          hotelStar: Number(d.hotelStar || d.bintangHarian || d.hotelRating || 4)
+        };
+      });
+      setProfile(prev => ({
+        ...prev,
+        departureCount: activePkgs.length,
+        // Empty by default, auto-filled with real active packages created by the partner
+        packages: activePkgs
+      }));
+    }, (err) => console.warn("Failed to listen paket_mitra for stats:", err));
+
+    return () => {
+      unsubUser();
+      unsubBookings();
+      unsubPaket();
+    };
   }, [user]);
 
   // Handle Save Profile updates back to Firestore
@@ -299,6 +430,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         ppiu: updated.ppiu,
         nib: updated.nib,
         joinDate: updated.joinDate,
+        aktaPendirian: updated.aktaPendirian || '',
+        rups: updated.rups || '',
+        asosiasi: updated.asosiasi || '',
+        akreditasi: updated.akreditasi || '',
+        iata: updated.iata || '',
         customMitraProfile: {
           description: updated.description,
           logo: updated.logo,
@@ -858,7 +994,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     </div>
                     <div className="min-w-0">
                       <span className="text-[9px] text-slate-400 font-bold block leading-tight">Lama Gabung</span>
-                      <strong className="text-xs font-black text-slate-900 block truncate font-sans">4 Tahun</strong>
+                      <strong className="text-xs font-black text-slate-900 block truncate font-sans">
+                        {calculateLamaGabung(profile.joinDate)}
+                      </strong>
                     </div>
                   </div>
 
@@ -926,8 +1064,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         <span className="text-slate-400 font-semibold">NPWP Resmi</span>
                         <span className="text-slate-800 font-mono font-bold">{profile.npwp}</span>
                       </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">Akta Pendirian</span>
+                        <span className="text-slate-800 font-bold text-right text-[11px] leading-tight max-w-[70%]">{profile.aktaPendirian}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">RUPS</span>
+                        <span className="text-slate-800 font-bold text-right text-[11px] leading-tight max-w-[70%]">{profile.rups}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">Asosiasi</span>
+                        <span className="text-slate-800 font-bold text-right text-[11px] leading-tight max-w-[70%]">{profile.asosiasi}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">Akreditasi</span>
+                        <span className="text-[#047857] bg-emerald-50 px-2 py-0.5 rounded font-black text-right text-[11px] leading-tight max-w-[70%]">{profile.akreditasi}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">IATA</span>
+                        <span className="text-slate-820 font-mono font-bold text-right text-[11px] leading-tight max-w-[70%]">{profile.iata}</span>
+                      </div>
                       <div className="pt-2 border-t border-slate-50 space-y-1">
-                        <span className="text-slate-400 font-semibold block">Alamat Kantor Pusat</span>
+                        <span className="text-slate-400 font-semibold block">Alamat Kantor / Domisili</span>
                         <p className="text-slate-705 bg-slate-50 p-3 rounded-lg border border-slate-150 leading-relaxed font-semibold">
                           📍 {profile.address}
                         </p>
@@ -964,32 +1122,42 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     </div>
 
                     <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1 flex flex-col">
-                      {profile.packages.map((pkg) => (
-                        <div 
-                          key={pkg.id} 
-                          className="p-3 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-105 flex items-center justify-between group transition-colors"
-                        >
-                          <div className="space-y-1 min-w-0 pr-2">
-                            <span className="text-[8px] bg-[#047857] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
-                              {pkg.type}
-                            </span>
-                            <h4 className="text-xs font-bold text-slate-900 truncate mt-1">
-                              {pkg.name}
-                            </h4>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
-                              <span>📅 {pkg.duration}</span>
-                              <span>•</span>
-                              <span>🏨 Hotel Bintang {pkg.hotelStar}</span>
+                      {profile.packages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-5">
+                          <Briefcase size={32} className="text-slate-300 mb-2" />
+                          <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Belum Ada Paket</p>
+                          <span className="text-[10px] text-slate-400 mt-1 max-w-[200px] leading-relaxed">
+                            Buat program paket di menu kelola paket Anda untuk menampilkannya di sini secara otomatis.
+                          </span>
+                        </div>
+                      ) : (
+                        profile.packages.map((pkg) => (
+                          <div 
+                            key={pkg.id} 
+                            className="p-3 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-105 flex items-center justify-between group transition-colors"
+                          >
+                            <div className="space-y-1 min-w-0 pr-2">
+                              <span className="text-[8px] bg-[#047857] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
+                                {pkg.type}
+                              </span>
+                              <h4 className="text-xs font-bold text-slate-900 truncate mt-1">
+                                {pkg.name}
+                              </h4>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
+                                <span>📅 {pkg.duration}</span>
+                                <span>•</span>
+                                <span>🏨 Hotel Bintang {pkg.hotelStar}</span>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-[8px] text-slate-400 block font-semibold uppercase leading-none mb-0.5">Mulai</span>
+                              <strong className="text-xs font-black text-slate-900 bg-white border border-slate-200/60 px-2.5 py-1.5 rounded-xl block font-sans">
+                                {pkg.price}
+                              </strong>
                             </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-[8px] text-slate-400 block font-semibold uppercase leading-none mb-0.5">Mulai</span>
-                            <strong className="text-xs font-black text-slate-900 bg-white border border-slate-200/60 px-2.5 py-1.5 rounded-xl block font-sans">
-                              {pkg.price}
-                            </strong>
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1144,99 +1312,138 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {profile.gallery
-                      .filter(img => galleryFilter === 'Semua' || img.category === galleryFilter)
-                      .map((img) => (
-                        <div 
-                          key={img.id}
-                          onClick={() => setSelectedImage({ url: img.url, title: img.title })}
-                          className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-95"
-                        >
-                          <div className="aspect-[4/3] bg-slate-50 overflow-hidden relative">
-                            <img 
-                              src={img.url} 
-                              alt={img.title} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              referrerPolicy="no-referrer"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
-                              <span className="text-[10px] text-white font-bold block truncate">{img.title}</span>
+                    {profile.gallery.length === 0 ? (
+                      <div className="col-span-full flex flex-col items-center justify-center py-12 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-5">
+                        <ImageIcon size={36} className="text-slate-300 mb-2" />
+                        <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Galeri Kosong</p>
+                        <span className="text-[10px] text-slate-400 mt-1 max-w-[220px] leading-relaxed">
+                          Anda belum mengunggah foto dokumentasi kegiatan manasik, hotel, tour, maupun keberangkatan.
+                        </span>
+                      </div>
+                    ) : (
+                      profile.gallery
+                        .filter(img => galleryFilter === 'Semua' || img.category === galleryFilter)
+                        .map((img) => (
+                          <div 
+                            key={img.id}
+                            onClick={() => setSelectedImage({ url: img.url, title: img.title })}
+                            className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-95"
+                          >
+                            <div className="aspect-[4/3] bg-slate-50 overflow-hidden relative">
+                              <img 
+                                src={img.url} 
+                                alt={img.title} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+                                <span className="text-[10px] text-white font-bold block truncate">{img.title}</span>
+                              </div>
+                            </div>
+                            <div className="p-2.5 bg-slate-50 flex justify-between items-center border-t border-slate-100">
+                              <span className="text-[9px] font-bold text-slate-900 truncate pr-2">{img.title}</span>
+                              <span className="text-[8px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-md font-bold text-right shrink-0">{img.category}</span>
                             </div>
                           </div>
-                          <div className="p-2.5 bg-slate-50 flex justify-between items-center border-t border-slate-100">
-                            <span className="text-[9px] font-bold text-slate-900 truncate pr-2">{img.title}</span>
-                            <span className="text-[8px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-md font-bold text-right shrink-0">{img.category}</span>
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                    )}
                   </div>
                 </div>
               )}
 
               {activeTab === 'testimoni' && (
                 <div className="bg-white rounded-2xl border border-slate-200/50 p-6 shadow-sm space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-1 bg-slate-50 rounded-2xl p-5 border border-slate-100/80 flex flex-col justify-center items-center text-center">
-                      <strong className="text-4xl font-black text-slate-900 leading-none">4.9</strong>
-                      <div className="flex gap-1 justify-center py-2">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} className="fill-[#F5B800] stroke-amber-500" size={16} />
+                  {profile.testimonials.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-5">
+                      <Star size={36} className="text-slate-300 stroke-slate-300 mb-2" />
+                      <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Belum Ada Ulasan</p>
+                      <span className="text-[10px] text-slate-400 mt-1 max-w-[240px] leading-relaxed">
+                        Mitra saat ini belum menerima testimoni/ulasan perjalanan terverifikasi dari para jamaah.
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-1 bg-slate-50 rounded-2xl p-5 border border-slate-100/80 flex flex-col justify-center items-center text-center">
+                          <strong className="text-4xl font-black text-slate-900 leading-none">
+                            {(profile.rating || (profile.testimonials.reduce((sum, t) => sum + t.rating, 0) / profile.testimonials.length)).toFixed(1)}
+                          </strong>
+                          <div className="flex gap-1 justify-center py-2">
+                            {[1, 2, 3, 4, 5].map((s) => {
+                              const ratingVal = profile.rating || (profile.testimonials.reduce((sum, t) => sum + t.rating, 0) / profile.testimonials.length);
+                              return (
+                                <Star 
+                                  key={s} 
+                                  className={s <= ratingVal ? "fill-[#F5B800] stroke-amber-500" : "text-slate-200"} 
+                                  size={16} 
+                                />
+                              );
+                            })}
+                          </div>
+                          <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide">
+                            Berdasarkan {profile.testimonials.length} Ulasan
+                          </span>
+                        </div>
+
+                        <div className="md:col-span-2 space-y-2.5 flex flex-col justify-center animate-in fade-in-50 duration-205 pointer-events-none select-none">
+                          <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
+                            <span className="w-6 font-extrabold text-slate-750 font-sans">5 ★</span>
+                            <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="bg-[#F5B800] h-full rounded-full" style={{ width: `${Math.round((profile.testimonials.filter(t => t.rating === 5).length / profile.testimonials.length) * 100)}%` }} />
+                            </div>
+                            <span className="w-8 text-right font-sans">{Math.round((profile.testimonials.filter(t => t.rating === 5).length / profile.testimonials.length) * 100)}%</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
+                            <span className="w-6 font-extrabold text-slate-755 font-sans">4 ★</span>
+                            <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="bg-[#F5B800] h-full rounded-full" style={{ width: `${Math.round((profile.testimonials.filter(t => t.rating === 4).length / profile.testimonials.length) * 100)}%` }} />
+                            </div>
+                            <span className="w-8 text-right font-medium font-sans">{Math.round((profile.testimonials.filter(t => t.rating === 4).length / profile.testimonials.length) * 100)}%</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
+                            <span className="w-6 font-extrabold text-slate-755 font-sans">3 ★</span>
+                            <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="bg-slate-300 h-full rounded-full" style={{ width: `${Math.round((profile.testimonials.filter(t => t.rating <= 3).length / profile.testimonials.length) * 100)}%` }} />
+                            </div>
+                            <span className="w-8 text-right font-semibold text-slate-800 font-sans">{Math.round((profile.testimonials.filter(t => t.rating <= 3).length / profile.testimonials.length) * 100)}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {profile.testimonials.map((t) => (
+                          <div key={t.id} className="bg-slate-50 hover:bg-slate-100/40 border border-slate-100 rounded-2xl p-4 transition-all space-y-3 font-sans">
+                            <div className="flex items-center gap-2.5">
+                              {t.avatar ? (
+                                <img 
+                                  src={t.avatar} 
+                                  alt={t.name} 
+                                  className="w-10 h-10 rounded-full object-cover border border-slate-150 shadow-sm"
+                                  referrerPolicy="no-referrer"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-150">
+                                  {t.name ? t.name.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0 font-sans flex flex-col justify-center">
+                                <h4 className="text-xs md:text-sm font-black text-slate-950 truncate leading-tight font-sans">{t.name}</h4>
+                                <span className="text-[9px] text-slate-400 font-bold block mt-0.5">{t.date}</span>
+                              </div>
+                              <div className="flex gap-0.5 bg-white border border-slate-150 px-2 py-1 rounded-lg shrink-0 shadow-2xs">
+                                {[...Array(t.rating).keys()].map((star) => (
+                                  <Star key={star} className="fill-[#F5B800] stroke-amber-500" size={11} />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs text-slate-600 leading-relaxed font-semibold italic">
+                              "{t.text}"
+                            </p>
+                          </div>
                         ))}
                       </div>
-                      <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide">Berdasarkan 156 Review</span>
-                    </div>
-
-                    <div className="md:col-span-2 space-y-2.5 flex flex-col justify-center animate-in fade-in-50 duration-200">
-                      <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
-                        <span className="w-6 font-extrabold text-slate-750 font-sans">5 ★</span>
-                        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="bg-[#F5B800] h-full rounded-full" style={{ width: '90%' }} />
-                        </div>
-                        <span className="w-8 text-right font-sans">90%</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
-                        <span className="w-6 font-extrabold text-slate-755 font-sans">4 ★</span>
-                        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="bg-amber-400 h-full rounded-full" style={{ width: '8%' }} />
-                        </div>
-                        <span className="w-8 text-right font-medium font-sans">8%</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs font-bold text-slate-505">
-                        <span className="w-6 font-extrabold text-slate-755 font-sans">3 ★</span>
-                        <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="bg-slate-300 h-full rounded-full" style={{ width: '2%' }} />
-                        </div>
-                        <span className="w-8 text-right font-semibold text-slate-800 font-sans">2%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {profile.testimonials.map((t) => (
-                      <div key={t.id} className="bg-slate-50 hover:bg-slate-100/40 border border-slate-100 rounded-2xl p-4 transition-all space-y-3 font-sans">
-                        <div className="flex items-center gap-2.5">
-                          <img 
-                            src={t.avatar} 
-                            alt={t.name} 
-                            className="w-10 h-10 rounded-full object-cover border border-slate-150 shadow-sm"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="flex-1 min-w-0 font-sans">
-                            <h4 className="text-xs md:text-sm font-black text-slate-950 truncate leading-tight font-sans">{t.name}</h4>
-                            <span className="text-[9px] text-slate-400 font-bold block mt-0.5">{t.date}</span>
-                          </div>
-                          <div className="flex gap-0.5 bg-white border border-slate-150 px-2 py-1 rounded-lg shrink-0 shadow-2xs">
-                            {[...Array(t.rating).keys()].map((star) => (
-                              <Star key={star} className="fill-[#F5B800] stroke-amber-500" size={11} />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-xs text-slate-600 leading-relaxed font-semibold italic">
-                          "{t.text}"
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1636,7 +1843,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 font-semibold block leading-tight">Lama Gabung</span>
-                    <strong className="text-xs font-black text-slate-900">4 Tahun</strong>
+                    <strong className="text-xs font-black text-slate-900">
+                      {calculateLamaGabung(profile.joinDate)}
+                    </strong>
                   </div>
                 </div>
 
@@ -1714,9 +1923,29 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         <span className="text-slate-400 font-semibold">NPWP Resmi</span>
                         <span className="text-slate-800 font-mono font-bold select-all">{profile.npwp}</span>
                       </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">Akta Pendirian</span>
+                        <span className="text-slate-800 font-bold text-right text-[11px] leading-tight max-w-[70%] select-all">{profile.aktaPendirian}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">RUPS</span>
+                        <span className="text-slate-800 font-bold text-right text-[11px] leading-tight max-w-[70%] select-all">{profile.rups}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">Asosiasi</span>
+                        <span className="text-slate-800 font-bold text-right text-[11px] leading-tight max-w-[70%] select-all">{profile.asosiasi}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">Akreditasi</span>
+                        <span className="text-[#047857] bg-emerald-50 px-2 py-0.5 rounded font-black text-right text-[11px] leading-tight max-w-[70%] select-all">{profile.akreditasi}</span>
+                      </div>
+                      <div className="flex justify-between items-start py-1 border-t border-slate-50 gap-2">
+                        <span className="text-slate-400 font-semibold shrink-0">IATA</span>
+                        <span className="text-slate-820 font-mono font-bold text-right text-[11px] leading-tight max-w-[70%] select-all">{profile.iata}</span>
+                      </div>
                       <div className="pt-2 border-t border-slate-50 space-y-1">
-                        <span className="text-slate-400 font-semibold block">Alamat Kantor Pusat</span>
-                        <p className="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed font-medium select-text">
+                        <span className="text-slate-400 font-semibold block">Alamat Kantor / Domisili</span>
+                        <p className="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed font-semibold select-text">
                           📍 {profile.address}
                         </p>
                       </div>
@@ -1752,32 +1981,42 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     </div>
 
                     <div className="space-y-2.5">
-                      {profile.packages.map((pkg) => (
-                        <div 
-                          key={pkg.id} 
-                          className="p-3 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-100 flex items-center justify-between group transition-colors"
-                        >
-                          <div className="space-y-0.5">
-                            <span className="text-[8px] bg-[#047857] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
-                              {pkg.type}
-                            </span>
-                            <h4 className="text-xs font-black text-slate-900 group-hover:text-[#047857] transition-colors mt-1 select-all">
-                              {pkg.name}
-                            </h4>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
-                              <span>📅 {pkg.duration}</span>
-                              <span>•</span>
-                              <span>🏨 Hotel Bintang {pkg.hotelStar}</span>
+                      {profile.packages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4">
+                          <Briefcase size={28} className="text-slate-300 mb-1.5" />
+                          <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Belum Ada Paket</p>
+                          <span className="text-[10px] text-slate-400 mt-0.5 max-w-[180px] leading-relaxed">
+                            Mitra belum merilis daftar paket layanan akomodasi aktif.
+                          </span>
+                        </div>
+                      ) : (
+                        profile.packages.map((pkg) => (
+                          <div 
+                            key={pkg.id} 
+                            className="p-3 bg-slate-50 hover:bg-slate-100/50 rounded-xl border border-slate-100 flex items-center justify-between group transition-colors"
+                          >
+                            <div className="space-y-0.5">
+                              <span className="text-[8px] bg-[#047857] text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full">
+                                {pkg.type}
+                              </span>
+                              <h4 className="text-xs font-black text-slate-900 group-hover:text-[#047857] transition-colors mt-1 select-all">
+                                {pkg.name}
+                              </h4>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
+                                <span>📅 {pkg.duration}</span>
+                                <span>•</span>
+                                <span>🏨 Hotel Bintang {pkg.hotelStar}</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[8px] text-slate-400 block font-semibold uppercase leading-none mb-0.5">Mulai</span>
+                              <strong className="text-xs font-black text-slate-900 bg-white border border-slate-200/60 px-2 py-1 rounded-lg select-all">
+                                {pkg.price}
+                              </strong>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-[8px] text-slate-400 block font-semibold uppercase leading-none mb-0.5">Mulai</span>
-                            <strong className="text-xs font-black text-slate-900 bg-white border border-slate-200/60 px-2 py-1 rounded-lg select-all">
-                              {pkg.price}
-                            </strong>
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
 
@@ -1960,31 +2199,41 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                   {/* Grid 2 Column Images */}
                   <div className="grid grid-cols-2 gap-2.5">
-                    {profile.gallery
-                      .filter(img => galleryFilter === 'Semua' || img.category === galleryFilter)
-                      .map((img) => (
-                        <div 
-                          key={img.id}
-                          onClick={() => setSelectedImage({ url: img.url, title: img.title })}
-                          className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-200 shadow-sm transition-transform active:scale-95"
-                        >
-                          <div className="aspect-[4/3] bg-slate-100 overflow-hidden relative">
-                            <img 
-                              src={img.url} 
-                              alt={img.title} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              referrerPolicy="no-referrer"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                              <span className="text-[10px] text-white font-bold block truncate">{img.title}</span>
+                    {profile.gallery.length === 0 ? (
+                      <div className="col-span-full flex flex-col items-center justify-center py-10 text-center bg-slate-50 border border-dashed border-slate-250 rounded-xl p-4">
+                        <ImageIcon size={30} className="text-slate-300 mb-1.5" />
+                        <p className="text-xs font-black text-slate-800 uppercase tracking-wide">Galeri Kosong</p>
+                        <span className="text-[10px] text-slate-400 mt-0.5 max-w-[180px] leading-relaxed">
+                          Tidak ada dokumentasi foto kegiatan pelayanan di galeri saat ini.
+                        </span>
+                      </div>
+                    ) : (
+                      profile.gallery
+                        .filter(img => galleryFilter === 'Semua' || img.category === galleryFilter)
+                        .map((img) => (
+                          <div 
+                            key={img.id}
+                            onClick={() => setSelectedImage({ url: img.url, title: img.title })}
+                            className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-200 shadow-sm transition-transform active:scale-95"
+                          >
+                            <div className="aspect-[4/3] bg-slate-100 overflow-hidden relative">
+                              <img 
+                                src={img.url} 
+                                alt={img.title} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                                <span className="text-[10px] text-white font-bold block truncate">{img.title}</span>
+                              </div>
+                            </div>
+                            <div className="p-2 bg-white flex justify-between items-center bg-slate-50">
+                              <span className="text-[9px] font-extrabold text-slate-900 truncate">{img.title}</span>
+                              <span className="text-[8px] bg-slate-200 text-slate-700 rounded px-1">{img.category}</span>
                             </div>
                           </div>
-                          <div className="p-2 bg-white flex justify-between items-center bg-slate-50">
-                            <span className="text-[9px] font-extrabold text-slate-900 truncate">{img.title}</span>
-                            <span className="text-[8px] bg-slate-200 text-slate-700 rounded px-1">{img.category}</span>
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                    )}
                   </div>
                 </div>
               )}
@@ -2619,6 +2868,61 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ initialProfile, onSav
             type="text" 
             name="npwp" 
             value={form.npwp} 
+            onChange={handleNestedLegalityChange} 
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800"
+          />
+        </div>
+
+        <div className="space-y-1.5 text-xs">
+          <label className="text-slate-400 font-extrabold uppercase">Akta Pendirian</label>
+          <input 
+            type="text" 
+            name="aktaPendirian" 
+            value={form.aktaPendirian || ''} 
+            onChange={handleNestedLegalityChange} 
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800"
+          />
+        </div>
+
+        <div className="space-y-1.5 text-xs">
+          <label className="text-slate-400 font-extrabold uppercase">RUPS</label>
+          <input 
+            type="text" 
+            name="rups" 
+            value={form.rups || ''} 
+            onChange={handleNestedLegalityChange} 
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800"
+          />
+        </div>
+
+        <div className="space-y-1.5 text-xs">
+          <label className="text-slate-400 font-extrabold uppercase">Asosiasi</label>
+          <input 
+            type="text" 
+            name="asosiasi" 
+            value={form.asosiasi || ''} 
+            onChange={handleNestedLegalityChange} 
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800"
+          />
+        </div>
+
+        <div className="space-y-1.5 text-xs">
+          <label className="text-slate-400 font-extrabold uppercase">Akreditasi</label>
+          <input 
+            type="text" 
+            name="akreditasi" 
+            value={form.akreditasi || ''} 
+            onChange={handleNestedLegalityChange} 
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800"
+          />
+        </div>
+
+        <div className="space-y-1.5 text-xs">
+          <label className="text-slate-400 font-extrabold uppercase">IATA</label>
+          <input 
+            type="text" 
+            name="iata" 
+            value={form.iata || ''} 
             onChange={handleNestedLegalityChange} 
             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800"
           />

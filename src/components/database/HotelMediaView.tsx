@@ -25,34 +25,64 @@ export const getFallbackDistance = (id: string, name?: string): string => {
 
 export const getNormalizedHotelNameKey = (name?: string): string => {
   if (!name) return "";
-  let words = name.toLowerCase().split(/[\s.-]+/);
   
-  // Filter out common stop-words
-  const stopwords = ["hotel", "the", "int", "group", "plaza", "by", "ex", "standard", "setaraf"];
-  words = words.filter(w => w && !stopwords.includes(w));
+  // Clean special characters and lower case
+  let processed = name.toLowerCase()
+    .replace(/[öøóòôõ]/g, "o")
+    .replace(/[éèêë]/g, "i")
+    .replace(/[áàâäãååæ]/g, "a")
+    .replace(/[íìîï]/g, "i")
+    .replace(/[úùûü]/g, "o")
+    .replace(/[^a-z0-9\s.-]/g, "");
+
+  // Convert specific known variants in the raw string first
+  processed = processed
+    .replace(/\b(ohud|houd|uhod|uhud)\b/g, "uhud")
+    .replace(/\b(makkah|mecca)\b/g, "makkah")
+    .replace(/\b(madina|madinah|medina|medinah)\b/g, "madinah")
+    .replace(/\b(movenpick|moevenpick)\b/g, "moevenpick")
+    .replace(/\b(odest|odst)\b/g, "odst");
+
+  let words = processed.split(/[\s.-]+/);
   
-  // Remove common Arabic prefixes
-  words = words.map(w => {
-    if ((w.startsWith("al") || w.startsWith("el")) && w.length > 2) {
-      return w.slice(2);
-    }
-    return w;
-  });
+  // Filter out common stop-words and noise words
+  const stopwords = [
+    "hotel", "the", "int", "group", "plaza", "by", "ex", "standard", "setaraf", 
+    "al", "el", "dar", "in", "inn", "an", "as", "ar", "at", "ad", "az", "ash", "of",
+    "tower", "towers", "management"
+  ];
+  
+  // Remove common Arabic prefixes and cleanup words
+  words = words
+    .map(w => {
+      const prefixes = ["al", "el", "ad", "as", "ar", "an", "at", "az", "ash"];
+      for (const prefix of prefixes) {
+        if (w.startsWith(prefix) && w.length > prefix.length + 1) {
+          return w.slice(prefix.length);
+        }
+      }
+      return w;
+    })
+    .filter(w => w && !stopwords.includes(w));
+
+  // Sort words alphabetically to make matching order-independent
+  words.sort();
   
   let clean = words.join("");
   
-  // Generic phonetic/spelling collapse
+  // Collapse duplicate letters (e.g., ss -> s, mm -> m)
+  clean = clean.replace(/([a-z0-9])\1+/g, "$1");
+
+  // Phonetic spelling & standardisation map
   clean = clean
     .replace(/harithia/g, "haritsia")
     .replace(/haritzia/g, "haritsia")
     .replace(/harith/g, "harits")
     .replace(/misk/g, "mysk")
     .replace(/maqom/g, "maqam")
-    .replace(/madina/g, "madinah")
     .replace(/taiba/g, "taibah")
     .replace(/sofua/g, "sofwa")
     .replace(/sofwah/g, "sofwa")
-    .replace(/movenpick/g, "moevenpick")
     .replace(/e/g, "i")
     .replace(/y/g, "i")
     .replace(/u/g, "o")
@@ -91,6 +121,7 @@ interface HotelMedia {
   city: string;
   photoUrl: string;
   distance: string;
+  stars?: number;
 }
 
 export const HotelMediaView: React.FC = () => {
@@ -101,7 +132,7 @@ export const HotelMediaView: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [editData, setEditData] = useState<{photoUrl: string, distance: string}>({ photoUrl: '', distance: '' });
+  const [editData, setEditData] = useState<{photoUrl: string, distance: string, stars?: number}>({ photoUrl: '', distance: '', stars: 5 });
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
@@ -158,7 +189,8 @@ export const HotelMediaView: React.FC = () => {
     const existing = getMediaForHotel(hotel.id, hotel.name);
     setEditData({
       photoUrl: existing?.photoUrl || '',
-      distance: existing?.distance || ''
+      distance: existing?.distance || '',
+      stars: existing?.stars || hotel.stars || 5
     });
     setIsEditing(hotel.id);
   };
@@ -174,6 +206,7 @@ export const HotelMediaView: React.FC = () => {
         city: hotel.city,
         photoUrl: editData.photoUrl,
         distance: editData.distance,
+        stars: editData.stars || 5,
         updatedAt: new Date().toISOString()
       }, { merge: true });
       setIsEditing(null);
@@ -221,9 +254,10 @@ export const HotelMediaView: React.FC = () => {
               type: 'OBJECT',
               properties: {
                 photoUrl: { type: 'STRING', description: "Valid image URL for the hotel" },
-                distance: { type: 'STRING', description: "Distance, e.g. '150m ke pelataran'" }
+                distance: { type: 'STRING', description: "Distance, e.g. '150m ke pelataran'" },
+                stars: { type: 'INTEGER', description: "Hotel star rating, e.g. 3, 4, or 5" }
               },
-              required: ["photoUrl", "distance"]
+              required: ["photoUrl", "distance", "stars"]
             },
             tools: useSearch ? [{ googleSearch: {} }] : undefined
           }
@@ -292,15 +326,17 @@ export const HotelMediaView: React.FC = () => {
     setIsGenerating(hotel.id);
     setErrorMessage(null);
     try {
-      const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
+      const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah), serta carikan informasi terpercaya mengenai berapa bintang (1-5) rating hotel tersebut. Kembalikan dalam format JSON. 
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
       const resData = await fetchWithRetryAndFallback(prompt, true);
       if (resData && resData.text) {
         const parsed = safeJsonParse(resData.text);
+        const resolvedStars = typeof parsed.stars === 'number' ? parsed.stars : (parseInt(parsed.stars) || editData.stars || hotel.stars || 5);
         setEditData({
           photoUrl: parsed.photoUrl || editData.photoUrl,
-          distance: parsed.distance || editData.distance
+          distance: parsed.distance || editData.distance,
+          stars: resolvedStars
         });
       }
     } catch (error) {
@@ -315,14 +351,14 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
   const handleAiAssistBulk = async () => {
     const hotelsToProcess = allHotels.filter(hotel => {
       const media = getMediaForHotel(hotel.id, hotel.name);
-      return !media?.photoUrl || !media?.distance;
+      return !media?.photoUrl || !media?.distance || !media?.stars;
     });
 
     if (hotelsToProcess.length === 0) {
       try {
-        alert('Semua hotel sudah lengkap (memiliki foto dan jarak).');
+        alert('Semua hotel sudah lengkap (memiliki foto, jarak, dan bintang).');
       } catch {
-        console.log('Semua hotel sudah lengkap (memiliki foto dan jarak).');
+        console.log('Semua hotel sudah lengkap (memiliki foto, jarak, dan bintang).');
       }
       return;
     }
@@ -344,7 +380,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
     for (const hotel of hotelsToProcess) {
       setIsGenerating(hotel.id);
       try {
-        const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah). Kembalikan dalam format JSON. 
+        const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah), serta carikan informasi terpercaya mengenai berapa bintang (1-5) rating hotel tersebut. Kembalikan dalam format JSON. 
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
         const resData = await fetchWithRetryAndFallback(prompt, true);
@@ -354,6 +390,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
           const docRef = doc(db, 'hotel_metadata', safeId);
           
           const existingMedia = getMediaForHotel(hotel.id, hotel.name);
+          const resolvedStars = typeof parsed.stars === 'number' ? parsed.stars : (parseInt(parsed.stars) || existingMedia?.stars || hotel.stars || 5);
           
           try {
             await setDoc(docRef, {
@@ -362,6 +399,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
               city: hotel.city,
               photoUrl: parsed.photoUrl || existingMedia?.photoUrl || '',
               distance: parsed.distance || existingMedia?.distance || '',
+              stars: resolvedStars,
               updatedAt: new Date().toISOString()
             }, { merge: true });
           } catch (err) {
@@ -457,7 +495,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                   <tr key={hotel.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-900">{hotel.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">{hotel.city} • ★ {hotel.stars || 5}</div>
+                      <div className="text-xs text-gray-500 mt-1">{hotel.city} • ★ {media?.stars || hotel.stars || 5}</div>
                     </td>
                     <td className="px-6 py-4">
                       {editing ? (
@@ -527,25 +565,43 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                           />
                         ) : (
                           <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 border border-dashed border-gray-300">
-                            <Image className="w-6 h-6" />
+                             <Image className="w-6 h-6" />
                           </div>
                         )
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {editing ? (
-                        <input 
-                          type="text" 
-                          placeholder="Cth: 150m ke pelataran" 
-                          value={editData.distance}
-                          onChange={(e) => setEditData({...editData, distance: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                        />
+                        <div className="space-y-2">
+                          <input 
+                            type="text" 
+                            placeholder="Cth: 150m ke pelataran" 
+                            value={editData.distance}
+                            onChange={(e) => setEditData({...editData, distance: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 font-medium">Bintang:</span>
+                            <select 
+                              value={editData.stars || 5}
+                              onChange={(e) => setEditData({...editData, stars: Number(e.target.value)})}
+                              className="border border-gray-200 rounded-lg text-xs px-2 py-1 outline-none bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                            >
+                              <option value={1}>★ 1</option>
+                              <option value={2}>★ 2</option>
+                              <option value={3}>★ 3</option>
+                              <option value={4}>★ 4</option>
+                              <option value={5}>★ 5</option>
+                            </select>
+                          </div>
+                        </div>
                       ) : (
                         media?.distance ? (
-                          <div className="flex items-center gap-1.5 text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-lg inline-flex">
-                            <MapPin className="w-4 h-4" />
-                            {media.distance}
+                          <div className="flex flex-col gap-1 inline-flex">
+                            <div className="flex items-center gap-1.5 text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-lg">
+                              <MapPin className="w-4 h-4" />
+                              {media.distance}
+                            </div>
                           </div>
                         ) : getFallbackDistance(hotel.id, hotel.name) ? (
                           <div className="flex items-center gap-1.5 text-indigo-700 font-medium bg-indigo-50 px-2.5 py-1 rounded-lg inline-flex">

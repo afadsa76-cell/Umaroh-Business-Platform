@@ -31,6 +31,7 @@ interface HotelMetaItem {
   city: string;
   photoUrl: string;
   distance: string;
+  stars?: number;
 }
 
 export const PaketDetailView: React.FC<PaketDetailViewProps> = ({ 
@@ -217,7 +218,7 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
     (makkahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === makkahTargetNorm)
   );
   const makkahDistanceStr = makkahMetaObj?.distance || 'Sangat dekat dengan pelataran';
-  const makkahStarsNum = hotelMakkahObj?.stars || hotelMakkahObj?.bintang || 5;
+  const makkahStarsNum = makkahMetaObj?.stars || hotelMakkahObj?.stars || hotelMakkahObj?.bintang || 5;
 
   const hotelMadinahObj = getHotelObject(paket.hotelMadinahId);
   const madinahHotelName = hotelMadinahObj?.name || (hotelMadinahObj as unknown as Record<string, unknown>)?.nama as string || "";
@@ -228,7 +229,7 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
     (madinahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === madinahTargetNorm)
   );
   const madinahDistanceStr = madinahMetaObj?.distance || 'Sangat dekat dengan pelataran';
-  const madinahStarsNum = hotelMadinahObj?.stars || hotelMadinahObj?.bintang || 5;
+  const madinahStarsNum = madinahMetaObj?.stars || hotelMadinahObj?.stars || hotelMadinahObj?.bintang || 5;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">

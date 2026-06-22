@@ -90,6 +90,7 @@ interface HotelMetaItem {
   city: string;
   photoUrl: string;
   distance: string;
+  stars?: number;
 }
 
 interface PaketMasterWizardProps {
@@ -307,6 +308,71 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const parseNum = (val: string | number | undefined, def = 0): number => {
     const n = Number(val);
     return isNaN(n) ? def : n;
+  };
+
+  const getHelperStars = (hotelId?: string, defaultStars?: number): number => {
+    if (!hotelId) return defaultStars || 5;
+    const hotel = hotelsList.find((h) => h.id === hotelId);
+    const hotelName = hotel?.nama || "";
+    const targetNorm = getNormalizedHotelNameKey(hotelName);
+    const meta = hotelMetas?.find(
+      (m) =>
+        m.hotelId === hotelId ||
+        m.hotelName?.toLowerCase() === hotelName.toLowerCase() ||
+        (targetNorm && getNormalizedHotelNameKey(m.hotelName) === targetNorm)
+    );
+    return meta?.stars || hotel?.bintang || defaultStars || 5;
+  };
+
+  const getHotelDistanceInternal = (hotel: WizardHotel): string => {
+    const targetNorm = getNormalizedHotelNameKey(hotel.nama);
+    const metaObj = hotelMetas?.find(
+      (m) =>
+        m.hotelId === hotel.id ||
+        m.hotelName?.toLowerCase() === hotel.nama?.toLowerCase() ||
+        (targetNorm && getNormalizedHotelNameKey(m.hotelName) === targetNorm)
+    );
+    return metaObj?.distance || getFallbackDistance(hotel.id, hotel.nama) || "";
+  };
+
+  const parseDistanceInMeters = (distanceStr: string): number => {
+    const norm = distanceStr.toLowerCase();
+    
+    // 1. Match meter number first (e.g. "50m", "150m") to avoid incorrect semantic fallbacks
+    const match = norm.match(/(\d+)\s*m/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+    
+    // 2. Match kilometer number
+    if (norm.includes("km")) {
+      const matchK = norm.match(/([\d.]+)\s*km/);
+      if (matchK) {
+        return Math.round(parseFloat(matchK[1]) * 1000);
+      }
+    }
+
+    // 3. Text/Semantic fallbacks
+    if (
+      norm.includes("sangat dekat") ||
+      norm.includes("halaman masjid") ||
+      norm.includes("depan masjid") ||
+      norm.includes("sebelah masjid") ||
+      norm.includes("nol meter") ||
+      norm.includes("menempel")
+    ) {
+      return 50;
+    }
+
+    if (norm.includes("pelataran") || norm.includes("halaman")) {
+      return 100;
+    }
+
+    if (norm.trim() === "") {
+      return 9999;
+    }
+
+    return 200;
   };
 
   const defaultData: WizardFormData = {
@@ -582,6 +648,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [hotelSearchTerm, setHotelSearchTerm] = useState("");
   const [hotelFilterBintang, setHotelFilterBintang] = useState("ALL");
+  const [hotelFilterJarak, setHotelFilterJarak] = useState("ALL");
   const [hotelSort, setHotelSort] = useState<"default" | "lowest" | "highest">("default");
   const [hotelPage, setHotelPage] = useState(1);
 
@@ -934,7 +1001,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
   useEffect(() => {
     setHotelPage(1);
-  }, [hotelSearchTerm, hotelFilterBintang, hotelStep, hotelSort]);
+  }, [hotelSearchTerm, hotelFilterBintang, hotelStep, hotelSort, hotelFilterJarak]);
 
   useEffect(() => {
     const unsubMaskapai = onSnapshot(
@@ -1420,8 +1487,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         ...formData,
         hotelMadinahNama: hMadinah?.nama || "TBA",
         hotelMakkahNama: hMakkah?.nama || "TBA",
-        hotelMadinahStars: hMadinah?.bintang || 0,
-        hotelMakkahStars: hMakkah?.bintang || 0,
+        hotelMadinahStars: getHelperStars(formData.hotelMadinahId, hMadinah?.bintang),
+        hotelMakkahStars: getHelperStars(formData.hotelMakkahId, hMakkah?.bintang),
         maskapaiNama: maskapai?.name || "TBA",
       });
       setAiResult({ title: "Marketing Content AI", content: result || "" });
@@ -3366,7 +3433,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl font-medium text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <select
                   value={hotelFilterBintang}
                   onChange={(e) => setHotelFilterBintang(e.target.value)}
@@ -3376,6 +3443,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <option value="5">Bintang 5</option>
                   <option value="4">Bintang 4</option>
                   <option value="3">Bintang 3</option>
+                </select>
+                <select
+                  value={hotelFilterJarak}
+                  onChange={(e) => setHotelFilterJarak(e.target.value)}
+                  className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none appearance-none"
+                >
+                  <option value="ALL">Semua Jarak</option>
+                  <option value="VERY_CLOSE">Sangat Dekat (≤ 150m)</option>
+                  <option value="CLOSE">Dekat (≤ 350m)</option>
+                  <option value="MEDIUM">Sedang (≤ 600m)</option>
+                  <option value="FAR">Lebih Jauh (&gt; 600m)</option>
                 </select>
                 <select
                   value={hotelSort}
@@ -3403,8 +3481,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 .filter(
                   (h) =>
                     hotelFilterBintang === "ALL" ||
-                    String(h.bintang) === hotelFilterBintang,
-                );
+                    String(getHelperStars(h.id, h.bintang)) === hotelFilterBintang,
+                )
+                .filter((h) => {
+                  if (hotelFilterJarak === "ALL") return true;
+                  const distStr = getHotelDistanceInternal(h);
+                  const meters = parseDistanceInMeters(distStr);
+                  if (hotelFilterJarak === "VERY_CLOSE") return meters <= 150;
+                  if (hotelFilterJarak === "CLOSE") return meters <= 350;
+                  if (hotelFilterJarak === "MEDIUM") return meters <= 600;
+                  if (hotelFilterJarak === "FAR") return meters > 600;
+                  return true;
+                });
 
               const getPriceForWisataSort = (hotel: WizardHotel) => {
                 const dyn = getHotelPriceDynamic(hotel, formData.tglBerangkat, 'Quad');
@@ -3415,8 +3503,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               // 1. Group/deduplicate by name, keeping only the highest price item for each unique name
               const uniqueWisataMap = new window.Map<string, { hotel: WizardHotel, index: number }>();
               filtered.forEach((h, index) => {
-                const normalizedName = (h.nama || h.name || "").trim().toLowerCase();
+                const normalizedName = getNormalizedHotelNameKey(h.nama || h.name || "");
                 const price = getPriceForWisataSort(h);
+                
+                if (!normalizedName) return;
                 
                 if (!uniqueWisataMap.has(normalizedName)) {
                   uniqueWisataMap.set(normalizedName, { hotel: h, index });
@@ -3477,23 +3567,20 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-black/80 to-transparent"></div>
                             <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
                               <div>
-                                <h4 className="text-white drop-shadow-md font-black uppercase text-sm mb-1">
-                                  {hotel.nama}
-                                </h4>
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <h4 className="text-white drop-shadow-md font-black uppercase text-sm">
+                                    {hotel.nama}
+                                  </h4>
+                                  <div className="flex items-center gap-0.5 shrink-0 bg-[#0d1527]/50 border border-amber-500/30 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                    {Array.from({ length: getHelperStars(hotel.id, hotel.bintang || 5) }).map((_, idx) => (
+                                      <Star key={idx} className="w-2.5 h-2.5 fill-amber-450 text-amber-400" />
+                                    ))}
+                                  </div>
+                                </div>
                                 <div className="flex flex-col gap-1">
                                   <span className="text-[10px] text-gray-700 bg-white/90 px-1.5 py-0.5 rounded font-bold uppercase w-fit">
                                     {hotel.kota}
                                   </span>
-                                  <div className="flex items-center gap-1">
-                                    {[...Array(hotel.bintang || 5)].map(
-                                      (_, i) => (
-                                        <Star
-                                          key={i}
-                                          className="w-3 h-3 fill-amber-500 text-amber-500"
-                                        />
-                                      ),
-                                    )}
-                                  </div>
                                 </div>
                               </div>
                               {isSelected && (
@@ -3986,7 +4073,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl font-medium text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <select
                   value={hotelFilterBintang}
                   onChange={(e) => setHotelFilterBintang(e.target.value)}
@@ -3996,6 +4083,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <option value="5">Bintang 5</option>
                   <option value="4">Bintang 4</option>
                   <option value="3">Bintang 3</option>
+                </select>
+                <select
+                  value={hotelFilterJarak}
+                  onChange={(e) => setHotelFilterJarak(e.target.value)}
+                  className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 outline-none appearance-none"
+                >
+                  <option value="ALL">Semua Jarak</option>
+                  <option value="VERY_CLOSE">Sangat Dekat (≤ 150m)</option>
+                  <option value="CLOSE">Dekat (≤ 350m)</option>
+                  <option value="MEDIUM">Sedang (≤ 600m)</option>
+                  <option value="FAR">Lebih Jauh (&gt; 600m)</option>
                 </select>
                 <select
                   value={hotelSort}
@@ -4030,8 +4128,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 .filter(
                   (h) =>
                     hotelFilterBintang === "ALL" ||
-                    String(h.bintang) === hotelFilterBintang,
-                );
+                    String(getHelperStars(h.id, h.bintang)) === hotelFilterBintang,
+                )
+                .filter((h) => {
+                  if (hotelFilterJarak === "ALL") return true;
+                  const distStr = getHotelDistanceInternal(h);
+                  const meters = parseDistanceInMeters(distStr);
+                  if (hotelFilterJarak === "VERY_CLOSE") return meters <= 150;
+                  if (hotelFilterJarak === "CLOSE") return meters <= 350;
+                  if (hotelFilterJarak === "MEDIUM") return meters <= 600;
+                  if (hotelFilterJarak === "FAR") return meters > 600;
+                  return true;
+                });
 
               const getPriceForSort = (hotel: WizardHotel) => {
                 const dyn = getHotelPriceDynamic(hotel, checkDate, 'Quad');
@@ -4042,8 +4150,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               // 1. Group/deduplicate by name, keeping only the highest price item for each unique name
               const uniqueMap = new window.Map<string, { hotel: WizardHotel, index: number }>();
               filtered.forEach((h, index) => {
-                const normalizedName = (h.nama || h.name || "").trim().toLowerCase();
+                const normalizedName = getNormalizedHotelNameKey(h.nama || h.name || "");
                 const price = getPriceForSort(h);
+                
+                if (!normalizedName) return;
                 
                 if (!uniqueMap.has(normalizedName)) {
                   uniqueMap.set(normalizedName, { hotel: h, index });
@@ -4141,19 +4251,20 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           <div className="p-4 flex flex-col flex-1 relative z-10 justify-between">
                             <div className="flex justify-between items-start mb-2">
                               <div className="pr-4">
-                                <h4 className="text-white font-black uppercase text-[10px] sm:text-xs md:text-sm mb-1 line-clamp-2 drop-shadow-md">
-                                  {hotel.nama}
-                                </h4>
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <h4 className="text-white font-black uppercase text-[10px] sm:text-xs md:text-sm line-clamp-2 drop-shadow-md">
+                                    {hotel.nama}
+                                  </h4>
+                                  <div className="flex items-center gap-0.5 shrink-0 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
+                                    {Array.from({ length: getHelperStars(hotel.id, hotel.bintang || 5) }).map((_, idx) => (
+                                      <Star key={idx} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                    ))}
+                                  </div>
+                                </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="text-[8px] sm:text-[10px] text-gray-300 font-bold uppercase tracking-wider drop-shadow">
                                     {hotel.kota}
                                   </span>
-                                  {distanceStr && (
-                                    <span className="text-[8px] sm:text-[9px] text-emerald-400 font-black tracking-wide drop-shadow flex items-center gap-0.5 bg-emerald-950/40 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
-                                      <MapPin className="w-2.5 h-2.5 shrink-0 text-emerald-400" />
-                                      {distanceStr}
-                                    </span>
-                                  )}
                                 </div>
                               </div>
                               <div
@@ -4167,10 +4278,6 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
                             <div className="mt-auto pt-4">
                               <div className="flex flex-wrap gap-1.5 mb-3">
-                                <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm shrink-0">
-                                  <Star className="w-2.5 h-2.5 fill-amber-400" />{" "}
-                                  {hotel.bintang || 5}
-                                </span>
                                 {distanceStr && (
                                   <span className="bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm shrink-0">
                                     <MapPin className="w-2.5 h-2.5 shrink-0 text-sky-450" />
@@ -5223,7 +5330,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 </div>
                                 <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
                                   HOTEL {formData.negaraWisata || "TURKEY"} ★
-                                  {hWisata?.bintang || 5} (
+                                  {getHelperStars(formData.hotelWisataId, hWisata?.bintang)} (
                                   {hWisata?.nama || "HILTON"} -{" "}
                                   {(formData.durasiWisata || 0) + 1} HARI{" "}
                                   {formData.durasiWisata || 0} MALAM)
@@ -5242,7 +5349,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <Building2 className="w-4 h-4" />
                                 </div>
                                 <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                  {hMadinah.nama} ★{hMadinah.bintang || 5} (
+                                  {hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, hMadinah.bintang)} (
                                   {parseNum(formData.durasiMadinah, 3) + 1} HARI{" "}
                                   {parseNum(formData.durasiMadinah, 3)} MALAM)
                                 </span>
@@ -5260,7 +5367,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <Building2 className="w-4 h-4" />
                                 </div>
                                 <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                  {hMakkah.nama} ★{hMakkah.bintang || 5} (
+                                  {hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, hMakkah.bintang)} (
                                   {parseNum(formData.durasiMakkah, 4) + 1} HARI{" "}
                                   {parseNum(formData.durasiMakkah, 4)} MALAM)
                                 </span>
@@ -6289,7 +6396,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                      <Building2 className="w-5 h-5" />
                   </div>
                   <span className="font-bold text-sm text-gray-800 uppercase">
-                     {pricingSummary.hMadinah.nama} ★{pricingSummary.hMadinah.bintang || 5} ({parseNum(formData.durasiMadinah, 3)} MALAM)
+                     {pricingSummary.hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, pricingSummary.hMadinah.bintang)} ({parseNum(formData.durasiMadinah, 3)} MALAM)
                   </span>
                 </div>
                 <span className="font-black text-blue-700 italic">Rp {pricingSummary.hQuadMadinah.toLocaleString('id-ID')}</span>
@@ -6303,7 +6410,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                      <Building2 className="w-5 h-5" />
                   </div>
                   <span className="font-bold text-sm text-gray-800 uppercase">
-                     {pricingSummary.hMakkah.nama} ★{pricingSummary.hMakkah.bintang || 5} ({parseNum(formData.durasiMakkah, 4)} MALAM)
+                     {pricingSummary.hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, pricingSummary.hMakkah.bintang)} ({parseNum(formData.durasiMakkah, 4)} MALAM)
                   </span>
                 </div>
                 <span className="font-black text-blue-700 italic">Rp {pricingSummary.hQuadMakkah.toLocaleString('id-ID')}</span>

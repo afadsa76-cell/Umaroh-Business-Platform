@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight, Building2 } from 'lucide-react';
+import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight, Building2, Users, Minus, Plus, ArrowRight, X } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc, handleFirestoreError, OperationType } from '../firebase';
 import { syncBookingToTracker } from '../utils/firebaseSync';
 import { PaketMaster, Maskapai, Hotel } from '../types';
@@ -51,6 +51,16 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
   const [viewingDetail, setViewingDetail] = React.useState<PaketMaster | null>(null);
   const [hotels, setHotels] = React.useState<Hotel[]>([]);
   const [maskapai, setMaskapai] = React.useState<Maskapai[]>([]);
+  
+  const [selectedRoomType, setSelectedRoomType] = React.useState<'quad' | 'triple' | 'double'>('quad');
+  const [paxCount, setPaxCount] = React.useState<number>(1);
+
+  React.useEffect(() => {
+    if (selectedPaket) {
+      setSelectedRoomType('quad');
+      setPaxCount(1);
+    }
+  }, [selectedPaket]);
 
   const userId = auth.currentUser?.uid;
 
@@ -114,40 +124,259 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
     };
   }, []);
 
-  const handleBooking = async () => {
-    if (!selectedPaket || !userId) return;
+  const renderBookingModal = () => {
+    if (!selectedPaket) return null;
 
-    try {
-      const isMitraPaket = !!selectedPaket.paketMasterId || selectedPaket.type === 'mitra';
-      const fallbackPrice = selectedPaket.hargaJualQuad || selectedPaket.displayPrice || 0;
-      const calculatedPrice = (isMitraPaket ? selectedPaket.hargaJual : selectedPaket.hargaDasar) ?? fallbackPrice;
+    // Calculate prices
+    const quadPrice = selectedPaket.hargaJualQuad || selectedPaket.displayPrice || selectedPaket.hargaJual || selectedPaket.hargaDasar || 0;
+    const triplePrice = selectedPaket.hargaJualTriple || (quadPrice * 1.1) || (quadPrice + 2500000);
+    const doublePrice = selectedPaket.hargaJualDouble || (quadPrice * 1.2) || (quadPrice + 5000000);
 
-      const bookingData = {
-        jamaahId: userId,
-        paketId: selectedPaket.id,
-        jenisPaket: isMitraPaket ? 'mitra' : 'master',
-        mitraId: isMitraPaket ? (selectedPaket.mitraId || null) : null,
-        paketLabel: selectedPaket.displayName || 'Paket Pilihan',
-        statusPembayaran: 'pending',
-        statusKeberangkatan: 'menunggu',
-        totalHarga: calculatedPrice,
-        createdAt: serverTimestamp()
-      };
+    const getRoomUnitPrice = (): number => {
+      if (selectedRoomType === 'quad') return quadPrice;
+      if (selectedRoomType === 'triple') return triplePrice;
+      if (selectedRoomType === 'double') return doublePrice;
+      return quadPrice;
+    };
 
-      const docRef = await addDoc(collection(db, 'bookings'), bookingData);
-      await syncBookingToTracker(docRef.id, {
-        ...bookingData,
-        createdAt: new Date().toISOString()
-      });
-      setBookingSuccess(true);
-      setTimeout(() => {
-        setBookingSuccess(false);
-        setSelectedPaket(null);
-      }, 3000);
-    } catch (error) {
-      console.error("Error creating booking:", error);
-      alert("Gagal membuat pemesanan. Silakan coba lagi.");
-    }
+    const unitPrice = getRoomUnitPrice();
+    const totalHarga = unitPrice * paxCount;
+
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-200">
+        <div className="bg-white rounded-[32px] max-w-md w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] text-slate-800">
+          
+          {/* Close button top right */}
+          <button 
+            type="button"
+            onClick={() => setSelectedPaket(null)}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all z-10"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          {bookingSuccess ? (
+            <div className="text-center py-10 space-y-4 my-auto">
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">
+                <CheckCircle2 className="w-8 h-8 text-[#10b981]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 uppercase tracking-wide">Pemesanan Sukses!</h3>
+                <p className="text-xs text-slate-500 mt-1">Sistem sedang mendaftarkan pesanan Anda di manifest pusat.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col overflow-y-auto pr-1 scrollbar-thin">
+              
+              {/* Header */}
+              <div className="text-center mb-6 mt-2">
+                <h3 className="text-[16px] font-black tracking-tight text-slate-900 uppercase">
+                  PILIH KAMAR & JUMLAH JAMAAH
+                </h3>
+                <p className="text-[9px] font-bold tracking-widest text-sky-550 uppercase mt-1 text-slate-400">
+                  KONFIGURASI KEBUTUHAN AKOMODASI ANDA
+                </p>
+              </div>
+
+              {/* TIPE KAMAR Section */}
+              <div className="space-y-3 mb-6">
+                <span className="text-[9px] font-bold text-slate-400 tracking-widest uppercase block mb-1">
+                  TIPE KAMAR (ROOM TYPE)
+                </span>
+
+                {/* Quad Room Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedRoomType('quad')}
+                  className={`w-full p-3 md:p-3.5 rounded-2xl flex items-center justify-between text-left transition-all outline-none ${
+                    selectedRoomType === 'quad'
+                      ? 'border-2 border-[#10b981] bg-emerald-50/10 shadow-sm'
+                      : 'border border-slate-100 bg-white hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${
+                      selectedRoomType === 'quad' ? 'bg-[#10b981] text-white' : 'bg-slate-50 text-slate-400'
+                    }`}>
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className={`text-[12px] font-black leading-tight ${selectedRoomType === 'quad' ? 'text-emerald-700' : 'text-slate-700'}`}>
+                        QUAD ROOM
+                      </h4>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">
+                        KAPASITAS 4 ORANG
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-[13px] font-black ${selectedRoomType === 'quad' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                    {formatCurrency(quadPrice)}
+                  </span>
+                </button>
+
+                {/* Triple Room Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedRoomType('triple')}
+                  className={`w-full p-3 md:p-3.5 rounded-2xl flex items-center justify-between text-left transition-all outline-none ${
+                    selectedRoomType === 'triple'
+                      ? 'border-2 border-[#10b981] bg-emerald-50/10 shadow-sm'
+                      : 'border border-slate-100 bg-white hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${
+                      selectedRoomType === 'triple' ? 'bg-[#10b981] text-white' : 'bg-slate-50 text-slate-400'
+                    }`}>
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className={`text-[12px] font-black leading-tight ${selectedRoomType === 'triple' ? 'text-emerald-700' : 'text-slate-700'}`}>
+                        TRIPLE ROOM
+                      </h4>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">
+                        KAPASITAS 3 ORANG
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-[13px] font-black ${selectedRoomType === 'triple' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                    {formatCurrency(triplePrice)}
+                  </span>
+                </button>
+
+                {/* Double Room Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedRoomType('double')}
+                  className={`w-full p-3 md:p-3.5 rounded-2xl flex items-center justify-between text-left transition-all outline-none ${
+                    selectedRoomType === 'double'
+                      ? 'border-2 border-[#10b981] bg-emerald-50/10 shadow-sm'
+                      : 'border border-slate-100 bg-white hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${
+                      selectedRoomType === 'double' ? 'bg-[#10b981] text-white' : 'bg-slate-50 text-slate-400'
+                    }`}>
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className={`text-[12px] font-black leading-tight ${selectedRoomType === 'double' ? 'text-emerald-700' : 'text-slate-700'}`}>
+                        DOUBLE ROOM
+                      </h4>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">
+                        KAPASITAS 2 ORANG
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-[13px] font-black ${selectedRoomType === 'double' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                    {formatCurrency(doublePrice)}
+                  </span>
+                </button>
+              </div>
+
+              {/* JUMLAH PAX / JAMAAH Section */}
+              <div className="bg-slate-50/50 p-4 rounded-[24px] border border-slate-100 text-center mb-6">
+                <span className="text-[9px] font-bold text-slate-400 tracking-widest uppercase block mb-3">
+                  JUMLAH PAX / JAMAAH
+                </span>
+
+                <div className="flex items-center justify-center gap-5 bg-white p-2 border border-slate-100 rounded-2xl max-w-[180px] mx-auto shadow-sm">
+                  <button
+                    type="button"
+                    disabled={paxCount <= 1}
+                    onClick={() => setPaxCount(prev => Math.max(1, prev - 1))}
+                    className={`w-11 h-11 bg-slate-50 hover:bg-slate-100 border border-slate-200/40 rounded-xl flex items-center justify-center text-slate-800 font-extrabold text-lg transition-all active:scale-90 ${
+                      paxCount <= 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
+                  >
+                    <Minus className="w-4 h-4 text-slate-700" />
+                  </button>
+                  <span className="text-xl font-black text-slate-900 w-10 text-center select-none">
+                    {paxCount}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={paxCount >= 10}
+                    onClick={() => setPaxCount(prev => Math.min(10, prev + 1))}
+                    className={`w-11 h-11 bg-slate-50 hover:bg-slate-100 border border-slate-200/40 rounded-xl flex items-center justify-center text-slate-800 font-extrabold text-lg transition-all active:scale-90 ${
+                      paxCount >= 10 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4 text-slate-700" />
+                  </button>
+                </div>
+
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-2 block leading-none">
+                  MAKSIMAL 10 PAX PER TRANSAKSI
+                </span>
+              </div>
+
+              {/* Bottom Sticky Total and Button */}
+              <div className="border-t border-slate-100 pt-4 mt-auto space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <div>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                      TOTAL BAYAR
+                    </span>
+                    <h5 className="text-emerald-600 font-black text-[22px] leading-tight italic tracking-tighter mt-0.5">
+                      {formatCurrency(totalHarga)}
+                    </h5>
+                  </div>
+                  <div className="bg-slate-100/60 text-slate-600 px-3 py-1.5 rounded-full font-black text-[9px] uppercase flex items-center gap-1">
+                    <Users className="w-3 h-3 text-slate-500" />
+                    <span>{paxCount} PAX</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    // Execute booking with updated total price, paxCount, and roomType
+                    try {
+                      const isMitraPaket = !!selectedPaket.paketMasterId || selectedPaket.type === 'mitra';
+                      const bookingData = {
+                        jamaahId: userId,
+                        paketId: selectedPaket.id,
+                        jenisPaket: isMitraPaket ? 'mitra' : 'master',
+                        mitraId: isMitraPaket ? (selectedPaket.mitraId || null) : null,
+                        paketLabel: selectedPaket.displayName || 'Paket Pilihan',
+                        statusPembayaran: 'pending',
+                        statusKeberangkatan: 'menunggu',
+                        totalHarga: totalHarga,
+                        paxCount: paxCount,
+                        roomType: selectedRoomType,
+                        createdAt: serverTimestamp()
+                      };
+
+                      const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+                      await syncBookingToTracker(docRef.id, {
+                        ...bookingData,
+                        createdAt: new Date().toISOString()
+                      });
+                      setBookingSuccess(true);
+                      setTimeout(() => {
+                        setBookingSuccess(false);
+                        setSelectedPaket(null);
+                      }, 3000);
+                    } catch (error) {
+                      console.error("Error creating booking:", error);
+                      alert("Gagal membuat pemesanan. Silakan coba lagi.");
+                    }
+                  }}
+                  className="w-full py-4 bg-slate-950 hover:bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-slate-950/10 cursor-pointer"
+                >
+                  <span>LANJUT ISI DATA</span>
+                  <ArrowRight className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+      </div>
+    );
   };
 
   const formatCurrency = (amount: number | string | undefined | null) => {
@@ -190,25 +419,28 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
 
   // Combine and format packages for display
   const displayPackages: DisplayPaket[] = [
-    ...paketMasters.map(p => ({ 
-      ...p, 
-      type: 'master', 
-      displayPrice: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0, 
-      displayName: p.nama,
-      tglBerangkat: p.tglBerangkat,
-      durasiHari: p.durasiHari,
-      maskapaiId: p.maskapaiId,
-      hargaJualQuad: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
-      hargaJualTriple: p.hargaJualTriple || (p.hargaDasar ? p.hargaDasar * 1.1 : 0),
-      hargaJualDouble: p.hargaJualDouble || (p.hargaDasar ? p.hargaDasar * 1.2 : 0)
-    })),
+    ...paketMasters.map(p => {
+      const qPrice = p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0;
+      return { 
+        ...p, 
+        type: 'master', 
+        displayPrice: qPrice, 
+        displayName: p.nama,
+        tglBerangkat: p.tglBerangkat,
+        durasiHari: p.durasiHari,
+        maskapaiId: p.maskapaiId,
+        hargaJualQuad: qPrice,
+        hargaJualTriple: p.hargaJualTriple || (qPrice ? Math.round(qPrice * 1.1) : 0),
+        hargaJualDouble: p.hargaJualDouble || (qPrice ? Math.round(qPrice * 1.2) : 0)
+      };
+    }),
     ...paketMitras.map(p => {
       const master = paketMasters.find(m => m.id === p.paketMasterId);
       const markup = p.markup || 0;
       
       const priceQuad = (master?.hargaJualQuad || master?.hargaDasar || master?.hargaEkonomi || 0) + markup;
-      const priceTriple = (master?.hargaJualTriple || 0) > 0 ? (master?.hargaJualTriple || 0) + markup : (master?.hargaDasar ? master.hargaDasar * 1.1 + markup : 0);
-      const priceDouble = (master?.hargaJualDouble || 0) > 0 ? (master?.hargaJualDouble || 0) + markup : (master?.hargaDasar ? master.hargaDasar * 1.2 + markup : 0);
+      const priceTriple = (master?.hargaJualTriple || 0) > 0 ? (master?.hargaJualTriple || 0) + markup : (priceQuad ? Math.round(priceQuad * 1.1) : 0);
+      const priceDouble = (master?.hargaJualDouble || 0) > 0 ? (master?.hargaJualDouble || 0) + markup : (priceQuad ? Math.round(priceQuad * 1.2) : 0);
 
       return { 
         ...p, 
@@ -251,85 +483,26 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
           onViewMitra={onViewMitra}
           onBook={(p) => {
             // Convert PaketMaster to DisplayPaket structure for booking modal
+            const qPrice = p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0;
             setSelectedPaket({
               id: p.id,
               type: 'master',
               displayName: p.nama,
-              displayPrice: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
+              displayPrice: qPrice,
               deskripsi: p.deskripsi || '',
               tglBerangkat: p.tglBerangkat,
               durasiHari: p.durasiHari,
               maskapaiId: p.maskapaiId,
-              hargaJualQuad: p.hargaJualQuad || p.hargaDasar || p.hargaEkonomi || 0,
-              hargaJualTriple: p.hargaJualTriple || (p.hargaDasar ? p.hargaDasar * 1.1 : 0),
-              hargaJualDouble: p.hargaJualDouble || (p.hargaDasar ? p.hargaDasar * 1.2 : 0),
+              hargaJualQuad: qPrice,
+              hargaJualTriple: p.hargaJualTriple || (qPrice ? Math.round(qPrice * 1.1) : 0),
+              hargaJualDouble: p.hargaJualDouble || (qPrice ? Math.round(qPrice * 1.2) : 0),
               mitraId: p.mitraId || undefined
             });
           }}
         />
 
         {/* Booking Confirmation Popup specifically active inside viewing detail too */}
-        {selectedPaket && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
-              {bookingSuccess ? (
-                <div className="text-center py-8 space-y-4">
-                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-                    ✓
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-gray-950 uppercase tracking-wide">Pemesanan Sukses!</h3>
-                    <p className="text-xs text-gray-500 mt-1">Sistem sedang mendaftarkan pesanan Anda di manifest pusat.</p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Konfirmasi Pemesanan</h3>
-                  <div className="bg-gray-50 rounded-xl mb-6 border border-gray-100 overflow-hidden">
-                    <div className="p-3 md:p-4 border-b border-gray-100">
-                      <h4 className="font-bold text-sm md:text-base text-gray-900 mb-1">{selectedPaket.displayName}</h4>
-                      <p className="text-[10px] md:text-xs text-gray-500 line-clamp-2">{selectedPaket.deskripsi}</p>
-                    </div>
-                    
-                    <div className="p-3 md:p-4 space-y-3 bg-white">
-                      <div className="flex justify-between items-center text-xs md:text-sm">
-                        <span className="text-gray-600 font-medium">QUAD (4 Bed)</span>
-                        <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.displayPrice || selectedPaket.hargaJualQuad)}</span>
-                      </div>
-                      {selectedPaket.hargaJualTriple ? (
-                        <div className="flex justify-between items-center text-xs md:text-sm">
-                          <span className="text-gray-650 font-medium">TRIPLE (3 Bed)</span>
-                          <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualTriple)}</span>
-                        </div>
-                      ) : null}
-                      {selectedPaket.hargaJualDouble ? (
-                        <div className="flex justify-between items-center text-xs md:text-sm">
-                          <span className="text-gray-650 font-medium">DOUBLE (2 Bed)</span>
-                          <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualDouble)}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => setSelectedPaket(null)}
-                      className="flex-1 px-4 py-2.5 bg-gray-150 text-gray-700 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-200 transition-colors"
-                    >
-                      Batal
-                    </button>
-                    <button 
-                      onClick={handleBooking}
-                      className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-lg shadow-emerald-600/10"
-                    >
-                      Konfirmasi
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+        {renderBookingModal()}
       </div>
     );
   }
@@ -517,65 +690,7 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
       </div>
 
       {/* Booking Modal */}
-      {selectedPaket && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 md:p-6 shadow-xl relative animate-in fade-in zoom-in duration-200">
-            {bookingSuccess ? (
-              <div className="text-center py-6 md:py-8">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8" />
-                </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Pemesanan Berhasil!</h3>
-                <p className="text-[10px] md:text-sm text-gray-500">Tim kami akan segera menghubungi Anda untuk proses selanjutnya.</p>
-              </div>
-            ) : (
-              <>
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4">Konfirmasi Pemesanan</h3>
-                <div className="bg-gray-50 rounded-xl mb-6 border border-gray-100 overflow-hidden">
-                  <div className="p-3 md:p-4 border-b border-gray-100">
-                    <h4 className="font-bold text-sm md:text-base text-gray-900 mb-1">{selectedPaket.displayName}</h4>
-                    <p className="text-[10px] md:text-sm text-gray-500">{selectedPaket.deskripsi}</p>
-                  </div>
-                  
-                  <div className="p-3 md:p-4 space-y-3 bg-white">
-                    <div className="flex justify-between items-center text-xs md:text-sm">
-                      <span className="text-gray-600">QUAD (4 Bed)</span>
-                      <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualQuad)}</span>
-                    </div>
-                    {selectedPaket.hargaJualTriple ? (
-                      <div className="flex justify-between items-center text-xs md:text-sm">
-                        <span className="text-gray-600">TRIPLE (3 Bed)</span>
-                        <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualTriple)}</span>
-                      </div>
-                    ) : null}
-                    {selectedPaket.hargaJualDouble ? (
-                      <div className="flex justify-between items-center text-xs md:text-sm">
-                        <span className="text-gray-600">DOUBLE (2 Bed)</span>
-                        <span className="font-bold text-amber-600">{formatCurrency(selectedPaket.hargaJualDouble)}</span>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-                
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => setSelectedPaket(null)}
-                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button 
-                    onClick={handleBooking}
-                    className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors"
-                  >
-                    Konfirmasi
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {renderBookingModal()}
     </div>
   );
 };
