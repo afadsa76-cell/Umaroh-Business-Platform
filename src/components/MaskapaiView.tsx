@@ -60,6 +60,32 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       
       setData(maskapaiList);
       setLoading(false);
+
+      // Auto-sync missing initial data items in background (only in admin/full mode)
+      if (!isVendorMode) {
+        const existingIds = new Set(maskapaiList.map(item => item.id));
+        const missingItems = initialData.filter(item => !existingIds.has(item.id));
+        if (missingItems.length > 0) {
+          console.log(`Auto-syncing ${missingItems.length} new maskapai records...`);
+          // Chunk missingItems to respect Firestore limit of 500 writes per batch
+          const chunkSize = 400;
+          for (let i = 0; i < missingItems.length; i += chunkSize) {
+            const chunk = missingItems.slice(i, i + chunkSize);
+            const batch = writeBatch(db);
+            chunk.forEach((item) => {
+              const itemRef = doc(db, 'maskapai', item.id);
+              const seedPayload = {
+                ...item,
+                updatedAt: new Date().toISOString()
+              };
+              batch.set(itemRef, seedPayload, { merge: true });
+            });
+            batch.commit()
+              .then(() => console.log('Auto-sync batch completed.'))
+              .catch(err => console.error('Auto-sync batch failed:', err));
+          }
+        }
+      }
     }, (error) => {
       console.error("Error fetching maskapai:", error);
       setLoading(false);
