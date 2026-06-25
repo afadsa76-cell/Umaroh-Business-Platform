@@ -100,6 +100,7 @@ interface PaketMasterWizardProps {
   onCancel: () => void;
   onSuccess: () => void;
   initialStepName?: string;
+  autoDownloadPdf?: boolean;
 }
 
 const getSteps = (kategori: string) => {
@@ -293,6 +294,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   onCancel,
   onSuccess,
   initialStepName,
+  autoDownloadPdf = false,
 }) => {
   const [currentStep, setCurrentStep] = useState(() => {
     if (initialStepName) {
@@ -311,6 +313,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [dbLayananList, setDbLayananList] = useState<Layanan[]>([]);
   const [bandaraList, setBandaraList] = useState<Bandara[]>([]);
   const [paketWisataList, setPaketWisataList] = useState<PaketWisata[]>([]);
+  const [createdDocId, setCreatedDocId] = useState<string | null>(() => initialData?.id || null);
 
   const [aiResult, setAiResult] = useState<{ title: string; content: string } | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -349,6 +352,20 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       unsubUser();
     };
   }, []);
+
+  useEffect(() => {
+    if (autoDownloadPdf) {
+      const timer = setTimeout(() => {
+        handleExport('pdf').then(() => {
+          onCancel();
+        }).catch((err) => {
+          console.error("Auto download failed:", err);
+          onCancel();
+        });
+      }, 1000); // 1000ms is standard to ensure everything has loaded/rendered in DOM
+      return () => clearTimeout(timer);
+    }
+  }, [autoDownloadPdf]);
 
   const parseNum = (val: string | number | undefined, def = 0): number => {
     const n = Number(val);
@@ -467,6 +484,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     };
     if (base.tglBerangkat && !base.preferredDepartureDate) {
       base.preferredDepartureDate = base.tglBerangkat;
+    }
+    // Fallback for loading existing packages created by Mitra where markup wasn't saved separately
+    if (base.mitraId && base.markup === undefined && base.marginBersih !== undefined) {
+      base.markup = base.marginBersih;
     }
     return base;
   });
@@ -635,11 +656,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     formData.kotaTujuan
   ]);
 
-  // Reset selected maskapai if it's filtered out
+  // Reset selected maskapai if it's not present in the master database list (deleted)
   useEffect(() => {
+    if (maskapaiList.length === 0) return; // Wait for master list to load first to avoid race conditions
     if (formData.maskapaiId) {
-      const isValid = filteredMaskapaiList.some(m => m.id === formData.maskapaiId);
-      if (!isValid) {
+      const existsInDb = maskapaiList.some(m => m.id === formData.maskapaiId);
+      if (!existsInDb) {
         setFormData(prev => ({
           ...prev,
           maskapaiId: '',
@@ -648,7 +670,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         }));
       }
     }
-  }, [formData.tipePenerbangan, formData.kotaTujuan, formData.kotaKeberangkatan, filteredMaskapaiList, formData.maskapaiId]);
+  }, [maskapaiList, formData.maskapaiId]);
 
   // Synchronize Hotel Dates based on tglBerangkat and durations
   useEffect(() => {
@@ -886,41 +908,88 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   ];
 
   const getHotelPriceDynamic = (hotel: WizardHotel | undefined, dateStr: string, roomType: 'Quad' | 'Triple' | 'Double') => {
-    if (!hotel || !dateStr) return 0;
-    if (!hotel.seasons || hotel.seasons.length === 0) return 0;
+    if (!hotel) return 0;
     
-    const dateObj = new Date(dateStr);
-    if (isNaN(dateObj.getTime())) return 0;
-    
-    let season = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
-    
-    // Fallback: If no season found, use the first season
-    if (!season && hotel.seasons.length > 0) {
-      season = hotel.seasons[0];
+    // If hotel has season ranges defined (usually static list or highly structured db entries)
+    if (hotel.seasons && hotel.seasons.length > 0 && dateStr) {
+      const dateObj = new Date(dateStr);
+      if (!isNaN(dateObj.getTime())) {
+        let season = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
+        
+        // Fallback: If no season matched but we have seasons, use the first season
+        if (!season && hotel.seasons.length > 0) {
+          season = hotel.seasons[0];
+        }
+        
+        if (season) {
+          const priceEntry = season.prices.find((p) => p.roomType === roomType);
+          if (priceEntry) {
+            const kurs = 4900; // Use standard conversion rate
+            const margin = 1.1;
+            let divisor = 1;
+            if (roomType === 'Quad') divisor = 4;
+            else if (roomType === 'Triple') divisor = 3;
+            else if (roomType === 'Double') divisor = 2;
+            
+            const price = ((priceEntry.price * kurs) / divisor) * margin;
+            return price > 0 ? Math.ceil(price / 1000) * 1000 : 0;
+          }
+        }
+      }
     }
     
-    if (!season) return 0;
-    
-    const priceEntry = season.prices.find((p) => p.roomType === roomType);
-    if (!priceEntry) return 0;
-    
-    const kurs = 4900; // Use a standard kurs or from state if available
-    const margin = 1.1;
-    let divisor = 1;
-    if (roomType === 'Quad') divisor = 4;
-    else if (roomType === 'Triple') divisor = 3;
-    else if (roomType === 'Double') divisor = 2;
-    
-    const price = ((priceEntry.price * kurs) / divisor) * margin;
-    return price > 0 ? Math.ceil(price / 1000) * 1000 : 0;
+    // Graceful Fallback: For database hotels without seasons, return their directly specified base price
+    if (roomType === 'Quad') return hotel.priceQuad || 0;
+    if (roomType === 'Triple') return hotel.priceTriple || 0;
+    if (roomType === 'Double') return hotel.priceDouble || 0;
+    return 0;
   };
 
   const pricingSummary = useMemo(() => {
     const maskapaiPrice = Number(formData.estimasiHargaMaskapai) || 0;
 
-    const hMadinah = hotelsList.find((h) => h.id === formData.hotelMadinahId);
-    const hMakkah = hotelsList.find((h) => h.id === formData.hotelMakkahId);
-    const hWisata = hotelsList.find((h) => h.id === formData.hotelWisataId);
+    let hMadinah = hotelsList.find((h) => h.id === formData.hotelMadinahId);
+    if (!hMadinah && formData.hotelMadinahId) {
+      // Prevent visual flicker/empty states while hotelsList is loading from Firestore
+      hMadinah = {
+        id: formData.hotelMadinahId,
+        nama: formData.hotelMadinahId.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+        kota: "madinah",
+        bintang: 5,
+        priceQuad: 0,
+        priceTriple: 0,
+        priceDouble: 0,
+        seasons: []
+      };
+    }
+
+    let hMakkah = hotelsList.find((h) => h.id === formData.hotelMakkahId);
+    if (!hMakkah && formData.hotelMakkahId) {
+      hMakkah = {
+        id: formData.hotelMakkahId,
+        nama: formData.hotelMakkahId.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+        kota: "makkah",
+        bintang: 5,
+        priceQuad: 0,
+        priceTriple: 0,
+        priceDouble: 0,
+        seasons: []
+      };
+    }
+
+    let hWisata = hotelsList.find((h) => h.id === formData.hotelWisataId);
+    if (!hWisata && formData.hotelWisataId) {
+      hWisata = {
+        id: formData.hotelWisataId,
+        nama: formData.hotelWisataId.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+        kota: (formData.negaraWisata || "turkey").toLowerCase(),
+        bintang: 5,
+        priceQuad: 0,
+        priceTriple: 0,
+        priceDouble: 0,
+        seasons: []
+      };
+    }
 
     const tglCheckInMadinah = formData.chkInMadinah || formData.tglBerangkat;
     const tglCheckInMakkah = formData.chkInMakkah || formData.tglBerangkat;
@@ -985,18 +1054,29 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const baseTriple = maskapaiPrice + hWisataTotalTriple + hTripleMadinah + hTripleMakkah + layananTotal;
     const baseDouble = maskapaiPrice + hWisataTotalDouble + hDoubleMadinah + hDoubleMakkah + layananTotal;
 
-    const margin = Number(formData.marginBersih) || 0;
+    const effectiveIsMitra = isMitraContext || !!formData.mitraId;
+    let margin = Number(formData.marginBersih) || 0;
+    let mitraMarkup = 0;
+
+    if (effectiveIsMitra) {
+      if (formData.markup !== undefined) {
+        mitraMarkup = Number(formData.markup) || 0;
+      } else {
+        mitraMarkup = Number(formData.marginBersih) || 0;
+        margin = 0;
+      }
+    }
+
     const adminFee = margin * 0.1;
-    const mitraMarkup = isMitraContext ? (Number(formData.markup) || 0) : 0;
     const mitraAdminFee = mitraMarkup * 0.1;
     
     // In Partner context, the Admin's profit (margin + fee) is part of the cost base
-    const adminServiceFee = isMitraContext ? (margin + adminFee) : 0;
+    const adminServiceFee = effectiveIsMitra ? (margin + adminFee) : 0;
     
-    const displayKomisiMitra = isMitraContext ? mitraMarkup : margin;
-    const displayKomisiUmaroh = isMitraContext ? mitraAdminFee : adminFee;
+    const displayKomisiMitra = effectiveIsMitra ? mitraMarkup : margin;
+    const displayKomisiUmaroh = effectiveIsMitra ? mitraAdminFee : adminFee;
     
-    const totalMarkupCount = isMitraContext ? (mitraMarkup + mitraAdminFee) : (margin + adminFee);
+    const totalMarkupCount = effectiveIsMitra ? (mitraMarkup + mitraAdminFee) : (margin + adminFee);
 
     // Wisata Halal specific
     const baseIDR = (formData.hargaDasar || 1350) * 19000;
@@ -1032,16 +1112,16 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       baseQuad: Math.round(baseQuad),
       baseTriple: Math.round(baseTriple),
       baseDouble: Math.round(baseDouble),
-      finalQuad: Math.round(baseQuad + totalMarkupCount),
-      finalTriple: Math.round(baseTriple + totalMarkupCount),
-      finalDouble: Math.round(baseDouble + totalMarkupCount),
-      adminFee: Math.round(adminFee),
+      finalQuad: Math.round(baseQuad + totalMarkupCount + adminServiceFee),
+      finalTriple: Math.round(baseTriple + totalMarkupCount + adminServiceFee),
+      finalDouble: Math.round(baseDouble + totalMarkupCount + adminServiceFee),
+      adminFee: Math.round(displayKomisiUmaroh),
       totalKomisiMitra: Math.round(displayKomisiMitra),
       ujrohAnda: Math.round(margin - (Number(formData.ujrohPartner) || 0)),
       ujrohPartner: Math.round(Number(formData.ujrohPartner) || 0),
       totalKomisiUmaroh: Math.round(displayKomisiUmaroh),
       adminServiceFee: Math.round(adminServiceFee),
-      totalMarkup: isMitraContext ? Math.round(mitraMarkup + mitraAdminFee) : Math.round(margin + adminFee),
+      totalMarkup: effectiveIsMitra ? Math.round(mitraMarkup + mitraAdminFee) : Math.round(margin + adminFee),
       finalWisataPrice,
       baseIDR,
       wisataAddonsTotal,
@@ -1252,7 +1332,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
-      const isNew = !initialData?.id;
+      const isNew = !createdDocId;
       const generateRequestId = () => {
         const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const code = Array.from({ length: 4 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join("");
@@ -1290,6 +1370,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         estimasiHargaMaskapai: Number(formData.estimasiHargaMaskapai || 0),
         marginBersih: Number(formData.marginBersih || 0),
         ujrohPartner: Number(formData.ujrohPartner || 0),
+        markup: Number(formData.markup || 0),
         durasiMadinah: Number(formData.durasiMadinah || 3),
         durasiMakkah: Number(formData.durasiMakkah || 4),
         durasiWisata: Number(formData.durasiWisata || 0),
@@ -1299,16 +1380,29 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         hargaJualQuad: Math.round(pricingSummary.finalQuad),
         hargaJualTriple: Math.round(pricingSummary.finalTriple),
         hargaJualDouble: Math.round(pricingSummary.finalDouble),
+        wisataAddon_tourLeader: formData.wisataAddon_tourLeader || false,
+        wisataAddon_tourLeaderCount: Number(formData.wisataAddon_tourLeaderCount || 0),
+        wisataAddon_handling: formData.wisataAddon_handling || false,
+        wisataAddon_handlingType: formData.wisataAddon_handlingType || "",
+        wisataAddon_travelKits: formData.wisataAddon_travelKits || false,
+        wisataAddon_merch_koper: formData.wisataAddon_merch_koper || false,
+        wisataAddon_merch_slingbag: formData.wisataAddon_merch_slingbag || false,
+        wisataAddon_merch_kaos: formData.wisataAddon_merch_kaos || false,
+        wisataAddon_merch_jaket: formData.wisataAddon_merch_jaket || false,
+        wisataAddon_merch_tasserut: formData.wisataAddon_merch_tasserut || false,
+        wisataAddon_merch_topi: formData.wisataAddon_merch_topi || false,
+        wisataAddon_merch_spanduk: formData.wisataAddon_merch_spanduk || false,
       };
 
       if (isNew) {
-        await addDoc(collection(db, "paket_master"), {
+        const docRef = await addDoc(collection(db, "paket_master"), {
           ...dataToSave,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
+        setCreatedDocId(docRef.id);
       } else {
-        await updateDoc(doc(db, "paket_master", initialData.id), {
+        await updateDoc(doc(db, "paket_master", createdDocId || initialData!.id), {
           ...dataToSave,
           updatedAt: serverTimestamp(),
         });
@@ -1324,7 +1418,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStepName === "HOTEL" || currentStepName === "HOTEL UMRAH") {
       if (!formData.hotelMadinahId) {
         alert("Hotel Madinah wajib dipilih!");
@@ -1335,6 +1429,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         alert("Hotel Makkah wajib dipilih!");
         setHotelStep("makkah");
         return;
+      }
+    }
+
+    if (currentStepName === "REVIEW FASILITAS") {
+      setIsSaving(true);
+      try {
+        await saveToDatabase();
+      } catch (e) {
+        console.error("Auto-save failed on Next:", e);
+      } finally {
+        setIsSaving(false);
       }
     }
 
@@ -1349,137 +1454,175 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const isNew = !initialData?.id;
-      const generateRequestId = () => {
-        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const code = Array.from({ length: 4 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join("");
-        return `REQ-${code}`;
-      };
+  const saveToDatabase = async (): Promise<string | null> => {
+    const isNew = !createdDocId;
+    const generateRequestId = () => {
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const code = Array.from({ length: 4 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join("");
+      return `REQ-${code}`;
+    };
 
-      const dataToSave: Partial<WizardFormData> = {
-        photoUtama: formData.photoUtama || null,
-        requestId: initialData?.requestId || generateRequestId(),
-        nama: formData.nama || "Paket Umroh Tanpa Nama",
-        deskripsi: formData.deskripsi || "",
-        tipePublikasi: formData.tipePublikasi || "B2C",
-        tipePenjualan: formData.tipePenjualan || "INDIVIDUAL",
-        hargaDasar: Number(pricingSummary.baseQuad || 0),
-        maskapaiId: formData.maskapaiId || "",
-        hotelMadinahId: formData.hotelMadinahId || "",
-        hotelMakkahId: formData.hotelMakkahId || "",
-        hotelWisataId: formData.hotelWisataId || "",
-        selectedLayanan: formData.selectedLayanan || [],
-        selectedWisata: formData.selectedWisata || [],
-        kuota: Number(formData.targetJamaah || 0),
-        sisaKuota: Number(formData.targetJamaah || 0),
-        status: isMitraContext ? 'pending_validation' : (formData.status || "draft"),
-        validationStatus: isMitraContext ? 'pending' : 'approved',
-        // Additional meta
-        kategori: formData.kategori,
-        periode: formData.periode,
-        durasiHari: formData.durasiHari,
-        kotaKeberangkatan: formData.kotaKeberangkatan,
-        kotaTujuan: formData.kotaTujuan,
-        urutanKunjungan: formData.urutanKunjungan,
-        tglBerangkat: formData.tglBerangkat,
-        tglKepulangan: formData.tglKepulangan,
-        tipePenerbangan: formData.tipePenerbangan,
-        kelasPenerbangan: formData.kelasPenerbangan,
-        estimasiHargaMaskapai: Number(formData.estimasiHargaMaskapai || 0),
-        marginBersih: Number(formData.marginBersih || 0),
-        ujrohPartner: Number(formData.ujrohPartner || 0),
-        durasiMadinah: Number(formData.durasiMadinah || 3),
-        durasiMakkah: Number(formData.durasiMakkah || 4),
-        durasiWisata: Number(formData.durasiWisata || 0),
-        paketWisataId: formData.paketWisataId || "",
-        negaraWisata: formData.negaraWisata || "",
-        mitraId: formData.mitraId || null,
-        hargaJualQuad: Math.round(pricingSummary.finalQuad),
-        hargaJualTriple: Math.round(pricingSummary.finalTriple),
-        hargaJualDouble: Math.round(pricingSummary.finalDouble),
-      };
+    const dataToSave: Partial<WizardFormData> = {
+      photoUtama: formData.photoUtama || null,
+      requestId: initialData?.requestId || generateRequestId(),
+      nama: formData.nama || "Paket Umroh Tanpa Nama",
+      deskripsi: formData.deskripsi || "",
+      tipePublikasi: formData.tipePublikasi || "B2C",
+      tipePenjualan: formData.tipePenjualan || "INDIVIDUAL",
+      hargaDasar: Number(pricingSummary.baseQuad || 0),
+      maskapaiId: formData.maskapaiId || "",
+      hotelMadinahId: formData.hotelMadinahId || "",
+      hotelMakkahId: formData.hotelMakkahId || "",
+      hotelWisataId: formData.hotelWisataId || "",
+      selectedLayanan: formData.selectedLayanan || [],
+      selectedWisata: formData.selectedWisata || [],
+      kuota: Number(formData.targetJamaah || 0),
+      sisaKuota: Number(formData.targetJamaah || 0),
+      status: isMitraContext ? 'pending_validation' : (formData.status || "draft"),
+      validationStatus: isMitraContext ? 'pending' : 'approved',
+      // Additional meta
+      kategori: formData.kategori,
+      periode: formData.periode,
+      durasiHari: formData.durasiHari,
+      kotaKeberangkatan: formData.kotaKeberangkatan,
+      kotaTujuan: formData.kotaTujuan,
+      urutanKunjungan: formData.urutanKunjungan,
+      tglBerangkat: formData.tglBerangkat,
+      tglKepulangan: formData.tglKepulangan,
+      tipePenerbangan: formData.tipePenerbangan,
+      kelasPenerbangan: formData.kelasPenerbangan,
+      estimasiHargaMaskapai: Number(formData.estimasiHargaMaskapai || 0),
+      marginBersih: Number(formData.marginBersih || 0),
+      ujrohPartner: Number(formData.ujrohPartner || 0),
+      markup: Number(formData.markup || 0),
+      durasiMadinah: Number(formData.durasiMadinah || 3),
+      durasiMakkah: Number(formData.durasiMakkah || 4),
+      durasiWisata: Number(formData.durasiWisata || 0),
+      paketWisataId: formData.paketWisataId || "",
+      negaraWisata: formData.negaraWisata || "",
+      mitraId: formData.mitraId || null,
+      hargaJualQuad: Math.round(pricingSummary.finalQuad),
+      hargaJualTriple: Math.round(pricingSummary.finalTriple),
+      hargaJualDouble: Math.round(pricingSummary.finalDouble),
+      wisataAddon_tourLeader: formData.wisataAddon_tourLeader || false,
+      wisataAddon_tourLeaderCount: Number(formData.wisataAddon_tourLeaderCount || 0),
+      wisataAddon_handling: formData.wisataAddon_handling || false,
+      wisataAddon_handlingType: formData.wisataAddon_handlingType || "",
+      wisataAddon_travelKits: formData.wisataAddon_travelKits || false,
+      wisataAddon_merch_koper: formData.wisataAddon_merch_koper || false,
+      wisataAddon_merch_slingbag: formData.wisataAddon_merch_slingbag || false,
+      wisataAddon_merch_kaos: formData.wisataAddon_merch_kaos || false,
+      wisataAddon_merch_jaket: formData.wisataAddon_merch_jaket || false,
+      wisataAddon_merch_tasserut: formData.wisataAddon_merch_tasserut || false,
+      wisataAddon_merch_topi: formData.wisataAddon_merch_topi || false,
+      wisataAddon_merch_spanduk: formData.wisataAddon_merch_spanduk || false,
+    };
 
-      if (isMitraContext) {
-        if (formData.isMarkupOnly || formData.paketMasterId || initialData?.paketMasterId) {
-          const markupData = {
-            paketMasterId: formData.paketMasterId || initialData?.paketMasterId,
-            mitraId: formData.mitraId,
-            namaPaketMitra: formData.nama || formData.namaPaketMitra,
-            markup: Number(formData.markup || 0),
-            hargaJual: Math.round(pricingSummary.finalQuad),
-            hargaJualTriple: Math.round(pricingSummary.finalTriple),
-            hargaJualDouble: Math.round(pricingSummary.finalDouble),
-            photoUtama: formData.photoUtama || null,
-            status: 'active',
-            updatedAt: serverTimestamp(),
-          };
+    let savedId = createdDocId;
 
-          if (!isNew && initialData?.id && !formData.isNewMarkup) {
-            // Update Existing Markup
-            try {
-              await updateDoc(doc(db, "paket_mitra", initialData.id), markupData);
-            } catch (e) {
-              handleFirestoreError(e, OperationType.WRITE, `paket_mitra/${initialData.id}`);
-            }
-          } else {
-            // Create New Markup
-            try {
-              await addDoc(collection(db, "paket_mitra"), {
-                ...markupData,
-                createdAt: serverTimestamp(),
-              });
-            } catch (e) {
-              handleFirestoreError(e, OperationType.CREATE, 'paket_mitra');
-            }
+    if (isMitraContext) {
+      if (formData.isMarkupOnly || formData.paketMasterId || initialData?.paketMasterId) {
+        const markupData = {
+          paketMasterId: formData.paketMasterId || initialData?.paketMasterId,
+          mitraId: formData.mitraId,
+          namaPaketMitra: formData.nama || formData.namaPaketMitra,
+          markup: Number(formData.markup || 0),
+          hargaJual: Math.round(pricingSummary.finalQuad),
+          hargaJualTriple: Math.round(pricingSummary.finalTriple),
+          hargaJualDouble: Math.round(pricingSummary.finalDouble),
+          photoUtama: formData.photoUtama || null,
+          status: 'active',
+          updatedAt: serverTimestamp(),
+        };
+
+        if (!isNew && savedId && !formData.isNewMarkup) {
+          // Update Existing Markup
+          try {
+            await updateDoc(doc(db, "paket_mitra", savedId), markupData);
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `paket_mitra/${savedId}`);
+            throw e;
           }
         } else {
-          // Validation process for Mitra creating OWN Master Package
-          if (isNew) {
-            try {
-              await addDoc(collection(db, "paket_master"), {
-                ...dataToSave,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-              });
-            } catch (e) {
-              handleFirestoreError(e, OperationType.CREATE, 'paket_master');
-            }
-          } else {
-            try {
-              await updateDoc(doc(db, "paket_master", initialData.id), {
-                ...dataToSave,
-                updatedAt: serverTimestamp(),
-              });
-            } catch (e) {
-              handleFirestoreError(e, OperationType.WRITE, `paket_master/${initialData.id}`);
-            }
+          // Create New Markup
+          try {
+            const docRef = await addDoc(collection(db, "paket_mitra"), {
+              ...markupData,
+              createdAt: serverTimestamp(),
+            });
+            savedId = docRef.id;
+            setCreatedDocId(docRef.id);
+            // After creating, it is no longer a new markup for subsequent updates
+            setFormData((prev) => ({ ...prev, isNewMarkup: false }));
+          } catch (e) {
+            handleFirestoreError(e, OperationType.CREATE, 'paket_mitra');
+            throw e;
           }
         }
       } else {
-        // Normal Admin flow
-        if (initialData?.id) {
+        // Validation process for Mitra creating OWN Master Package
+        if (isNew) {
           try {
-            await updateDoc(doc(db, "paket_master", initialData.id), {
-              ...dataToSave,
-              updatedAt: serverTimestamp(),
-            });
-          } catch (e) {
-            handleFirestoreError(e, OperationType.WRITE, `paket_master/${initialData.id}`);
-          }
-        } else {
-          try {
-            await addDoc(collection(db, "paket_master"), {
+            const docRef = await addDoc(collection(db, "paket_master"), {
               ...dataToSave,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
             });
+            savedId = docRef.id;
+            setCreatedDocId(docRef.id);
           } catch (e) {
             handleFirestoreError(e, OperationType.CREATE, 'paket_master');
+            throw e;
+          }
+        } else {
+          try {
+            await updateDoc(doc(db, "paket_master", savedId!), {
+              ...dataToSave,
+              updatedAt: serverTimestamp(),
+            });
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `paket_master/${savedId}`);
+            throw e;
           }
         }
+      }
+    } else {
+      // Normal Admin flow
+      if (!isNew && savedId) {
+        try {
+          await updateDoc(doc(db, "paket_master", savedId), {
+            ...dataToSave,
+            updatedAt: serverTimestamp(),
+          });
+        } catch (e) {
+          handleFirestoreError(e, OperationType.WRITE, `paket_master/${savedId}`);
+          throw e;
+        }
+      } else {
+        try {
+          const docRef = await addDoc(collection(db, "paket_master"), {
+            ...dataToSave,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          savedId = docRef.id;
+          setCreatedDocId(docRef.id);
+        } catch (e) {
+          handleFirestoreError(e, OperationType.CREATE, 'paket_master');
+          throw e;
+        }
+      }
+    }
+
+    return savedId;
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const savedId = await saveToDatabase();
+      if (!savedId) {
+        throw new Error("Gagal menyimpan ke database");
       }
 
       onSuccess();
@@ -1487,11 +1630,11 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       // Trigger WhatsApp if finishing from VALIDASI AKHIR step
       if (currentStepName === "VALIDASI AKHIR") {
         const adminPhone = "6283844974952";
-        const isUpdate = !isNew;
+        const isUpdate = !(!initialData?.id);
         const msgHeader = isUpdate 
           ? "Ada UPDATE paket yang membutuhkan validasi ulang:" 
           : "Ada paket baru yang membutuhkan validasi:";
-        const waMessage = `Assalamu'alaikum Admin Operasional,\n\n${msgHeader}\n\n*Nama Paket:* ${dataToSave.nama}\n*Kategori:* ${dataToSave.kategori || formData.kategori}\n\nMohon segera ditinjau.\n\nTerima kasih.`;
+        const waMessage = `Assalamu'alaikum Admin Operasional,\n\n${msgHeader}\n\n*Nama Paket:* ${formData.nama || "Paket Umroh Tanpa Nama"}\n*Kategori:* ${formData.kategori}\n\nMohon segera ditinjau.\n\nTerima kasih.`;
         openWhatsApp(generateWALink(adminPhone, waMessage));
       }
     } catch (e) {
@@ -1550,7 +1693,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   };
 
   const handleExport = async (type: 'pdf' | 'jpg') => {
-    // ...
+    if (!autoDownloadPdf) {
+      setIsSaving(true);
+      try {
+        await saveToDatabase();
+      } catch (e) {
+        console.error("Auto-save failed on export:", e);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+
     const pdfElement = document.getElementById('pdf-export-content');
     if (!pdfElement) return;
 
@@ -1651,7 +1804,23 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   };
 
   return (
-    <div className="bg-white md:rounded-2xl md:shadow-md md:border md:border-gray-100 p-0 sm:p-6 md:p-8 min-h-screen md:min-h-0">
+    <div className="bg-white md:rounded-2xl md:shadow-md md:border md:border-gray-100 p-0 sm:p-6 md:p-8 min-h-screen md:min-h-0 relative">
+      {autoDownloadPdf && (
+        <div className="absolute inset-0 z-50 bg-white/95 flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
+          <div className="relative flex flex-col items-center justify-center space-y-6">
+            <div className="relative flex items-center justify-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-100 border-t-emerald-600"></div>
+              <FileText className="w-6 h-6 text-emerald-600 absolute animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-gray-900 mb-2">Mempersiapkan Dokumen</h3>
+              <p className="text-sm font-medium text-gray-600 max-w-md">
+                Mengunduh PDF deskripsi paket <span className="font-bold text-emerald-600">"{formData.nama || "TBA"}"</span> langsung ke perangkat Anda...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header & Back Button */}
       <div className="flex items-center gap-4 mb-8 px-4 sm:px-0 pt-4 sm:pt-0">
         <button
@@ -4905,13 +5074,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   const adminFeeAdmin = marginAdmin * 0.1;
                   const totalMarkupAdmin = marginAdmin + adminFeeAdmin;
 
-                  const marginMitra = isMitraContext ? (Number(formData.markup) || 0) : 0;
+                  const effectiveIsMitra = isMitraContext || !!formData.mitraId;
+                  const marginMitra = effectiveIsMitra ? (Number(formData.markup !== undefined ? formData.markup : formData.marginBersih) || 0) : 0;
                   const adminFeeMitra = marginMitra * 0.1;
                   const totalMarkupMitra = marginMitra + adminFeeMitra;
 
-                  const currentMarkup = isMitraContext ? marginMitra : marginAdmin;
-                  const adminFeeDisplay = isMitraContext ? adminFeeMitra : adminFeeAdmin;
-                  const totalMarkupDisplay = isMitraContext ? totalMarkupMitra : totalMarkupAdmin;
+                  const currentMarkup = effectiveIsMitra ? marginMitra : marginAdmin;
+                  const adminFeeDisplay = effectiveIsMitra ? adminFeeMitra : adminFeeAdmin;
+                  const totalMarkupDisplay = effectiveIsMitra ? totalMarkupMitra : totalMarkupAdmin;
 
                   return (
                     <div className="space-y-8">
@@ -5232,8 +5402,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     selectedLayananItems,
                     finalQuad,
                     finalTriple,
-                    finalDouble,
-                    adminFee
+                    finalDouble
                   } = pricingSummary;
 
                 return (
@@ -5433,6 +5602,22 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                               </div>
                             ))}
 
+                          {(isMitraContext || !!formData.mitraId) && pricingSummary.adminServiceFee > 0 && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 border-dashed">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                  <Check className="w-4 h-4 text-emerald-500" />
+                                </div>
+                                <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
+                                  SISTEM & LAYANAN PUSAT
+                                </span>
+                              </div>
+                              <span className="font-black text-xs sm:text-sm text-blue-600 italic">
+                                Rp {pricingSummary.adminServiceFee.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                          )}
+
 
                           {(pricingSummary.totalKomisiMitra > 0) && (
                             <>
@@ -5507,7 +5692,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             <div className="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase tracking-widest">
                               <Layers className="w-3 h-3" />
                               INC. ADMIN (RP{" "}
-                              {Math.round(adminFee || 0).toLocaleString("id-ID")})
+                              {Math.round(pricingSummary.adminFee || 0).toLocaleString("id-ID")})
                             </div>
                           </div>
                         ))}
@@ -6465,6 +6650,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </div>
             ))}
 
+            {(isMitraContext || !!formData.mitraId) && pricingSummary.adminServiceFee > 0 && (
+              <div style={{ pageBreakInside: 'avoid' }} className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                     <Check className="w-5 h-5" />
+                  </div>
+                  <span className="font-bold text-sm text-gray-800 uppercase">SISTEM & LAYANAN PUSAT</span>
+                </div>
+                <span className="font-black text-blue-700 italic">Rp {pricingSummary.adminServiceFee.toLocaleString('id-ID')}</span>
+              </div>
+            )}
+
 
             {(pricingSummary.totalKomisiMitra > 0) && (
               <>
@@ -6474,7 +6671,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                        <Banknote className="w-5 h-5" />
                     </div>
                     <span className="font-bold text-sm text-gray-800 uppercase">
-                      {isMitraContext ? 'KOMISI MITRA' : 'TOTAL UJROH PAKET'}
+                      {(isMitraContext || !!formData.mitraId) ? 'KOMISI MITRA' : 'TOTAL UJROH PAKET'}
                     </span>
                   </div>
                   <span className="font-black text-blue-700 italic">Rp {pricingSummary.totalKomisiMitra.toLocaleString('id-ID')}</span>

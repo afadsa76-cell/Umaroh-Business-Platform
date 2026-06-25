@@ -69,6 +69,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
     provinsi: '',
     kota: '',
     kecamatan: '',
+    desaKelurahan: '',
     alamatLengkap: '',
     uplineId: '',
     metodePembayaran: 'transfer',
@@ -121,15 +122,24 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
   const handleSelectAddress = (suggestion: AddressSuggestion) => {
     const addressDetails = suggestion.address;
     
-    const provinsi = addressDetails.state || addressDetails.province || '';
-    const kota = addressDetails.city || addressDetails.town || addressDetails.county || addressDetails.municipality || '';
-    const kecamatan = addressDetails.suburb || addressDetails.village || addressDetails.district || '';
+    const rawProvinsi = addressDetails.state || addressDetails.province || '';
+    const provinsi = typeof rawProvinsi === 'string' ? rawProvinsi : '';
+    
+    const rawKota = addressDetails.city || addressDetails.town || addressDetails.county || addressDetails.municipality || '';
+    const kota = typeof rawKota === 'string' ? rawKota : '';
+    
+    const rawKecamatan = addressDetails.suburb || addressDetails.district || addressDetails.village || '';
+    const kecamatan = typeof rawKecamatan === 'string' ? rawKecamatan : '';
+    
+    const rawDesa = addressDetails.village || addressDetails.subdistrict || addressDetails.hamlet || addressDetails.neighbourhood || '';
+    const desaKelurahan = typeof rawDesa === 'string' ? rawDesa : '';
     
     setFormData(prev => ({
       ...prev,
       provinsi,
       kota,
       kecamatan,
+      desaKelurahan
     }));
     
     setAddressQuery(suggestion.display_name);
@@ -216,8 +226,8 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
         return;
       }
     } else if (currentStep === 4) {
-      if (!formData.provinsi || !formData.kota || !formData.kecamatan || !formData.alamatLengkap) {
-        setError("Mohon lengkapi semua data lokasi.");
+      if (!formData.provinsi || !formData.kota || !formData.kecamatan || !formData.desaKelurahan || !formData.alamatLengkap) {
+        setError("Mohon lengkapi semua data lokasi (Provinsi, Kota, Kecamatan, Desa/Kelurahan, dan Alamat Lengkap).");
         return;
       }
     }
@@ -256,6 +266,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
         provinsi: formData.provinsi,
         kota: formData.kota,
         kecamatan: formData.kecamatan,
+        desaKelurahan: formData.desaKelurahan,
         alamatLengkap: formData.alamatLengkap,
         uplineId: formData.uplineId,
         uplineName: upline ? upline.name : '',
@@ -690,7 +701,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Provinsi</label>
+                        <label className="block text-sm font-medium text-gray-700">Provinsi *</label>
                         <input
                           type="text"
                           name="provinsi"
@@ -702,7 +713,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Kota / Kabupaten</label>
+                        <label className="block text-sm font-medium text-gray-700">Kota / Kabupaten *</label>
                         <input
                           type="text"
                           name="kota"
@@ -715,21 +726,35 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Kecamatan</label>
-                      <input
-                        type="text"
-                        name="kecamatan"
-                        required
-                        value={formData.kecamatan}
-                        onChange={handleInputChange}
-                        className="mt-1 focus:ring-amber-500 focus:border-amber-500 block w-full sm:text-sm border-gray-300 rounded-lg py-3 px-4 border"
-                        placeholder="Contoh: Coblong"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Kecamatan *</label>
+                        <input
+                          type="text"
+                          name="kecamatan"
+                          required
+                          value={formData.kecamatan}
+                          onChange={handleInputChange}
+                          className="mt-1 focus:ring-amber-500 focus:border-amber-500 block w-full sm:text-sm border-gray-300 rounded-lg py-3 px-4 border"
+                          placeholder="Contoh: Coblong"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Desa / Kelurahan *</label>
+                        <input
+                          type="text"
+                          name="desaKelurahan"
+                          required
+                          value={formData.desaKelurahan}
+                          onChange={handleInputChange}
+                          className="mt-1 focus:ring-amber-500 focus:border-amber-500 block w-full sm:text-sm border-gray-300 rounded-lg py-3 px-4 border"
+                          placeholder="Contoh: Sadang Serang"
+                        />
+                      </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
+                      <label className="block text-sm font-medium text-gray-700">Alamat Lengkap *</label>
                       <div className="mt-1 relative rounded-md shadow-sm">
                         <div className="absolute top-3 left-3 flex items-start pointer-events-none">
                           <MapPin className="h-5 w-5 text-gray-400" />

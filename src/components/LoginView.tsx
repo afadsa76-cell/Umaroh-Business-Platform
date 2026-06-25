@@ -707,7 +707,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                     onClick={() => setIsSignUp(!isSignUp)}
                     className="text-xs text-amber-600 hover:text-amber-700 font-medium"
                   >
-                    {isSignUp ? 'Sudah punya akun? Login' : 'Buat akun manual baru'}
+                    {isSignUp ? 'Sudah punya akun? Login' : 'Buat akun Jamaah baru'}
                   </button>
                   {!isSignUp && (
                     <button

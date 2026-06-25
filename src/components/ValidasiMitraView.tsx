@@ -13,6 +13,7 @@ interface PendaftaranMitra {
   provinsi: string;
   kota: string;
   kecamatan: string;
+  desaKelurahan?: string;
   alamatLengkap: string;
   uplineId: string;
   uplineName: string;
@@ -99,6 +100,7 @@ export const ValidasiMitraView: React.FC = () => {
         provinsi: pendaftaran.provinsi || '',
         kota: pendaftaran.kota || '',
         kecamatan: pendaftaran.kecamatan || '',
+        desaKelurahan: pendaftaran.desaKelurahan || '',
         address: pendaftaran.alamatLengkap || '',
         createdAt: new Date().toISOString()
       });
@@ -322,7 +324,9 @@ export const ValidasiMitraView: React.FC = () => {
                       <div>
                         <p className="text-xs text-gray-500">Alamat Lengkap</p>
                         <p className="font-medium text-gray-900">{selectedPendaftaran.alamatLengkap}</p>
-                        <p className="text-sm text-gray-600">{selectedPendaftaran.kecamatan}, {selectedPendaftaran.kota}, {selectedPendaftaran.provinsi}</p>
+                        <p className="text-sm text-gray-600">
+                          {selectedPendaftaran.desaKelurahan ? `${selectedPendaftaran.desaKelurahan}, ` : ''}{selectedPendaftaran.kecamatan}, {selectedPendaftaran.kota}, {selectedPendaftaran.provinsi}
+                        </p>
                       </div>
                       {selectedPendaftaran.uplineName && (
                         <div className="pt-2 border-t border-gray-200">

@@ -80,6 +80,7 @@ export interface PendaftaranMitra {
   provinsi: string;
   kota: string;
   kecamatan: string;
+  desaKelurahan?: string;
   alamatLengkap: string;
   uplineId: string;
   uplineName: string;

@@ -20,7 +20,8 @@ import { formatCurrency, formatPercent } from '../utils/format';
 import { saveTransaction } from '../data/transactions';
 import { Transaction } from '../types/transaction';
 import { OfferingTemplate } from './OfferingTemplate';
-import { db, collection, addDoc, handleFirestoreError, OperationType } from '../firebase';
+import { db, collection, addDoc, handleFirestoreError, OperationType, onSnapshot } from '../firebase';
+import { PaketMaster } from '../types';
 import { generateTimelineEstimasi } from './tracker/utils';
 import { Capacitor } from '@capacitor/core';
 import { captureToDataUrl } from '../utils/exportUtils';
@@ -57,6 +58,14 @@ const getDoublePrice = (hotel: Hotel, dateStr: string) => {
 const getHotelSeasonRange = (hotel: Hotel, dateStr: string) => {
   const targetSeason = getTargetSeason(hotel, dateStr);
   return targetSeason ? targetSeason.range : '';
+};
+
+const getSOHotelPriceApk = (hotel: Hotel | undefined, dateStr: string, roomType: 'Quad' | 'Triple' | 'Double', nights: number) => {
+  if (!hotel) return 0;
+  const basePrice = (roomType === 'Quad' ? getQuadPrice(hotel, dateStr) : roomType === 'Triple' ? getTriplePrice(hotel, dateStr) : getDoublePrice(hotel, dateStr)) || 0;
+  const divisor = roomType === 'Quad' ? 4 : roomType === 'Triple' ? 3 : 2;
+  const nightlyApk = Math.ceil((((basePrice * 4900) / divisor) * 1.1) / 1000) * 1000;
+  return nightlyApk * nights;
 };
 
 export const SalesOrderView: React.FC = () => {
@@ -207,8 +216,161 @@ export const SalesOrderView: React.FC = () => {
   const [keretaCepatHargaVendor, setKeretaCepatHargaVendor] = useState(0);
 
   const [komisiMitra, setKomisiMitra] = useState(3000000);
-  const komisiUmarohPercent = 10;
-  const komisiUmaroh = komisiMitra * (komisiUmarohPercent / 100);
+  const [komisiUmaroh, setKomisiUmaroh] = useState(300000);
+
+  useEffect(() => {
+    setKomisiUmaroh(Math.round(komisiMitra * 0.1));
+  }, [komisiMitra]);
+
+  const [paketMasterList, setPaketMasterList] = useState<PaketMaster[]>([]);
+  const [selectedPaketMasterId, setSelectedPaketMasterId] = useState<string>('');
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'paket_master'), (snapshot) => {
+      setPaketMasterList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaketMaster)));
+    }, (error) => {
+      console.error("Error loading paket_master", error);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleSelectPaketMaster = (paketId: string) => {
+    setSelectedPaketMasterId(paketId);
+    if (!paketId) return;
+
+    const p = paketMasterList.find(pkg => pkg.id === paketId);
+    if (!p) return;
+
+    // Map fields from PaketMaster to Sales Order state
+    if (p.nama) setNamaPaket(p.nama);
+    if (p.kuota) setJumlahPax(p.kuota);
+    if (p.tglBerangkat) setTglKeberangkatan(p.tglBerangkat);
+    if (p.durasiHari) setProgramHari(String(p.durasiHari));
+    if (p.durasiMadinah) setMalamMadinah(p.durasiMadinah);
+    if (p.durasiMakkah) setMalamMakkah(p.durasiMakkah);
+
+    // Set standard defaults for exchange rates to align with master package calculations
+    setKursSaudi(4900);
+    setKursUsd(20000);
+
+    // Map Embarkasi (kotaKeberangkatan) automatically
+    if (p.kotaKeberangkatan) {
+      const codeMatch = p.kotaKeberangkatan.match(/\(([A-Z]{3})\)/);
+      const code = codeMatch ? codeMatch[1] : p.kotaKeberangkatan.trim();
+      const matchedAirport = umrahAirports.find(a => 
+        a.id.toUpperCase() === code.toUpperCase() || 
+        a.name.toUpperCase().includes(code.toUpperCase()) || 
+        a.name.toLowerCase().includes(p.kotaKeberangkatan.toLowerCase())
+      );
+      if (matchedAirport) {
+        setEmberkasi(matchedAirport.name);
+      }
+    }
+
+    // Map commissions (komisi mitra & komisi Umaroh)
+    if (p.marginBersih !== undefined) {
+      setKomisiMitra(p.marginBersih);
+      setKomisiUmaroh(Math.round(p.marginBersih * 0.1));
+    }
+    
+    // Map Maskapai
+    if (p.maskapaiId) {
+      setSelectedMaskapai(p.maskapaiId);
+      const mask = maskapaiData.find(m => m.id === p.maskapaiId);
+      if (mask) {
+        setMaskapaiHargaVendor(mask.hargaBeli);
+        setMaskapaiHargaApk(p.estimasiHargaMaskapai || mask.hargaJual);
+      } else if (p.estimasiHargaMaskapai) {
+        setMaskapaiHargaVendor(p.estimasiHargaMaskapai);
+        setMaskapaiHargaApk(p.estimasiHargaMaskapai);
+      }
+    }
+
+    // Map Hotels
+    if (p.hotelMadinahId) setSelectedHotelMadinah(p.hotelMadinahId);
+    if (p.hotelMakkahId) setSelectedHotelMakkah(p.hotelMakkahId);
+
+    // Map selected services from Paket Master
+    if (p.selectedLayanan && Array.isArray(p.selectedLayanan)) {
+      // 1. Equipment
+      const equipItem = p.selectedLayanan.find(l => l.startsWith('equip_'));
+      if (equipItem) {
+        setSelectedEquipment(equipItem.replace('equip_', ''));
+      } else {
+        setSelectedEquipment('');
+      }
+
+      // 2. Manasik
+      const manasikItem = p.selectedLayanan.find(l => l.startsWith('manasik_'));
+      if (manasikItem) {
+        setSelectedManasik(manasikItem.replace('manasik_', ''));
+      } else {
+        setSelectedManasik('');
+      }
+
+      // 3. Ziarah
+      const ziarahItem = p.selectedLayanan.find(l => l.startsWith('ziarah_'));
+      if (ziarahItem) {
+        setSelectedZiarah(ziarahItem.replace('ziarah_', ''));
+      } else {
+        setSelectedZiarah('');
+      }
+
+      // 4. Kereta Cepat
+      const keretaCepatItem = p.selectedLayanan.find(l => l.startsWith('kc_'));
+      if (keretaCepatItem) {
+        setSelectedKeretaCepat(keretaCepatItem.replace('kc_', ''));
+      } else {
+        setSelectedKeretaCepat('');
+      }
+
+      // 5. Handling Domestik
+      const hdomestikItem = p.selectedLayanan.find(l => l.startsWith('hdomestik_'));
+      if (hdomestikItem) {
+        setSelectedHandlingDomestik(hdomestikItem.replace('hdomestik_', ''));
+      } else {
+        setSelectedHandlingDomestik('');
+      }
+
+      // 6. Mutawwif
+      const hasMutawwif = p.selectedLayanan.includes('mutawwif_auto');
+      setPakaiMutawif(hasMutawwif);
+
+      // 7. Handling Saudi (based on pax)
+      const saudiTier = HANDLING_TIERS.find(t => p.kuota >= t.minPax && p.kuota <= t.maxPax) 
+        || HANDLING_TIERS[HANDLING_TIERS.length - 1];
+      if (saudiTier) {
+        setSelectedHandling(saudiTier.minPax.toString());
+      }
+
+      // 8. Tour Leader
+      const hasTourLeader = p.selectedLayanan.includes('tour_leader') || p.wisataAddon_tourLeader;
+      if (hasTourLeader) {
+        setTl(p.wisataAddon_tourLeaderCount || 1);
+      } else {
+        setTl(0);
+      }
+    }
+
+    // Map Kategori/Jenis Paket
+    if (p.kategori === 'UMRAH PLUS') {
+      setJenisPaket('Plus Wisata');
+      if (p.hotelWisataId) {
+        const hw = hotels.find(h => h.id === p.hotelWisataId);
+        if (hw) {
+          setNamaWisata(hw.name);
+          const qPrice = getQuadPrice(hw, p.tglBerangkat || tglKeberangkatan) || 2500;
+          const priceVendor = qPrice * 4900;
+          setHargaWisataVendor(priceVendor);
+          setHargaWisataApk(Math.ceil((priceVendor * 1.10) / 1000) * 1000);
+        }
+      }
+    } else if (p.kategori && p.kategori.toUpperCase().includes('L.A.')) {
+      setJenisPaket('Paket L.A.');
+    } else {
+      setJenisPaket('Reguler');
+    }
+  };
 
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -264,6 +426,7 @@ export const SalesOrderView: React.FC = () => {
         if (parsed.keretaCepatHargaApk !== undefined) setKeretaCepatHargaApk(parsed.keretaCepatHargaApk);
         if (parsed.keretaCepatHargaVendor !== undefined) setKeretaCepatHargaVendor(parsed.keretaCepatHargaVendor);
         if (parsed.komisiMitra !== undefined) setKomisiMitra(parsed.komisiMitra);
+        if (parsed.komisiUmaroh !== undefined) setKomisiUmaroh(parsed.komisiUmaroh);
       } catch (e) {
         console.error("Failed to parse saved state", e);
       }
@@ -284,7 +447,7 @@ export const SalesOrderView: React.FC = () => {
       maskapaiHargaVendor, namaWisata, hargaWisataApk, hargaWisataVendor,
       asuransiHargaApk, asuransiHargaVendor, manasikHargaApk, manasikHargaVendor,
       handlingDomestikHargaApk, handlingDomestikHargaVendor, ziarahHargaApk,
-      ziarahHargaVendor, keretaCepatHargaApk, keretaCepatHargaVendor, komisiMitra
+      ziarahHargaVendor, keretaCepatHargaApk, keretaCepatHargaVendor, komisiMitra, komisiUmaroh
     };
     localStorage.setItem('salesOrderState', JSON.stringify(stateToSave));
   }, [
@@ -298,7 +461,7 @@ export const SalesOrderView: React.FC = () => {
     maskapaiHargaVendor, namaWisata, hargaWisataApk, hargaWisataVendor,
     asuransiHargaApk, asuransiHargaVendor, manasikHargaApk, manasikHargaVendor,
     handlingDomestikHargaApk, handlingDomestikHargaVendor, ziarahHargaApk,
-    ziarahHargaVendor, keretaCepatHargaApk, keretaCepatHargaVendor, komisiMitra
+    ziarahHargaVendor, keretaCepatHargaApk, keretaCepatHargaVendor, komisiMitra, komisiUmaroh
   ]);
 
   const customSelectStyles = {
@@ -477,7 +640,7 @@ export const SalesOrderView: React.FC = () => {
       }
 
       setZiarahHargaVendor(vendor);
-      setZiarahHargaApk(vendor * multiplier);
+      setZiarahHargaApk(Math.ceil((vendor * multiplier) / 1000) * 1000);
     } else {
       setZiarahHargaApk(0);
       setZiarahHargaVendor(0);
@@ -496,6 +659,7 @@ export const SalesOrderView: React.FC = () => {
   }, [selectedKeretaCepat]);
 
   // Row calculations
+
   const effectiveMaskapaiHargaApk = jenisPaket === 'Paket L.A.' ? 0 : maskapaiHargaApk;
   const effectiveMaskapaiHargaVendor = jenisPaket === 'Paket L.A.' ? 0 : maskapaiHargaVendor;
   const maskapaiObj = maskapaiData.find(m => m.id === selectedMaskapai);
@@ -506,37 +670,37 @@ export const SalesOrderView: React.FC = () => {
   // Hotel Madinah
   const hotelMadinahObj = hotels.find(h => h.id === selectedHotelMadinah);
   const hotelMadinahHargaVendor = hotelMadinahObj ? ((getQuadPrice(hotelMadinahObj, tglKeberangkatan) || 0) * kursSaudi * malamMadinah) / 4 : 0;
-  const hotelMadinahHargaApk = hotelMadinahHargaVendor * 1.10; // 10% markup
+  const hotelMadinahHargaApk = getSOHotelPriceApk(hotelMadinahObj, tglKeberangkatan, 'Quad', malamMadinah);
   const hotelMadinah = calculateRow(hotelMadinahHargaApk, hotelMadinahHargaVendor, jamaahBayar, jamaahBeli);
 
   // Hotel Makkah
   const hotelMakkahObj = hotels.find(h => h.id === selectedHotelMakkah);
   const hotelMakkahHargaVendor = hotelMakkahObj ? ((getQuadPrice(hotelMakkahObj, tglKeberangkatan) || 0) * kursSaudi * malamMakkah) / 4 : 0;
-  const hotelMakkahHargaApk = hotelMakkahHargaVendor * 1.10; // 10% markup
+  const hotelMakkahHargaApk = getSOHotelPriceApk(hotelMakkahObj, tglKeberangkatan, 'Quad', malamMakkah);
   const hotelMakkah = calculateRow(hotelMakkahHargaApk, hotelMakkahHargaVendor, jamaahBayar, jamaahBeli);
 
   // Handling
   const handlingObj = HANDLING_TIERS.find(h => h.minPax.toString() === selectedHandling);
   const handlingHargaVendor = handlingObj ? (handlingObj.hpp + HANDLING_CONSTANTS.adminFee) * kursUsd : 0;
-  const handlingHargaApk = handlingHargaVendor * (1 + HANDLING_CONSTANTS.defaultMarginPercent / 100);
+  const handlingHargaApk = Math.ceil((handlingHargaVendor * (1 + HANDLING_CONSTANTS.defaultMarginPercent / 100)) / 1000) * 1000;
   const handling = calculateRow(handlingHargaApk, handlingHargaVendor, jamaahBayar, jamaahBeli);
 
   // Mutawif
   const mutawifHari = programHari ? (parseInt(programHari) || 9) - 1 : 8;
   const mutawifHargaVendor = (pakaiMutawif && jumlahPax > 0) ? (hargaMutawwifUpdate * mutawifHari * kursSaudi) / jumlahPax : 0;
-  const mutawifHargaApk = mutawifHargaVendor * 1.80; // 80% margin
+  const mutawifHargaApk = Math.ceil((mutawifHargaVendor * 1.80) / 1000) * 1000; // 80% margin rounded up
   const mutawifRow = calculateRow(mutawifHargaApk, mutawifHargaVendor, jamaahBayar, jamaahBeli);
 
   // Equipment
   const equipmentObj = equipmentData.find(e => e.id === selectedEquipment);
   const equipmentHargaVendor = equipmentObj ? equipmentObj.basePrice : 0;
-  const equipmentHargaApk = equipmentObj ? equipmentObj.roundedPrice : 0;
+  const equipmentHargaApk = equipmentObj ? Math.ceil(equipmentObj.roundedPrice / 1000) * 1000 : 0;
   const perlengkapan = calculateRow(equipmentHargaApk, equipmentHargaVendor, jamaahBayar, jamaahBeli);
 
   // Visa
   const visaObj = visaData.find(v => v.id === selectedVisa);
   const visaHargaVendor = visaObj ? visaObj.vendorPrice : 0;
-  const visaHargaApk = visaObj ? visaObj.sellingPrice : 0;
+  const visaHargaApk = visaObj ? Math.ceil(visaObj.sellingPrice / 1000) * 1000 : 0;
   const visaRow = calculateRow(visaHargaApk, visaHargaVendor, jamaahBayar, jamaahBeli);
 
   // Transport
@@ -544,7 +708,7 @@ export const SalesOrderView: React.FC = () => {
   const transportObj = transportData.find(t => t.id === transportId);
   const transportRoute = transportObj?.routes[Number(routeIndexStr)];
   const transportHargaVendor = transportRoute ? (transportRoute.price * kursSaudi) / (jumlahPax > 0 ? jumlahPax : 1) : 0;
-  const transportHargaApk = transportHargaVendor * 1.29; // Example 29% markup
+  const transportHargaApk = Math.ceil((transportHargaVendor * 1.29) / 1000) * 1000; // Example 29% markup rounded up
   const transportRow = calculateRow(transportHargaApk, transportHargaVendor, jamaahBayar, jamaahBeli);
 
   const asuransi = calculateRow(asuransiHargaApk, asuransiHargaVendor, jamaahBayar, jamaahBeli);
@@ -555,29 +719,35 @@ export const SalesOrderView: React.FC = () => {
 
   // Tour Leader
   const subtotalHargaVendor = effectiveMaskapaiHargaVendor + hotelMadinahHargaVendor + hotelMakkahHargaVendor + handlingHargaVendor + mutawifHargaVendor + equipmentHargaVendor + visaHargaVendor + transportHargaVendor + asuransiHargaVendor + manasikHargaVendor + ziarahHargaVendor + keretaCepatHargaVendor + handlingDomestikHargaVendor + (jenisPaket === 'Plus Wisata' ? hargaWisataVendor : 0);
-  const tlHargaApk = (jumlahPax > 0 && tl > 0) ? (subtotalHargaVendor * tl) / jumlahPax : 0;
+  const tlHargaApk = (jumlahPax > 0 && tl > 0) ? Math.ceil(((subtotalHargaVendor * tl) / jumlahPax) / 1000) * 1000 : 0;
   const tlRow = calculateRow(tlHargaApk, 0, jamaahBayar, 0); 
 
   // Totals
-  const totalHargaApk = effectiveMaskapaiHargaApk + hotelMadinahHargaApk + hotelMakkahHargaApk + handlingHargaApk + mutawifHargaApk + equipmentHargaApk + visaHargaApk + transportHargaApk + asuransiHargaApk + manasikHargaApk + ziarahHargaApk + keretaCepatHargaApk + handlingDomestikHargaApk + tlHargaApk + (jenisPaket === 'Plus Wisata' ? hargaWisataApk : 0);
-  
-  const totalHrgJual = maskapai.totalHrgJual + hotelMadinah.totalHrgJual + hotelMakkah.totalHrgJual + handling.totalHrgJual + mutawifRow.totalHrgJual + perlengkapan.totalHrgJual + visaRow.totalHrgJual + transportRow.totalHrgJual + asuransi.totalHrgJual + manasik.totalHrgJual + ziarah.totalHrgJual + keretaCepat.totalHrgJual + handlingDomestik.totalHrgJual + tlRow.totalHrgJual + (jenisPaket === 'Plus Wisata' ? wisataRow.totalHrgJual : 0);
-  
+  const calculatedTotalHargaApk = effectiveMaskapaiHargaApk + hotelMadinahHargaApk + hotelMakkahHargaApk + handlingHargaApk + mutawifHargaApk + equipmentHargaApk + visaHargaApk + transportHargaApk + asuransiHargaApk + manasikHargaApk + ziarahHargaApk + keretaCepatHargaApk + handlingDomestikHargaApk + tlHargaApk + (jenisPaket === 'Plus Wisata' ? hargaWisataApk : 0);
+
+  const hargaQuadDewasa = calculatedTotalHargaApk + komisiMitra + komisiUmaroh;
+
+  const hotelMadinahTriple = getSOHotelPriceApk(hotelMadinahObj, tglKeberangkatan, 'Triple', malamMadinah);
+  const hotelMakkahTriple = getSOHotelPriceApk(hotelMakkahObj, tglKeberangkatan, 'Triple', malamMakkah);
+
+  const hotelMadinahDouble = getSOHotelPriceApk(hotelMadinahObj, tglKeberangkatan, 'Double', malamMadinah);
+  const hotelMakkahDouble = getSOHotelPriceApk(hotelMakkahObj, tglKeberangkatan, 'Double', malamMakkah);
+
+  const hargaTripleDewasa = calculatedTotalHargaApk - (hotelMadinahHargaApk + hotelMakkahHargaApk) + hotelMadinahTriple + hotelMakkahTriple + komisiMitra + komisiUmaroh;
+
+  const hargaDoubleDewasa = calculatedTotalHargaApk - (hotelMadinahHargaApk + hotelMakkahHargaApk) + hotelMadinahDouble + hotelMakkahDouble + komisiMitra + komisiUmaroh;
+
+  const totalHargaApk = calculatedTotalHargaApk;
+
+  const calculatedTotalHrgJual = maskapai.totalHrgJual + hotelMadinah.totalHrgJual + hotelMakkah.totalHrgJual + handling.totalHrgJual + mutawifRow.totalHrgJual + perlengkapan.totalHrgJual + visaRow.totalHrgJual + transportRow.totalHrgJual + asuransi.totalHrgJual + manasik.totalHrgJual + ziarah.totalHrgJual + keretaCepat.totalHrgJual + handlingDomestik.totalHrgJual + tlRow.totalHrgJual + (jenisPaket === 'Plus Wisata' ? wisataRow.totalHrgJual : 0);
+
+  const totalHrgJual = calculatedTotalHrgJual;
+
   const totalHargaBeliAll = maskapai.totalHargaBeli + hotelMadinah.totalHargaBeli + hotelMakkah.totalHargaBeli + handling.totalHargaBeli + mutawifRow.totalHargaBeli + perlengkapan.totalHargaBeli + visaRow.totalHargaBeli + transportRow.totalHargaBeli + asuransi.totalHargaBeli + manasik.totalHargaBeli + ziarah.totalHargaBeli + keretaCepat.totalHargaBeli + handlingDomestik.totalHargaBeli + tlRow.totalHargaBeli + (jenisPaket === 'Plus Wisata' ? wisataRow.totalHargaBeli : 0);
-  
+
   const totalHargaVendor = totalHargaBeliAll / (jumlahPax > 0 ? jumlahPax : 1);
   const totalEstMargin = totalHargaApk - totalHargaVendor;
   const totalMarginAll = totalHrgJual - totalHargaBeliAll;
-
-  const hotelMadinahTriple = hotelMadinahObj ? ((getTriplePrice(hotelMadinahObj, tglKeberangkatan) || 0) * kursSaudi * malamMadinah) / 3 : 0;
-  const hotelMakkahTriple = hotelMakkahObj ? ((getTriplePrice(hotelMakkahObj, tglKeberangkatan) || 0) * kursSaudi * malamMakkah) / 3 : 0;
-
-  const hotelMadinahDouble = hotelMadinahObj ? ((getDoublePrice(hotelMadinahObj, tglKeberangkatan) || 0) * kursSaudi * malamMadinah) / 2 : 0;
-  const hotelMakkahDouble = hotelMakkahObj ? ((getDoublePrice(hotelMakkahObj, tglKeberangkatan) || 0) * kursSaudi * malamMakkah) / 2 : 0;
-
-  const hargaQuadDewasa = totalHargaApk + komisiMitra + komisiUmaroh;
-  const hargaTripleDewasa = totalHargaApk - (hotelMadinahHargaApk + hotelMakkahHargaApk) + hotelMadinahTriple + hotelMakkahTriple + komisiMitra + komisiUmaroh;
-  const hargaDoubleDewasa = totalHargaApk - (hotelMadinahHargaApk + hotelMakkahHargaApk) + hotelMadinahDouble + hotelMakkahDouble + komisiMitra + komisiUmaroh;
 
   const handleSaveTransaction = () => {
     if (!namaPaket || !tglKeberangkatan) {
@@ -630,7 +800,7 @@ export const SalesOrderView: React.FC = () => {
 
     data.push(
       [],
-      ["HARGA DEWASA SEBELUM ADA KOMISI", "", totalHargaApk, totalHargaVendor, totalEstMargin, formatPercent(totalEstMargin / totalHargaApk), "", totalHrgJual, "", totalHargaBeliAll, totalMarginAll, ""]
+      ["HARGA DEWASA SEBELUM ADA KOMISI", "", totalHargaApk, totalHargaVendor, totalEstMargin, formatPercent(totalEstMargin / (totalHargaApk || 1)), "", totalHrgJual, "", totalHargaBeliAll, totalMarginAll, ""]
     );
 
     if (komisiMitra > 0) data.push(["KOMISI MITRA", "", komisiMitra, "", "", "", "", "", "", "", "", ""]);
@@ -887,6 +1057,40 @@ export const SalesOrderView: React.FC = () => {
               <input type="number" value={kursUsd} onChange={e => setKursUsd(Number(e.target.value))} className="border rounded px-2 py-1 w-24 text-sm" />
             </div>
           </div>
+        </div>
+
+        {/* Dropdown Pilihan Paket Master */}
+        <div className="bg-blue-50 border-b border-gray-200 p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <span className="text-sm font-semibold text-blue-800 shrink-0">Pilih Paket Master untuk Validasi:</span>
+            <select
+              value={selectedPaketMasterId}
+              onChange={e => handleSelectPaketMaster(e.target.value)}
+              className="w-full md:w-80 bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-700 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm cursor-pointer"
+            >
+              <option value="">-- Pilih Paket Master --</option>
+              {paketMasterList.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.nama} ({p.kategori || 'Reguler'} - {p.durasiHari || 9} Hari) {p.tglBerangkat ? `- Mulai ${p.tglBerangkat}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          {selectedPaketMasterId && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">
+                Sisa Kuota: {paketMasterList.find(p => p.id === selectedPaketMasterId)?.sisaKuota || 'N/A'} Pax
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedPaketMasterId('');
+                }}
+                className="text-xs text-red-600 hover:text-red-800 font-semibold"
+              >
+                Clear Selection
+              </button>
+            </div>
+          )}
         </div>
 
         <div ref={tableRef} className="overflow-x-auto bg-white">
@@ -1386,7 +1590,16 @@ export const SalesOrderView: React.FC = () => {
               <tr className="border-b border-gray-300 hover:bg-gray-50">
                 <td colSpan={2} className="border-r border-gray-300 p-2 font-medium">KOMISI MITRA</td>
                 <td className="border-r border-gray-300 p-2 text-right">
-                  <input type="number" value={komisiMitra} onChange={e => setKomisiMitra(Number(e.target.value))} className="w-full text-right bg-transparent" />
+                  <input 
+                    type="number" 
+                    value={komisiMitra} 
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setKomisiMitra(val);
+                      setKomisiUmaroh(Math.round(val * 0.1));
+                    }} 
+                    className="w-full text-right bg-transparent outline-none font-bold" 
+                  />
                 </td>
                 <td className="border-r border-gray-300 p-2"></td>
                 <td className="border-r border-gray-300 p-2"></td>
@@ -1401,7 +1614,7 @@ export const SalesOrderView: React.FC = () => {
 
               <tr className="border-b border-gray-300 hover:bg-gray-50">
                 <td colSpan={2} className="border-r border-gray-300 p-2 font-medium">KOMISI UMAROH</td>
-                <td className="border-r border-gray-300 p-2 text-right">
+                <td className="border-r border-gray-300 p-2 text-right font-bold text-gray-700">
                   {formatCurrency(komisiUmaroh)}
                 </td>
                 <td className="border-r border-gray-300 p-2"></td>
