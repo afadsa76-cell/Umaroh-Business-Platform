@@ -482,6 +482,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       ...defaultData,
       ...(initialData as WizardFormData || {}),
     };
+    if (isMitraContext && !base.mitraId) {
+      base.mitraId = auth.currentUser?.uid || null;
+    }
     if (base.tglBerangkat && !base.preferredDepartureDate) {
       base.preferredDepartureDate = base.tglBerangkat;
     }

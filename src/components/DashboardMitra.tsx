@@ -2025,6 +2025,7 @@ export const DashboardMitra = () => {
         {showWizard && (
           <div className="fixed inset-0 z-[60] bg-white overflow-y-auto">
             <PaketMasterWizard 
+              initialData={{ mitraId: userId, status: 'draft' }}
               onCancel={() => setShowWizard(false)} 
               onSuccess={() => {
                 setShowWizard(false);
