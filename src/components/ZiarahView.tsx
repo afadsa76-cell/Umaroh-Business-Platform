@@ -1,39 +1,62 @@
-import React, { useState, useMemo } from 'react';
-import { Map, Search, Calculator, RefreshCw, DollarSign, Users } from 'lucide-react';
-import { ziarahData } from '../data/ziarah';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Map, Search, Calculator, DollarSign, Users, Plus, Trash2, Edit, X } from 'lucide-react';
+import { ziarahData, Ziarah } from '../data/ziarah';
+import { useKurs } from '../hooks/useKurs';
 
 export const ZiarahView: React.FC = () => {
+  const { kurs: masterKurs, updateKurs } = useKurs();
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Calculator state
-  const [selectedItemId, setSelectedItemId] = useState<string>(ziarahData[0]?.id || '');
   const [kurs, setKurs] = useState<number>(4900);
-  const [paxInput, setPaxInput] = useState<number>(ziarahData[0]?.jumlahPax || 45);
-  const [marginPercent, setMarginPercent] = useState<number>(20);
 
-  const filteredData = ziarahData.filter(item => 
-    item.item.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Sync with global SAR rate
+  useEffect(() => {
+    if (masterKurs) {
+      setKurs(masterKurs.sarToIdr);
+    }
+  }, [masterKurs]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+  // Load / Save local ziarah list
+  const [localList, setLocalList] = useState<Ziarah[]>(() => {
+    const cached = localStorage.getItem('umaroh_db_ziarah');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Failed to parse cached ziarah list:', e);
+      }
+    }
+    return ziarahData;
+  });
+
+  const saveList = (updated: Ziarah[]) => {
+    setLocalList(updated);
+    localStorage.setItem('umaroh_db_ziarah', JSON.stringify(updated));
   };
 
+  // Calculator State
+  const [selectedItemId, setSelectedItemId] = useState<string>(localList[0]?.id || '');
+  const [paxInput, setPaxInput] = useState<number>(localList[0]?.jumlahPax || 45);
+  const [marginPercent, setMarginPercent] = useState<number>(20);
+
   const selectedItem = useMemo(() => {
-    return ziarahData.find(item => item.id === selectedItemId);
-  }, [selectedItemId]);
+    return localList.find(item => item.id === selectedItemId) || localList[0];
+  }, [selectedItemId, localList]);
+
+  // Update default pax and margin when item changes
+  useEffect(() => {
+    if (selectedItem) {
+      setPaxInput(selectedItem.jumlahPax);
+      const defaultMargin = Math.round(((selectedItem.hargaJual / selectedItem.hargaBeli) - 1) * 100);
+      setMarginPercent(isNaN(defaultMargin) ? 20 : defaultMargin);
+    }
+  }, [selectedItem]);
 
   const calculationResult = useMemo(() => {
     if (!selectedItem) return null;
 
-    // Harga asing is total for the group, so we divide by paxInput to get per pax
+    const rateToUse = selectedItem.currency === 'USD' ? (masterKurs?.usdToIdr || 20000) : kurs;
     const hargaAsingPerPax = selectedItem.hargaAsing / paxInput;
-    const hargaBeliPerPax = hargaAsingPerPax * kurs;
+    const hargaBeliPerPax = hargaAsingPerPax * rateToUse;
     const marginPerPax = hargaBeliPerPax * (marginPercent / 100);
     const hargaJualPerPax = hargaBeliPerPax + marginPerPax;
 
@@ -50,28 +73,201 @@ export const ZiarahView: React.FC = () => {
       totalMargin,
       totalJual
     };
-  }, [selectedItem, kurs, marginPercent, paxInput]);
+  }, [selectedItem, kurs, masterKurs, marginPercent, paxInput]);
 
-  // Update default pax and margin when item changes
-  React.useEffect(() => {
-    if (selectedItem) {
-      setPaxInput(selectedItem.jumlahPax);
-      // Calculate default margin based on data
-      const defaultMargin = Math.round(((selectedItem.hargaJual / selectedItem.hargaBeli) - 1) * 100);
-      setMarginPercent(defaultMargin);
+  const filteredData = useMemo(() => {
+    return localList.filter(item => 
+      item.item.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [localList, searchTerm]);
+
+  // Selection states
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const isAllSelected = filteredData.length > 0 && filteredData.every(item => selectedIds.includes(item.id));
+
+  // Add/Edit Modals state
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Ziarah | null>(null);
+
+  // Form states
+  const [formItemName, setFormItemName] = useState('');
+  const [formJumlahPax, setFormJumlahPax] = useState<number>(45);
+  const [formHargaAsing, setFormHargaAsing] = useState<number>(850);
+  const [formCurrency, setFormCurrency] = useState('SAR');
+  const [formMarginPercent, setFormMarginPercent] = useState<number>(20);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
     }
-  }, [selectedItem]);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(filteredData.map(item => item.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSaveAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formItemName.trim()) {
+      alert('Nama item wajib diisi!');
+      return;
+    }
+
+    const rateToUse = formCurrency === 'USD' ? (masterKurs?.usdToIdr || 20000) : kurs;
+    const foreignPerPax = Number(formHargaAsing) / Number(formJumlahPax);
+    const priceBeli = foreignPerPax * rateToUse;
+    const priceMargin = priceBeli * (Number(formMarginPercent) / 100);
+    const priceJual = priceBeli + priceMargin;
+
+    const newItem: Ziarah = {
+      id: 'z_' + Date.now(),
+      item: formItemName,
+      jumlahPax: Number(formJumlahPax),
+      hargaAsing: Number(formHargaAsing),
+      currency: formCurrency,
+      hargaBeli: Math.round(priceBeli),
+      hargaJual: Math.round(priceJual),
+    };
+
+    saveList([newItem, ...localList]);
+    setIsAddOpen(false);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    if (!formItemName.trim()) {
+      alert('Nama item wajib diisi!');
+      return;
+    }
+
+    const rateToUse = formCurrency === 'USD' ? (masterKurs?.usdToIdr || 20000) : kurs;
+    const foreignPerPax = Number(formHargaAsing) / Number(formJumlahPax);
+    const priceBeli = foreignPerPax * rateToUse;
+    const priceMargin = priceBeli * (Number(formMarginPercent) / 100);
+    const priceJual = priceBeli + priceMargin;
+
+    const updated = localList.map((item) => {
+      if (item.id === editingItem.id) {
+        return {
+          ...item,
+          item: formItemName,
+          jumlahPax: Number(formJumlahPax),
+          hargaAsing: Number(formHargaAsing),
+          currency: formCurrency,
+          hargaBeli: Math.round(priceBeli),
+          hargaJual: Math.round(priceJual),
+        };
+      }
+      return item;
+    });
+
+    saveList(updated);
+    setIsEditOpen(false);
+    setEditingItem(null);
+  };
+
+  const openEditModal = (item: Ziarah) => {
+    setEditingItem(item);
+    setFormItemName(item.item);
+    setFormJumlahPax(item.jumlahPax);
+    setFormHargaAsing(item.hargaAsing);
+    setFormCurrency(item.currency);
+    const calculatedMargin = Math.round(((item.hargaJual / item.hargaBeli) - 1) * 100);
+    setFormMarginPercent(isNaN(calculatedMargin) ? 20 : calculatedMargin);
+    setIsEditOpen(true);
+  };
+
+  const handleSingleDelete = (item: Ziarah) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus ziarah "${item.item}"?`)) {
+      const updated = localList.filter(i => i.id !== item.id);
+      saveList(updated);
+      setSelectedIds(selectedIds.filter(id => id !== item.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} item ziarah terpilih?`)) {
+      const updated = localList.filter(item => !selectedIds.includes(item.id));
+      saveList(updated);
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSaveKurs = async () => {
+    try {
+      await updateKurs(kurs, masterKurs?.usdToIdr || 20000);
+      alert('Kurs Ziarah (SAR) berhasil diperbarui!');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui kurs');
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Map className="w-6 h-6 text-emerald-600" />
-            Ziarah Tambahan
+            Database Master Ziarah Tambahan
           </h1>
-          <p className="text-gray-500 mt-1">Manage and view prices for Ziarah Tambahan</p>
+          <p className="text-gray-500 mt-1">Kelola rute ziarah, harga grup, margin, dan kurs ziarah (SAR)</p>
         </div>
+      </div>
+
+      {/* Control Panel: Kurs and Add Manual */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <span className="font-bold text-gray-700 text-sm whitespace-nowrap">Kurs SAR ke IDR:</span>
+          <div className="relative rounded-lg shadow-sm max-w-[150px]">
+            <input
+              type="number"
+              value={kurs}
+              onChange={(e) => setKurs(Number(e.target.value))}
+              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-semibold text-gray-800"
+            />
+          </div>
+          <button
+            onClick={handleSaveKurs}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 shrink-0"
+          >
+            Update Kurs
+          </button>
+        </div>
+
+        <button
+          onClick={() => {
+            setFormItemName('');
+            setFormJumlahPax(45);
+            setFormHargaAsing(850);
+            setFormCurrency('SAR');
+            setFormMarginPercent(20);
+            setIsAddOpen(true);
+          }}
+          className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Tambah Ziarah Manual
+        </button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -95,7 +291,7 @@ export const ZiarahView: React.FC = () => {
                   onChange={(e) => setSelectedItemId(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
                 >
-                  {ziarahData.map(item => (
+                  {localList.map(item => (
                     <option key={item.id} value={item.id}>{item.item}</option>
                   ))}
                 </select>
@@ -113,21 +309,6 @@ export const ZiarahView: React.FC = () => {
                     onChange={(e) => setPaxInput(Math.max(1, Number(e.target.value)))}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     min="1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kurs (IDR)
-                </label>
-                <div className="relative">
-                  <RefreshCw className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="number"
-                    value={kurs}
-                    onChange={(e) => setKurs(Number(e.target.value))}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>
               </div>
@@ -182,108 +363,225 @@ export const ZiarahView: React.FC = () => {
 
         {/* Table Section */}
         <div className="lg:w-2/3">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Daftar Harga</h2>
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+            <h2 className="text-xl font-bold text-gray-900">Daftar Paket Ziarah Tambahan</h2>
+            
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span className="font-semibold text-xs text-gray-500 uppercase tracking-wider">Pilih Semua ({filteredData.length} Item)</span>
+              </label>
+
+              {selectedIds.length > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus ({selectedIds.length})
+                </button>
+              )}
             </div>
           </div>
 
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari rute ziarah..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="hidden xl:block overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                   <tr>
+                    <th className="px-4 py-3 text-center w-12"></th>
                     <th scope="col" className="px-4 py-3 font-semibold">Items</th>
                     <th scope="col" className="px-4 py-3 font-semibold text-center">Jumlah Pax</th>
                     <th scope="col" className="px-4 py-3 font-semibold text-right">Harga Asing</th>
                     <th scope="col" className="px-4 py-3 font-semibold text-right">Harga Beli</th>
-                    <th scope="col" className="px-4 py-3 font-semibold text-right">Harga Jual</th>
+                    <th scope="col" className="px-4 py-3 font-semibold text-right text-emerald-800 bg-emerald-50/50">Harga Jual</th>
+                    <th scope="col" className="px-4 py-3 text-center w-24">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {filteredData.length > 0 ? (
-                    filteredData.map((item, index) => (
-                      <tr 
-                        key={item.id} 
-                        className={`border-b border-gray-100 hover:bg-emerald-50/50 transition-colors cursor-pointer ${
-                          selectedItemId === item.id ? 'bg-emerald-50' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                        }`}
-                        onClick={() => setSelectedItemId(item.id)}
-                      >
-                        <td className="px-4 py-3 font-medium text-gray-900">{item.item}</td>
-                        <td className="px-4 py-3 text-center text-gray-600">{item.jumlahPax}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">
-                          {item.currency} {item.hargaAsing.toLocaleString('id-ID')}
-                        </td>
-                        <td className="px-4 py-3 text-right text-gray-600">
-                          Rp {item.hargaBeli.toLocaleString('id-ID')}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-emerald-600">
-                          Rp {item.hargaJual.toLocaleString('id-ID')}
-                        </td>
-                      </tr>
-                    ))
+                <tbody className="divide-y divide-gray-200">
+                    {filteredData.length > 0 ? (
+                      filteredData.map((item) => {
+                        const isSel = selectedIds.includes(item.id);
+
+                        return (
+                        <tr 
+                          key={item.id} 
+                          className={`hover:bg-emerald-50/30 transition-colors ${
+                            isSel ? 'bg-amber-50/60' : ''
+                          }`}
+                        >
+                          <td className="px-4 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSel}
+                              onChange={(e) => handleSelectOne(item.id, e.target.checked)}
+                              className="w-4 h-4 rounded border-gray-300 text-emerald-600"
+                            />
+                          </td>
+                          <td className="px-4 py-3 font-bold text-gray-900 cursor-pointer" onClick={() => setSelectedItemId(item.id)}>
+                            {item.item}
+                          </td>
+                          <td className="px-4 py-3 text-center text-gray-600 font-semibold">{item.jumlahPax}</td>
+                          <td className="px-4 py-3 text-right text-gray-600 font-mono">
+                            {item.currency} {item.hargaAsing.toLocaleString('id-ID')}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-600 font-mono">
+                            Rp {item.hargaBeli.toLocaleString('id-ID')}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-emerald-700 bg-emerald-50/20 font-mono">
+                            Rp {item.hargaJual.toLocaleString('id-ID')}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex justify-center items-center gap-1">
+                              <button
+                                onClick={() => openEditModal(item)}
+                                className="text-amber-600 hover:text-amber-800 hover:bg-amber-50 p-1.5 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleSingleDelete(item)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                                title="Hapus"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                        No items found matching "{searchTerm}"
+                      <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                        Tidak ada item yang cocok dengan "{searchTerm}"
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-
-            {/* Mobile/Tablet Card View */}
-            <div className="xl:hidden divide-y divide-gray-100">
-              {filteredData.length > 0 ? (
-                filteredData.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                      selectedItemId === item.id ? 'bg-emerald-50' : ''
-                    }`}
-                    onClick={() => setSelectedItemId(item.id)}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-gray-900">{item.item}</h3>
-                      <div className="text-emerald-600 font-bold">
-                        Rp {item.hargaJual.toLocaleString('id-ID')}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <span className="text-gray-500 uppercase font-semibold">Pax: </span>
-                        <span className="text-gray-700">{item.jumlahPax}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-gray-500 uppercase font-semibold">Harga Asing: </span>
-                        <span className="text-gray-700">{item.currency} {item.hargaAsing.toLocaleString('id-ID')}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500 uppercase font-semibold">Harga Beli: </span>
-                        <span className="text-gray-700">Rp {item.hargaBeli.toLocaleString('id-ID')}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center text-gray-500">
-                  No items found matching "{searchTerm}"
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Manual Add / Edit Modals */}
+      {(isAddOpen || isEditOpen) && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col">
+            <div className="bg-emerald-600 px-6 py-4 flex justify-between items-center text-white">
+              <h3 className="font-bold text-lg">
+                {isAddOpen ? 'Tambah Ziarah Manual' : 'Edit Ziarah'}
+              </h3>
+              <button 
+                onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
+                className="hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={isAddOpen ? handleSaveAdd : handleSaveEdit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Item / Destinasi</label>
+                <input
+                  type="text"
+                  value={formItemName}
+                  onChange={(e) => setFormItemName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  placeholder="Contoh: THAIF TOUR + NASI MANDI"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Jumlah Pax</label>
+                  <input
+                    type="number"
+                    value={formJumlahPax}
+                    onChange={(e) => setFormJumlahPax(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Mata Uang</label>
+                  <select
+                    value={formCurrency}
+                    onChange={(e) => setFormCurrency(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                  >
+                    <option value="SAR">SAR</option>
+                    <option value="USD">USD</option>
+                    <option value="IDR">IDR</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Asing</label>
+                  <input
+                    type="number"
+                    value={formHargaAsing}
+                    onChange={(e) => setFormHargaAsing(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    min="0"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Margin (%)</label>
+                  <input
+                    type="number"
+                    value={formMarginPercent}
+                    onChange={(e) => setFormMarginPercent(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    min="0"
+                    max="100"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-semibold transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

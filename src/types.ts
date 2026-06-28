@@ -156,6 +156,8 @@ export interface WizardFormData {
   status?: string;
   isPublished?: boolean;
   isDraft?: boolean;
+  kursSar?: number;
+  kursUsd?: number;
   mitraId?: string | null;
   paketWisataId?: string;
   kuota?: number;

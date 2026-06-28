@@ -268,7 +268,10 @@ export const SalesOrderView: React.FC = () => {
     }
 
     // Map commissions (komisi mitra & komisi Umaroh)
-    if (p.marginBersih !== undefined) {
+    if (p.mitraId && p.markup !== undefined) {
+      setKomisiMitra(p.markup);
+      setKomisiUmaroh(Math.round(p.markup * 0.1));
+    } else if (p.marginBersih !== undefined) {
       setKomisiMitra(p.marginBersih);
       setKomisiUmaroh(Math.round(p.marginBersih * 0.1));
     }

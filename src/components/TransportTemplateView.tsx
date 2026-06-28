@@ -5,12 +5,20 @@ import { transportData } from '../data/transport';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
+import { useKurs } from '../hooks/useKurs';
 
 export const TransportTemplateView: React.FC = () => {
+  const { kurs: masterKurs, loading: masterKursLoading } = useKurs();
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('gmc');
   const [kurs, setKurs] = useState<number>(4900);
+
+  useEffect(() => {
+    if (!masterKursLoading && masterKurs) {
+      setKurs(masterKurs.sarToIdr);
+    }
+  }, [masterKurs, masterKursLoading]);
   const [marginPercent, setMarginPercent] = useState<number>(40);
   const [currency, setCurrency] = useState<'SAR' | 'IDR'>('IDR');
   const printRef = useRef<HTMLDivElement>(null);

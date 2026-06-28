@@ -129,6 +129,7 @@ export const HotelMediaView: React.FC = () => {
   const [dbHotels, setDbHotels] = useState<HotelItem[]>([]);
   const [mediaList, setMediaList] = useState<HotelMedia[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -166,27 +167,54 @@ export const HotelMediaView: React.FC = () => {
   }, []);
 
   const allHotelsRaw = [...staticHotels, ...dbHotels];
-  // Deduplicate by normalized name key so "Grand Plaza Badr Al Maqom" and "Grand Plaza Badr Maqom" are grouped
+  // Deduplicate by normalized name key and city so "Grand Plaza Badr Al Maqom" and "Grand Plaza Badr Maqom" are grouped, but different cities are not
   const allHotels = allHotelsRaw.filter((v, i, a) => 
-    a.findIndex(t => getNormalizedHotelNameKey(t.name) === getNormalizedHotelNameKey(v.name)) === i
+    a.findIndex(t => 
+      getNormalizedHotelNameKey(t.name) === getNormalizedHotelNameKey(v.name) &&
+      (t.city || "").toLowerCase() === (v.city || "").toLowerCase()
+    ) === i
   );
 
-  const filteredHotels = allHotels.filter(h => 
-    h.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    h.city?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getMediaForHotel = (hotelId: string, hotelName: string) => {
+  const getMediaForHotel = (hotelId: string, hotelName: string, hotelCity?: string) => {
     const targetNorm = getNormalizedHotelNameKey(hotelName);
-    return mediaList.find(m => 
-      m.hotelId === hotelId || 
-      m.hotelName === hotelName || 
-      getNormalizedHotelNameKey(m.hotelName) === targetNorm
-    );
+    const targetCityNorm = hotelCity ? hotelCity.toLowerCase().replace(/mecca/g, "makkah").replace(/medina/g, "madinah").replace(/[^a-z]/g, "") : "";
+    
+    return mediaList.find(m => {
+      if (m.hotelId === hotelId) return true;
+      if (m.hotelName === hotelName) return true;
+      
+      const mNorm = getNormalizedHotelNameKey(m.hotelName);
+      const mCityNorm = m.city ? m.city.toLowerCase().replace(/mecca/g, "makkah").replace(/medina/g, "madinah").replace(/[^a-z]/g, "") : "";
+      
+      if (targetNorm && mNorm === targetNorm) {
+        if (targetCityNorm && mCityNorm) {
+          return targetCityNorm === mCityNorm;
+        }
+        return true;
+      }
+      return false;
+    });
   };
 
+  const filteredHotels = allHotels.filter(h => {
+    const matchesSearch = h.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          h.city?.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    const media = getMediaForHotel(h.id, h.name, h.city);
+    const isComplete = !!(media?.distance && media.distance.trim() !== "" && media.distance !== "Belum diatur");
+
+    if (statusFilter === 'complete') {
+      return isComplete;
+    }
+    if (statusFilter === 'incomplete') {
+      return !isComplete;
+    }
+    return true;
+  });
+
   const handleEdit = (hotel: HotelItem) => {
-    const existing = getMediaForHotel(hotel.id, hotel.name);
+    const existing = getMediaForHotel(hotel.id, hotel.name, hotel.city);
     setEditData({
       photoUrl: existing?.photoUrl || '',
       distance: existing?.distance || '',
@@ -198,7 +226,7 @@ export const HotelMediaView: React.FC = () => {
   const handleSave = async (hotel: HotelItem) => {
     setIsSaving(true);
     try {
-      const safeId = hotel.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const safeId = `${hotel.name}-${hotel.city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const docRef = doc(db, 'hotel_metadata', safeId);
       await setDoc(docRef, {
         hotelId: hotel.id,
@@ -281,11 +309,15 @@ export const HotelMediaView: React.FC = () => {
             parsedMessage = errText;
           }
 
-          const isRateLimit = response.status === 429 || 
-                              parsedMessage.includes('429') || 
-                              parsedMessage.toLowerCase().includes('quota') || 
-                              parsedMessage.toLowerCase().includes('rate limit') || 
-                              parsedMessage.toLowerCase().includes('exhausted');
+          const isQuotaExceeded = parsedMessage.toLowerCase().includes('exceeded your current quota') || 
+                                  parsedMessage.toLowerCase().includes('billing') ||
+                                  parsedMessage.toLowerCase().includes('resource_exhausted');
+
+          const isRateLimit = (response.status === 429 || 
+                               parsedMessage.includes('429') || 
+                               parsedMessage.toLowerCase().includes('quota') || 
+                               parsedMessage.toLowerCase().includes('rate limit') || 
+                               parsedMessage.toLowerCase().includes('exhausted')) && !isQuotaExceeded;
 
           if (isRateLimit && retries < maxRetries) {
             retries++;
@@ -326,7 +358,13 @@ export const HotelMediaView: React.FC = () => {
     setIsGenerating(hotel.id);
     setErrorMessage(null);
     try {
-      const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah), serta carikan informasi terpercaya mengenai berapa bintang (1-5) rating hotel tersebut. Kembalikan dalam format JSON. 
+      const destination = hotel.city.toLowerCase() === 'makkah' ? 'Masjidil Haram, Makkah' : 'Masjid Nabawi, Madinah';
+      const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel "${hotel.name}" di kota ${hotel.city}. 
+Juga carikan estimasi jarak terdekat dalam satuan meter (m) dari hotel "${hotel.name}" di ${hotel.city} menuju ke batas pelataran terluar atau gerbang luar (outer ring/courtyard gate) terdekat dari ${destination}. 
+PENTING: Jangan gunakan jarak navigasi jalan kaki Google Maps yang mengarah ke bagian dalam masjid (misalnya rute sampai ke Ka'bah di Makkah) karena rute Google Maps sering menunjukkan jarak yang terlampau jauh (misal 1.8 km atau 31 menit) karena mengarahkan ke bagian dalam. Cari estimasi jarak lurus/jalan kaki langsung ke pintu gerbang halaman luar/batas pelataran luar masjid terdekat (garis ring biru di satelit). Jarak ke pelataran luar inilah yang sangat akurat dan relevan bagi jamaah.
+Format output jarak harus rapi dan singkat, contoh: "150m ke pelataran" atau "350m ke pelataran".
+Carikan juga informasi peringkat bintang (1-5) yang resmi untuk hotel ini.
+Kembalikan data dalam format JSON.
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
       const resData = await fetchWithRetryAndFallback(prompt, true);
@@ -350,7 +388,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
 
   const handleAiAssistBulk = async () => {
     const hotelsToProcess = allHotels.filter(hotel => {
-      const media = getMediaForHotel(hotel.id, hotel.name);
+      const media = getMediaForHotel(hotel.id, hotel.name, hotel.city);
       return !media?.photoUrl || !media?.distance || !media?.stars;
     });
 
@@ -380,16 +418,22 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
     for (const hotel of hotelsToProcess) {
       setIsGenerating(hotel.id);
       try {
-        const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel ${hotel.name} di ${hotel.city}. Juga estimasikan jarak hotel tersebut ke pelataran masjid terdekat (Masjid Nabawi untuk Madinah, atau Masjidil Haram untuk Makkah), serta carikan informasi terpercaya mengenai berapa bintang (1-5) rating hotel tersebut. Kembalikan dalam format JSON. 
+        const destination = hotel.city.toLowerCase() === 'makkah' ? 'Masjidil Haram, Makkah' : 'Masjid Nabawi, Madinah';
+        const prompt = `Carikan saya foto resmi atau foto eksterior yang bagus untuk hotel "${hotel.name}" di kota ${hotel.city}. 
+Cari estimasi jarak terdekat dalam satuan meter (m) dari hotel "${hotel.name}" di ${hotel.city} menuju ke batas pelataran terluar atau gerbang luar (outer ring/courtyard gate) terdekat dari ${destination}. 
+PENTING: Jangan gunakan rute jalan kaki Google Maps yang mengarah ke bagian dalam masjid (misalnya sampai ke Ka'bah di Makkah) karena rute Google Maps sering menunjukkan jarak yang terlampau jauh (misal 1.8 km) karena mengarahkan ke bagian dalam. Cari estimasi jarak lurus/jalan kaki langsung ke pintu gerbang halaman luar/batas pelataran luar masjid terdekat (garis ring biru di satelit). Jarak ke pelataran luar inilah yang sangat akurat dan relevan bagi jamaah.
+Format output jarak harus rapi dan singkat, contoh: "150m ke pelataran" atau "350m ke pelataran".
+Carikan juga informasi peringkat bintang (1-5) yang resmi untuk hotel ini.
+Kembalikan data dalam format JSON.
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
         const resData = await fetchWithRetryAndFallback(prompt, true);
         if (resData && resData.text) {
           const parsed = safeJsonParse(resData.text);
-          const safeId = hotel.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+          const safeId = `${hotel.name}-${hotel.city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
           const docRef = doc(db, 'hotel_metadata', safeId);
           
-          const existingMedia = getMediaForHotel(hotel.id, hotel.name);
+          const existingMedia = getMediaForHotel(hotel.id, hotel.name, hotel.city);
           const resolvedStars = typeof parsed.stars === 'number' ? parsed.stars : (parseInt(parsed.stars) || existingMedia?.stars || hotel.stars || 5);
           
           try {
@@ -450,22 +494,38 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
         </div>
       )}
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Cari hotel berdasarkan nama atau kota..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-          />
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari hotel berdasarkan nama atau kota..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Filter Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'complete' | 'incomplete')}
+              className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white font-medium text-gray-700"
+            >
+              <option value="all">Semua Hotel</option>
+              <option value="complete">Lengkap (Jarak & Bintang Selesai)</option>
+              <option value="incomplete">Belum Lengkap (Perlu Jarak / Bintang)</option>
+            </select>
+          </div>
         </div>
+        
         <div>
           <button
             onClick={handleAiAssistBulk}
             disabled={isGeneratingAll}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm w-full sm:w-auto justify-center"
           >
             {isGeneratingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {isGeneratingAll && generationProgress 
@@ -488,7 +548,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredHotels.map(hotel => {
-                const media = getMediaForHotel(hotel.id, hotel.name);
+                const media = getMediaForHotel(hotel.id, hotel.name, hotel.city);
                 const editing = isEditing === hotel.id;
 
                 return (
@@ -572,7 +632,7 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                     </td>
                     <td className="px-6 py-4">
                       {editing ? (
-                        <div className="space-y-2">
+                        <div className="space-y-2 flex flex-col">
                           <input 
                             type="text" 
                             placeholder="Cth: 150m ke pelataran" 
@@ -580,6 +640,16 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                             onChange={(e) => setEditData({...editData, distance: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                           />
+                          <a 
+                            href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(hotel.name + ', ' + hotel.city)}&destination=${encodeURIComponent(hotel.city.toLowerCase() === 'makkah' ? 'Masjidil Haram, Makkah' : 'Masjid Nabawi, Madinah')}&travelmode=walking`}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800 hover:underline bg-blue-50/50 px-2 py-1 rounded border border-blue-100 self-start"
+                            title="Buka rute jalan kaki langsung di Google Maps untuk melihat jarak yang 100% akurat"
+                          >
+                            <Search className="w-3 h-3 text-blue-500" />
+                            Rute Jalan Kaki Google Maps ↗
+                          </a>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500 font-medium">Bintang:</span>
                             <select 
@@ -602,11 +672,33 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                               <MapPin className="w-4 h-4" />
                               {media.distance}
                             </div>
+                            <a 
+                              href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(hotel.name + ', ' + hotel.city)}&destination=${encodeURIComponent(hotel.city.toLowerCase() === 'makkah' ? 'Masjidil Haram, Makkah' : 'Masjid Nabawi, Madinah')}&travelmode=walking`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 text-[9px] text-gray-400 hover:text-blue-600 transition-colors mt-0.5 self-start pl-1"
+                              title="Verifikasi rute jalan kaki sebenarnya di Google Maps"
+                            >
+                              <Search className="w-2.5 h-2.5" />
+                              Cek rute Google Maps ↗
+                            </a>
                           </div>
                         ) : getFallbackDistance(hotel.id, hotel.name) ? (
-                          <div className="flex items-center gap-1.5 text-indigo-700 font-medium bg-indigo-50 px-2.5 py-1 rounded-lg inline-flex">
-                            <MapPin className="w-4 h-4 text-indigo-500" />
-                            {getFallbackDistance(hotel.id, hotel.name)} (Default)
+                          <div className="flex flex-col gap-1 inline-flex">
+                            <div className="flex items-center gap-1.5 text-indigo-700 font-medium bg-indigo-50 px-2.5 py-1 rounded-lg inline-flex">
+                              <MapPin className="w-4 h-4 text-indigo-500" />
+                              {getFallbackDistance(hotel.id, hotel.name)} (Default)
+                            </div>
+                            <a 
+                              href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(hotel.name + ', ' + hotel.city)}&destination=${encodeURIComponent(hotel.city.toLowerCase() === 'makkah' ? 'Masjidil Haram, Makkah' : 'Masjid Nabawi, Madinah')}&travelmode=walking`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 text-[9px] text-gray-400 hover:text-blue-600 transition-colors mt-0.5 self-start pl-1"
+                              title="Verifikasi rute jalan kaki sebenarnya di Google Maps"
+                            >
+                              <Search className="w-2.5 h-2.5" />
+                              Cek rute Google Maps ↗
+                            </a>
                           </div>
                         ) : (
                           <span className="text-gray-400 italic text-xs">Belum diatur</span>

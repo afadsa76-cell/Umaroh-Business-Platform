@@ -10,6 +10,7 @@ import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { useKurs } from '../hooks/useKurs';
 
 interface QuotationRow {
   madinah?: Partial<Hotel>;
@@ -20,6 +21,7 @@ interface QuotationRow {
 }
 
 export const QuotationView: React.FC = () => {
+  const { kurs: masterKurs, loading: masterKursLoading } = useKurs();
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [paxCount, setPaxCount] = useState<number>(35);
   const [includeHandling, setIncludeHandling] = useState<boolean>(false);
@@ -28,6 +30,14 @@ export const QuotationView: React.FC = () => {
   const [currency, setCurrency] = useState<'SAR' | 'USD' | 'IDR'>('IDR');
   const [kurs, setKurs] = useState<number>(4900);
   const [kursUsd, setKursUsd] = useState<number>(20000);
+
+  useEffect(() => {
+    if (!masterKursLoading && masterKurs) {
+      setKurs(masterKurs.sarToIdr);
+      setKursUsd(masterKurs.usdToIdr);
+    }
+  }, [masterKurs, masterKursLoading]);
+
   const [rows, setRows] = useState<QuotationRow[]>(Array(14).fill({}));
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);

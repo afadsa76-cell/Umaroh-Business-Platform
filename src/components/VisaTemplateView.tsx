@@ -6,8 +6,10 @@ import { transportData } from '../data/transport';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
+import { useKurs } from '../hooks/useKurs';
 
 export const VisaTemplateView: React.FC = () => {
+  const { kurs: masterKurs, loading: masterKursLoading } = useKurs();
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [totalPax, setTotalPax] = useState<number>(45);
@@ -17,6 +19,13 @@ export const VisaTemplateView: React.FC = () => {
   const [transportRoute, setTransportRoute] = useState<string>('Full Trip (Jed - Mak - CT Mak - CT Mad - Mad)');
   const [kurs, setKurs] = useState<number>(20000); // Default USD to IDR
   const [kursSar, setKursSar] = useState<number>(4900); // Default SAR to IDR
+
+  useEffect(() => {
+    if (!masterKursLoading && masterKurs) {
+      setKurs(masterKurs.usdToIdr);
+      setKursSar(masterKurs.sarToIdr);
+    }
+  }, [masterKurs, masterKursLoading]);
   const [marginPercent, setMarginPercent] = useState<number>(7);
   const printRef = useRef<HTMLDivElement>(null);
 

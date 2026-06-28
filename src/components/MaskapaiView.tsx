@@ -18,7 +18,19 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   // Dynamic filter states
   const [filterKeberangkatan, setFilterKeberangkatan] = useState<'future' | 'past' | 'all'>('future');
   const [filterMinSeats, setFilterMinSeats] = useState<number>(10);
+  const [filterVendor, setFilterVendor] = useState<string>('All');
   const [isCleaning, setIsCleaning] = useState(false);
+
+  // Extract unique vendors for filtering
+  const vendors = Array.from(
+    new Set(
+      data
+        .map(item => item.namaVendor?.trim())
+        .filter(Boolean)
+    )
+  )
+  .filter(v => v.toLowerCase() !== 'all')
+  .sort();
 
   // Custom interactive modal states (fixes blockages & security errors in sandboxed iframes)
   const [showCleanupModal, setShowCleanupModal] = useState(false);
@@ -295,6 +307,11 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     // Minimum Seats Filter
     if (item.availableSeats < filterMinSeats) return false;
 
+    // Vendor Filter
+    if (!isVendorMode && filterVendor !== 'All') {
+      if ((item.namaVendor || '').trim() !== filterVendor) return false;
+    }
+
     return true;
   });
 
@@ -511,6 +528,25 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                 </button>
               </div>
             </div>
+
+            {/* Vendor Filter Select Dropdown */}
+            {!isVendorMode && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Vendor:</span>
+                <select
+                  value={filterVendor}
+                  onChange={(e) => setFilterVendor(e.target.value)}
+                  className="px-3 py-1.5 bg-white border border-gray-300 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                >
+                  <option value="All">All</option>
+                  {vendors.map((vendor) => (
+                    <option key={vendor} value={vendor}>
+                      {vendor}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Seats Filter select drop down */}
             <div className="flex items-center gap-2">

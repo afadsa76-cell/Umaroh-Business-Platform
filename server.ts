@@ -236,6 +236,8 @@ async function startServer() {
       let errMsg = err.message || '';
       if (errMsg.includes('PERMISSION_DENIED') || errMsg.includes('denied access') || errMsg.includes('restricted')) {
         errMsg = 'Akses API Key Gemini ditolak (PERMISSION_DENIED). Hal ini biasanya terjadi jika kuota habis, kartu kredit kedaluwarsa pada billing Google Cloud, atau API Key ditangguhkan. Silakan periksa keaktifan Key di Google AI Studio.';
+      } else if (errMsg.includes('429') || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('rate_limit') || errMsg.toLowerCase().includes('exhausted')) {
+        errMsg = 'Kuota Gemini API gratis atau berbayar Anda di Google AI Studio telah habis (RESOURCE_EXHAUSTED). Anda masih dapat menginput jarak, bintang, dan URL foto secara manual melalui tombol Edit (ikon Pensil) di sebelah kanan masing-masing hotel.';
       }
       res.status(500).json({ error: errMsg || 'Gagal memproses permintaan AI' });
     }

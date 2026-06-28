@@ -3,10 +3,12 @@ import { hotels, Hotel, newRowaHotels, newAlharmainHotels, defaultHotels } from 
 import { HotelCard } from './HotelCard';
 import { FilterBar } from './FilterBar';
 import { HotelDetailModal } from './HotelDetailModal';
-import { Building2, Download, RefreshCw } from 'lucide-react';
+import { Building2, Download, RefreshCw, Plus, Trash2, X } from 'lucide-react';
 import { isDateInRange, parseDate, parseDateRange } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
-import { db, doc, writeBatch, collection, getDocs, query, where } from '../firebase';
+import { db, doc, writeBatch, collection, getDocs, query, where, onSnapshot } from '../firebase';
+import { useKurs } from '../hooks/useKurs';
+import { getNormalizedHotelNameKey } from './database/HotelMediaView';
 
 const MASTER_PERIODS = [
   { name: 'LOW SEASON JUN–JUL 2026', start: '16 Jun 2026', end: '31 Jul 2026', hijri: '1 Muharram 1448 – 15 Safar 1448' },
@@ -397,6 +399,97 @@ interface HotelViewProps {
 }
 
 export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vendorName = '' }) => {
+  const { kurs: masterKurs, updateKurs } = useKurs();
+  const [localKurs, setLocalKurs] = useState<number>(4900);
+
+  interface HotelMetaItem {
+    id: string;
+    hotelId: string;
+    hotelName: string;
+    city: string;
+    photoUrl: string;
+    distance: string;
+    stars?: number;
+  }
+  const [hotelMetas, setHotelMetas] = useState<HotelMetaItem[]>([]);
+
+  useEffect(() => {
+    const unsubHotelMetas = onSnapshot(
+      collection(db, "hotel_metadata"),
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        } as HotelMetaItem));
+        setHotelMetas(data);
+      },
+      (error) => {
+        console.error("Failed to load hotel_metadata in HotelView:", error);
+      }
+    );
+    return () => unsubHotelMetas();
+  }, []);
+
+  const getMetaForHotelInternal = (hotelId: string, hotelName: string, hotelCity?: string) => {
+    if (!hotelMetas || hotelMetas.length === 0) return undefined;
+    
+    const targetNorm = getNormalizedHotelNameKey(hotelName);
+    const targetCityNorm = hotelCity 
+      ? hotelCity.toLowerCase()
+          .replace(/mecca/g, "makkah")
+          .replace(/mekkah/g, "makkah")
+          .replace(/medina/g, "madinah")
+          .replace(/medinah/g, "madinah")
+          .replace(/[^a-z]/g, "") 
+      : "";
+    
+    return hotelMetas.find(m => {
+      if (m.hotelId === hotelId) return true;
+      if (m.hotelName && hotelName && m.hotelName.toLowerCase() === hotelName.toLowerCase()) return true;
+      
+      const mNorm = getNormalizedHotelNameKey(m.hotelName);
+      const mCityNorm = m.city 
+        ? m.city.toLowerCase()
+            .replace(/mecca/g, "makkah")
+            .replace(/mekkah/g, "makkah")
+            .replace(/medina/g, "madinah")
+            .replace(/medinah/g, "madinah")
+            .replace(/[^a-z]/g, "") 
+        : "";
+      
+      if (targetNorm && mNorm === targetNorm) {
+        if (targetCityNorm && mCityNorm) {
+          return targetCityNorm === mCityNorm;
+        }
+        return true;
+      }
+      return false;
+    });
+  };
+
+  useEffect(() => {
+    if (masterKurs) {
+      setLocalKurs(masterKurs.sarToIdr);
+    }
+  }, [masterKurs]);
+
+  const [localHotels, setLocalHotels] = useState<Hotel[]>(() => {
+    const cached = localStorage.getItem('umaroh_db_hotels');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Failed to parse cached hotels:', e);
+      }
+    }
+    return hotels;
+  });
+
+  const saveHotels = (updated: Hotel[]) => {
+    setLocalHotels(updated);
+    localStorage.setItem('umaroh_db_hotels', JSON.stringify(updated));
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [mealFilter, setMealFilter] = useState('ALL');
   const [vendorFilter, setVendorFilter] = useState('ALL');
@@ -404,6 +497,164 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
   const [dateFilter, setDateFilter] = useState('');
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'confirm' | 'synced' | 'loading' | 'error'>('idle');
+
+  // Multi-selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Add & Edit modal states
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
+
+  // Form states for manual hotel
+  const [formName, setFormName] = useState('');
+  const [formCity, setFormCity] = useState<'Madinah' | 'Makkah'>('Madinah');
+  const [formVendor, setFormVendor] = useState('');
+  const [formMealPlan, setFormMealPlan] = useState<'FB' | 'RO' | 'HB' | 'BB'>('FB');
+  const [formStars, setFormStars] = useState<number>(4);
+  const [formSeasons, setFormSeasons] = useState<{ range: string; quad: number; triple: number; double: number }[]>([
+    { range: '23/06/2026 TO 20/09/2026', quad: 0, triple: 0, double: 0 }
+  ]);
+
+  const openAddModal = () => {
+    setFormName('');
+    setFormCity('Madinah');
+    setFormVendor('');
+    setFormMealPlan('FB');
+    setFormStars(4);
+    setFormSeasons([{ range: '23/06/2026 TO 20/09/2026', quad: 0, triple: 0, double: 0 }]);
+    setIsAddOpen(true);
+  };
+
+  const openEditModal = (hotel: Hotel) => {
+    setEditingHotel(hotel);
+    setFormName(hotel.name);
+    setFormCity(hotel.city as 'Madinah' | 'Makkah');
+    setFormVendor(hotel.vendor);
+    setFormMealPlan(hotel.mealPlan);
+    setFormStars(hotel.stars || 4);
+    
+    const mappedSeasons = hotel.seasons.map(s => {
+      const quadPrice = s.prices.find(p => p.roomType === 'Quad')?.price || 0;
+      const triplePrice = s.prices.find(p => p.roomType === 'Triple')?.price || 0;
+      const doublePrice = s.prices.find(p => p.roomType === 'Double')?.price || 0;
+      return {
+        range: s.range,
+        quad: quadPrice,
+        triple: triplePrice,
+        double: doublePrice
+      };
+    });
+    setFormSeasons(mappedSeasons.length > 0 ? mappedSeasons : [{ range: '23/06/2026 TO 20/09/2026', quad: 0, triple: 0, double: 0 }]);
+    setIsEditOpen(true);
+  };
+
+  const handleSaveAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || !formVendor.trim()) {
+      alert('Nama Hotel dan Vendor wajib diisi!');
+      return;
+    }
+
+    const newHotel: Hotel = {
+      id: 'hotel_manual_' + Date.now(),
+      name: formName,
+      city: formCity,
+      vendor: formVendor,
+      mealPlan: formMealPlan,
+      stars: formStars,
+      seasons: formSeasons.map(s => ({
+        range: s.range,
+        prices: [
+          { roomType: 'Quad', price: Number(s.quad) },
+          { roomType: 'Triple', price: Number(s.triple) },
+          { roomType: 'Double', price: Number(s.double) }
+        ]
+      }))
+    };
+
+    saveHotels([newHotel, ...localHotels]);
+    setIsAddOpen(false);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingHotel) return;
+    if (!formName.trim() || !formVendor.trim()) {
+      alert('Nama Hotel dan Vendor wajib diisi!');
+      return;
+    }
+
+    const updated = localHotels.map(h => {
+      if (h.id === editingHotel.id) {
+        return {
+          ...h,
+          name: formName,
+          city: formCity,
+          vendor: formVendor,
+          mealPlan: formMealPlan,
+          stars: formStars,
+          seasons: formSeasons.map(s => ({
+            range: s.range,
+            prices: [
+              { roomType: 'Quad', price: Number(s.quad) },
+              { roomType: 'Triple', price: Number(s.triple) },
+              { roomType: 'Double', price: Number(s.double) }
+            ]
+          }))
+        } as Hotel;
+      }
+      return h;
+    });
+
+    saveHotels(updated);
+    setIsEditOpen(false);
+    setEditingHotel(null);
+  };
+
+  const handleSingleDelete = (hotel: Hotel) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus hotel "${hotel.name}"?`)) {
+      const updated = localHotels.filter(h => h.id !== hotel.id);
+      saveHotels(updated);
+      setSelectedIds(selectedIds.filter(id => id !== hotel.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} hotel terpilih?`)) {
+      const updated = localHotels.filter(h => !selectedIds.includes(h.id));
+      saveHotels(updated);
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(item => item !== id));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean, visibleIds: string[]) => {
+    if (checked) {
+      const union = Array.from(new Set([...selectedIds, ...visibleIds]));
+      setSelectedIds(union);
+    } else {
+      setSelectedIds(selectedIds.filter(id => !visibleIds.includes(id)));
+    }
+  };
+
+  const handleSaveKurs = async () => {
+    try {
+      await updateKurs(localKurs, masterKurs?.usdToIdr || 20000);
+      alert('Kurs Hotel (SAR) berhasil diperbarui!');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui kurs');
+    }
+  };
 
   // Automated silent sync check on component load
   useEffect(() => {
@@ -512,12 +763,12 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
   };
 
   const vendors = useMemo(() => {
-    const uniqueVendors = new Set(hotels.map(hotel => hotel.vendor));
+    const uniqueVendors = new Set(localHotels.map(hotel => hotel.vendor));
     return Array.from(uniqueVendors).sort();
-  }, []);
+  }, [localHotels]);
 
   const filteredHotels = useMemo(() => {
-    return hotels.filter((hotel) => {
+    return localHotels.filter((hotel) => {
       const matchesSearch = hotel.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesMeal = mealFilter === 'ALL' || hotel.mealPlan === mealFilter;
       const matchesVendor = isVendorMode 
@@ -534,7 +785,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
 
       return matchesSearch && matchesMeal && matchesVendor && matchesCity && matchesDate;
     });
-  }, [searchTerm, mealFilter, vendorFilter, cityFilter, dateFilter, isVendorMode, vendorName]);
+  }, [localHotels, searchTerm, mealFilter, vendorFilter, cityFilter, dateFilter, isVendorMode, vendorName]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -564,7 +815,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     // Collect all possible rows first
     const allRows: HotelExportRow[] = [];
     
-    hotels.forEach(hotel => {
+    localHotels.forEach(hotel => {
       if (hotel.seasons && hotel.seasons.length > 0) {
         hotel.seasons.forEach(season => {
           const quadPrice = season.prices.find(p => p.roomType === 'Quad')?.price || 0;
@@ -628,7 +879,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
       ['4', 'Foto hotel tidak perlu dimasukkan ke Excel. Foto akan dipilih saat modal review import muncul.'],
       ['5', 'Setelah selesai mengisi, simpan tetap dalam format XLSX atau CSV lalu import kembali dari aplikasi.'],
       ['6', 'Kalau memakai file lama yang masih menggunakan Sheet1, sistem tetap akan mencoba membacanya selama header kolom hotel masih sesuai.'],
-      ['nama_hotel', 'Wajib diisi. Nama hotel untuk tampil di listing dan paket.'],
+      ['nama_hotel', 'Wajib diisi. Nama hotel untuk tampil di listing and paket.'],
       ['nama_vendor', 'Wajib diisi and harus sama persis dengan nama vendor pada master vendor.'],
       ['nama_periode', 'Wajib diisi (Hijriah).'],
       ['kota_hotel', 'Wajib diisi dan harus sama dengan master tujuan umrah atau kota wisata.'],
@@ -651,8 +902,40 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     XLSX.writeFile(workbook, 'template_hotel.xlsx');
   };
 
+  const visibleHotelIds = filteredHotels.map(h => h.id);
+  const isAllVisibleSelected = visibleHotelIds.length > 0 && visibleHotelIds.every(id => selectedIds.includes(id));
+
   return (
     <div className="container mx-auto px-4 py-8 flex-grow">
+      {/* Kurs & Add Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <span className="font-bold text-gray-700 text-sm whitespace-nowrap">Kurs SAR ke IDR:</span>
+          <div className="relative rounded-lg shadow-sm max-w-[150px]">
+            <input
+              type="number"
+              value={localKurs}
+              onChange={(e) => setLocalKurs(Number(e.target.value))}
+              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-semibold text-gray-800"
+            />
+          </div>
+          <button
+            onClick={handleSaveKurs}
+            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1 shrink-0"
+          >
+            Update Kurs
+          </button>
+        </div>
+
+        <button
+          onClick={openAddModal}
+          className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Tambah Hotel Manual
+        </button>
+      </div>
+
       <FilterBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -669,11 +952,34 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         isVendorMode={isVendorMode}
       />
 
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="text-gray-500 text-sm">
-          Showing {filteredHotels.length} hotels
+      {/* Multi selection and list header */}
+      <div className="mb-6 bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isAllVisibleSelected}
+              onChange={(e) => handleSelectAll(e.target.checked, visibleHotelIds)}
+              className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+            />
+            <span>Pilih Semua ({filteredHotels.length} Hotel)</span>
+          </label>
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded">
+                {selectedIds.length} Terpilih
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 hover:text-red-700 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Hapus Terpilih
+              </button>
+            </div>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
           <button
             onClick={handleSyncToFirestore}
             disabled={syncStatus === 'loading'}
@@ -704,13 +1010,23 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
 
       {filteredHotels.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredHotels.map((hotel) => (
-            <HotelCard 
-              key={hotel.id} 
-              hotel={hotel} 
-              onClick={setSelectedHotel}
-            />
-          ))}
+          {filteredHotels.map((hotel) => {
+            const meta = getMetaForHotelInternal(hotel.id, hotel.name, hotel.city);
+            return (
+              <HotelCard 
+                key={hotel.id} 
+                hotel={hotel} 
+                onClick={setSelectedHotel}
+                onEdit={openEditModal}
+                onDelete={handleSingleDelete}
+                isSelected={selectedIds.includes(hotel.id)}
+                onSelect={handleSelectOne}
+                photoUrl={meta?.photoUrl}
+                distance={meta?.distance}
+                stars={meta?.stars}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
@@ -725,6 +1041,198 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
           hotel={selectedHotel} 
           onClose={() => setSelectedHotel(null)} 
         />
+      )}
+
+      {/* Manual Add / Edit Modals */}
+      {(isAddOpen || isEditOpen) && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col my-8 max-h-[90vh]">
+            <div className="bg-emerald-600 px-6 py-4 flex justify-between items-center text-white">
+              <h3 className="font-bold text-lg">
+                {isAddOpen ? 'Tambah Hotel Manual' : 'Edit Hotel Master'}
+              </h3>
+              <button 
+                onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
+                className="hover:bg-white/10 p-1.5 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={isAddOpen ? handleSaveAdd : handleSaveEdit} className="p-6 overflow-y-auto flex-grow space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Hotel</label>
+                  <input
+                    type="text"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    placeholder="Contoh: Safwah Royal Orchid"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Kota</label>
+                  <select
+                    value={formCity}
+                    onChange={(e) => setFormCity(e.target.value as 'Madinah' | 'Makkah')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                  >
+                    <option value="Madinah">Madinah</option>
+                    <option value="Makkah">Makkah</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Vendor</label>
+                  <input
+                    type="text"
+                    value={formVendor}
+                    onChange={(e) => setFormVendor(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    placeholder="Contoh: TFA, ROWA, Maysan"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Meal Plan</label>
+                  <input
+                    type="text"
+                    value={formMealPlan}
+                    onChange={(e) => setFormMealPlan(e.target.value as 'FB' | 'RO' | 'HB' | 'BB')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    placeholder="Contoh: FB, BB, HB"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Bintang</label>
+                  <select
+                    value={formStars}
+                    onChange={(e) => setFormStars(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                  >
+                    <option value="3">3 Bintang</option>
+                    <option value="4">4 Bintang</option>
+                    <option value="5">5 Bintang</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Seasons Section */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold text-gray-800 text-sm">Musim & Tarif Room (SAR)</h4>
+                  <button
+                    type="button"
+                    onClick={() => setFormSeasons([...formSeasons, { range: '01/10/2026 TO 31/10/2026', quad: 0, triple: 0, double: 0 }])}
+                    className="text-xs bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-2 py-1 rounded flex items-center gap-1 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" /> Tambah Musim
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                  {formSeasons.map((season, idx) => (
+                    <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-3 relative">
+                      <button
+                        type="button"
+                        onClick={() => setFormSeasons(formSeasons.filter((_, sIdx) => sIdx !== idx))}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                        disabled={formSeasons.length === 1}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Periode Tanggal (Range)</label>
+                        <input
+                          type="text"
+                          value={season.range}
+                          onChange={(e) => {
+                            const updated = [...formSeasons];
+                            updated[idx].range = e.target.value;
+                            setFormSeasons(updated);
+                          }}
+                          placeholder="DD/MM/YYYY TO DD/MM/YYYY"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono"
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Quad Price (SAR)</label>
+                          <input
+                            type="number"
+                            value={season.quad || ''}
+                            onChange={(e) => {
+                              const updated = [...formSeasons];
+                              updated[idx].quad = Number(e.target.value);
+                              setFormSeasons(updated);
+                            }}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                            placeholder="Quad Price"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Triple Price (SAR)</label>
+                          <input
+                            type="number"
+                            value={season.triple || ''}
+                            onChange={(e) => {
+                              const updated = [...formSeasons];
+                              updated[idx].triple = Number(e.target.value);
+                              setFormSeasons(updated);
+                            }}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                            placeholder="Triple Price"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Double Price (SAR)</label>
+                          <input
+                            type="number"
+                            value={season.double || ''}
+                            onChange={(e) => {
+                              const updated = [...formSeasons];
+                              updated[idx].double = Number(e.target.value);
+                              setFormSeasons(updated);
+                            }}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                            placeholder="Double Price"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setIsAddOpen(false); setIsEditOpen(false); }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-semibold transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
+                >
+                  {isAddOpen ? 'Simpan Hotel Baru' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

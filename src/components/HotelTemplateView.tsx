@@ -8,6 +8,7 @@ import { Type } from '@google/genai';
 import { logoBase64 } from '../utils/logoBase64';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { useKurs } from '../hooks/useKurs';
 
 type HotelRow = {
   hotelName: string;
@@ -22,10 +23,17 @@ type StarSection = {
 };
 
 export const HotelTemplateView: React.FC = () => {
+  const { kurs: masterKurs, loading: masterKursLoading } = useKurs();
   const [city, setCity] = useState<'Madinah' | 'Makkah'>('Madinah');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [kurs, setKurs] = useState<number>(4900);
+
+  useEffect(() => {
+    if (!masterKursLoading && masterKurs) {
+      setKurs(masterKurs.sarToIdr);
+    }
+  }, [masterKurs, masterKursLoading]);
   const [marginPercent, setMarginPercent] = useState<number>(15);
   const [currency, setCurrency] = useState<'SAR' | 'IDR'>('SAR');
   const printRef = useRef<HTMLDivElement>(null);

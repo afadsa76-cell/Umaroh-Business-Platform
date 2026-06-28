@@ -17,9 +17,10 @@ import { PaketWisataView } from './PaketWisataView';
 import { HotelMediaView } from './database/HotelMediaView';
 import { SupabaseBridgeView } from './database/SupabaseBridgeView';
 import { GoogleDriveSyncView } from './database/GoogleDriveSyncView';
-import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon, Layers, CloudUpload } from 'lucide-react';
+import { MasterKursView } from './MasterKursView';
+import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon, Layers, CloudUpload, Coins } from 'lucide-react';
 
-type DatabaseTab = 'paketMaster' | 'kemitraan' | 'googleDriveSync' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'manasik' | 'ziarah' | 'mutawif' | 'handlingDomestik' | 'keretaCepat' | 'supabaseBridge';
+type DatabaseTab = 'paketMaster' | 'kemitraan' | 'googleDriveSync' | 'masterKurs' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'manasik' | 'ziarah' | 'mutawif' | 'handlingDomestik' | 'keretaCepat' | 'supabaseBridge';
 
 export const DatabaseView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DatabaseTab>('googleDriveSync');
@@ -27,6 +28,7 @@ export const DatabaseView: React.FC = () => {
   const tabs: { id: DatabaseTab; label: string; icon: React.ElementType }[] = [
     { id: 'googleDriveSync', label: 'Google Drive Auto-Backup', icon: CloudUpload },
     { id: 'supabaseBridge', label: 'Migration Bridge (Supabase)', icon: Layers },
+    { id: 'masterKurs', label: 'Master Kurs', icon: Coins },
     { id: 'paketMaster', label: 'Paket Master', icon: Package },
     { id: 'kemitraan', label: 'Kemitraan', icon: Handshake },
     { id: 'hotel', label: 'Hotel', icon: Building2 },
@@ -50,6 +52,7 @@ export const DatabaseView: React.FC = () => {
     switch (activeTab) {
       case 'googleDriveSync': return <GoogleDriveSyncView />;
       case 'supabaseBridge': return <SupabaseBridgeView />;
+      case 'masterKurs': return <MasterKursView />;
       case 'paketMaster': return <PaketMasterView />;
       case 'kemitraan': return <KemitraanAdminView />;
       case 'hotel': return <HotelView />;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, Search, Star, Building2, CheckCircle2, Clock, Calendar, Plane, Share2, ChevronRight, Activity, X } from 'lucide-react';
-import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp, handleFirestoreError, OperationType, addDoc, setDoc, getDocs, getDoc } from '../firebase';
+import { Package, Plus, Edit2, Trash2, Search, Star, Building2, CheckCircle2, Clock, Calendar, Plane, Share2, ChevronRight, Activity, X, GitMerge, ArrowRight, Sparkles, RefreshCw } from 'lucide-react';
+import { db, auth, collection, onSnapshot, doc, deleteDoc, query, where, updateDoc, serverTimestamp, handleFirestoreError, OperationType, addDoc, setDoc, getDocs, getDoc, writeBatch } from '../firebase';
 import { PaketMasterWizard } from './PaketMasterWizard';
 import { PaketDetailView } from './PaketDetailView';
 import { PaketMaster, Maskapai, Layanan } from '../types';
@@ -25,7 +25,12 @@ export const PaketMitraView: React.FC = () => {
   
   const [notification, setNotification] = useState<{type: 'success'|'error', message: string} | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'draft' | 'publish'>('publish');
+  const [activeTab, setActiveTab] = useState<'draft' | 'publish' | 'merge'>('publish');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [mergeSourceId, setMergeSourceId] = useState<string>('');
+  const [mergeTargetId, setMergeTargetId] = useState<string>('');
+  const [isMerging, setIsMerging] = useState<boolean>(false);
 
   // States for Wizard
   const [isAddingNewMaster, setIsAddingNewMaster] = useState(false);
@@ -39,6 +44,415 @@ export const PaketMitraView: React.FC = () => {
   const showNotification = (type: 'success'|'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleMergeGroups = async () => {
+    if (!mergeSourceId || !mergeTargetId) {
+      showNotification('error', 'Harap pilih kedua grup yang akan digabungkan.');
+      return;
+    }
+    if (mergeSourceId === mergeTargetId) {
+      showNotification('error', 'Grup asal dan tujuan tidak boleh sama.');
+      return;
+    }
+
+    setIsMerging(true);
+    try {
+      const sourcePaket = paketMitras.find(p => p.id === mergeSourceId);
+      const targetPaket = paketMitras.find(p => p.id === mergeTargetId);
+      
+      if (!sourcePaket || !targetPaket) {
+        showNotification('error', 'Data paket tidak ditemukan.');
+        setIsMerging(false);
+        return;
+      }
+
+      const targetMaster = paketMasters.find(m => m.id === targetPaket.paketMasterId);
+
+      // Find bookings belonging to source package (Group B - which will be moved)
+      const sourceBookings = bookings.filter(b => b.paketId === sourcePaket.id || b.paketId === sourcePaket.paketMasterId);
+
+      if (sourceBookings.length === 0) {
+        showNotification('error', 'Grup asal tidak memiliki jemaah terdaftar untuk dipindahkan.');
+        setIsMerging(false);
+        return;
+      }
+
+      // Update all bookings in Source Group to the Target Group
+      const batch = writeBatch(db);
+      sourceBookings.forEach((booking) => {
+        const bRef = doc(db, 'bookings', booking.id);
+        batch.update(bRef, {
+          paketId: targetPaket.id,
+          paketNama: targetPaket.namaPaketMitra,
+          updatedAt: serverTimestamp()
+        });
+      });
+
+      // Update source package status to inactive/merged
+      const sourceRef = doc(db, 'paket_mitra', sourcePaket.id);
+      batch.update(sourceRef, {
+        status: 'inactive',
+        mergedIntoId: targetPaket.id,
+        updatedAt: serverTimestamp()
+      });
+
+      // Optionally, let's adjust the Target Package targetJamaah or kuota
+      const targetBookings = bookings.filter(b => b.paketId === targetPaket.id || b.paketId === targetPaket.paketMasterId);
+      const totalNewRegistrants = targetBookings.length + sourceBookings.length;
+
+      // Update the tracker_paket of target package if exists
+      const targetTracker = trackerPakets.find(t => t.paketMasterId === targetPaket.paketMasterId || t.namaPaket === targetMaster?.nama);
+      if (targetTracker) {
+        const trackerRef = doc(db, 'tracker_paket', targetTracker.id);
+        batch.update(trackerRef, {
+          terdaftar: totalNewRegistrants,
+          // If actual registration exceeds target, we expand it
+          targetJamaah: Math.max(targetTracker.targetJamaah || 35, totalNewRegistrants)
+        });
+      }
+
+      await batch.commit();
+
+      showNotification('success', `Berhasil menggabungkan grup! ${sourceBookings.length} jemaah dari "${sourcePaket.namaPaketMitra}" berhasil dipindahkan ke "${targetPaket.namaPaketMitra}".`);
+      
+      // Clear selections
+      setMergeSourceId('');
+      setMergeTargetId('');
+      setActiveTab('publish');
+    } catch (error) {
+      console.error("Error during merge:", error);
+      showNotification('error', 'Terjadi kesalahan saat menggabungkan grup.');
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
+  const renderMergeGroupTab = () => {
+    // We only show published packages of the current partner that are active
+    const activeMitraPakets = paketMitras.filter(p => p.status === 'active');
+    
+    const sourcePaket = activeMitraPakets.find(p => p.id === mergeSourceId);
+    const targetPaket = activeMitraPakets.find(p => p.id === mergeTargetId);
+
+    const sourceMaster = sourcePaket ? paketMasters.find(m => m.id === sourcePaket.paketMasterId) : null;
+    const targetMaster = targetPaket ? paketMasters.find(m => m.id === targetPaket.paketMasterId) : null;
+
+    // Filter bookings belonging to these packages
+    const sourceBookings = sourcePaket 
+      ? bookings.filter(b => b.paketId === sourcePaket.id || b.paketId === sourcePaket.paketMasterId) 
+      : [];
+    const targetBookings = targetPaket 
+      ? bookings.filter(b => b.paketId === targetPaket.id || b.paketId === targetPaket.paketMasterId) 
+      : [];
+
+    // Calculate compatibility
+    let compatibilityScore = 0;
+    const compatibilityChecks: { label: string; passed: boolean; detail: string }[] = [];
+
+    if (sourcePaket && targetPaket && sourceMaster && targetMaster) {
+      // 1. Check Maskapai
+      const sameAirline = sourceMaster.maskapaiId === targetMaster.maskapaiId;
+      if (sameAirline) compatibilityScore += 35;
+      compatibilityChecks.push({
+        label: 'Maskapai Penerbangan',
+        passed: sameAirline,
+        detail: sameAirline ? 'Sama (' + getMaskapaiInfo(sourceMaster.maskapaiId) + ')' : 'Berbeda'
+      });
+
+      // 2. Check Departure Dates
+      let dateDiffDays = 999;
+      if (sourceMaster.tglBerangkat && targetMaster.tglBerangkat) {
+        try {
+          const d1 = new Date(sourceMaster.tglBerangkat);
+          const d2 = new Date(targetMaster.tglBerangkat);
+          dateDiffDays = Math.abs(Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+        } catch (err) {
+          console.debug("Date parsing error ignored:", err);
+        }
+      }
+      const closeDates = dateDiffDays <= 7;
+      if (closeDates) compatibilityScore += 35;
+      else if (dateDiffDays <= 15) compatibilityScore += 15;
+      
+      compatibilityChecks.push({
+        label: 'Tanggal Keberangkatan',
+        passed: closeDates,
+        detail: dateDiffDays === 0 ? 'Sama persis' : dateDiffDays < 999 ? `Selisih ${dateDiffDays} hari` : 'Berbeda jauh'
+      });
+
+      // 3. Check Hotels
+      const sameMakkahHotel = sourceMaster.hotelMakkahId === targetMaster.hotelMakkahId;
+      const sameMadinahHotel = sourceMaster.hotelMadinahId === targetMaster.hotelMadinahId;
+      const hotelsCompatible = sameMakkahHotel && sameMadinahHotel;
+      
+      if (sameMakkahHotel) compatibilityScore += 15;
+      if (sameMadinahHotel) compatibilityScore += 15;
+      
+      compatibilityChecks.push({
+        label: 'Hotel Makkah & Madinah',
+        passed: hotelsCompatible,
+        detail: hotelsCompatible ? 'Sama persis' : (sameMakkahHotel ? 'Hanya Hotel Makkah sama' : sameMadinahHotel ? 'Hanya Hotel Madinah sama' : 'Hotel berbeda')
+      });
+    }
+
+    return (
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        {/* Intro banner */}
+        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-3xl p-6 md:p-8 text-white border border-indigo-500/10 shadow-xl relative overflow-hidden">
+          <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                <GitMerge className="w-4 h-4" />
+                Mitra Group Merger Portal
+              </div>
+              <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight">
+                Solusi Penggabungan Grup untuk Cegah Kerugian
+              </h3>
+              <p className="text-sm text-slate-300 leading-relaxed max-w-3xl">
+                Menghadapi pendaftaran di bawah kuota operasional? Fitur ini memungkinkan Anda memindahkan jemaah terdaftar dari satu grup kecil ke grup aktif lainnya yang memiliki spesifikasi mirip. Setelah digabungkan, biaya komponen operasional akan direkalkulasi secara otomatis untuk meningkatkan profitabilitas!
+              </p>
+            </div>
+            <Sparkles className="w-16 h-16 text-indigo-400 opacity-20 hidden md:block" />
+          </div>
+        </div>
+
+        {/* Selection Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          
+          {/* Group Source Selection */}
+          <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-full bg-rose-50 text-rose-600 font-bold text-xs flex items-center justify-center">1</span>
+                <h4 className="font-black text-gray-900 uppercase text-xs tracking-wider">Pilih Grup Asal (Pindahkan Jemaah Dari)</h4>
+              </div>
+              <select
+                value={mergeSourceId}
+                onChange={(e) => setMergeSourceId(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+              >
+                <option value="">-- PILIH GRUP ASAL --</option>
+                {activeMitraPakets.map(p => {
+                  const pBookings = bookings.filter(b => b.paketId === p.id || b.paketId === p.paketMasterId);
+                  return (
+                    <option key={p.id} value={p.id} disabled={p.id === mergeTargetId}>
+                      {p.namaPaketMitra} ({pBookings.length} Jemaah Terdaftar)
+                    </option>
+                  );
+                })}
+              </select>
+
+              {sourcePaket && sourceMaster ? (
+                <div className="bg-rose-50/50 rounded-2xl p-4 border border-rose-100/60 space-y-3 mt-4 animate-in fade-in">
+                  <h5 className="font-black text-rose-800 text-xs uppercase italic">{sourcePaket.namaPaketMitra}</h5>
+                  <div className="space-y-1.5 text-[11px] text-gray-600">
+                    <div className="flex justify-between"><span className="font-bold">Maskapai:</span> <span>{getMaskapaiInfo(sourceMaster.maskapaiId)}</span></div>
+                    <div className="flex justify-between"><span className="font-bold">Tgl Berangkat:</span> <span>{sourceMaster.tglBerangkat || '-'}</span></div>
+                    <div className="flex justify-between"><span className="font-bold">Durasi:</span> <span>{sourceMaster.durasiHari || 9} Hari</span></div>
+                    <div className="flex justify-between"><span className="font-bold">Kuota Awal:</span> <span>{sourceMaster.kuota} Pax</span></div>
+                    <div className="flex justify-between text-rose-700 font-bold border-t border-rose-100/60 pt-1.5">
+                      <span>Jemaah Aktif Saat Ini:</span> <span>{sourceBookings.length} PAX</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center text-gray-400 border border-dashed border-gray-100 rounded-2xl text-xs font-medium">
+                  Silakan pilih grup yang pendaftarnya di bawah kuota
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Transfer Icon in Middle */}
+          <div className="lg:col-span-2 flex flex-col items-center justify-center gap-2">
+            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shadow-md">
+              <ArrowRight className="w-6 h-6 rotate-90 lg:rotate-0 animate-pulse" />
+            </div>
+            <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full">
+              Dipindahkan
+            </span>
+          </div>
+
+          {/* Group Target Selection */}
+          <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center">2</span>
+                <h4 className="font-black text-gray-900 uppercase text-xs tracking-wider">Pilih Grup Tujuan (Pindahkan Jemaah Ke)</h4>
+              </div>
+              <select
+                value={mergeTargetId}
+                onChange={(e) => setMergeTargetId(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="">-- PILIH GRUP TUJUAN --</option>
+                {activeMitraPakets.map(p => {
+                  const pBookings = bookings.filter(b => b.paketId === p.id || b.paketId === p.paketMasterId);
+                  return (
+                    <option key={p.id} value={p.id} disabled={p.id === mergeSourceId}>
+                      {p.namaPaketMitra} ({pBookings.length} Jemaah Terdaftar)
+                    </option>
+                  );
+                })}
+              </select>
+
+              {targetPaket && targetMaster ? (
+                <div className="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-100/60 space-y-3 mt-4 animate-in fade-in">
+                  <h5 className="font-black text-emerald-800 text-xs uppercase italic">{targetPaket.namaPaketMitra}</h5>
+                  <div className="space-y-1.5 text-[11px] text-gray-600">
+                    <div className="flex justify-between"><span className="font-bold">Maskapai:</span> <span>{getMaskapaiInfo(targetMaster.maskapaiId)}</span></div>
+                    <div className="flex justify-between"><span className="font-bold">Tgl Berangkat:</span> <span>{targetMaster.tglBerangkat || '-'}</span></div>
+                    <div className="flex justify-between"><span className="font-bold">Durasi:</span> <span>{targetMaster.durasiHari || 9} Hari</span></div>
+                    <div className="flex justify-between"><span className="font-bold">Kuota Awal:</span> <span>{targetMaster.kuota} Pax</span></div>
+                    <div className="flex justify-between text-emerald-700 font-bold border-t border-emerald-100/60 pt-1.5">
+                      <span>Jemaah Aktif Saat Ini:</span> <span>{targetBookings.length} PAX</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center text-gray-400 border border-dashed border-gray-100 rounded-2xl text-xs font-medium">
+                  Silakan pilih grup tujuan penampung jemaah
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Compatibility & Impact Report */}
+        {sourcePaket && targetPaket && sourceMaster && targetMaster && (
+          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 md:p-8 space-y-6 animate-in fade-in duration-300">
+            <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-5 h-5 text-indigo-600" />
+              Laporan Analisis Kompatibilitas & Dampak Merger
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Compatibility score radial indicator */}
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 flex flex-col items-center justify-center text-center">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tingkat Kompatibilitas</span>
+                <div className="relative flex items-center justify-center">
+                  <svg className="w-24 h-24 transform -rotate-90">
+                    <circle cx="48" cy="48" r="40" stroke="#f1f5f9" strokeWidth="8" fill="transparent" />
+                    <circle 
+                      cx="48" 
+                      cy="48" 
+                      r="40" 
+                      stroke={compatibilityScore >= 70 ? '#10b981' : compatibilityScore >= 40 ? '#f59e0b' : '#ef4444'} 
+                      strokeWidth="8" 
+                      fill="transparent" 
+                      strokeDasharray={251.2}
+                      strokeDashoffset={251.2 - (251.2 * compatibilityScore) / 100}
+                    />
+                  </svg>
+                  <span className="absolute text-xl font-black text-slate-800">{compatibilityScore}%</span>
+                </div>
+                <span className={`text-[10px] font-black uppercase tracking-wider mt-3 px-2.5 py-1 rounded-full ${
+                  compatibilityScore >= 70 ? 'bg-emerald-100 text-emerald-800' : compatibilityScore >= 40 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                }`}>
+                  {compatibilityScore >= 70 ? 'Sangat Direkomendasikan' : compatibilityScore >= 40 ? 'Kompatibilitas Sedang' : 'Risiko Kompatibilitas'}
+                </span>
+              </div>
+
+              {/* Compatibility Checklists */}
+              <div className="md:col-span-2 bg-white p-5 rounded-2xl border border-gray-100 space-y-4">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block border-b pb-1.5">Parameter Kesesuaian</span>
+                <div className="space-y-3">
+                  {compatibilityChecks.map((check, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-gray-500">{check.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-800 font-black">{check.detail}</span>
+                        <span className={`w-2 h-2 rounded-full ${check.passed ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Combined impact */}
+            <div className="bg-indigo-50 border border-indigo-100/80 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-indigo-800 font-black text-sm uppercase">Simulasi Gabungan Grup Sukses!</p>
+                <p className="text-xs text-indigo-900/85 font-medium leading-relaxed max-w-2xl">
+                  Jumlah jemaah akan bertambah dari <span className="font-bold text-indigo-700 underline">{targetBookings.length} Pax</span> menjadi <span className="font-bold text-emerald-700 underline">{targetBookings.length + sourceBookings.length} Pax</span>. Total ini akan memperkecil beban biaya handling per pax karena sharing bus, mutawif, dan tour leader dialokasikan secara efisien ke grup penampung.
+                </p>
+              </div>
+              <div className="bg-indigo-600 text-white font-black text-center px-6 py-3 rounded-xl shadow-lg shrink-0 w-full md:w-auto">
+                <div className="text-[9px] uppercase tracking-wider text-indigo-100">Gabungan Jemaah</div>
+                <div className="text-2xl">{targetBookings.length + sourceBookings.length} PAX</div>
+              </div>
+            </div>
+
+            {/* List of pilgrims to be transferred */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Daftar {sourceBookings.length} Jemaah yang akan Dipindahkan</span>
+              <div className="overflow-x-auto max-h-48 overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-gray-50 text-gray-400 font-bold uppercase text-[9px]">
+                    <tr>
+                      <th className="px-4 py-2">Nama Jemaah</th>
+                      <th className="px-4 py-2">Status Pembayaran</th>
+                      <th className="px-4 py-2 text-right">Nilai Tagihan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 text-[11px]">
+                    {sourceBookings.map((b, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-2 font-black text-gray-800 uppercase italic">{b.nama || b.namaJamaah || 'Tanpa Nama'}</td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                            b.statusPembayaran === 'Lunas' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                          }`}>
+                            {b.statusPembayaran || 'Pending'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-right font-black italic">Rp {Number(b.harga || b.totalHarga || 0).toLocaleString('id-ID')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Big confirmation action */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  setMergeSourceId('');
+                  setMergeTargetId('');
+                }}
+                className="px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+              >
+                Reset Pilihan
+              </button>
+              <button
+                type="button"
+                disabled={isMerging}
+                onClick={handleMergeGroups}
+                className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-800 hover:from-indigo-700 hover:to-indigo-950 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/35 transition-all flex items-center gap-2"
+              >
+                {isMerging ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Memproses Penggabungan...
+                  </>
+                ) : (
+                  <>
+                    <GitMerge className="w-4 h-4" />
+                    Proses Gabungkan Grup & Rekalkulasi
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -111,6 +525,12 @@ export const PaketMitraView: React.FC = () => {
       handleFirestoreError(error, OperationType.GET, 'layanan');
     });
 
+    const unsubBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
+      setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'bookings');
+    });
+
     return () => {
       unsubUser();
       unsubMaster();
@@ -119,6 +539,7 @@ export const PaketMitraView: React.FC = () => {
       unsubTracker();
       unsubMitra();
       unsubLayanan();
+      unsubBookings();
     };
   }, [userId, userRole]);
 
@@ -535,6 +956,13 @@ export const PaketMitraView: React.FC = () => {
           >
             Publish ({paketMitras.length + filteredPublishedMasters.length})
           </button>
+          <button 
+            onClick={() => setActiveTab('merge')}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'merge' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <GitMerge className="w-4 h-4" />
+            Merge Group
+          </button>
         </div>
       </div>
 
@@ -631,7 +1059,7 @@ export const PaketMitraView: React.FC = () => {
             </div>
           )}
         </div>
-      ) : (
+      ) : activeTab === 'publish' ? (
         <div className="space-y-8">
           {/* Katalog Master Section */}
           <div>
@@ -850,6 +1278,8 @@ export const PaketMitraView: React.FC = () => {
           </div>
         </div>
       </div>
+      ) : (
+        renderMergeGroupTab()
       )}
       {/* Sales Order Profitability Validation Modal */}
       {soValidationPaket && (

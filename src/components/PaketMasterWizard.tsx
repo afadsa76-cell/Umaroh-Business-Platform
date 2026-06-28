@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { isDateInRange } from "../utils/dateUtils";
+import { useKurs } from "../hooks/useKurs";
 import {
   ChevronRight,
   ChevronLeft,
@@ -81,8 +82,29 @@ import {
   Bandara,
   PaketWisata,
   WizardFormData,
-  VisaData
 } from "../types";
+
+interface SimpleHotel {
+  id: string;
+  name?: string;
+  nama?: string;
+  city?: string;
+  kota?: string;
+  stars?: number;
+  bintang?: number;
+  priceQuad?: number;
+  priceTriple?: number;
+  priceDouble?: number;
+  vendor?: string;
+  mealPlan?: string;
+  seasons?: Array<{
+    range: string;
+    prices: Array<{
+      roomType: 'Quad' | 'Triple' | 'Double';
+      price: number;
+    }>;
+  }>;
+}
 
 interface HotelMetaItem {
   id: string;
@@ -178,6 +200,98 @@ const WISATA_OPTIONS = [
     ],
   },
 ];
+
+const getHotelImages = (photoUrl: string | undefined, hotelId: string, hotelNama?: string, hotelKota?: string): string[] => {
+  if (!photoUrl) {
+    const fallback = getHotelImage(hotelId, hotelNama, hotelKota);
+    return fallback ? [fallback] : [];
+  }
+  // Try to split by common separators: newline, semicolon, or comma
+  const rawUrls = photoUrl.includes('\n')
+    ? photoUrl.split('\n')
+    : photoUrl.includes(';')
+    ? photoUrl.split(';')
+    : photoUrl.split(',');
+
+  const urls = rawUrls
+    .map((url) => url.trim())
+    .filter((url) => url.startsWith("http") || url.startsWith("data:image"));
+
+  if (urls.length === 0) {
+    const fallback = getHotelImage(hotelId, hotelNama, hotelKota);
+    return fallback ? [fallback] : [];
+  }
+  return urls;
+};
+
+interface HotelImageCarouselProps {
+  images: string[];
+  hotelName: string;
+  kota?: string;
+}
+
+const HotelImageCarousel: React.FC<HotelImageCarouselProps> = ({ images, hotelName, kota }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 3500); // 3.5 seconds
+
+    return () => clearInterval(interval);
+  }, [images]);
+
+  if (images.length === 0) {
+    return (
+      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-600 text-xs font-mono">
+        No Image
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full overflow-hidden bg-slate-950">
+      {images.map((img, idx) => (
+        <img
+          key={idx}
+          src={img}
+          alt={`${hotelName} - ${idx + 1}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${
+            idx === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+          }`}
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            target.onerror = null;
+            let fallback = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
+            if (kota?.toLowerCase() === "makkah") {
+              fallback = "https://images.unsplash.com/photo-1565552643983-6597af594348?auto=format&fit=crop&w=800&q=80";
+            } else if (kota?.toLowerCase() === "madinah") {
+              fallback = "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=800&q=80";
+            }
+            target.src = fallback;
+          }}
+        />
+      ))}
+      
+      {/* Visual indicators for slides */}
+      {images.length > 1 && (
+        <div className="absolute bottom-3 right-3 flex gap-1 z-10 bg-black/50 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 shadow-sm">
+          {images.map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                idx === currentIndex ? "bg-blue-400 w-3" : "bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const getHotelImage = (id: string, nama?: string, kota?: string) => {
   // Try to match by name (case insensitive, removing spaces/dashes)
@@ -296,6 +410,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   initialStepName,
   autoDownloadPdf = false,
 }) => {
+  const { kurs: masterKurs } = useKurs();
+  const effectiveKursSar = initialData?.kursSar || masterKurs.sarToIdr || 4900;
+  const effectiveKursUsd = initialData?.kursUsd || masterKurs.usdToIdr || 20000;
+
   const [currentStep, setCurrentStep] = useState(() => {
     if (initialStepName) {
       const steps = getSteps(initialData?.kategori || "UMRAH REGULAR");
@@ -372,28 +490,54 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     return isNaN(n) ? def : n;
   };
 
+  const getMetaForHotelInternal = (hotelId: string, hotelName: string, hotelCity?: string) => {
+    if (!hotelMetas || hotelMetas.length === 0) return undefined;
+    
+    const targetNorm = getNormalizedHotelNameKey(hotelName);
+    const targetCityNorm = hotelCity 
+      ? hotelCity.toLowerCase()
+          .replace(/mecca/g, "makkah")
+          .replace(/mekkah/g, "makkah")
+          .replace(/medina/g, "madinah")
+          .replace(/medinah/g, "madinah")
+          .replace(/[^a-z]/g, "") 
+      : "";
+    
+    return hotelMetas.find(m => {
+      if (m.hotelId === hotelId) return true;
+      if (m.hotelName && hotelName && m.hotelName.toLowerCase() === hotelName.toLowerCase()) return true;
+      
+      const mNorm = getNormalizedHotelNameKey(m.hotelName);
+      const mCityNorm = m.city 
+        ? m.city.toLowerCase()
+            .replace(/mecca/g, "makkah")
+            .replace(/mekkah/g, "makkah")
+            .replace(/medina/g, "madinah")
+            .replace(/medinah/g, "madinah")
+            .replace(/[^a-z]/g, "") 
+        : "";
+      
+      if (targetNorm && mNorm === targetNorm) {
+        if (targetCityNorm && mCityNorm) {
+          return targetCityNorm === mCityNorm;
+        }
+        return true;
+      }
+      return false;
+    });
+  };
+
   const getHelperStars = (hotelId?: string, defaultStars?: number): number => {
     if (!hotelId) return defaultStars || 5;
     const hotel = hotelsList.find((h) => h.id === hotelId);
     const hotelName = hotel?.nama || "";
-    const targetNorm = getNormalizedHotelNameKey(hotelName);
-    const meta = hotelMetas?.find(
-      (m) =>
-        m.hotelId === hotelId ||
-        m.hotelName?.toLowerCase() === hotelName.toLowerCase() ||
-        (targetNorm && getNormalizedHotelNameKey(m.hotelName) === targetNorm)
-    );
+    const hotelCity = hotel?.kota || "";
+    const meta = getMetaForHotelInternal(hotelId, hotelName, hotelCity);
     return meta?.stars || hotel?.bintang || defaultStars || 5;
   };
 
   const getHotelDistanceInternal = (hotel: WizardHotel): string => {
-    const targetNorm = getNormalizedHotelNameKey(hotel.nama);
-    const metaObj = hotelMetas?.find(
-      (m) =>
-        m.hotelId === hotel.id ||
-        m.hotelName?.toLowerCase() === hotel.nama?.toLowerCase() ||
-        (targetNorm && getNormalizedHotelNameKey(m.hotelName) === targetNorm)
-    );
+    const metaObj = getMetaForHotelInternal(hotel.id, hotel.nama, hotel.kota);
     return metaObj?.distance || getFallbackDistance(hotel.id, hotel.nama) || "";
   };
 
@@ -723,7 +867,6 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [hotelPage, setHotelPage] = useState(1);
 
   const targetJamaah = Number(formData.targetJamaah) || 35;
-  const durasiHari = Number(formData.durasiHari) || 9;
   const maskapaiPrice = Number(formData.estimasiHargaMaskapai) || 0;
 
   let hQuadMakkah = 0,
@@ -740,52 +883,90 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const tourLeaderPrice =
     targetJamaah > 0 ? Math.round(baseBelanja / targetJamaah) : 0;
 
-  const vData: VisaData = (targetJamaah <= 34 
-    ? (visaData.find((v) => v.paxRange === "1-34 PAX") || visaData[0])
-    : (visaData.find((v) => v.paxRange === "35-55 PAX") || visaData[1])) || visaData[0];
-    
-  const visaPrice = vData.sellingPrice || 0;
-  const visaName = `Visa Umrah (${vData.paxRange || (targetJamaah <= 34 ? "1-34 PAX" : "35-55 PAX")})`;
+  // Dynamic Database Loader for local storage custom data (Solusi B)
+  const getLocalData = <T,>(key: string, fallback: T): T => {
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error(`Failed to parse cached ${key}:`, e);
+      }
+    }
+    return fallback;
+  };
 
-  const saudiTier = HANDLING_TIERS.find(
+  const localVisaSource = getLocalData("umaroh_db_visa", visaData);
+  const localSaudiSource = getLocalData("umaroh_db_handling_saudi", HANDLING_TIERS);
+  const localTransportSource = getLocalData("umaroh_db_transport", transportData);
+  const localZiarahSource = getLocalData("umaroh_db_ziarah", ziarahData);
+  const localHdomestikSource = getLocalData("umaroh_db_handling_domestik", handlingDomestikData);
+  const localKcSource = getLocalData("umaroh_db_kereta_cepat", keretaCepatData);
+  const localMutawifSource = getLocalData("umaroh_db_mutawif", [
+    {
+      id: "m1",
+      name: "MUTAWIF + TRANSPORTASI",
+      hargaAsingPerHari: 300,
+      jumlahHari: 8,
+      marginPersen: 80,
+    }
+  ]);
+
+  const vData = (targetJamaah <= 34 
+    ? (localVisaSource.find((v) => v.paxRange.includes("1-34")) || localVisaSource[0])
+    : (localVisaSource.find((v) => v.paxRange.includes("35-55")) || localVisaSource[1] || localVisaSource[0])) || localVisaSource[0];
+    
+  const visaPrice = vData ? Math.round((vData.foreignPriceUsd * effectiveKursUsd) * (1 + (vData.percentage || 7) / 100)) : 0;
+  const visaName = `Visa Umrah (${vData?.paxRange || (targetJamaah <= 34 ? "1-34 PAX" : "35-55 PAX")})`;
+
+  const saudiTier = localSaudiSource.find(
     (t) => targetJamaah >= t.minPax && targetJamaah <= t.maxPax,
   ) ||
-    HANDLING_TIERS[HANDLING_TIERS.length - 1] || { hpp: 43 };
+    localSaudiSource[localSaudiSource.length - 1] || { hpp: 43 };
   const saudiHppUsd = saudiTier.hpp;
   const saudiSell = Math.round(
     (saudiHppUsd + HANDLING_CONSTANTS.adminFee) *
-      HANDLING_CONSTANTS.defaultKurs *
+      effectiveKursUsd *
       (1 + HANDLING_CONSTANTS.defaultMarginPercent / 100),
   );
 
   const isGroupPax = targetJamaah >= 35;
-  const transportOptions = [
-    { id: "trans_satria", label: "Satria", sar: 3900 },
-    { id: "trans_hiace", label: "Hiace", sar: 3750 },
-    { id: "trans_gmc", label: "GMC", sar: 4250 },
-    { id: "trans_bus", label: "BUS", sar: 2600 },
-  ].map((opt) => ({
-    id: opt.id,
-    label: `${opt.label} Full Trip`,
-    price: targetJamaah > 0 ? Math.round(((opt.sar * 4900) / targetJamaah) * 1.4) : 0,
-  }));
+  
+  // Flatten transport options from localTransportSource
+  const transportOptions = [];
+  localTransportSource.forEach((vehicle) => {
+    vehicle.routes.forEach((route) => {
+      const pricePerPax = targetJamaah > 0 ? Math.round(((route.price * effectiveKursSar) / targetJamaah) * 1.4) : 0;
+      transportOptions.push({
+        id: `trans_${vehicle.id}_${route.route.toLowerCase().replace(/\s+/g, '_')}`,
+        label: `${vehicle.name} - ${route.route} (${vehicle.namaVendor})`,
+        price: pricePerPax
+      });
+    });
+  });
 
-  const mutawwifDays = Math.max(1, durasiHari - 1);
-  const mutawwifPrice =
-    targetJamaah > 0
-      ? Math.round(((300 * 4900 * mutawwifDays) / targetJamaah) * 1.8)
+  const mutawifOptions = localMutawifSource.map((item) => {
+    const days = item.jumlahHari || 8;
+    const pricePerPax = targetJamaah > 0 
+      ? Math.round(((item.hargaAsingPerHari * effectiveKursSar * days) / targetJamaah) * (1 + item.marginPersen / 100))
       : 0;
+    return {
+      id: `mutawif_${item.id}`,
+      label: `${item.name} (${days} Hari, ${item.hargaAsingPerHari} SAR/Hari)`,
+      price: pricePerPax,
+    };
+  });
 
-  const ziarahOptions = ziarahData.map((item) => {
-    const margin = 0.2;
-    const computedPrice =
-      targetJamaah > 0
-        ? Math.round(((item.hargaAsing * 4900) / targetJamaah) * (1 + margin))
-        : 0;
+  const ziarahOptions = localZiarahSource.map((item) => {
+    const rateToUse = item.currency === "USD" ? effectiveKursUsd : effectiveKursSar;
+    const foreignPerPax = item.hargaAsing / (item.jumlahPax || 45);
+    const priceBeli = foreignPerPax * rateToUse;
+    const calculatedMargin = item.hargaBeli > 0 ? ((item.hargaJual / item.hargaBeli) - 1) : 0.2;
+    const priceJual = Math.round(priceBeli * (1 + calculatedMargin));
     return {
       id: `ziarah_${item.id}`,
-      label: `${item.item} (${item.hargaAsing} SAR / ${targetJamaah} Pax)`,
-      price: computedPrice,
+      label: item.item,
+      price: priceJual,
     };
   });
 
@@ -820,7 +1001,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       nama: "Handling Domestik",
       deskripsi: "Layanan Elevasi Bandara & Lounge Keberangkatan",
       isGroup: true,
-      options: handlingDomestikData.map((item) => ({
+      options: localHdomestikSource.map((item) => ({
         id: `hdomestik_${item.id}`,
         label: item.item,
         price: item.hargaJual,
@@ -868,21 +1049,28 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       options: transportOptions,
     },
     {
-      id: "mutawwif_auto",
-      nama: `Mutawwif (${mutawwifDays} Hari)`,
-      deskripsi: `Pemandu Ibadah Selama Program`,
-      harga: mutawwifPrice,
+      id: "group_mutawif",
+      nama: `Mutawif`,
+      deskripsi: `Pilihan Pemandu Ibadah Selama Program`,
+      isGroup: true,
+      options: mutawifOptions,
     },
     {
       id: "group_kereta",
       nama: "Kereta Cepat",
       deskripsi: "Layanan Transportasi Kereta Cepat Haramain",
       isGroup: true,
-      options: keretaCepatData.map((item) => ({
-        id: `kc_${item.id}`,
-        label: item.item,
-        price: item.hargaJual,
-      })),
+      options: localKcSource.map((item) => {
+        const rateToUse = item.mataUang === "USD" ? effectiveKursUsd : effectiveKursSar;
+        const priceBeli = item.hargaAsing * rateToUse;
+        const priceMargin = priceBeli * ((item.persen || 20) / 100);
+        const calculatedHargaJual = Math.round(priceBeli + priceMargin);
+        return {
+          id: `kc_${item.id}`,
+          label: item.item,
+          price: calculatedHargaJual,
+        };
+      }),
     },
     {
       id: "group_manasik",
@@ -927,7 +1115,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         if (season) {
           const priceEntry = season.prices.find((p) => p.roomType === roomType);
           if (priceEntry) {
-            const kurs = 4900; // Use standard conversion rate
+            const kurs = effectiveKursSar; // Use standard conversion rate
             const margin = 1.1;
             let divisor = 1;
             if (roomType === 'Quad') divisor = 4;
@@ -1073,8 +1261,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const adminFee = margin * 0.1;
     const mitraAdminFee = mitraMarkup * 0.1;
     
-    // In Partner context, the Admin's profit (margin + fee) is part of the cost base
-    const adminServiceFee = effectiveIsMitra ? (margin + adminFee) : 0;
+    // In Partner context, the Admin's profit (margin + fee) is part of the cost base (removed)
+    const adminServiceFee = 0;
     
     const displayKomisiMitra = effectiveIsMitra ? mitraMarkup : margin;
     const displayKomisiUmaroh = effectiveIsMitra ? mitraAdminFee : adminFee;
@@ -1149,30 +1337,46 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       (error) => handleFirestoreError(error, OperationType.GET, "maskapai"),
     );
 
-    const staticHotels: WizardHotel[] = hotels.map((h) => {
+    const cachedHotelsStr = localStorage.getItem('umaroh_db_hotels');
+    let hotelsSource = hotels;
+    if (cachedHotelsStr) {
+      try {
+        hotelsSource = JSON.parse(cachedHotelsStr);
+      } catch (e) {
+        console.error('Failed to parse cached hotels:', e);
+      }
+    }
+
+    const staticHotels: WizardHotel[] = (hotelsSource as SimpleHotel[]).map((h) => {
       const quad =
-        h.seasons[0]?.prices.find((p) => p.roomType === "Quad")?.price ||
+        h.seasons?.[0]?.prices?.find((p) => p.roomType === "Quad")?.price ||
         0;
       const triple =
-        h.seasons[0]?.prices.find((p) => p.roomType === "Triple")?.price ||
+        h.seasons?.[0]?.prices?.find((p) => p.roomType === "Triple")?.price ||
         0;
       const double =
-        h.seasons[0]?.prices.find((p) => p.roomType === "Double")?.price ||
+        h.seasons?.[0]?.prices?.find((p) => p.roomType === "Double")?.price ||
         0;
 
-      const kurs = 4900;
+      const kurs = effectiveKursSar;
       const margin = 1.1;
+
+      // Ensure manual/standard priceQuad exists as fallback if seasons is not defined
+      const priceQ = quad ? ((quad * kurs) / 4) * margin : (h.priceQuad || 0);
+      const priceT = triple ? ((triple * kurs) / 3) * margin : (h.priceTriple || 0);
+      const priceD = double ? ((double * kurs) / 2) * margin : (h.priceDouble || 0);
 
       return {
         id: h.id,
-        nama: h.name,
-        kota: h.city.toLowerCase(),
-        bintang: h.stars || 5,
-        priceQuad: quad ? ((quad * kurs) / 4) * margin : 0,
-        priceTriple: triple ? ((triple * kurs) / 3) * margin : 0,
-        priceDouble: double ? ((double * kurs) / 2) * margin : 0,
-        vendor: h.vendor,
-        seasons: h.seasons,
+        nama: h.name || h.nama || "",
+        kota: (h.city || h.kota || "").toLowerCase(),
+        bintang: h.stars || h.bintang || 5,
+        priceQuad: priceQ,
+        priceTriple: priceT,
+        priceDouble: priceD,
+        vendor: h.vendor || "",
+        seasons: h.seasons || [],
+        mealPlan: h.mealPlan || "FB",
       };
     });
 
@@ -1192,6 +1396,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             priceDouble: Number(d.priceDouble || 0),
             vendor: d.vendor || "",
             seasons: d.seasons || [],
+            mealPlan: d.mealPlan || "FB",
           } as WizardHotel;
         });
         setHotelsList([...staticHotels, ...data]);
@@ -1344,6 +1549,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
       const dataToSave: Partial<WizardFormData> = {
         photoUtama: formData.photoUtama || null,
+        kursSar: effectiveKursSar,
+        kursUsd: effectiveKursUsd,
         requestId: initialData?.requestId || generateRequestId(),
         nama: formData.nama || "Paket Draft",
         deskripsi: formData.deskripsi || "",
@@ -1467,6 +1674,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
     const dataToSave: Partial<WizardFormData> = {
       photoUtama: formData.photoUtama || null,
+      kursSar: effectiveKursSar,
+      kursUsd: effectiveKursUsd,
       requestId: initialData?.requestId || generateRequestId(),
       nama: formData.nama || "Paket Umroh Tanpa Nama",
       deskripsi: formData.deskripsi || "",
@@ -2370,16 +2579,32 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       <label className="block text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
                         TARGET JAMAAH *
                       </label>
-                      <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase">
-                        {formData.targetJamaah} PAX
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="2"
+                          max="90"
+                          value={formData.targetJamaah || ""}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            setFormData({
+                              ...formData,
+                              targetJamaah: isNaN(val) ? 0 : Math.min(90, Math.max(2, val)),
+                            });
+                          }}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
+                        />
+                        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase">
+                          PAX
+                        </span>
+                      </div>
                     </div>
                     <div className="pt-2 pb-1 relative group">
                       <input
                         type="range"
                         min="2"
                         max="90"
-                        value={formData.targetJamaah}
+                        value={formData.targetJamaah || 35}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
@@ -3763,6 +3988,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {paginated.map((hotel) => {
                       const isSelected = formData.hotelWisataId === hotel.id;
+                      const metaObj = getMetaForHotelInternal(hotel.id, hotel.nama, hotel.kota);
+                      const images = getHotelImages(metaObj?.photoUrl, hotel.id, hotel.nama, hotel.kota);
+
                       return (
                         <div
                           key={hotel.id}
@@ -3775,16 +4003,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           className={`bg-white rounded-2xl overflow-hidden border-2 cursor-pointer transition-all flex flex-col ${isSelected ? "border-blue-500 shadow-[0_8px_30px_rgba(59,130,246,0.15)] ring-4 ring-blue-50" : "border-gray-100 hover:border-gray-300"}`}
                         >
                           <div className="h-44 overflow-hidden relative bg-gray-100 flex items-center justify-center shrink-0">
-                            <img
-                              src={getHotelImage(
-                                hotel.id,
-                                hotel.nama,
-                                hotel.kota,
-                              )}
-                              alt={hotel.nama}
-                              referrerPolicy="no-referrer"
-                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            />
+                            <HotelImageCarousel images={images} hotelName={hotel.nama} kota={hotel.kota} />
 
                             <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-black/80 to-transparent"></div>
                             <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
@@ -4398,7 +4617,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 sorted.sort((a, b) => getPriceForSort(a) - getPriceForSort(b));
               }
 
-              const pageSize = 10;
+              const pageSize = 4;
               const totalPages = Math.ceil(sorted.length / pageSize);
               const paginated = sorted.slice(
                 (hotelPage - 1) * pageSize,
@@ -4407,7 +4626,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
               return (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     {paginated.map((hotel) => {
                       const isSelected =
                         hotelStep === "madinah"
@@ -4433,15 +4652,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         }
                       }
 
-                      const targetNorm = getNormalizedHotelNameKey(hotel.nama);
-                      const metaObj = hotelMetas?.find(
-                        (m) =>
-                          m.hotelId === hotel.id ||
-                          m.hotelName?.toLowerCase() === hotel.nama?.toLowerCase() ||
-                          getNormalizedHotelNameKey(m.hotelName) === targetNorm
-                      );
+                      const metaObj = getMetaForHotelInternal(hotel.id, hotel.nama, hotel.kota);
                       const distanceStr = metaObj?.distance || getFallbackDistance(hotel.id, hotel.nama) || "";
-                      const hotelImgSrc = metaObj?.photoUrl || getHotelImage(hotel.id, hotel.nama, hotel.kota);
+                      const images = getHotelImages(metaObj?.photoUrl, hotel.id, hotel.nama, hotel.kota);
 
                       return (
                         <div
@@ -4451,7 +4664,6 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                               setFormData({
                                 ...formData,
                                 hotelMadinahId: hotel.id,
-                                // Automatically copy over stars if needed or rely on dynamic lookup
                               });
                             else
                               setFormData({
@@ -4459,116 +4671,128 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 hotelMakkahId: hotel.id,
                               });
                           }}
-                          className={`bg-[#0b101e] rounded-2xl overflow-hidden border cursor-pointer transition-all flex flex-col relative min-h-[220px] group ${isSelected ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] ring-2 ring-blue-500" : "border-gray-800 hover:border-gray-600"}`}
+                          className={`bg-[#0b101e] rounded-2xl overflow-hidden border cursor-pointer transition-all flex flex-col relative group ${
+                            isSelected
+                              ? "border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.35)] ring-2 ring-blue-500/80"
+                              : "border-gray-800/80 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20"
+                          }`}
                         >
-                          {/* FULL BACKGROUND IMAGE */}
-                          <div className="absolute inset-0">
-                            <img
-                              src={hotelImgSrc}
-                              alt={hotel.nama}
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            />
-                            <div
-                              className={`absolute inset-0 bg-gradient-to-t ${isSelected ? "from-blue-900/95 via-blue-900/80" : "from-[#0b101e]/95 via-[#0b101e]/80"} to-black/20`}
-                            ></div>
-                          </div>
+                          {/* TOP SECTION: CLEAR HOTEL PHOTO */}
+                          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                            <HotelImageCarousel images={images} hotelName={hotel.nama} kota={hotel.kota} />
+                            {/* Subtle gradient overlay at the bottom for readability */}
+                            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent"></div>
 
-                          <div className="p-4 flex flex-col flex-1 relative z-10 justify-between">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="pr-4">
-                                <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  <h4 className="text-white font-black uppercase text-[10px] sm:text-xs md:text-sm line-clamp-2 drop-shadow-md">
-                                    {hotel.nama}
-                                  </h4>
-                                  <div className="flex items-center gap-0.5 shrink-0 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 backdrop-blur-sm">
-                                    {Array.from({ length: getHelperStars(hotel.id, hotel.bintang || 5) }).map((_, idx) => (
-                                      <Star key={idx} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-[8px] sm:text-[10px] text-gray-300 font-bold uppercase tracking-wider drop-shadow">
-                                    {hotel.kota}
-                                  </span>
-                                </div>
-                              </div>
+                            {/* Checkbox indicator absolute top-right */}
+                            <div className="absolute top-3 right-3">
                               <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-lg ${isSelected ? "bg-blue-500 text-white" : "bg-black/50 text-gray-400 border border-white/20"}`}
+                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md ${
+                                  isSelected
+                                    ? "bg-blue-500 text-white border border-blue-450"
+                                    : "bg-black/50 text-gray-300 border border-white/15 backdrop-blur-xs"
+                                }`}
                               >
-                                {isSelected && (
-                                  <Check className="w-3.5 h-3.5" />
+                                {isSelected ? (
+                                  <Check className="w-4 h-4 stroke-[3]" />
+                                ) : (
+                                  <div className="w-2.5 h-2.5 rounded-full bg-transparent group-hover:bg-white/20 transition-colors" />
                                 )}
                               </div>
                             </div>
 
-                            <div className="mt-auto pt-4">
-                              <div className="flex flex-wrap gap-1.5 mb-3">
-                                {distanceStr && (
-                                  <span className="bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm shrink-0">
-                                    <MapPin className="w-2.5 h-2.5 shrink-0 text-sky-450" />
-                                    <span>{distanceStr}</span>
+                            {/* Distance / Map Pin absolute bottom-3 left-3 */}
+                            {distanceStr && (
+                              <span className="absolute bottom-3 left-3 bg-sky-500/90 text-white px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold flex items-center gap-1 shadow-md backdrop-blur-xs">
+                                <MapPin className="w-3.5 h-3.5 text-white" />
+                                <span>{distanceStr}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* BOTTOM SECTION: HOTEL INFORMATION & PRICING */}
+                          <div className="p-5 flex flex-col flex-1 justify-between gap-4">
+                            <div className="space-y-2">
+                              <div className="flex flex-col gap-1">
+                                <h4 className="text-white font-extrabold uppercase text-sm sm:text-base line-clamp-1 tracking-wide leading-tight group-hover:text-blue-400 transition-colors">
+                                  {hotel.nama}
+                                </h4>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                    {hotel.kota}
                                   </span>
-                                )}
-                                {seasonText && (
-                                  <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm min-w-0 flex-1">
-                                    <Calendar className="w-2.5 h-2.5 shrink-0" />
-                                    <span className="truncate whitespace-nowrap">{seasonText}</span>
+
+                                  {/* Bintang (Stars) next to Kota */}
+                                  <div className="flex items-center gap-0.5 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/15">
+                                    {Array.from({ length: getHelperStars(hotel.id, hotel.bintang || 5) }).map((_, idx) => (
+                                      <Star key={idx} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                    ))}
+                                  </div>
+
+                                  {/* MEAL PLAN BADGE */}
+                                  <span className="ml-auto bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black tracking-wider">
+                                    {hotel.mealPlan || "FB"}
                                   </span>
-                                )}
+                                </div>
                               </div>
 
-                              <div className="grid grid-cols-3 gap-1 md:gap-2">
-                                <div className="bg-black/40 backdrop-blur-md rounded-lg p-1 md:p-2 text-center border border-white/10 flex flex-col justify-between min-w-0">
-                                  <div className="text-[7px] md:text-[8px] text-gray-400 font-bold uppercase mb-0.5">
-                                    QUAD
-                                  </div>
-                                  <div
-                                    className="text-emerald-400 font-bold text-[8px] sm:text-xs whitespace-nowrap leading-tight"
-                                    title={`Rp ${Math.round(displayPriceQuad || 0).toLocaleString("id-ID")}`}
-                                  >
-                                    <span className="text-[6px] md:text-[7px] mr-0.5 text-emerald-400/70">Rp</span>
-                                    {Math.round(displayPriceQuad || 0).toLocaleString(
-                                      "id-ID",
-                                    )}
-                                  </div>
-                                  <div className="text-[5px] md:text-[7px] text-gray-500 mt-0.5 uppercase">
-                                    PAX/MLM
-                                  </div>
+                              {seasonText && (
+                                <span className="inline-flex bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold items-center gap-1.5 shadow-sm">
+                                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                                  <span className="truncate">{seasonText}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* PRICING GRID */}
+                            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                              {/* QUAD */}
+                              <div className="bg-[#131b2e] rounded-xl px-1.5 py-2.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
+                                <div className="text-[8px] sm:text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-1">
+                                  QUAD
                                 </div>
-                                <div className="bg-black/40 backdrop-blur-md rounded-lg p-1 md:p-2 text-center border border-white/10 flex flex-col justify-between min-w-0">
-                                  <div className="text-[7px] md:text-[8px] text-gray-400 font-bold uppercase mb-0.5">
-                                    TRIPLE
-                                  </div>
-                                  <div
-                                    className="text-emerald-400 font-bold text-[8px] sm:text-xs whitespace-nowrap leading-tight"
-                                    title={`Rp ${Math.round(displayPriceTriple || 0).toLocaleString("id-ID")}`}
-                                  >
-                                    <span className="text-[6px] md:text-[7px] mr-0.5 text-emerald-400/70">Rp</span>
-                                    {Math.round(displayPriceTriple || 0).toLocaleString(
-                                      "id-ID",
-                                    )}
-                                  </div>
-                                  <div className="text-[5px] md:text-[7px] text-gray-500 mt-0.5 uppercase">
-                                    PAX/MLM
-                                  </div>
+                                <div
+                                  className="text-emerald-400 font-black text-[10px] sm:text-xs md:text-sm whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
+                                  title={`Rp ${Math.round(displayPriceQuad || 0).toLocaleString("id-ID")}`}
+                                >
+                                  <span className="text-[7px] sm:text-[8px] font-bold text-emerald-400/70 shrink-0">Rp</span>
+                                  <span className="truncate">{Math.round(displayPriceQuad || 0).toLocaleString("id-ID")}</span>
                                 </div>
-                                <div className="bg-black/40 backdrop-blur-md rounded-lg p-1 md:p-2 text-center border border-white/10 flex flex-col justify-between min-w-0">
-                                  <div className="text-[7px] md:text-[8px] text-gray-400 font-bold uppercase mb-0.5">
-                                    DOUBLE
-                                  </div>
-                                  <div
-                                    className="text-emerald-400 font-bold text-[8px] sm:text-xs whitespace-nowrap leading-tight"
-                                    title={`Rp ${Math.round(displayPriceDouble || 0).toLocaleString("id-ID")}`}
-                                  >
-                                    <span className="text-[6px] md:text-[7px] mr-0.5 text-emerald-400/70">Rp</span>
-                                    {Math.round(displayPriceDouble || 0).toLocaleString(
-                                      "id-ID",
-                                    )}
-                                  </div>
-                                  <div className="text-[5px] md:text-[7px] text-gray-500 mt-0.5 uppercase">
-                                    PAX/MLM
-                                  </div>
+                                <div className="text-[7px] sm:text-[8px] text-gray-500 mt-1 uppercase font-semibold">
+                                  PAX/MLM
+                                </div>
+                              </div>
+
+                              {/* TRIPLE */}
+                              <div className="bg-[#131b2e] rounded-xl px-1.5 py-2.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
+                                <div className="text-[8px] sm:text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-1">
+                                  TRIPLE
+                                </div>
+                                <div
+                                  className="text-emerald-400 font-black text-[10px] sm:text-xs md:text-sm whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
+                                  title={`Rp ${Math.round(displayPriceTriple || 0).toLocaleString("id-ID")}`}
+                                >
+                                  <span className="text-[7px] sm:text-[8px] font-bold text-emerald-400/70 shrink-0">Rp</span>
+                                  <span className="truncate">{Math.round(displayPriceTriple || 0).toLocaleString("id-ID")}</span>
+                                </div>
+                                <div className="text-[7px] sm:text-[8px] text-gray-500 mt-1 uppercase font-semibold">
+                                  PAX/MLM
+                                </div>
+                              </div>
+
+                              {/* DOUBLE */}
+                              <div className="bg-[#131b2e] rounded-xl px-1.5 py-2.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
+                                <div className="text-[8px] sm:text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-1">
+                                  DOUBLE
+                                </div>
+                                <div
+                                  className="text-emerald-400 font-black text-[10px] sm:text-xs md:text-sm whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
+                                  title={`Rp ${Math.round(displayPriceDouble || 0).toLocaleString("id-ID")}`}
+                                >
+                                  <span className="text-[7px] sm:text-[8px] font-bold text-emerald-400/70 shrink-0">Rp</span>
+                                  <span className="truncate">{Math.round(displayPriceDouble || 0).toLocaleString("id-ID")}</span>
+                                </div>
+                                <div className="text-[7px] sm:text-[8px] text-gray-500 mt-1 uppercase font-semibold">
+                                  PAX/MLM
                                 </div>
                               </div>
                             </div>
@@ -4739,6 +4963,86 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </h3>
             </div>
 
+            {/* Dynamic Pax Adjuster for Mitigating Publish Price Errors */}
+            <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-2xl p-5 md:p-6 text-white border border-blue-500/20 shadow-xl mb-6 relative overflow-hidden">
+              <div className="absolute right-0 top-0 translate-x-6 -translate-y-6 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+              
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="bg-blue-500 text-white font-black text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider">
+                      Dynamic Recalculation Engine
+                    </span>
+                    <span className="bg-amber-500 text-white font-black text-[9px] px-2.5 py-0.5 rounded uppercase tracking-wider">
+                      Offline-Safe Anti-Loss
+                    </span>
+                  </div>
+                  <h4 className="text-base md:text-lg font-black uppercase tracking-tight">
+                    Penyesuaian Pax Aktual & Rekalkulasi Biaya
+                  </h4>
+                  <p className="text-xs text-blue-100 font-medium leading-relaxed">
+                    Jika kuota awal dipublish untuk <span className="font-bold underline">35 Pax</span>, namun pendaftar riil hanya <span className="font-bold underline">20 Pax</span>, Anda tidak perlu rugi! Cukup ubah angka Pax di bawah ini. Seluruh estimasi komponen operasional (seperti sharing bus, pemandu mutawif, asuransi, visa tier, dll.) akan dihitung ulang secara otomatis per kepala.
+                  </p>
+                </div>
+
+                <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/15 flex flex-col items-center justify-center shrink-0 w-full md:w-56">
+                  <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-2">
+                    Jumlah Pax Aktual
+                  </span>
+                  
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cur = Number(formData.targetJamaah) || 35;
+                        if (cur > 2) {
+                          setFormData({ ...formData, targetJamaah: cur - 1 });
+                        }
+                      }}
+                      className="w-10 h-10 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 transition-all flex items-center justify-center text-white font-black text-lg focus:outline-none"
+                    >
+                      -
+                    </button>
+                    
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="2"
+                        max="90"
+                        value={formData.targetJamaah || ""}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          setFormData({
+                            ...formData,
+                            targetJamaah: isNaN(val) ? 0 : Math.min(90, Math.max(2, val)),
+                          });
+                        }}
+                        className="w-20 h-10 bg-white text-gray-900 rounded-lg text-center font-black text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cur = Number(formData.targetJamaah) || 35;
+                        if (cur < 90) {
+                          setFormData({ ...formData, targetJamaah: cur + 1 });
+                        }
+                      }}
+                      className="w-10 h-10 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 transition-all flex items-center justify-center text-white font-black text-lg focus:outline-none"
+                    >
+                      +
+                    </button>
+                  </div>
+                  
+                  <div className="text-[9px] text-blue-300 font-semibold uppercase mt-3 tracking-wider animate-pulse flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    Menghitung Ulang Otomatis
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {layananList.map((item) => {
                 const isGroup = !!item.isGroup;
@@ -4757,7 +5061,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   item.nama.toLowerCase().includes("wisata/ziarah");
 
                 // For grouped items, if selected, find the active option's price. Otherwise show minimum price.
-                let rawPrice = item.harga || 0;
+                let rawPrice = (item as { harga?: number }).harga || 0;
                 if (isGroup) {
                   const activeOpt = item.options?.find((opt) =>
                     formData.selectedLayanan?.includes(opt.id),
@@ -4900,7 +5204,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     </div>
 
                     {/* Expandable Group Options */}
-                    {isGroup && isGroupSelected && (
+                    {isGroup && isGroupSelected && item.id !== "group_mutawif" && (
                       <div className="px-4 pb-4 w-full">
                         <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-2">
                           <h5 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 border-b-2 border-blue-50 pb-1.5 inline-block">

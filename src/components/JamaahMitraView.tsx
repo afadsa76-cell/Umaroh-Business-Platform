@@ -740,6 +740,70 @@ export const JamaahMitraView: React.FC = () => {
     }
   };
 
+  const renderCompletionBadge = (jamaah: Jamaah) => {
+    const fields = [
+      { label: 'Nama Lengkap', val: jamaah.namaJamaah || jamaah.nama },
+      { label: 'No. HP', val: jamaah.noHp },
+      { label: 'Domisili', val: jamaah.alamat },
+      { label: 'Tipe Kamar', val: jamaah.roomType },
+      { label: 'Tempat Lahir', val: jamaah.tempat_lahir },
+      { label: 'Tanggal Lahir', val: jamaah.tanggal_lahir },
+      { label: 'Jenis Kelamin', val: jamaah.jenisKelamin },
+      { label: 'Nama Ayah', val: jamaah.nama_ayah },
+      { label: 'No. Paspor', val: jamaah.nomorPassport || jamaah.no_paspor },
+      { label: 'Tgl Issue Paspor', val: jamaah.tgl_issue_paspor },
+      { label: 'Tgl Exp Paspor', val: jamaah.tgl_exp_paspor },
+      { label: 'Kota Paspor', val: jamaah.kota_paspor },
+      { label: 'Berkas Paspor', val: jamaah.filePassport || jamaah.docPassport },
+      { label: 'Berkas KTP', val: jamaah.fileKtp || jamaah.docKtp },
+      { label: 'Berkas Vaksin', val: jamaah.fileVaccine || jamaah.docVaccine },
+      { label: 'Pas Foto', val: jamaah.fileFoto || jamaah.docFoto },
+    ];
+
+    const total = fields.length;
+    const filled = fields.filter(f => {
+      if (typeof f.val === 'string') return f.val.trim().length > 0;
+      if (typeof f.val === 'boolean') return f.val === true;
+      return !!f.val;
+    }).length;
+
+    const pct = Math.round((filled / total) * 100);
+
+    let barColor = 'bg-rose-500';
+    let textColor = 'text-rose-600 bg-rose-50 border-rose-100';
+    if (pct >= 80) {
+      barColor = 'bg-emerald-500';
+      textColor = 'text-emerald-700 bg-emerald-50 border-emerald-100';
+    } else if (pct >= 40) {
+      barColor = 'bg-amber-500';
+      textColor = 'text-amber-700 bg-amber-50 border-amber-100';
+    }
+
+    const unfilledLabels = fields.filter(f => {
+      if (typeof f.val === 'string') return f.val.trim().length === 0;
+      if (typeof f.val === 'boolean') return f.val !== true;
+      return !f.val;
+    }).map(f => f.label);
+
+    const tooltipText = unfilledLabels.length > 0 
+      ? `Belum diisi: ${unfilledLabels.slice(0, 3).join(', ')}${unfilledLabels.length > 3 ? '...' : ''}`
+      : 'Semua data lengkap!';
+
+    return (
+      <div className="flex flex-col items-center justify-center gap-1 min-w-[120px]" title={tooltipText}>
+        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${textColor} tracking-wider`}>
+          {pct}% Lengkap
+        </span>
+        <div className="w-20 bg-gray-100 h-1.5 rounded-full overflow-hidden border border-gray-200/50">
+          <div className={`h-full ${barColor} transition-all duration-500`} style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">
+          {filled}/{total} Kolom
+        </span>
+      </div>
+    );
+  };
+
   // Process search and filters
   const filteredJamaahs = jamaahs.filter(j => {
     const matchesSearch = j.namaJamaah.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -920,6 +984,7 @@ export const JamaahMitraView: React.FC = () => {
               <tr className="bg-gray-50/70 text-gray-400 text-[10px] font-black uppercase tracking-[0.1em] border-b border-gray-100">
                 <th className="p-5">PROFIL JAMAAH</th>
                 <th className="p-5">PAKET & RUANGAN</th>
+                <th className="p-5 text-center">KELENGKAPAN DATA</th>
                 <th className="p-5 text-center">CHECKLIST REAL DOKUMEN (FAST TOGGLE)</th>
                 <th className="p-5 text-center">FINANSIAL LAPORAN</th>
                 <th className="p-5 text-center">KEBERANGKATAN</th>
@@ -929,7 +994,7 @@ export const JamaahMitraView: React.FC = () => {
             <tbody className="divide-y divide-gray-100/50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="p-20 text-center text-gray-500">
+                  <td colSpan={7} className="p-20 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <RefreshCw className="animate-spin text-purple-600 w-8 h-8" />
                       <p className="text-xs font-black text-gray-400 uppercase tracking-widest mt-2">Membaca Database Real...</p>
@@ -938,7 +1003,7 @@ export const JamaahMitraView: React.FC = () => {
                 </tr>
               ) : filteredJamaahs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-24 text-center">
+                  <td colSpan={7} className="p-24 text-center">
                     <div className="max-w-md mx-auto py-8">
                       <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-4 text-purple-400">
                         <User className="w-8 h-8" />
@@ -1028,6 +1093,11 @@ export const JamaahMitraView: React.FC = () => {
                             </span>
                           </div>
                         </div>
+                      </td>
+
+                      {/* Completion Badge */}
+                      <td className="p-5 text-center">
+                        {renderCompletionBadge(jamaah)}
                       </td>
 
                       {/* Fast Checklist Docs */}

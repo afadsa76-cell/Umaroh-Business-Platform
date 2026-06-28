@@ -215,7 +215,7 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   const makkahMetaObj = hotelMetas?.find(m => 
     m.hotelId === paket.hotelMakkahId || 
     m.hotelName === makkahHotelName || 
-    (makkahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === makkahTargetNorm)
+    (makkahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === makkahTargetNorm && (!m.city || m.city.toLowerCase().includes('mak') || m.city.toLowerCase().includes('mec')))
   );
   const makkahDistanceStr = makkahMetaObj?.distance || 'Sangat dekat dengan pelataran';
   const makkahStarsNum = makkahMetaObj?.stars || hotelMakkahObj?.stars || hotelMakkahObj?.bintang || 5;
@@ -226,7 +226,7 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   const madinahMetaObj = hotelMetas?.find(m => 
     m.hotelId === paket.hotelMadinahId || 
     m.hotelName === madinahHotelName || 
-    (madinahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === madinahTargetNorm)
+    (madinahTargetNorm && getNormalizedHotelNameKey(m.hotelName) === madinahTargetNorm && (!m.city || m.city.toLowerCase().includes('mad') || m.city.toLowerCase().includes('med')))
   );
   const madinahDistanceStr = madinahMetaObj?.distance || 'Sangat dekat dengan pelataran';
   const madinahStarsNum = madinahMetaObj?.stars || hotelMadinahObj?.stars || hotelMadinahObj?.bintang || 5;

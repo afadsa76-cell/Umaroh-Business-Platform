@@ -93,6 +93,61 @@ export async function syncBookingToTracker(bookingId: string, bookingData: any) 
 
     // 3. Write with the SAME document ID to ensure perfect 1:1 synchronization
     await setDoc(doc(db, 'tracker_jamaah', bookingId), trackerPayload);
+
+    // 4. Handle additional passengers in manifestList
+    if (bookingData.manifestList && Array.isArray(bookingData.manifestList)) {
+      // Delete any pre-existing sub-pax records first (in case the count decreased)
+      for (let i = 1; i <= 10; i++) {
+        try {
+          await deleteDoc(doc(db, 'tracker_jamaah', `${bookingId}_pax_${i}`));
+        } catch {
+          // ignore
+        }
+      }
+
+      // Add other passengers
+      for (let i = 1; i < bookingData.manifestList.length; i++) {
+        const pax = bookingData.manifestList[i];
+        const paxPayload = {
+          bookingId: bookingId,
+          jamaahId: bookingData.jamaahId || '',
+          mitraId: bookingData.mitraId || '',
+          paketId: targetPaketId,
+          title: pax.title || 'MR',
+          namaLengkap: (pax.namaLengkap || '').toUpperCase(),
+          status_kesiapan: bookingData.statusKeberangkatan || 'READY',
+          nik: pax.nik || '',
+          nama_paspor: (pax.nama_paspor || pax.namaLengkap || '').toUpperCase(),
+          no_paspor: (pax.no_paspor || '').toUpperCase(),
+          tanggal_lahir: pax.tanggal_lahir || '',
+          tgl_issue_paspor: pax.tgl_issue_paspor || '',
+          tgl_exp_paspor: pax.tgl_exp_paspor || '',
+          kota_paspor: (pax.kota_paspor || '').toUpperCase(),
+          tempat_lahir: (pax.tempat_lahir || '').toUpperCase(),
+          alamat: (pax.alamat || bookingData.alamat || '').toUpperCase(),
+          kewarganegaraan: pax.kewarganegaraan || 'WNI',
+          telepon: pax.telepon || '',
+          emergency_contact: pax.emergency_contact || '',
+          jenisKelamin: pax.jenisKelamin || (pax.title === 'MR' || pax.title === 'LAKI-LAKI' || pax.title === 'MSTR' ? 'L' : 'P'),
+          roomType: roomType,
+          
+          docPassport: false,
+          docKtp: false,
+          docVaccine: false,
+          docFoto: false,
+          filePassport: '',
+          fileKtp: '',
+          fileVaccine: '',
+          fileFoto: '',
+          
+          statusPembayaran: bookingData.statusPembayaran || 'Belum Lunas',
+          statusPaspor: pax.no_paspor ? 'Sudah Ada' : 'Belum Ada',
+          statusVaksin: 'Belum',
+          updatedAt: new Date().toISOString(),
+        };
+        await setDoc(doc(db, 'tracker_jamaah', `${bookingId}_pax_${i}`), paxPayload);
+      }
+    }
     console.log(`[Firebase Sync] Synchronized booking: ${bookingId} successfully.`);
   } catch (error) {
     console.error(`[Firebase Sync] Failed to synchronize booking ${bookingId}:`, error);
@@ -103,7 +158,15 @@ export async function deleteBookingFromTracker(bookingId: string) {
   try {
     if (!bookingId) return;
     await deleteDoc(doc(db, 'tracker_jamaah', bookingId));
-    console.log(`[Firebase Sync] Removed tracker item for booking: ${bookingId}`);
+    // Also delete any other pax rows
+    for (let i = 1; i <= 10; i++) {
+      try {
+        await deleteDoc(doc(db, 'tracker_jamaah', `${bookingId}_pax_${i}`));
+      } catch {
+        // ignore
+      }
+    }
+    console.log(`[Firebase Sync] Removed tracker items for booking: ${bookingId}`);
   } catch (error) {
     console.error(`[Firebase Sync] Failed to delete booking ${bookingId}:`, error);
   }

@@ -365,5 +365,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isValidId(nodeId) && isValidBlueprintNode(incoming());
     }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if (settingId == 'kurs' && request.resource.data.sarToIdr is number && request.resource.data.usdToIdr is number) ||
+                    (settingId == 'accurate_config' && isSignedIn());
+    }
   }
 }
