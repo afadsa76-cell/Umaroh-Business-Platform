@@ -6,7 +6,7 @@ import { HotelDetailModal } from './HotelDetailModal';
 import { Building2, Download, RefreshCw, Plus, Trash2, X } from 'lucide-react';
 import { isDateInRange, parseDate, parseDateRange } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
-import { db, doc, writeBatch, collection, getDocs, query, where, onSnapshot } from '../firebase';
+import { db, doc, writeBatch, collection, getDocs, query, where, onSnapshot, setDoc, auth } from '../firebase';
 import { useKurs } from '../hooks/useKurs';
 import { getNormalizedHotelNameKey } from './database/HotelMediaView';
 
@@ -412,6 +412,53 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     stars?: number;
   }
   const [hotelMetas, setHotelMetas] = useState<HotelMetaItem[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        const cached = localStorage.getItem(`umaroh_cached_role_${user.uid}`);
+        if (cached) {
+          setCurrentUserRole(cached);
+        }
+        // Get user role from firestore
+        const unsubUser = onSnapshot(doc(db, 'users', user.uid), (userDoc) => {
+          if (userDoc.exists()) {
+            const r = userDoc.data().role;
+            setCurrentUserRole(r);
+            localStorage.setItem(`umaroh_cached_role_${user.uid}`, r);
+          }
+        });
+        return () => unsubUser();
+      } else {
+        setCurrentUserRole(null);
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  const handleSaveHotelMeta = async (hotelId: string, hotelName: string, city: string, photoUrl: string, distance: string) => {
+    try {
+      const safeId = `${hotelName}-${city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const docRef = doc(db, 'hotel_metadata', safeId);
+      
+      // Try to find if we already have the stars count
+      const existingMeta = hotelMetas.find(m => m.hotelId === hotelId || (m.hotelName?.toLowerCase() === hotelName.toLowerCase() && m.city?.toLowerCase() === city.toLowerCase()));
+      const starsToSave = existingMeta?.stars || 5;
+
+      await setDoc(docRef, {
+        hotelId,
+        hotelName,
+        city,
+        photoUrl,
+        distance,
+        stars: starsToSave,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (error) {
+      console.error("Error saving hotel metadata inline:", error);
+    }
+  };
 
   useEffect(() => {
     const unsubHotelMetas = onSnapshot(
@@ -1024,6 +1071,8 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
                 photoUrl={meta?.photoUrl}
                 distance={meta?.distance}
                 stars={meta?.stars}
+                canEditInline={currentUserRole === 'admin' || currentUserRole === 'operasional'}
+                onSaveMeta={(photoUrl, distance) => handleSaveHotelMeta(hotel.id, hotel.name, hotel.city, photoUrl, distance)}
               />
             );
           })}

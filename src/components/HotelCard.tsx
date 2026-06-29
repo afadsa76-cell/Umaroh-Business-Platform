@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Hotel } from '../data/hotels';
-import { Calendar, Utensils, Building, Star, MapPin } from 'lucide-react';
+import { Calendar, Utensils, Building, Star, MapPin, Pencil } from 'lucide-react';
 
 interface HotelCardProps {
   hotel: Hotel;
@@ -12,6 +12,8 @@ interface HotelCardProps {
   photoUrl?: string;
   distance?: string;
   stars?: number;
+  canEditInline?: boolean;
+  onSaveMeta?: (photoUrl: string, distance: string) => Promise<void>;
 }
 
 export const HotelCard: React.FC<HotelCardProps> = ({ 
@@ -23,9 +25,38 @@ export const HotelCard: React.FC<HotelCardProps> = ({
   onSelect,
   photoUrl,
   distance,
-  stars
+  stars,
+  canEditInline = false,
+  onSaveMeta
 }) => {
   const displayStars = stars || hotel.stars;
+
+  const [isEditingInline, setIsEditingInline] = useState(false);
+  const [editPhotoUrl, setEditPhotoUrl] = useState(photoUrl || '');
+  const [editDistance, setEditDistance] = useState(distance || '');
+  const [isSavingInline, setIsSavingInline] = useState(false);
+
+  useEffect(() => {
+    setEditPhotoUrl(photoUrl || '');
+  }, [photoUrl]);
+
+  useEffect(() => {
+    setEditDistance(distance || '');
+  }, [distance]);
+
+  const handleSaveInline = async () => {
+    if (onSaveMeta) {
+      setIsSavingInline(true);
+      try {
+        await onSaveMeta(editPhotoUrl, editDistance);
+        setIsEditingInline(false);
+      } catch (err) {
+        console.error("Gagal menyimpan metadata inline:", err);
+      } finally {
+        setIsSavingInline(false);
+      }
+    }
+  };
 
   return (
     <div className={`bg-white rounded-xl shadow-md overflow-hidden border transition-all duration-300 flex flex-col h-full relative ${
@@ -43,7 +74,76 @@ export const HotelCard: React.FC<HotelCardProps> = ({
         )}
       </div>
 
-      {photoUrl ? (
+      {canEditInline && !isEditingInline && (
+        <div className="absolute top-3 right-3 z-10">
+          <button
+            onClick={() => {
+              setIsEditingInline(true);
+              setEditPhotoUrl(photoUrl || '');
+              setEditDistance(distance || '');
+            }}
+            className="p-1.5 bg-white/90 hover:bg-white rounded-full text-gray-700 hover:text-amber-600 shadow-md border border-gray-200 transition-colors"
+            title="Edit Foto & Jarak Langsung"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {isEditingInline ? (
+        <div className="h-48 bg-gray-50 border-b border-gray-100 p-4 flex flex-col justify-between">
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1">
+              <Pencil className="w-3 h-3" /> Edit Foto & Jarak
+            </h4>
+            
+            {/* Input Foto URL */}
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                Foto URL (Gambar Hotel)
+              </label>
+              <input
+                type="text"
+                value={editPhotoUrl}
+                onChange={(e) => setEditPhotoUrl(e.target.value)}
+                placeholder="https://example.com/hotel.jpg"
+                className="w-full text-xs px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+              />
+            </div>
+
+            {/* Input Jarak */}
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
+                Jarak ke Pelataran / Masjid
+              </label>
+              <input
+                type="text"
+                value={editDistance}
+                onChange={(e) => setEditDistance(e.target.value)}
+                placeholder="misal: 150m ke pelataran"
+                className="w-full text-xs px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-2">
+            <button
+              onClick={() => setIsEditingInline(false)}
+              disabled={isSavingInline}
+              className="px-2.5 py-1 text-xs border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded font-semibold transition-colors shadow-xs"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleSaveInline}
+              disabled={isSavingInline}
+              className="px-2.5 py-1 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded font-semibold flex items-center gap-1 transition-colors shadow-sm disabled:opacity-50"
+            >
+              {isSavingInline ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
+        </div>
+      ) : photoUrl ? (
         <div className="relative h-48 bg-gray-100 overflow-hidden group">
           <img 
             src={photoUrl} 

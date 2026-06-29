@@ -588,19 +588,7 @@ function App() {
         </div>
       )}
 
-      {/* Dynamic Offline / Connection Status indicator */}
-      {isOffline && (
-        <div className="fixed top-4 right-4 z-[100] flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl shadow-xl animate-bounce max-w-sm" style={{ animationDuration: '3s' }}>
-          <div className="relative flex h-3 w-3 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-          </div>
-          <div className="flex-1">
-            <p className="font-extrabold text-[11px] uppercase tracking-wider text-amber-800 leading-none">Status Koneksi Terganggu</p>
-            <p className="text-[10px] text-amber-700 font-semibold mt-1 leading-tight">Berjalan lancar dalam Mode Offline / Replika Lokal.</p>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

@@ -4637,7 +4637,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 sorted.sort((a, b) => getPriceForSort(a) - getPriceForSort(b));
               }
 
-              const pageSize = 4;
+              const pageSize = 16;
               const totalPages = Math.ceil(sorted.length / pageSize);
               const paginated = sorted.slice(
                 (hotelPage - 1) * pageSize,
@@ -4646,7 +4646,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
               return (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     {paginated.map((hotel) => {
                       const isSelected =
                         hotelStep === "madinah"
@@ -4691,127 +4691,127 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 hotelMakkahId: hotel.id,
                               });
                           }}
-                          className={`bg-[#0b101e] rounded-2xl overflow-hidden border cursor-pointer transition-all flex flex-col relative group ${
+                          className={`bg-[#0b101e] rounded-xl overflow-hidden border cursor-pointer transition-all flex flex-col relative group ${
                             isSelected
-                              ? "border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.35)] ring-2 ring-blue-500/80"
-                              : "border-gray-800/80 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20"
+                              ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] ring-2 ring-blue-500/80"
+                              : "border-gray-800/80 hover:border-gray-700 hover:shadow-md hover:shadow-black/20"
                           }`}
                         >
                           {/* TOP SECTION: CLEAR HOTEL PHOTO */}
-                          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
+                          <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-950">
                             <HotelImageCarousel images={images} hotelName={hotel.nama} kota={hotel.kota} />
                             {/* Subtle gradient overlay at the bottom for readability */}
-                            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent"></div>
 
                             {/* Checkbox indicator absolute top-right */}
-                            <div className="absolute top-3 right-3">
+                            <div className="absolute top-2.5 right-2.5">
                               <div
-                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md ${
+                                className={`w-6.5 h-6.5 rounded-full flex items-center justify-center transition-all shadow-md ${
                                   isSelected
                                     ? "bg-blue-500 text-white border border-blue-450"
                                     : "bg-black/50 text-gray-300 border border-white/15 backdrop-blur-xs"
                                 }`}
                               >
                                 {isSelected ? (
-                                  <Check className="w-4 h-4 stroke-[3]" />
+                                  <Check className="w-3.5 h-3.5 stroke-[3]" />
                                 ) : (
-                                  <div className="w-2.5 h-2.5 rounded-full bg-transparent group-hover:bg-white/20 transition-colors" />
+                                  <div className="w-2 h-2 rounded-full bg-transparent group-hover:bg-white/20 transition-colors" />
                                 )}
                               </div>
                             </div>
 
-                            {/* Distance / Map Pin absolute bottom-3 left-3 */}
+                            {/* Distance / Map Pin absolute bottom-2.5 left-2.5 */}
                             {distanceStr && (
-                              <span className="absolute bottom-3 left-3 bg-sky-500/90 text-white px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold flex items-center gap-1 shadow-md backdrop-blur-xs">
-                                <MapPin className="w-3.5 h-3.5 text-white" />
-                                <span>{distanceStr}</span>
+                              <span className="absolute bottom-2.5 left-2.5 bg-sky-500/95 text-white px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-bold flex items-center gap-0.5 shadow-md backdrop-blur-xs">
+                                <MapPin className="w-3 h-3 text-white" />
+                                <span className="max-w-[100px] truncate">{distanceStr}</span>
                               </span>
                             )}
                           </div>
 
                           {/* BOTTOM SECTION: HOTEL INFORMATION & PRICING */}
-                          <div className="p-5 flex flex-col flex-1 justify-between gap-4">
-                            <div className="space-y-2">
-                              <div className="flex flex-col gap-1">
-                                <h4 className="text-white font-extrabold uppercase text-sm sm:text-base line-clamp-1 tracking-wide leading-tight group-hover:text-blue-400 transition-colors">
+                          <div className="p-3 flex flex-col flex-1 justify-between gap-3">
+                            <div className="space-y-1.5">
+                              <div className="flex flex-col gap-0.5">
+                                <h4 className="text-white font-extrabold uppercase text-xs sm:text-xs line-clamp-1 tracking-wide leading-tight group-hover:text-blue-400 transition-colors" title={hotel.nama}>
                                   {hotel.nama}
                                 </h4>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
                                     {hotel.kota}
                                   </span>
 
                                   {/* Bintang (Stars) next to Kota */}
-                                  <div className="flex items-center gap-0.5 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/15">
+                                  <div className="flex items-center gap-0.5 bg-amber-500/10 px-1 py-0.2 rounded border border-amber-500/15">
                                     {Array.from({ length: getHelperStars(hotel.id, hotel.bintang || 5) }).map((_, idx) => (
-                                      <Star key={idx} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                      <Star key={idx} className="w-2 h-2 fill-amber-400 text-amber-400" />
                                     ))}
                                   </div>
 
                                   {/* MEAL PLAN BADGE */}
-                                  <span className="ml-auto bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black tracking-wider">
+                                  <span className="ml-auto bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.2 rounded text-[8px] font-black tracking-wider">
                                     {hotel.mealPlan || "FB"}
                                   </span>
                                 </div>
                               </div>
 
                               {seasonText && (
-                                <span className="inline-flex bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold items-center gap-1.5 shadow-sm">
-                                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                                <span className="inline-flex bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded text-[8px] font-bold items-center gap-1 shadow-sm max-w-full">
+                                  <Calendar className="w-3 h-3 shrink-0" />
                                   <span className="truncate">{seasonText}</span>
                                 </span>
                               )}
                             </div>
 
                             {/* PRICING GRID */}
-                            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                            <div className="grid grid-cols-3 gap-1">
                               {/* QUAD */}
-                              <div className="bg-[#131b2e] rounded-xl px-1.5 py-2.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
-                                <div className="text-[8px] sm:text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-1">
+                              <div className="bg-[#131b2e] rounded-lg px-1 py-1.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
+                                <div className="text-[7px] text-gray-400 font-extrabold uppercase tracking-wider mb-0.5">
                                   QUAD
                                 </div>
                                 <div
-                                  className="text-emerald-400 font-black text-[10px] sm:text-xs md:text-sm whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
+                                  className="text-emerald-400 font-black text-[9px] sm:text-xs whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
                                   title={`Rp ${Math.round(displayPriceQuad || 0).toLocaleString("id-ID")}`}
                                 >
-                                  <span className="text-[7px] sm:text-[8px] font-bold text-emerald-400/70 shrink-0">Rp</span>
+                                  <span className="text-[6px] sm:text-[7px] font-bold text-emerald-400/70 shrink-0">Rp</span>
                                   <span className="truncate">{Math.round(displayPriceQuad || 0).toLocaleString("id-ID")}</span>
                                 </div>
-                                <div className="text-[7px] sm:text-[8px] text-gray-500 mt-1 uppercase font-semibold">
+                                <div className="text-[6px] text-gray-500 mt-0.5 uppercase font-semibold">
                                   PAX/MLM
                                 </div>
                               </div>
 
                               {/* TRIPLE */}
-                              <div className="bg-[#131b2e] rounded-xl px-1.5 py-2.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
-                                <div className="text-[8px] sm:text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-1">
+                              <div className="bg-[#131b2e] rounded-lg px-1 py-1.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
+                                <div className="text-[7px] text-gray-400 font-extrabold uppercase tracking-wider mb-0.5">
                                   TRIPLE
                                 </div>
                                 <div
-                                  className="text-emerald-400 font-black text-[10px] sm:text-xs md:text-sm whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
+                                  className="text-emerald-400 font-black text-[9px] sm:text-xs whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
                                   title={`Rp ${Math.round(displayPriceTriple || 0).toLocaleString("id-ID")}`}
                                 >
-                                  <span className="text-[7px] sm:text-[8px] font-bold text-emerald-400/70 shrink-0">Rp</span>
+                                  <span className="text-[6px] sm:text-[7px] font-bold text-emerald-400/70 shrink-0">Rp</span>
                                   <span className="truncate">{Math.round(displayPriceTriple || 0).toLocaleString("id-ID")}</span>
                                 </div>
-                                <div className="text-[7px] sm:text-[8px] text-gray-500 mt-1 uppercase font-semibold">
+                                <div className="text-[6px] text-gray-500 mt-0.5 uppercase font-semibold">
                                   PAX/MLM
                                 </div>
                               </div>
 
                               {/* DOUBLE */}
-                              <div className="bg-[#131b2e] rounded-xl px-1.5 py-2.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
-                                <div className="text-[8px] sm:text-[9px] text-gray-400 font-extrabold uppercase tracking-wider mb-1">
+                              <div className="bg-[#131b2e] rounded-lg px-1 py-1.5 text-center border border-gray-800/60 flex flex-col justify-between min-w-0 shadow-sm">
+                                <div className="text-[7px] text-gray-400 font-extrabold uppercase tracking-wider mb-0.5">
                                   DOUBLE
                                 </div>
                                 <div
-                                  className="text-emerald-400 font-black text-[10px] sm:text-xs md:text-sm whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
+                                  className="text-emerald-400 font-black text-[9px] sm:text-xs whitespace-nowrap leading-tight tracking-tight flex items-center justify-center gap-0.5"
                                   title={`Rp ${Math.round(displayPriceDouble || 0).toLocaleString("id-ID")}`}
                                 >
-                                  <span className="text-[7px] sm:text-[8px] font-bold text-emerald-400/70 shrink-0">Rp</span>
+                                  <span className="text-[6px] sm:text-[7px] font-bold text-emerald-400/70 shrink-0">Rp</span>
                                   <span className="truncate">{Math.round(displayPriceDouble || 0).toLocaleString("id-ID")}</span>
                                 </div>
-                                <div className="text-[7px] sm:text-[8px] text-gray-500 mt-1 uppercase font-semibold">
+                                <div className="text-[6px] text-gray-500 mt-0.5 uppercase font-semibold">
                                   PAX/MLM
                                 </div>
                               </div>
