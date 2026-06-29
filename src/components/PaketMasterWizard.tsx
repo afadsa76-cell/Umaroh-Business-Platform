@@ -930,18 +930,43 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       (1 + HANDLING_CONSTANTS.defaultMarginPercent / 100),
   );
 
-  const isGroupPax = targetJamaah >= 35;
-  
   // Flatten transport options from localTransportSource
   const transportOptions = [];
   localTransportSource.forEach((vehicle) => {
-    vehicle.routes.forEach((route) => {
-      const pricePerPax = targetJamaah > 0 ? Math.round(((route.price * effectiveKursSar) / targetJamaah) * 1.4) : 0;
-      transportOptions.push({
-        id: `trans_${vehicle.id}_${route.route.toLowerCase().replace(/\s+/g, '_')}`,
-        label: `${vehicle.name} - ${route.route} (${vehicle.namaVendor})`,
-        price: pricePerPax
-      });
+    const idLower = vehicle.id.toLowerCase();
+    // Only allow BUS, GMC, STARIA, HIACE
+    if (!['bus', 'gmc', 'staria', 'hiace'].includes(idLower)) {
+      return;
+    }
+
+    // Filter only Full Trip routes
+    const fullTripRoutes = vehicle.routes.filter((route) =>
+      route.route.toLowerCase().includes("full trip")
+    );
+
+    if (fullTripRoutes.length === 0) return;
+
+    // Find the route with the highest price
+    let highestRoute = fullTripRoutes[0];
+    let maxPrice = idLower === 'bus' ? 2600 : highestRoute.price;
+
+    fullTripRoutes.forEach((route) => {
+      const currentPrice = idLower === 'bus' ? 2600 : route.price;
+      if (currentPrice > maxPrice) {
+        maxPrice = currentPrice;
+        highestRoute = route;
+      }
+    });
+
+    const pricePerPax = targetJamaah > 0 ? Math.round(((maxPrice * effectiveKursSar) / targetJamaah) * 1.4) : 0;
+
+    // Clean label: e.g. "BUS - Full Trip" instead of including detailed route route info or vendor
+    const label = `${vehicle.name} - Full Trip`;
+
+    transportOptions.push({
+      id: `trans_${vehicle.id}_full_trip`,
+      label: label,
+      price: pricePerPax
     });
   });
 
@@ -1036,12 +1061,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       deskripsi: `Kedatangan & Keberangkatan`,
       harga: saudiSell,
     },
-    isGroupPax ? {
-      id: "transportasi_auto",
-      nama: `Transportasi Bus`,
-      deskripsi: `Biaya Transportasi (Gratis/Included for 35-55 Pax)`,
-      harga: 0,
-    } : {
+    {
       id: "group_transport",
       nama: "Transportasi",
       deskripsi: `Pilihan Kendaraan Full Trip (${targetJamaah} Pax)`,
