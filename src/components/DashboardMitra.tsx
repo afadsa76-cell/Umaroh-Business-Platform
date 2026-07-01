@@ -170,8 +170,76 @@ export const DashboardMitra = () => {
   const [sentTransactions, setSentTransactions] = useState<WalletTransaction[]>([]);
   const [recvTransactions, setRecvTransactions] = useState<WalletTransaction[]>([]);
   
-  // Toko Perlengkapan & Aksesoris States
+   // Toko Perlengkapan & Aksesoris States
   const [mitraShopOrders, setMitraShopOrders] = useState<MitraShopOrder[]>([]);
+  const [shopProductsList, setShopProductsList] = useState<TokoProduct[]>([
+    {
+      id: "prod-1",
+      name: "Kain Ihram Katun Al-Mansuur Premium",
+      price: 185000,
+      weight: "1.2 kg",
+      rating: 4.9,
+      sold: 342,
+      stock: 45,
+      image: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=300&auto=format&fit=crop",
+      desc: "Kain Ihram katun premium dengan ketebalan terbaik, menyerap keringat optimal, tidak menerawang, sangat nyaman dipakai selama ritual ihram di cuaca panas jazirah Arab."
+    },
+    {
+      id: "prod-2",
+      name: "Mukena Silk Travel Ringan Anti-Kusut",
+      price: 290000,
+      weight: "0.4 kg",
+      rating: 4.8,
+      sold: 198,
+      stock: 32,
+      image: "https://images.unsplash.com/photo-1535252151047-35ad8970ac9e?q=80&w=300&auto=format&fit=crop",
+      desc: "Mukena berbahan sutra satin berkualitas tinggi, adem, sangat fungsional dilengkapi pouch mini fungsional agar mudah dimasukkan ke tas saku selama perjalanan ziarah."
+    },
+    {
+      id: "prod-3",
+      name: "Sabuk Tawaf Thawaf Anti-Copot & Kantong Serbaguna",
+      price: 75000,
+      weight: "0.2 kg",
+      rating: 4.7,
+      sold: 520,
+      stock: 80,
+      image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=300&auto=format&fit=crop",
+      desc: "Sabuk kain Ihram tanpa jahitan dengan sistem klip pengunci super kuat dilengkapi saku ritsleting aman tahan air untuk menaruh handphone, dompet kecil, dan paspor."
+    },
+    {
+      id: "prod-4",
+      name: "Sandal Masjid Ringan & Tas Kantong Serut",
+      price: 35000,
+      weight: "0.15 kg",
+      rating: 4.9,
+      sold: 812,
+      stock: 120,
+      image: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=300&auto=format&fit=crop",
+      desc: "Sandal masjid anti slip dari karet ultra ringan lengkap dengan pouch jaring agar sandal tidak hilang dan siap digantungkan di punggung tas saat sedang melakukan thawaf."
+    },
+    {
+      id: "prod-5",
+      name: "Buku Panduan Doa & Wirid Saku Lengkap",
+      price: 20000,
+      weight: "0.1 kg",
+      rating: 4.9,
+      sold: 1040,
+      stock: 300,
+      image: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?q=80&w=300&auto=format&fit=crop",
+      desc: "Buku doa saku eksklusif cetakan jernih materi thariqah lengkap doa-doa mutholaah Miqat, Thawaf, Putaran Sa'i lengkap teks arab, transliterasi latin dan arti bahasa indonesia."
+    },
+    {
+      id: "prod-6",
+      name: "Koper Hardcase Fiber TSA 24 Inch",
+      price: 420000,
+      weight: "3.5 kg",
+      rating: 4.8,
+      sold: 95,
+      stock: 15,
+      image: "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?q=80&w=300&auto=format&fit=crop",
+      desc: "Koper perlengkapan bagasi kuat anti retak fiber ABS bersertifikasi kunci TSA standar penerbangan internasional Arab Saudi. Roda ganda 360 derajat lincah."
+    }
+  ]);
   const [selectedProduct, setSelectedProduct] = useState<TokoProduct | null>(null);
   const [buyQty, setBuyQty] = useState<number>(1);
   const [shippingAddress, setShippingAddress] = useState<string>('');
@@ -288,6 +356,29 @@ export const DashboardMitra = () => {
       setMitraShopOrders(arr);
     });
 
+    // Real-time shop products list from perlengkapan_master
+    const unsubscribeShopProducts = onSnapshot(collection(db, 'perlengkapan_master'), (snap) => {
+      if (!snap.empty) {
+        const arr: TokoProduct[] = [];
+        snap.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.status_barang === 'Nonaktif') return;
+          arr.push({
+            id: docSnap.id,
+            name: d.nama_barang || '',
+            price: Number(d.harga_jual || d.harga_modal || 0),
+            weight: d.ukuran ? `Size: ${d.ukuran}` : '0.5 kg',
+            rating: d.rating || 4.9,
+            sold: d.sold || 120,
+            stock: Number(d.stok || 0),
+            image: d.thumbnail || d.image || "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=300&auto=format&fit=crop",
+            desc: d.kategori_barang ? `Kategori: ${d.kategori_barang}. ` + (d.deskripsi || d.nama_barang) : (d.deskripsi || d.nama_barang || '')
+          });
+        });
+        setShopProductsList(arr);
+      }
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeWallet();
@@ -301,6 +392,7 @@ export const DashboardMitra = () => {
       unsubscribeMaskapai();
       unsubscribeNotifications();
       unsubscribeShopOrders();
+      unsubscribeShopProducts();
     };
   }, [userId]);
 
@@ -523,75 +615,6 @@ export const DashboardMitra = () => {
   };
 
   const renderToko = () => {
-    const shopProductsList = [
-      {
-        id: "prod-1",
-        name: "Kain Ihram Katun Al-Mansuur Premium",
-        price: 185000,
-        weight: "1.2 kg",
-        rating: 4.9,
-        sold: 342,
-        stock: 45,
-        image: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=300&auto=format&fit=crop",
-        desc: "Kain Ihram katun premium dengan ketebalan terbaik, menyerap keringat optimal, tidak menerawang, sangat nyaman dipakai selama ritual ihram di cuaca panas jazirah Arab."
-      },
-      {
-        id: "prod-2",
-        name: "Mukena Silk Travel Ringan Anti-Kusut",
-        price: 290000,
-        weight: "0.4 kg",
-        rating: 4.8,
-        sold: 198,
-        stock: 32,
-        image: "https://images.unsplash.com/photo-1535252151047-35ad8970ac9e?q=80&w=300&auto=format&fit=crop",
-        desc: "Mukena berbahan sutra satin berkualitas tinggi, adem, sangat fungsional dilengkapi pouch mini fungsional agar mudah dimasukkan ke tas saku selama perjalanan ziarah."
-      },
-      {
-        id: "prod-3",
-        name: "Sabuk Tawaf Thawaf Anti-Copot & Kantong Serbaguna",
-        price: 75000,
-        weight: "0.2 kg",
-        rating: 4.7,
-        sold: 520,
-        stock: 80,
-        image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=300&auto=format&fit=crop",
-        desc: "Sabuk kain Ihram tanpa jahitan dengan sistem klip pengunci super kuat dilengkapi saku ritsleting aman tahan air untuk menaruh handphone, dompet kecil, dan paspor."
-      },
-      {
-        id: "prod-4",
-        name: "Sandal Masjid Ringan & Tas Kantong Serut",
-        price: 35000,
-        weight: "0.15 kg",
-        rating: 4.9,
-        sold: 812,
-        stock: 120,
-        image: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=300&auto=format&fit=crop",
-        desc: "Sandal masjid anti slip dari karet ultra ringan lengkap dengan pouch jaring agar sandal tidak hilang dan siap digantungkan di punggung tas saat sedang melakukan thawaf."
-      },
-      {
-        id: "prod-5",
-        name: "Buku Panduan Doa & Wirid Saku Lengkap",
-        price: 20000,
-        weight: "0.1 kg",
-        rating: 4.9,
-        sold: 1040,
-        stock: 300,
-        image: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?q=80&w=300&auto=format&fit=crop",
-        desc: "Buku doa saku eksklusif cetakan jernih materi thariqah lengkap doa-doa mutholaah Miqat, Thawaf, Putaran Sa'i lengkap teks arab, transliterasi latin dan arti bahasa indonesia."
-      },
-      {
-        id: "prod-6",
-        name: "Koper Hardcase Fiber TSA 24 Inch",
-        price: 420000,
-        weight: "3.5 kg",
-        rating: 4.8,
-        sold: 95,
-        stock: 15,
-        image: "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?q=80&w=300&auto=format&fit=crop",
-        desc: "Koper perlengkapan bagasi kuat anti retak fiber ABS bersertifikasi kunci TSA standar penerbangan internasional Arab Saudi. Roda ganda 360 derajat lincah."
-      }
-    ];
-
     const filteredProducts = shopProductsList.filter(p => 
       p.name.toLowerCase().includes(tokoSearch.toLowerCase()) || 
       p.desc.toLowerCase().includes(tokoSearch.toLowerCase())

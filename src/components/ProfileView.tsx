@@ -49,6 +49,15 @@ interface Testimonial {
   text: string;
 }
 
+interface BookingItem {
+  id: string;
+  createdAt?: { seconds: number; nanoseconds: number } | string | null;
+  namaLengkap?: string;
+  name?: string;
+  status?: string;
+  mitraId?: string;
+}
+
 interface MitraProfile {
   id: string;
   travelName: string;
@@ -197,6 +206,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
   const [galleryFilter, setGalleryFilter] = useState<string>('Semua');
+  const [monthlyBookings, setMonthlyBookings] = useState<number[]>([0, 0, 0, 0, 0, 0]);
+  const [recentBookings, setRecentBookings] = useState<BookingItem[]>([]);
 
   // Core profile state (synced with Firebase)
   const [profile, setProfile] = useState<MitraProfile>({
@@ -361,6 +372,44 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const qBookings = query(collection(db, 'bookings'), where('mitraId', '==', targetUid));
     const unsubBookings = onSnapshot(qBookings, (snap) => {
       const bookingsCount = snap.size;
+      const list: BookingItem[] = [];
+      const counts = [0, 0, 0, 0, 0, 0]; // Jan, Feb, Mar, Apr, Mei, Jun
+      
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        list.push({ id: docSnap.id, ...d });
+        
+        let dateVal: Date | null = null;
+        if (d.createdAt) {
+          if (typeof d.createdAt === 'object' && 'seconds' in d.createdAt) {
+            dateVal = new Date(d.createdAt.seconds * 1000);
+          } else if (typeof d.createdAt === 'string') {
+            dateVal = new Date(d.createdAt);
+          }
+        }
+        
+        if (dateVal && !isNaN(dateVal.getTime())) {
+          const m = dateVal.getMonth();
+          if (m >= 0 && m <= 5) {
+            counts[m] += 1;
+          }
+        }
+      });
+
+      // Sort newest bookings
+      list.sort((a, b) => {
+        const getMs = (item: BookingItem) => {
+          if (!item.createdAt) return 0;
+          if (typeof item.createdAt === 'object' && 'seconds' in item.createdAt) {
+            return (item.createdAt as { seconds: number }).seconds * 1000;
+          }
+          return new Date(item.createdAt as string).getTime() || 0;
+        };
+        return getMs(b) - getMs(a);
+      });
+
+      setRecentBookings(list);
+      setMonthlyBookings(counts);
       setProfile(prev => ({
         ...prev,
         jamaahCount: bookingsCount
@@ -535,7 +584,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
     docPdf.setFont('helvetica', 'normal');
     docPdf.setTextColor(50, 50, 50);
-    docPdf.text(`- Total Jamaah Berangkat : ${profile.jamaahCount.toLocaleString('id-ID')} Pax`, 20, 140);
+    docPdf.text(`- Total Jamaah Berangkat : ${(profile?.jamaahCount ?? 0).toLocaleString('id-ID')} Pax`, 20, 140);
     docPdf.text(`- Total Paket Terjual : 321 Paket`, 20, 147);
     docPdf.text(`- Rata-Rata Rating Jamaah : ${profile.rating} / 5.0 Bintang`, 20, 154);
     docPdf.text(`- Skor Kelayakan Mitra : ${profile.performanceScore} / 100 (Sangat Layak)`, 20, 161);
@@ -623,6 +672,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       </div>
     );
   }
+
+  const maxBookingCount = Math.max(...monthlyBookings, 1);
+  const chartYCoords = monthlyBookings.map(c => 90 - (c / maxBookingCount) * 75);
+  const chartPathD = `M 10 ${chartYCoords[0]} L 60 ${chartYCoords[1]} L 120 ${chartYCoords[2]} L 180 ${chartYCoords[3]} L 240 ${chartYCoords[4]} L 290 ${chartYCoords[5]}`;
+  const chartAreaD = `${chartPathD} L 290 100 L 10 100 Z`;
 
   if (userData && role === 'jamaah') {
     if (isEditMode) {
@@ -971,7 +1025,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     <div className="min-w-0">
                       <span className="text-[9px] text-slate-400 font-bold block leading-tight">Total Jamaah</span>
                       <strong className="text-xs font-black text-slate-900 block truncate">
-                        {profile.jamaahCount.toLocaleString('id-ID')}+
+                        {(profile?.jamaahCount ?? 0).toLocaleString('id-ID')}+
                       </strong>
                     </div>
                   </div>
@@ -1169,33 +1223,33 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
                       <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Tahun Ini</span>
                       <strong className="text-xl font-black text-slate-900 block leading-tight mt-1">
-                        845 Jamaah
+                        {(profile?.jamaahCount ?? 0).toLocaleString('id-ID')} Jamaah
                       </strong>
-                      <span className="text-[9px] text-emerald-600 font-bold block mt-1">+14% vs tahun lalu</span>
+                      <span className="text-[9px] text-emerald-600 font-bold block mt-1">Data Realtime</span>
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
                       <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Paket Terjual</span>
                       <strong className="text-xl font-black text-slate-900 block leading-tight mt-1">
-                        321 Paket
+                        {(profile?.jamaahCount ?? 0).toLocaleString('id-ID')} Paket
                       </strong>
-                      <span className="text-[9px] text-[#047857] font-bold block mt-1">Sisa 12 kuota promo</span>
+                      <span className="text-[9px] text-[#047857] font-bold block mt-1">Sesuai Pendaftaran</span>
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
-                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Conversion Rate</span>
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Indeks Kepuasan</span>
                       <strong className="text-xl font-black text-[#047857] block leading-tight mt-1">
-                        34%
+                        {(profile?.performanceScore || 100)}%
                       </strong>
-                      <span className="text-[9px] text-slate-400 font-bold block mt-1">Efisiensi tinggi</span>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-1">Sangat Layak</span>
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-xs">
-                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Repeat Customer</span>
-                      <strong className="text-xl font-black text-amber-605 block leading-tight mt-1">
-                        42%
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Paket Aktif</span>
+                      <strong className="text-xl font-black text-amber-600 block leading-tight mt-1">
+                        {(profile?.departureCount ?? 0).toLocaleString('id-ID')} Paket
                       </strong>
-                      <span className="text-[9px] text-slate-400 font-bold block mt-1">Loyalitas mantap</span>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-1">Terpublikasi</span>
                     </div>
                   </div>
 
@@ -1214,36 +1268,28 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         <svg className="w-full h-full overflow-visible z-10" viewBox="0 0 300 100" preserveAspectRatio="none">
                           <defs>
                             <linearGradient id="chartGradDesk" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#F5B800" stopOpacity="0.45" />
-                              <stop offset="100%" stopColor="#F5B800" stopOpacity="0" />
+                              <stop offset="0%" stopColor="#047857" stopOpacity="0.25" />
+                              <stop offset="100%" stopColor="#047857" stopOpacity="0" />
                             </linearGradient>
                           </defs>
                           <path 
-                            d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15 L 290 100 L 10 100 Z" 
+                            d={chartAreaD} 
                             fill="url(#chartGradDesk)" 
                           />
                           <path 
-                            d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15" 
+                            d={chartPathD} 
                             fill="none" 
                             stroke="#047857" 
                             strokeWidth="3.5" 
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
-                          <path 
-                            d="M 10 80 L 60 70 L 120 60 L 180 40 L 240 35 L 290 20" 
-                            fill="none" 
-                            stroke="#F5B800" 
-                            strokeWidth="2" 
-                            strokeDasharray="4 3" 
-                            strokeLinecap="round"
-                          />
-                          <circle cx="10" cy="90" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
-                          <circle cx="60" cy="75" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
-                          <circle cx="120" cy="50" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
-                          <circle cx="180" cy="65" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
-                          <circle cx="240" cy="30" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
-                          <circle cx="290" cy="15" r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="10" cy={chartYCoords[0]} r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="60" cy={chartYCoords[1]} r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="120" cy={chartYCoords[2]} r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="180" cy={chartYCoords[3]} r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="240" cy={chartYCoords[4]} r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
+                          <circle cx="290" cy={chartYCoords[5]} r="4" fill="#047857" stroke="#fff" strokeWidth="2" />
                         </svg>
 
                         <div className="flex justify-between px-1 text-[10px] font-black text-slate-400 select-none z-10 mt-2">
@@ -1260,9 +1306,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">
                           <span className="inline-block w-2.5 h-1.5 bg-[#047857] rounded" /> Realisasi Keberangkatan (Pax)
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                          <span className="inline-block w-2.5 h-1.5 bg-amber-400 rounded-full" /> Target Program
-                        </div>
                       </div>
                     </div>
 
@@ -1270,23 +1313,49 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4 font-sans flex flex-col">
                       <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Timeline Aktivitas</h3>
                       <div className="relative border-l border-slate-200 pl-4 ml-2 space-y-4 max-h-[220px] overflow-y-auto">
-                        <div className="relative">
-                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-[#047857] border-2 border-white ring-2 ring-[#047857]/20" />
-                          <time className="text-[9px] font-bold text-slate-400 block">Hari ini, 09:20 WIB</time>
-                          <h4 className="text-xs font-bold text-slate-900 mt-0.5 font-sans">42 Jamaah Berhasil Diberangkatkan</h4>
-                        </div>
-
-                        <div className="relative">
-                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-white" />
-                          <time className="text-[9px] font-bold text-slate-400 block">Kemarin</time>
-                          <h4 className="text-xs font-bold text-slate-900 mt-0.5">Paket Baru Ditambahkan</h4>
-                        </div>
-
-                        <div className="relative">
-                          <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
-                          <time className="text-[9px] font-bold text-slate-400 block">27 Mei 2026</time>
-                          <h4 className="text-xs font-bold text-slate-900 mt-0.5">Validasi & Verifikasi NIB selesai</h4>
-                        </div>
+                        {recentBookings.length === 0 && (profile.packages || []).length === 0 ? (
+                          <>
+                            <div className="relative">
+                              <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+                              <time className="text-[9px] font-bold text-slate-400 block">Sistem</time>
+                              <h4 className="text-xs font-bold text-slate-900 mt-0.5">Mitra Aktif & Siap Menerima Pendaftaran</h4>
+                            </div>
+                            <div className="relative">
+                              <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
+                              <time className="text-[9px] font-bold text-slate-400 block">Legalitas</time>
+                              <h4 className="text-xs font-bold text-slate-900 mt-0.5">Dokumen Perizinan NIB & PPIU Terverifikasi</h4>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {recentBookings.slice(0, 5).map((booking, idx) => (
+                              <div key={booking.id || idx} className="relative">
+                                <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-[#047857] border-2 border-white ring-2 ring-[#047857]/20" />
+                                <time className="text-[9px] font-bold text-slate-400 block">
+                                  {booking.createdAt ? (
+                                    typeof booking.createdAt === 'object' && 'seconds' in booking.createdAt
+                                      ? new Date(booking.createdAt.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                      : new Date(booking.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                  ) : 'Baru Saja'}
+                                </time>
+                                <h4 className="text-xs font-bold text-slate-900 mt-0.5 font-sans">
+                                  Pendaftaran Jamaah: {booking.namaLengkap || booking.name || 'Hamba Allah'}
+                                </h4>
+                                <p className="text-[10px] text-slate-500">Status: {booking.status || 'Persiapan'}</p>
+                              </div>
+                            ))}
+                            {(profile.packages || []).slice(0, 3).map((pkg, idx) => (
+                              <div key={pkg.id || idx} className="relative">
+                                <div className="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-white" />
+                                <time className="text-[9px] font-bold text-slate-400 block">Aktif</time>
+                                <h4 className="text-xs font-bold text-slate-900 mt-0.5">
+                                  Paket Dipublikasikan: {pkg.name}
+                                </h4>
+                                <p className="text-[10px] text-slate-500">Harga mulai {pkg.price}</p>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1820,7 +1889,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <div>
                     <span className="text-[10px] text-slate-400 font-semibold block leading-tight">Jamaah</span>
                     <strong className="text-xs font-black text-slate-900 select-all">
-                      {profile.jamaahCount.toLocaleString('id-ID')}+
+                      {(profile?.jamaahCount ?? 0).toLocaleString('id-ID')}+
                     </strong>
                   </div>
                 </div>
@@ -2045,33 +2114,33 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
                       <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Tahun Ini</span>
                       <strong className="text-base font-black text-slate-900 block leading-tight">
-                        845 Jamaah
+                        {(profile?.jamaahCount ?? 0).toLocaleString('id-ID')} Jamaah
                       </strong>
-                      <span className="text-[8px] text-emerald-600 font-bold block mt-1">+14% vs tahun lalu</span>
+                      <span className="text-[8px] text-emerald-600 font-bold block mt-1">Data Realtime</span>
                     </div>
 
                     <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
                       <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Paket Terjual</span>
                       <strong className="text-base font-black text-slate-900 block leading-tight">
-                        321 Paket
+                        {(profile?.jamaahCount ?? 0).toLocaleString('id-ID')} Paket
                       </strong>
-                      <span className="text-[8px] text-[#047857] font-bold block mt-1">Sisa 12 kuota promo</span>
+                      <span className="text-[8px] text-[#047857] font-bold block mt-1">Sesuai Pendaftaran</span>
                     </div>
 
                     <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
-                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Conversion Rate</span>
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Indeks Kepuasan</span>
                       <strong className="text-base font-black text-[#047857] block leading-tight">
-                        34%
+                        {(profile?.performanceScore || 100)}%
                       </strong>
-                      <span className="text-[8px] text-slate-400 font-bold block mt-1">Efisiensi tinggi</span>
+                      <span className="text-[8px] text-slate-400 font-bold block mt-1">Sangat Layak</span>
                     </div>
 
                     <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
-                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Repeat Customer</span>
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight block">Paket Aktif</span>
                       <strong className="text-base font-black text-amber-600 block leading-tight">
-                        42%
+                        {(profile?.departureCount ?? 0).toLocaleString('id-ID')} Paket
                       </strong>
-                      <span className="text-[8px] text-slate-400 font-bold block mt-1">Loyalitas mantap</span>
+                      <span className="text-[8px] text-slate-400 font-bold block mt-1">Terpublikasi</span>
                     </div>
                   </div>
 
@@ -2091,40 +2160,31 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                       <svg className="w-full h-full overflow-visible z-10" viewBox="0 0 300 100" preserveAspectRatio="none">
                         <defs>
                           <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#F5B800" stopOpacity="0.45" />
-                            <stop offset="100%" stopColor="#F5B800" stopOpacity="0" />
+                            <stop offset="0%" stopColor="#047857" stopOpacity="0.25" />
+                            <stop offset="100%" stopColor="#047857" stopOpacity="0" />
                           </linearGradient>
                         </defs>
                         {/* Shaded Area under path */}
                         <path 
-                          d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15 L 290 100 L 10 100 Z" 
+                          d={chartAreaD} 
                           fill="url(#chartGrad)" 
                         />
                         {/* Main Line */}
                         <path 
-                          d="M 10 90 L 60 75 L 120 50 L 180 65 L 240 30 L 290 15" 
+                          d={chartPathD} 
                           fill="none" 
                           stroke="#047857" 
                           strokeWidth="3.5" 
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
-                        {/* Target line comparison */}
-                        <path 
-                          d="M 10 80 L 60 70 L 120 60 L 180 40 L 240 35 L 290 20" 
-                          fill="none" 
-                          stroke="#F5B800" 
-                          strokeWidth="2" 
-                          strokeDasharray="4 3" 
-                          strokeLinecap="round"
-                        />
                         {/* Draw Data Points */}
-                        <circle cx="10" cy="90" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
-                        <circle cx="60" cy="75" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
-                        <circle cx="120" cy="50" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
-                        <circle cx="180" cy="65" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
-                        <circle cx="240" cy="30" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
-                        <circle cx="290" cy="15" r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="10" cy={chartYCoords[0]} r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="60" cy={chartYCoords[1]} r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="120" cy={chartYCoords[2]} r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="180" cy={chartYCoords[3]} r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="240" cy={chartYCoords[4]} r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
+                        <circle cx="290" cy={chartYCoords[5]} r="4.5" fill="#047857" stroke="#fff" strokeWidth="2" />
                       </svg>
 
                       {/* Labels X and Y */}
@@ -2140,10 +2200,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                     <div className="flex justify-between text-[10px] font-bold text-slate-400 pt-1">
                       <div className="flex items-center gap-1.5Box">
-                        <span className="inline-block w-2.5 h-1.5 bg-[#047857] rounded" /> Realisasi (Keberangkatan)
-                      </div>
-                      <div className="flex items-center gap-1.5Box">
-                        <span className="inline-block w-2.5 h-1.5 bg-amber-400 rounded-full" /> Target Umrah
+                        <span className="inline-block w-2.5 h-1.5 bg-[#047857] rounded" /> Realisasi Keberangkatan (Pax)
                       </div>
                     </div>
                   </div>
@@ -2152,26 +2209,45 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3.5">
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Timeline Aktivitas Terakhir</h3>
                     <div className="relative border-l border-slate-200 pl-4 ml-2 space-y-4">
-                      <div className="relative">
-                        <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-[#047857] border-2 border-white ring-2 ring-[#047857]/20" />
-                        <time className="text-[9px] font-bold text-slate-400">Hari ini, 09:20 WIB</time>
-                        <h4 className="text-xs font-bold text-slate-900">42 Jamaah Berhasil Diberangkatkan</h4>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Kloter Syawal Group 1, Pesawat Saudia Airways SV-812.</p>
-                      </div>
-
-                      <div className="relative">
-                        <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-white" />
-                        <time className="text-[9px] font-bold text-slate-400 font-semibold">Kemarin</time>
-                        <h4 className="text-xs font-bold text-slate-900">Paket Baru Ditambahkan</h4>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Mengunggah Paket VIP Plus Turki Musim Gugur seharga Rp 28,9 Jt.</p>
-                      </div>
-
-                      <div className="relative">
-                        <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
-                        <time className="text-[9px] font-bold text-slate-400 font-semibold">27 Mei 2026</time>
-                        <h4 className="text-xs font-bold text-slate-900">Validasi & Verifikasi NIB selesai</h4>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Sistem memverifikasi keaslian corporate ID dengan skor sempurna.</p>
-                      </div>
+                      {recentBookings.length === 0 && (profile.packages || []).length === 0 ? (
+                        <>
+                          <div className="relative">
+                            <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+                            <time className="text-[9px] font-bold text-slate-400">Sistem</time>
+                            <h4 className="text-xs font-bold text-slate-900">Mitra Aktif & Siap Menerima Pendaftaran</h4>
+                            <p className="text-[10px] text-slate-500 mt-0.5">Sistem memvalidasi keaslian corporate ID dengan skor sempurna.</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {recentBookings.slice(0, 5).map((booking, idx) => (
+                            <div key={booking.id || idx} className="relative">
+                              <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-[#047857] border-2 border-white ring-2 ring-[#047857]/20" />
+                              <time className="text-[9px] font-bold text-slate-400">
+                                {booking.createdAt ? (
+                                  typeof booking.createdAt === 'object' && 'seconds' in booking.createdAt
+                                    ? new Date(booking.createdAt.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                    : new Date(booking.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                ) : 'Baru Saja'}
+                              </time>
+                              <h4 className="text-xs font-bold text-slate-900">
+                                Pendaftaran Jamaah: {booking.namaLengkap || booking.name || 'Hamba Allah'}
+                              </h4>
+                              <p className="text-[10px] text-slate-500 mt-0.5">Status: {booking.status || 'Persiapan'}</p>
+                            </div>
+                          ))}
+                          {(profile.packages || []).slice(0, 3).map((pkg, idx) => (
+                            <div key={pkg.id || idx} className="relative">
+                              <div className="absolute -left-[20px] top-1.5 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-white" />
+                              <time className="text-[9px] font-bold text-slate-400 font-semibold">Aktif</time>
+                              <h4 className="text-xs font-bold text-slate-900">
+                                Paket Dipublikasikan: {pkg.name}
+                              </h4>
+                              <p className="text-[10px] text-slate-500 mt-0.5">Harga mulai {pkg.price}</p>
+                            </div>
+                          ))}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

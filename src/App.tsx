@@ -563,25 +563,25 @@ function App() {
           </div>
           <button
             onClick={() => setAdminViewMode('operasional')}
-            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'operasional' ? 'bg-amber-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'operasional' ? 'bg-indigo-600 text-gray-950' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <Settings className="w-3 h-3 md:w-4 md:h-4" /> Ops
           </button>
           <button
             onClick={() => setAdminViewMode('mitra')}
-            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'mitra' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'mitra' ? 'bg-indigo-600 text-gray-950' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <Users className="w-3 h-3 md:w-4 md:h-4" /> Mitra
           </button>
           <button
             onClick={() => setAdminViewMode('jamaah')}
-            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'jamaah' ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'jamaah' ? 'bg-indigo-600 text-gray-950' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <User className="w-3 h-3 md:w-4 md:h-4" /> Jamaah
           </button>
           <button
             onClick={() => setAdminViewMode('vendor')}
-            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'vendor' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-full text-[10px] md:text-sm font-bold flex items-center gap-1 md:gap-2 transition-colors ${adminViewMode === 'vendor' ? 'bg-indigo-600 text-gray-950' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <Sliders className="w-3 h-3 md:w-4 md:h-4" /> Vendor
           </button>

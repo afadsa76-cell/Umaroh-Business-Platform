@@ -379,7 +379,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       {/* Modern Dashboard Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-150 pb-6 relative z-10">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-indigo-100 shadow-lg">
+          <div className="p-3 bg-indigo-600 text-gray-950 rounded-2xl shadow-indigo-100 shadow-lg">
             <LayoutDashboard className="w-6 h-6 animate-pulse" />
           </div>
           <div>

@@ -958,10 +958,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       }
     });
 
-    const pricePerPax = targetJamaah > 0 ? Math.round(((maxPrice * effectiveKursSar) / targetJamaah) * 1.4) : 0;
+    const isVisa35to55 = vData ? vData.paxRange.includes("35-55") : false;
+    const pricePerPax = isVisa35to55 
+      ? 0 
+      : (targetJamaah > 0 ? Math.round(((maxPrice * effectiveKursSar) / targetJamaah) * 1.4) : 0);
 
     // Clean label: e.g. "BUS - Full Trip" instead of including detailed route route info or vendor
-    const label = `${vehicle.name} - Full Trip`;
+    const label = isVisa35to55 
+      ? `${vehicle.name} - Full Trip (Termasuk Visa 35-55)` 
+      : `${vehicle.name} - Full Trip`;
 
     transportOptions.push({
       id: `trans_${vehicle.id}_full_trip`,

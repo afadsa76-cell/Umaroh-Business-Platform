@@ -143,13 +143,13 @@ export const DashboardVendor: React.FC<DashboardVendorProps> = ({ vendorName, ve
         <div className="flex bg-white p-1 rounded-2xl border border-gray-150 shadow-sm max-w-md mb-6">
           <button
             onClick={() => setSelectedType('vendor_maskapai')}
-            className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 uppercase tracking-wider ${selectedType === 'vendor_maskapai' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+            className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 uppercase tracking-wider ${selectedType === 'vendor_maskapai' ? 'bg-indigo-600 text-gray-950 shadow-md' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
           >
             ✈️ Vendor Airline
           </button>
           <button
             onClick={() => setSelectedType('vendor_hotel')}
-            className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 uppercase tracking-wider ${selectedType === 'vendor_hotel' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+            className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 uppercase tracking-wider ${selectedType === 'vendor_hotel' ? 'bg-indigo-600 text-gray-950 shadow-md' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
           >
             🏨 Vendor Hotel
           </button>

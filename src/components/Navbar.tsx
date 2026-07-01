@@ -23,6 +23,7 @@ import {
   Landmark
 } from 'lucide-react';
 import { Role } from './LoginView';
+import { logoBase64 } from '../utils/logoBase64';
 
 export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative' | 'blueprint-flow';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing' | 'tour_leader' | 'petugas_bandara';
@@ -147,7 +148,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
         <div className="p-6 border-b border-gray-150 flex flex-col gap-1 items-start bg-indigo-50/10">
           <div className="bg-indigo-600 py-2.5 px-4 rounded-xl flex items-center justify-center border border-indigo-700 shadow-sm w-full mb-1">
             <img 
-              src="https://umaroh.com/assets/logo-light-D4UzTX0_.png" 
+              src={logoBase64} 
               alt="Logo Umaroh" 
               className="h-8 object-contain max-w-full" 
               referrerPolicy="no-referrer"
@@ -193,12 +194,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                 className={`
                   w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-black transition-all duration-200 cursor-pointer justify-start
                   ${activeTab === 'dashboard'
-                    ? 'bg-indigo-600 text-white shadow-md' 
+                    ? 'bg-indigo-600 text-gray-950 shadow-md' 
                     : 'bg-indigo-50/55 hover:bg-indigo-50 text-indigo-950 border border-indigo-100/50 shadow-sm'
                   }
                 `}
               >
-                <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-white' : 'text-indigo-600'}`} />
+                <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-gray-950' : 'text-indigo-600'}`} />
                 <span className="truncate text-left leading-tight py-0.5 uppercase tracking-wide">Dashboard</span>
               </button>
             </div>
@@ -221,12 +222,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                       className={`
                         w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer justify-start
                         ${isActive 
-                          ? 'bg-indigo-600 text-white shadow-md' 
+                          ? 'bg-indigo-600 text-gray-950 shadow-md' 
                           : 'text-gray-650 hover:bg-gray-50 hover:text-gray-900'
                         }
                       `}
                     >
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-indigo-600/70'}`} />
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-gray-950' : 'text-indigo-600/70'}`} />
                       <span className="truncate text-left leading-tight py-0.5">{item.label}</span>
                     </button>
                   );
@@ -258,12 +259,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                           className={`
                             w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer justify-start
                             ${isActive 
-                              ? 'bg-indigo-600 text-white shadow-md' 
+                              ? 'bg-indigo-600 text-gray-950 shadow-md' 
                               : 'text-gray-650 hover:bg-gray-50 hover:text-gray-900'
                             }
                           `}
                         >
-                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-indigo-600/70'}`} />
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-gray-950' : 'text-indigo-600/70'}`} />
                           <span className="truncate text-left leading-tight py-0.5">{item.label}</span>
                         </button>
                       );
@@ -349,12 +350,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                     className={`
                       w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-black transition-all justify-start
                       ${activeTab === 'dashboard' 
-                        ? 'bg-indigo-600 text-white shadow-sm' 
+                        ? 'bg-indigo-600 text-gray-950 shadow-sm' 
                         : 'text-indigo-950 hover:bg-gray-50'
                       }
                     `}
                   >
-                    <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-white' : 'text-indigo-600'}`} />
+                    <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-gray-950' : 'text-indigo-600'}`} />
                     <span>DASHBOARD</span>
                   </button>
                 </div>
@@ -380,10 +381,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
                               onClick={() => handleTabClick(item.id)}
                               className={`
                                 flex items-center gap-3 px-3.5 py-3 rounded-lg text-xs font-bold transition-all
-                                ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}
+                                ${isActive ? 'bg-indigo-600 text-gray-950' : 'text-gray-650 hover:bg-gray-50'}
                               `}
                             >
-                              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                              <Icon className={`w-4 h-4 ${isActive ? 'text-gray-950' : 'text-gray-400'}`} />
                               {item.label}
                             </button>
                           );
