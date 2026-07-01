@@ -252,14 +252,60 @@ export const HotelMediaView: React.FC = () => {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      console.log("Maksimal ukuran gambar adalah 2MB");
+      alert("Gagal mengunggah gambar!\n\nUkuran file maksimal adalah 2MB.");
+      e.target.value = '';
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64String = event.target?.result as string;
-      setEditData(prev => ({ ...prev, photoUrl: base64String }));
+      
+      const img = new window.Image();
+      img.onload = () => {
+        const width = img.width;
+        const height = img.height;
+        const aspectRatio = width / height;
+        
+        // Target ratio is 16:10 = 1.6
+        const targetRatio = 1.6;
+        const tolerance = 0.05; // allow ±0.05 tolerance
+        
+        if (Math.abs(aspectRatio - targetRatio) > tolerance) {
+          alert(
+            `Gagal mengunggah gambar!\n\n` +
+            `Ukuran/Dimensi gambar tidak sesuai dengan standar kartu hotel (Rasio 16:10).\n` +
+            `Dimensi gambar Anda: ${width}x${height} px (Rasio: ${aspectRatio.toFixed(2)})\n\n` +
+            `Silakan gunakan gambar dengan aspek rasio 16:10. Rekomendasi resolusi:\n` +
+            `- 1280 x 800 piksel (Sangat direkomendasikan)\n` +
+            `- 800 x 500 piksel\n` +
+            `- 1920 x 1200 piksel`
+          );
+          e.target.value = '';
+          return;
+        }
+
+        if (width < 640 || height < 400) {
+          alert(
+            `Gagal mengunggah gambar!\n\n` +
+            `Resolusi gambar terlalu rendah.\n` +
+            `Dimensi gambar Anda: ${width}x${height} px\n\n` +
+            `Silakan gunakan gambar berkualitas lebih tinggi dengan resolusi minimal 800x500 piksel.`
+          );
+          e.target.value = '';
+          return;
+        }
+
+        // Pass validation
+        setEditData(prev => ({ ...prev, photoUrl: base64String }));
+      };
+
+      img.onerror = () => {
+        alert("Gagal membaca file gambar. Pastikan file yang Anda unggah adalah gambar yang valid.");
+        e.target.value = '';
+      };
+
+      img.src = base64String;
     };
     reader.readAsDataURL(file);
   };

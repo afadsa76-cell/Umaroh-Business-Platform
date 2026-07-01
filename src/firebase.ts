@@ -132,21 +132,34 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Local Collection Storage Management helper functions
+// Local Collection Storage Management helper functions with in-memory caching and quota-exhaustion safety
+const memoryCache: Record<string, any[]> = {};
+
 function getLocalCollection(collectionName: string): any[] {
   if (typeof window === 'undefined') return [];
-  const val = localStorage.getItem(`db_${collectionName}`);
-  if (!val) return [];
+  if (memoryCache[collectionName]) {
+    return memoryCache[collectionName];
+  }
   try {
-    return JSON.parse(val);
-  } catch {
+    const val = localStorage.getItem(`db_${collectionName}`);
+    if (!val) return [];
+    const parsed = JSON.parse(val);
+    memoryCache[collectionName] = parsed;
+    return parsed;
+  } catch (e) {
+    console.warn(`Failed to read local collection ${collectionName} from localStorage:`, e);
     return [];
   }
 }
 
 function saveLocalCollection(collectionName: string, data: any[]) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(`db_${collectionName}`, JSON.stringify(data));
+  memoryCache[collectionName] = data;
+  try {
+    localStorage.setItem(`db_${collectionName}`, JSON.stringify(data));
+  } catch (e) {
+    console.warn(`Failed to save local collection ${collectionName} to localStorage due to space quota:`, e);
+  }
   // Dispatch local change event to wake up onSnapshot listeners instantly
   window.dispatchEvent(new CustomEvent(`local-db-change:${collectionName}`));
 }

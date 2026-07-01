@@ -67,6 +67,8 @@ import { HANDLING_TIERS, HANDLING_CONSTANTS } from "../data/handlingSaudi";
 import { transportData } from "../data/transport";
 
 import { AIResultModal } from "./AIResultModal";
+import { HijriGregorianDatePicker } from "./HijriGregorianDatePicker";
+import { getUmrahSeasonAndPeriod } from "../utils/dateUtils";
 import { generateItinerary, generateMarketingCopy } from "../services/aiService";
 import { sanitizeForHtml2Canvas, captureToDataUrl } from "../utils/exportUtils";
 import { Capacitor } from '@capacitor/core';
@@ -232,61 +234,93 @@ interface HotelImageCarouselProps {
 
 const HotelImageCarousel: React.FC<HotelImageCarouselProps> = ({ images, hotelName, kota }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (images.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 3500); // 3.5 seconds
+      setCurrentIndex((prevIndex) => {
+        // Find next non-failed index if possible
+        let nextIndex = (prevIndex + 1) % images.length;
+        for (let i = 0; i < images.length; i++) {
+          if (!failedImages[nextIndex]) {
+            return nextIndex;
+          }
+          nextIndex = (nextIndex + 1) % images.length;
+        }
+        return prevIndex;
+      });
+    }, 4000);
 
     return () => clearInterval(interval);
-  }, [images]);
+  }, [images, failedImages]);
 
-  if (images.length === 0) {
+  const handleImageError = (index: number) => {
+    setFailedImages((prev) => ({ ...prev, [index]: true }));
+  };
+
+  const isAllFailed = images.length === 0 || images.every((_, idx) => failedImages[idx]);
+
+  if (isAllFailed) {
     return (
-      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-slate-600 text-xs font-mono">
-        No Image
+      <div className="w-full h-full bg-gradient-to-br from-slate-900 via-indigo-950/85 to-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden select-none">
+        {/* Modern ambient radial lighting */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent opacity-65"></div>
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/25 to-transparent"></div>
+        
+        {/* Soft luxury glow-ring with hotel icon */}
+        <div className="relative mb-3 p-3.5 bg-blue-500/10 rounded-2xl border border-blue-500/20 backdrop-blur-md shadow-inner transition-transform duration-300 hover:scale-110">
+          <Building2 className="w-8 h-8 text-blue-400" />
+        </div>
+        
+        {/* Clean, readable text */}
+        <span className="text-xs font-bold text-slate-200 uppercase tracking-wider text-center max-w-[90%] truncate px-2">
+          {hotelName}
+        </span>
+        <span className="text-[10px] text-slate-500 font-semibold tracking-wider mt-1 uppercase">
+          {kota || "Makkah/Madinah"} Hotel
+        </span>
       </div>
     );
   }
 
+  // Find first index that hasn't failed to show as default
+  const validIndex = failedImages[currentIndex] ? images.findIndex((_, idx) => !failedImages[idx]) : currentIndex;
+  const activeIndex = validIndex !== -1 ? validIndex : 0;
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-slate-950">
-      {images.map((img, idx) => (
-        <img
-          key={idx}
-          src={img}
-          alt={`${hotelName} - ${idx + 1}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${
-            idx === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
-          }`}
-          referrerPolicy="no-referrer"
-          onError={(e) => {
-            const target = e.currentTarget;
-            target.onerror = null;
-            let fallback = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
-            if (kota?.toLowerCase() === "makkah") {
-              fallback = "https://images.unsplash.com/photo-1565552643983-6597af594348?auto=format&fit=crop&w=800&q=80";
-            } else if (kota?.toLowerCase() === "madinah") {
-              fallback = "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=800&q=80";
-            }
-            target.src = fallback;
-          }}
-        />
-      ))}
+      {images.map((img, idx) => {
+        if (failedImages[idx]) return null;
+        return (
+          <img
+            key={idx}
+            src={img}
+            alt={`${hotelName} - ${idx + 1}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${
+              idx === activeIndex ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+            }`}
+            referrerPolicy="no-referrer"
+            onError={() => handleImageError(idx)}
+          />
+        );
+      })}
       
       {/* Visual indicators for slides */}
-      {images.length > 1 && (
-        <div className="absolute bottom-3 right-3 flex gap-1 z-10 bg-black/50 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 shadow-sm">
-          {images.map((_, idx) => (
-            <div
-              key={idx}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                idx === currentIndex ? "bg-blue-400 w-3" : "bg-white/40"
-              }`}
-            />
-          ))}
+      {images.filter((_, idx) => !failedImages[idx]).length > 1 && (
+        <div className="absolute bottom-3 right-3 flex gap-1 z-10 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 shadow-sm">
+          {images.map((_, idx) => {
+            if (failedImages[idx]) return null;
+            return (
+              <div
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  idx === activeIndex ? "bg-blue-400 w-3" : "bg-white/40"
+                }`}
+              />
+            );
+          })}
         </div>
       )}
     </div>
@@ -2268,18 +2302,22 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, periode: e.target.value })
                       }
-                      className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 font-bold appearance-none transition-all"
+                      className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 font-bold transition-all"
                     >
-                      <option value="">Awal Tahun 2025</option>
-                      <option value="Awal Musim">
-                        Awal Musim (Muharram-Safar)
-                      </option>
-                      <option value="High Season">
-                        High Season (Rajab-Ramadhan)
-                      </option>
-                      <option value="Akhir Musim">
-                        Akhir Musim (Syawal-Dzulhijjah)
-                      </option>
+                      {formData.periode && 
+                       !["Low Season", "Medium Season", "High Season", "Peak Season", "Umrah Ditutup", "Awal Musim (Low Season)", "Akhir Musim (Syawal-Dzulhijjah)"].includes(formData.periode) && (
+                        <option value={formData.periode}>
+                          🌙 {formData.periode}
+                        </option>
+                      )}
+                      <option value="">-- Pilih Periode Secara Manual --</option>
+                      <option value="Low Season">Low Season (Safar, Syawal)</option>
+                      <option value="Medium Season">Medium Season (Rabi'ul Awal - Jumadil Akhir)</option>
+                      <option value="High Season">High Season (Rajab, Sya'ban)</option>
+                      <option value="Peak Season">Peak Season (Ramadhan)</option>
+                      <option value="Umrah Ditutup">Umrah Ditutup (Dzulqa'dah, Dzulhijjah)</option>
+                      <option value="Awal Musim (Low Season)">Awal Musim / Low Season (Muharram-Safar)</option>
+                      <option value="Akhir Musim (Syawal-Dzulhijjah)">Akhir Musim (Syawal-Dzulhijjah)</option>
                     </select>
                   </div>
 
@@ -2539,17 +2577,23 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
                       TANGGAL KEBERANGKATAN *
                     </label>
-                    <input
-                      type="date"
+                    <HijriGregorianDatePicker
                       value={formData.tglBerangkat || ""}
-                      onChange={(e) => {
-                        const newTglBerangkat = e.target.value;
+                      onChange={(newTglBerangkat) => {
                         let newTglPulang = formData.tglKepulangan;
+                        let autoPeriode = formData.periode;
                         if (newTglBerangkat) {
                           const dt = new Date(newTglBerangkat);
                           if (!isNaN(dt.getTime())) {
                             dt.setDate(dt.getDate() + (formData.durasiHari || 9));
                             newTglPulang = dt.toISOString().split("T")[0];
+                            
+                            // Calculate automatic Hijri period and Umrah season
+                            const departureDateObj = new Date(newTglBerangkat);
+                            const offsetStr = localStorage.getItem("hijri_offset");
+                            const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
+                            const seasonInfo = getUmrahSeasonAndPeriod(departureDateObj, offset);
+                            autoPeriode = seasonInfo.periodText;
                           }
                         }
                         setFormData({
@@ -2557,9 +2601,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           tglBerangkat: newTglBerangkat,
                           preferredDepartureDate: newTglBerangkat,
                           tglKepulangan: newTglPulang,
+                          periode: autoPeriode,
                         });
                       }}
-                      className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 font-bold"
                     />
                   </div>
 

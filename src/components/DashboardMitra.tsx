@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell, Check, Info, AlertTriangle, X, ShoppingCart, ShoppingBag, Star } from 'lucide-react';
+import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell, Check, Info, AlertTriangle, X, ShoppingCart, ShoppingBag, Star, Sun, Moon } from 'lucide-react';
 import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc, signOut, serverTimestamp } from '../firebase';
 import { AppNotification } from '../types';
 import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, sendNotification } from '../services/notificationService';
@@ -16,6 +16,7 @@ import { AISmartAnalyticsView } from './AISmartAnalyticsView';
 import { FlightTrackerWidget } from './FlightTrackerWidget';
 import { ELearningMitraView } from './ELearningMitraView';
 import { BookOpen } from 'lucide-react';
+import { logoBase64 } from '../utils/logoBase64';
 
 interface MitraBooking {
   id: string;
@@ -137,6 +138,33 @@ export const DashboardMitra = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('mitraTheme') === 'dark';
+  });
+  const [showChatDropdown, setShowChatDropdown] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: 'msg-1',
+      sender: 'Admin Umaroh',
+      text: "Assalamu'alaikum wr. wb. Mitra Umaroh, mohon segera melengkapi dokumen paspor untuk pendaftaran Jamaah atas nama Budi Santoso.",
+      time: '09:30',
+      avatar: 'A'
+    },
+    {
+      id: 'msg-2',
+      sender: 'Admin Umaroh',
+      text: "Info rilis tiket penerbangan Saudia untuk keberangkatan Oktober sudah tersedia di tab Kelola Paket.",
+      time: '10:15',
+      avatar: 'A'
+    }
+  ]);
+  const [newMsgText, setNewMsgText] = useState('');
+
+  const toggleTheme = () => {
+    const nextVal = !isDarkMode;
+    setIsDarkMode(nextVal);
+    localStorage.setItem('mitraTheme', nextVal ? 'dark' : 'light');
+  };
   const [balance, setBalance] = useState(0);
   const [copied, setCopied] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -2062,20 +2090,24 @@ export const DashboardMitra = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50/20">
+    <div className={`flex flex-col lg:flex-row min-h-screen ${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-gray-50/20 text-slate-900'}`}>
       {/* Side Navigation Sidebar (Desktop Only) */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:left-0 lg:bg-white lg:border-r lg:border-gray-200 lg:z-30 lg:overflow-y-auto">
+      <aside className={`hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:left-0 lg:border-r lg:z-30 lg:overflow-y-auto ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-gray-200 text-slate-900'}`}>
         {/* Sidebar Brand Header */}
-        <div className="p-6 border-b border-gray-150 flex flex-col gap-1 items-start bg-indigo-50/10">
-          <div className="bg-white py-2 px-4 rounded-xl flex items-center justify-center border border-gray-200 shadow-sm w-full mb-1">
+        <div className={`p-5 border-b flex flex-col gap-3 items-center ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-150'}`}>
+          <div className="bg-[#F5B800] py-3.5 px-6 w-full flex items-center justify-center rounded-2xl shadow-md border border-[#D9A300]/10">
             <img 
-              src="https://umaroh.com/assets/logo-light-D4UzTX0_.png" 
+              src={logoBase64} 
               alt="Logo Umaroh" 
-              className="h-7 object-contain max-w-full" 
+              className="h-8 object-contain max-w-full" 
               referrerPolicy="no-referrer"
             />
           </div>
-          <div className="mt-3 relative group w-full">
+          <span className="text-[10px] font-bold tracking-widest text-[#856000] uppercase mt-1 text-center font-sans">
+            PORTAL MITRA UMAROH
+          </span>
+
+          <div className="relative group w-full">
             <input
               type="file"
               accept="image/*"
@@ -2085,10 +2117,10 @@ export const DashboardMitra = () => {
             />
             <label
               htmlFor="sidebar-logo-upload"
-              className="flex items-center gap-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200/80 hover:border-indigo-400 hover:bg-indigo-50/20 active:scale-[0.98] transition-all p-2 rounded-xl border border-gray-200/60 max-w-full cursor-pointer duration-200"
+              className={`flex items-center gap-2.5 text-xs font-bold active:scale-[0.98] transition-all p-2 rounded-xl border max-w-full cursor-pointer duration-200 ${isDarkMode ? 'text-slate-100 bg-slate-800/40 hover:bg-slate-800 border-slate-700 hover:border-amber-400' : 'text-gray-700 bg-[#FFFBEB]/60 hover:bg-[#FFFBEB]/100 hover:border-amber-400 border-amber-200/40'}`}
               title="Klik untuk mengubah foto profil"
             >
-              <div className="relative flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200/80 overflow-hidden flex items-center justify-center">
+              <div className="relative flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 text-[#B28200] border border-amber-200/80 overflow-hidden flex items-center justify-center">
                 {currentUserData?.logo || currentUserData?.customMitraProfile?.logo ? (
                   <img
                     src={currentUserData.logo || currentUserData.customMitraProfile?.logo}
@@ -2106,11 +2138,11 @@ export const DashboardMitra = () => {
               </div>
               
               <div className="flex-1 min-w-0 flex flex-col text-left">
-                <span className="truncate leading-tight text-[11px] font-black text-gray-800">
-                  {currentUserData?.brandName || currentUserData?.namaLengkap || currentUserData?.name || 'Mitra Agen'}
+                <span className={`truncate leading-tight text-[10px] font-black uppercase tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-850'}`}>
+                  {currentUserData?.brandName || currentUserData?.namaLengkap || currentUserData?.name || 'MITRA ADMINISTRATOR'}
                 </span>
-                <span className="text-[9px] text-gray-400 font-medium tracking-tight mt-0.5 group-hover:text-indigo-600 transition-colors">
-                  Ubah Foto Profil
+                <span className="text-[8px] text-[#B28200] font-black uppercase tracking-widest mt-0.5">
+                  SYSTEM LEVEL ACCESS
                 </span>
               </div>
             </label>
@@ -2118,182 +2150,211 @@ export const DashboardMitra = () => {
         </div>
 
         {/* Sidebar Navigation Items */}
-        <nav className="flex-1 p-4 space-y-1">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'overview' 
-                ? 'bg-blue-50 text-blue-800 shadow-sm ring-1 ring-blue-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <LayoutDashboard className={`w-4 h-4 ${activeTab === 'overview' ? 'text-blue-700' : 'text-gray-500'}`} />
-            Overview
-          </button>
+        <nav className="flex-1 p-4 space-y-4">
+          
+          {/* Category: OPERASIONAL */}
+          <div className="space-y-1">
+            <span className={`font-black uppercase text-[9px] tracking-wider px-3.5 py-1.5 rounded-lg block font-sans border ${isDarkMode ? 'bg-amber-950/20 text-[#F5B800] border-amber-500/20' : 'bg-[#FFFDF0] text-[#B28200] border-amber-100/30'}`}>
+              ⚙️ 1. OPERASIONAL
+            </span>
 
-          <button
-            onClick={() => setActiveTab('feed')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'feed' 
-                ? 'bg-indigo-50 text-indigo-800 shadow-sm ring-1 ring-indigo-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Target className={`w-4 h-4 ${activeTab === 'feed' ? 'text-indigo-700' : 'text-gray-500'}`} />
-            Feed Kolaborasi
-          </button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'overview' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <LayoutDashboard className={`w-4 h-4 ${activeTab === 'overview' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Dashboard
+            </button>
 
-          <button
-            onClick={() => setActiveTab('elearning')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'elearning' 
-                ? 'bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <BookOpen className={`w-4 h-4 ${activeTab === 'elearning' ? 'text-emerald-700' : 'text-gray-505'}`} />
-            E-Learning Akademi
-          </button>
+            <button
+              onClick={() => setActiveTab('katalog')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'katalog' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Calendar className={`w-4 h-4 ${activeTab === 'katalog' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Katalog Paket
+            </button>
 
-          <button
-            onClick={() => setActiveTab('katalog')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'katalog' 
-                ? 'bg-amber-50 text-amber-800 shadow-sm ring-1 ring-amber-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Calendar className={`w-4 h-4 ${activeTab === 'katalog' ? 'text-amber-700' : 'text-gray-500'}`} />
-            Katalog Paket
-          </button>
+            <button
+              onClick={() => setActiveTab('paket')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'paket' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Package className={`w-4 h-4 ${activeTab === 'paket' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Kelola Paket
+            </button>
 
-          <button
-            onClick={() => setActiveTab('paket')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'paket' 
-                ? 'bg-indigo-50 text-indigo-800 shadow-sm ring-1 ring-indigo-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Package className={`w-4 h-4 ${activeTab === 'paket' ? 'text-indigo-700' : 'text-gray-500'}`} />
-            Kelola Paket
-          </button>
+            <button
+              onClick={() => setActiveTab('validasi')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'validasi' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Shield className={`w-4 h-4 ${activeTab === 'validasi' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Tracking Validasi
+            </button>
 
-          <button
-            onClick={() => setActiveTab('validasi')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'validasi' 
-                ? 'bg-blue-50 text-blue-800 shadow-sm ring-1 ring-blue-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Shield className={`w-4 h-4 ${activeTab === 'validasi' ? 'text-blue-700' : 'text-gray-500'}`} />
-            Tracking Validasi
-          </button>
+            <button
+              onClick={() => setActiveTab('jamaah')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'jamaah' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Users className={`w-4 h-4 ${activeTab === 'jamaah' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Jamaah Saya
+            </button>
 
-          <button
-            onClick={() => setActiveTab('jamaah')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'jamaah' 
-                ? 'bg-purple-50 text-purple-800 shadow-sm ring-1 ring-purple-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Users className={`w-4 h-4 ${activeTab === 'jamaah' ? 'text-purple-700' : 'text-gray-500'}`} />
-            Jamaah Saya
-          </button>
+            <button
+              onClick={() => setActiveTab('jaringan')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'jaringan' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Users className={`w-4 h-4 ${activeTab === 'jaringan' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Jaringan Saya
+            </button>
 
-          <button
-            onClick={() => setActiveTab('jaringan')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'jaringan' 
-                ? 'bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Users className={`w-4 h-4 ${activeTab === 'jaringan' ? 'text-emerald-700' : 'text-gray-500'}`} />
-            Jaringan Saya
-          </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'analytics' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <BarChart2 className={`w-4 h-4 ${activeTab === 'analytics' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              AI Analytics
+            </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('marketing')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'marketing' 
-                ? 'bg-indigo-50 text-indigo-850 shadow-sm ring-1 ring-indigo-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Sparkles className={`w-4 h-4 ${activeTab === 'marketing' ? 'text-indigo-705' : 'text-gray-500'}`} />
-            Marketing AI
-          </button>
+          {/* Category: FINANCE */}
+          <div className="space-y-1">
+            <span className={`font-black uppercase text-[9px] tracking-wider px-3.5 py-1.5 rounded-lg block font-sans border ${isDarkMode ? 'bg-amber-950/20 text-[#F5B800] border-amber-500/20' : 'bg-[#FFFDF0] text-[#B28200] border-amber-100/30'}`}>
+              💳 2. FINANCE
+            </span>
 
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'analytics' 
-                ? 'bg-emerald-50 text-emerald-850 shadow-sm ring-1 ring-emerald-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <BarChart2 className={`w-4 h-4 ${activeTab === 'analytics' ? 'text-emerald-705' : 'text-gray-500'}`} />
-            AI Analytics
-          </button>
+            <button
+              onClick={() => setActiveTab('wallet')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'wallet' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Wallet className={`w-4 h-4 ${activeTab === 'wallet' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Dompet & Komisi
+            </button>
 
-          <button
-            onClick={() => setActiveTab('wallet')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'wallet' 
-                ? 'bg-amber-50 text-amber-850 shadow-sm ring-1 ring-amber-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Wallet className={`w-4 h-4 ${activeTab === 'wallet' ? 'text-amber-705' : 'text-gray-500'}`} />
-            Dompet & Komisi
-          </button>
+            <button
+              onClick={() => setActiveTab('toko')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'toko' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <ShoppingCart className={`w-4 h-4 ${activeTab === 'toko' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Belanja Perlengkapan
+            </button>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('toko')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'toko' 
-                ? 'bg-[#055734]/10 text-[#055734] shadow-sm ring-1 ring-[#055734]/20' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <ShoppingCart className={`w-4 h-4 ${activeTab === 'toko' ? 'text-[#055734]' : 'text-gray-500'}`} />
-            Belanja Perlengkapan
-          </button>
+          {/* Category: MARKETING */}
+          <div className="space-y-1">
+            <span className={`font-black uppercase text-[9px] tracking-wider px-3.5 py-1.5 rounded-lg block font-sans border ${isDarkMode ? 'bg-amber-950/20 text-[#F5B800] border-amber-500/20' : 'bg-[#FFFDF0] text-[#B28200] border-amber-100/30'}`}>
+              📣 3. MARKETING
+            </span>
 
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-              activeTab === 'profile' 
-                ? 'bg-gray-100 text-gray-900 shadow-sm ring-1 ring-gray-600/20' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <User className={`w-4 h-4 ${activeTab === 'profile' ? 'text-gray-905' : 'text-gray-500'}`} />
-            Profil
-          </button>
+            <button
+              onClick={() => setActiveTab('marketing')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'marketing' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Sparkles className={`w-4 h-4 ${activeTab === 'marketing' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Marketing AI
+            </button>
 
-          <button
-            onClick={async () => {
-              if (confirm('Apakah Anda yakin ingin keluar dari akun Mitra?')) {
-                try {
-                  await signOut(auth);
-                } catch (err) {
-                  console.error('Error signing out:', err);
+            <button
+              onClick={() => setActiveTab('feed')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'feed' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Target className={`w-4 h-4 ${activeTab === 'feed' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Feed Kolaborasi
+            </button>
+
+            <button
+              onClick={() => setActiveTab('elearning')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'elearning' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <BookOpen className={`w-4 h-4 ${activeTab === 'elearning' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              E-Learning Akademi
+            </button>
+          </div>
+
+          {/* Category: ACCOUNT SETTINGS */}
+          <div className="space-y-1">
+            <span className={`font-black uppercase text-[9px] tracking-wider px-3.5 py-1.5 rounded-lg block font-sans border ${isDarkMode ? 'bg-amber-950/20 text-[#F5B800] border-amber-500/20' : 'bg-[#FFFDF0] text-[#B28200] border-amber-100/30'}`}>
+              👤 4. AKUN & SETTING
+            </span>
+
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'profile' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <User className={`w-4 h-4 ${activeTab === 'profile' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Profil Detail
+            </button>
+
+            <button
+              onClick={async () => {
+                if (confirm('Apakah Anda yakin ingin keluar dari akun Mitra?')) {
+                  try {
+                    await signOut(auth);
+                  } catch (err) {
+                    console.error('Error signing out:', err);
+                  }
                 }
-              }
-            }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-          >
-            <LogOut className="w-4 h-4 text-red-500" />
-            Keluar (Logout)
-          </button>
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${isDarkMode ? 'text-red-400 hover:bg-red-950/20 hover:text-red-300' : 'text-red-650 hover:bg-red-50 hover:text-red-700'}`}
+            >
+              <LogOut className="w-4 h-4 text-red-500" />
+              Keluar (Logout)
+            </button>
+          </div>
         </nav>
 
         {/* Sync Status Frame */}
-        <div className="p-4 border-t border-gray-150 bg-gray-50">
+        <div className={`p-4 border-t ${isDarkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-gray-50 border-gray-150 text-gray-500'}`}>
           <div className="flex items-center gap-2 text-[9px] font-black text-emerald-600 uppercase tracking-widest">
             <span className="w-2 h-2 rounded-full bg-emerald-550 animate-pulse inline-block"></span>
             CONNECTED TO API
@@ -2304,67 +2365,67 @@ export const DashboardMitra = () => {
       {/* Main Container including Responsive layouts */}
       <div className="flex-1 lg:pl-72 flex flex-col min-h-screen">
         {/* Mobile Bottom Navigation */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 px-2 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] border-t transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-gray-200 text-slate-900'}`}>
           <div className="flex justify-around items-center h-16">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'overview' ? 'text-blue-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'overview' ? 'text-[#C69200] font-black' : isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
             >
               <LayoutDashboard className="w-5 h-5" />
               <span className="text-[10px] font-bold">Beranda</span>
             </button>
             <button
               onClick={() => setActiveTab('feed')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'feed' ? 'text-indigo-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'feed' ? 'text-[#C69200] font-black' : isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <Zap className="w-5 h-5 text-amber-500 fill-amber-300/20" />
+              <Zap className={`w-5 h-5 ${activeTab === 'feed' ? 'text-[#C69200]' : 'text-gray-400'}`} />
               <span className="text-[10px] font-bold">Feed</span>
             </button>
             <button
               onClick={() => setActiveTab('elearning')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'elearning' ? 'text-emerald-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'elearning' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
-              <BookOpen className="w-5 h-5 text-emerald-505" />
+              <BookOpen className="w-5 h-5" />
               <span className="text-[10px] font-bold">Belajar</span>
             </button>
             <button
               onClick={() => setActiveTab('katalog')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'katalog' ? 'text-amber-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'katalog' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
               <Calendar className="w-5 h-5" />
               <span className="text-[10px] font-bold">Katalog</span>
             </button>
             <button
               onClick={() => setActiveTab('paket')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'paket' ? 'text-indigo-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'paket' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
               <Package className="w-5 h-5" />
               <span className="text-[10px] font-bold">Produk</span>
             </button>
             <button
               onClick={() => setActiveTab('validasi')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'validasi' ? 'text-blue-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'validasi' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
               <Shield className="w-5 h-5" />
               <span className="text-[10px] font-bold">Validasi</span>
             </button>
             <button
               onClick={() => setActiveTab('jamaah')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'jamaah' ? 'text-purple-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'jamaah' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
               <Users className="w-5 h-5" />
               <span className="text-[10px] font-bold">Jamaah</span>
             </button>
             <button
               onClick={() => setActiveTab('jaringan')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'jaringan' ? 'text-emerald-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'jaringan' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
               <Users className="w-5 h-5" />
               <span className="text-[10px] font-bold">Jaringan</span>
             </button>
             <button
               onClick={() => setActiveTab('profile')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'profile' ? 'text-gray-900' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'profile' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
               <User className="w-5 h-5" />
               <span className="text-[10px] font-bold">Profil</span>
@@ -2375,42 +2436,175 @@ export const DashboardMitra = () => {
         {/* Content Wrapper */}
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 lg:pb-8 flex-grow">
           {/* Top Premium Header Bar */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-row items-center justify-between gap-4 mb-6 shadow-sm">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+          <div className={`rounded-2xl border p-4 flex flex-row items-center justify-between gap-4 mb-6 shadow-sm transition-all duration-200 ${
+            isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-slate-950/20' : 'bg-white border-gray-100 text-slate-900 shadow-sm'
+          }`}>
+            {/* Search Input Container */}
+            <div className="relative flex-1 max-w-md z-40">
               <input 
                 type="text" 
                 placeholder="Cari paket, jamaah, Invoice, dll..." 
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
-                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-xl py-2 px-4 pr-10 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100/50 focus:border-indigo-500 transition-all font-medium"
+                className={`w-full border rounded-xl py-2 px-4 pr-10 text-xs focus:outline-none transition-all font-medium ${
+                  isDarkMode 
+                    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:ring-slate-700' 
+                    : 'bg-gray-50/50 border border-gray-200/80 text-gray-700 placeholder-gray-400 focus:ring-indigo-100/50 focus:border-indigo-500'
+                }`}
               />
+              {globalSearch && (
+                <button 
+                  onClick={() => setGlobalSearch('')}
+                  className="absolute right-9 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 font-bold text-xs"
+                >
+                  ✕
+                </button>
+              )}
               <Search className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+
+              {/* Real-time Search Results Dropdown */}
+              {globalSearch && (
+                <div className={`absolute left-0 right-0 mt-2 rounded-2xl border shadow-xl max-h-[30rem] overflow-y-auto p-4 z-50 text-left transition-all ${
+                  isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-gray-150 text-slate-900'
+                }`}>
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100 dark:border-slate-800">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Hasil Pencarian</span>
+                    <button 
+                      onClick={() => setGlobalSearch('')}
+                      className="text-xs font-bold text-gray-400 hover:text-gray-600 dark:hover:text-slate-200"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                  
+                  {(() => {
+                    const filteredSearchPaket = paketMasters.filter(p => p.nama.toLowerCase().includes(globalSearch.toLowerCase()));
+                    const filteredSearchJamaah = bookings.filter(b => (b.namaJamaah || b.nama || '').toLowerCase().includes(globalSearch.toLowerCase()));
+                    
+                    if (filteredSearchPaket.length === 0 && filteredSearchJamaah.length === 0) {
+                      return (
+                        <div className="py-8 text-center text-gray-400">
+                          <p className="text-xs font-bold uppercase tracking-wider">Tidak Ada Hasil</p>
+                          <p className="text-[10px] text-gray-400 mt-1">Ganti kata kunci Anda atau periksa ejaan.</p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-4">
+                        {/* Paket Masters */}
+                        {filteredSearchPaket.length > 0 && (
+                          <div>
+                            <div className="text-[9px] font-black uppercase tracking-wider text-amber-500 mb-1">Paket Umroh ({filteredSearchPaket.length})</div>
+                            <div className="space-y-2">
+                              {filteredSearchPaket.map(p => (
+                                <button
+                                  key={p.id}
+                                  onClick={() => {
+                                    setActiveTab('katalog');
+                                    setGlobalSearch('');
+                                  }}
+                                  className={`w-full text-left p-2.5 rounded-xl border flex items-center justify-between transition-all ${
+                                    isDarkMode ? 'border-slate-800 hover:bg-slate-800/50 bg-slate-850' : 'border-gray-100 hover:bg-gray-50 bg-gray-50/20'
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="text-xs font-bold">{p.nama}</div>
+                                    <div className="text-[9px] text-gray-400 font-mono mt-0.5 uppercase">
+                                      Berangkat: {p.tglBerangkat || 'Draft'} • {p.durasiHari || 9} Hari
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-black text-amber-500 shrink-0">
+                                    Rp {p.hargaJualQuad?.toLocaleString('id-ID') || p.hargaDasar?.toLocaleString('id-ID')}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Jamaah & Bookings */}
+                        {filteredSearchJamaah.length > 0 && (
+                          <div>
+                            <div className="text-[9px] font-black uppercase tracking-wider text-emerald-500 mb-1">Jamaah & Pendaftaran ({filteredSearchJamaah.length})</div>
+                            <div className="space-y-2">
+                              {filteredSearchJamaah.map(b => (
+                                <button
+                                  key={b.id}
+                                  onClick={() => {
+                                    setActiveTab('jamaah');
+                                    setGlobalSearch('');
+                                  }}
+                                  className={`w-full text-left p-2.5 rounded-xl border flex flex-col transition-all ${
+                                    isDarkMode ? 'border-slate-800 hover:bg-slate-800/50 bg-slate-850' : 'border-gray-100 hover:bg-gray-50 bg-gray-50/20'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-xs font-bold">{b.namaJamaah || b.nama}</span>
+                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                      b.statusPembayaran === 'Lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                    }`}>
+                                      {b.statusPembayaran || b.status || 'Pending'}
+                                    </span>
+                                  </div>
+                                  <div className="text-[9px] text-gray-400 font-mono mt-0.5 uppercase flex justify-between w-full">
+                                    <span>Paket: {b.paketNama || 'Katalog Pilihan'}</span>
+                                    <span>Bayar: Rp {(b.jumlahBayar || b.total_bayar || b.totalPaid || 0).toLocaleString('id-ID')}</span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
 
-            {/* Quick Badges in Dark Green */}
+            {/* Quick Badges and Controls */}
             <div className="flex items-center gap-3 relative">
+              
+              {/* Theme Toggle Button */}
+              <button 
+                onClick={toggleTheme}
+                title={isDarkMode ? 'Aktifkan Mode Terang' : 'Aktifkan Mode Gelap'} 
+                className={`p-2 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
+                  isDarkMode ? 'hover:bg-slate-800 text-amber-400 bg-slate-800/30' : 'hover:bg-gray-50 text-gray-500 bg-gray-50/50 border border-gray-100'
+                }`}
+              >
+                {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-gray-600" />}
+              </button>
+
               {/* Notifications */}
               <div className="relative">
                 <button 
-                  onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                  onClick={() => {
+                    setShowNotificationDropdown(!showNotificationDropdown);
+                    setShowChatDropdown(false);
+                  }}
                   title="Pemberitahuan resmi" 
-                  className="relative p-2 hover:bg-gray-50 active:scale-95 transition-all text-gray-500 rounded-xl cursor-pointer flex items-center justify-center"
+                  className={`relative p-2 active:scale-95 transition-all rounded-xl cursor-pointer flex items-center justify-center ${
+                    isDarkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-gray-500'
+                  }`}
                 >
-                  <Bell className="w-5 h-5 text-gray-600" />
+                  <Bell className="w-5 h-5 text-gray-650 dark:text-slate-300" />
                   {notifications.filter(n => !n.read).length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm font-sans">
+                    <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm font-sans">
                       {notifications.filter(n => !n.read).length}
                     </span>
                   )}
                 </button>
 
                 {showNotificationDropdown && (
-                  <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200">
+                  <div className={`absolute right-0 mt-2 w-80 md:w-96 rounded-2xl border shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200 ${
+                    isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-gray-100 text-slate-900'
+                  }`}>
                     {/* Popover Header */}
-                    <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'bg-slate-950/40 border-slate-800' : 'bg-gray-50/50 border-gray-100'}`}>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black uppercase text-gray-800 tracking-wider">Notifikasi</span>
+                        <span className="text-xs font-black uppercase tracking-wider">Notifikasi</span>
                         {notifications.filter(n => !n.read).length > 0 && (
                           <span className="bg-[#055734] text-white text-[10px] font-bold px-2 py-0.5 rounded-full font-mono">
                             {notifications.filter(n => !n.read).length} Baru
@@ -2430,10 +2624,10 @@ export const DashboardMitra = () => {
                     </div>
 
                     {/* Popover Content */}
-                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50 dark:divide-slate-800">
                       {notifications.length === 0 ? (
                         <div className="p-6 text-center text-gray-400">
-                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-30 text-gray-500" />
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
                           <p className="text-xs font-bold uppercase tracking-wider">Belum Ada Notifikasi</p>
                           <p className="text-[10px] text-gray-400 mt-1">Anda akan mendapat pemberitahuan saat sistem memperbarui status Anda.</p>
                         </div>
@@ -2464,21 +2658,21 @@ export const DashboardMitra = () => {
                                   await markNotificationAsRead(notif.id);
                                 }
                               }}
-                              className={`p-4 flex gap-3 hover:bg-gray-50 transition-colors cursor-pointer text-left ${!notif.read ? 'bg-indigo-50/10' : ''}`}
+                              className={`p-4 flex gap-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer text-left ${!notif.read ? 'bg-indigo-50/10' : ''}`}
                             >
                               <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${badgeBg}`}>
                                 <Icon className="w-4 h-4" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className={`text-xs text-gray-900 leading-snug ${!notif.read ? 'font-extrabold' : 'font-medium'}`}>
+                                  <p className={`text-xs text-gray-900 dark:text-slate-100 leading-snug ${!notif.read ? 'font-extrabold' : 'font-medium'}`}>
                                     {notif.title}
                                   </p>
                                   {!notif.read && (
                                     <span className="w-2 h-2 rounded-full bg-[#055734] shrink-0"></span>
                                   )}
                                 </div>
-                                <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                                <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-1 leading-relaxed">
                                   {notif.message}
                                 </p>
                                 <span className="text-[8px] font-mono font-bold text-gray-400 block mt-1 uppercase">
@@ -2499,16 +2693,122 @@ export const DashboardMitra = () => {
                 )}
               </div>
 
-              {/* Chat Messages */}
-              <button 
-                title="Diskusi / Chat Mitra & Admin" 
-                className="relative p-2 hover:bg-gray-50 active:scale-95 transition-all text-gray-500 rounded-xl cursor-pointer"
-              >
-                <MessageSquare className="w-5 h-5 text-gray-600" />
-                <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm font-sans">
-                  2
-                </span>
-              </button>
+              {/* Chat messages */}
+              <div className="relative">
+                <button 
+                  onClick={() => {
+                    setShowChatDropdown(!showChatDropdown);
+                    setShowNotificationDropdown(false);
+                  }}
+                  title="Diskusi / Chat Mitra & Admin" 
+                  className={`relative p-2 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
+                    isDarkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-gray-50 text-gray-500'
+                  }`}
+                >
+                  <MessageSquare className="w-5 h-5 text-gray-650 dark:text-slate-300" />
+                  {chatMessages.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#055734] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm font-sans">
+                      {chatMessages.length}
+                    </span>
+                  )}
+                </button>
+
+                {showChatDropdown && (
+                  <div className={`absolute right-0 mt-2 w-80 md:w-96 rounded-2xl border shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200 ${
+                    isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-gray-100 text-slate-900'
+                  }`}>
+                    {/* Popover Header */}
+                    <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'bg-slate-950/40 border-slate-800' : 'bg-gray-50/50 border-gray-100'}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black uppercase tracking-wider">Diskusi & Chat Support</span>
+                        <span className="bg-[#055734] text-white text-[9px] font-bold px-2 py-0.5 rounded-full font-mono">Mitra-Admin</span>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setShowChatDropdown(false);
+                          setActiveTab('feed');
+                        }}
+                        className="text-[10px] font-extrabold text-[#055734] hover:underline uppercase tracking-wider cursor-pointer"
+                      >
+                        Buka Feed ➔
+                      </button>
+                    </div>
+
+                    {/* Chat Messages Stream */}
+                    <div className="p-4 max-h-72 overflow-y-auto space-y-3 flex flex-col">
+                      {chatMessages.map((msg) => {
+                        const isAdmin = msg.sender.includes('Admin');
+                        return (
+                          <div key={msg.id} className={`flex gap-2.5 max-w-[85%] ${isAdmin ? 'self-start' : 'self-end flex-row-reverse'}`}>
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                              isAdmin ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {msg.avatar}
+                            </div>
+                            <div className={`p-3 rounded-2xl text-xs leading-relaxed ${
+                              isAdmin 
+                                ? isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-100 text-slate-800'
+                                : 'bg-[#055734] text-white'
+                            }`}>
+                              <p className="font-extrabold text-[10px] mb-0.5 uppercase tracking-wide opacity-80">{msg.sender}</p>
+                              <p className="font-medium whitespace-pre-line">{msg.text}</p>
+                              <span className="text-[8px] font-mono block mt-1 text-right opacity-60">{msg.time}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Chat Input Field */}
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!newMsgText.trim()) return;
+                        const newMsg = {
+                          id: `msg-${Date.now()}`,
+                          sender: currentUserData?.brandName || currentUserData?.namaLengkap || 'Mitra',
+                          text: newMsgText.trim(),
+                          time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                          avatar: (currentUserData?.brandName || currentUserData?.namaLengkap || 'M')[0].toUpperCase()
+                        };
+                        setChatMessages([...chatMessages, newMsg]);
+                        setNewMsgText('');
+                        
+                        // Fake auto-reply from Admin to simulate interactive chat!
+                        setTimeout(() => {
+                          setChatMessages(prev => [
+                            ...prev,
+                            {
+                              id: `msg-reply-${Date.now()}`,
+                              sender: 'Admin Umaroh',
+                              text: "Terima kasih atas tanggapan Anda. Kami sedang memverifikasi laporan tersebut. Kami hubungi Anda segera.",
+                              time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                              avatar: 'A'
+                            }
+                          ]);
+                        }, 2500);
+                      }}
+                      className={`p-3 border-t flex gap-2 items-center ${isDarkMode ? 'bg-slate-950/40 border-slate-800' : 'bg-gray-50/50 border-gray-100'}`}
+                    >
+                      <input 
+                        type="text" 
+                        placeholder="Tulis pesan..."
+                        value={newMsgText}
+                        onChange={(e) => setNewMsgText(e.target.value)}
+                        className={`flex-1 text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all ${
+                          isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-white border-gray-200 text-slate-800 placeholder-gray-400'
+                        }`}
+                      />
+                      <button 
+                        type="submit"
+                        className="bg-[#055734] hover:bg-[#044c2d] text-white p-2 rounded-xl transition-transform active:scale-95 shrink-0 flex items-center justify-center cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

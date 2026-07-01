@@ -2164,99 +2164,128 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
       {/* Desktop Sidebar (lg Screen) */}
       <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 lg:left-0 lg:bg-white lg:border-r lg:border-gray-200 lg:z-30 lg:overflow-y-auto print:hidden">
         {/* Sidebar Brand Header */}
-        <div className="p-6 border-b border-gray-150 flex flex-col gap-1 items-start bg-emerald-50/10">
-          <div className="bg-[#055734] py-2.5 px-4 rounded-xl flex items-center justify-center border border-emerald-800 shadow-sm w-full mb-1">
+        <div className="p-5 border-b border-gray-150 flex flex-col gap-3 items-center bg-white">
+          <div className="bg-[#F5B800] py-3.5 px-6 w-full flex items-center justify-center rounded-2xl shadow-md border border-[#D9A300]/10">
             <img 
-              src="https://umaroh.com/assets/logo-light-D4UzTX0_.png" 
+              src={logoBase64} 
               alt="Logo Umaroh" 
-              className="h-7 object-contain max-w-full" 
+              className="h-8 object-contain max-w-full" 
               referrerPolicy="no-referrer"
             />
           </div>
-          <div className="mt-2 w-full text-center">
-            <span className="text-[10px] text-emerald-800 font-extrabold tracking-widest uppercase block font-sans">PORTAL JAMAAH NAWAITUL</span>
+          <span className="text-[10px] font-bold tracking-widest text-[#856000] uppercase mt-1 text-center font-sans">
+            PORTAL JAMAAH NAWAITUL
+          </span>
+
+          <div className="bg-[#FFFBEB]/60 p-3 rounded-xl border border-amber-200/40 w-full flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-amber-100 text-[#B28200] flex items-center justify-center font-bold text-xs uppercase">
+              {(bookingData?.nama_paspor || bookingData?.namaJamaah || auth.currentUser?.displayName || 'JU').substring(0, 2)}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <span className="block truncate text-[10px] font-black text-slate-850 uppercase tracking-tight">
+                {bookingData?.nama_paspor || bookingData?.namaJamaah || auth.currentUser?.displayName || 'JAMAAH UMAROH'}
+              </span>
+              <span className="block text-[8px] text-[#B28200] font-black uppercase tracking-widest mt-0.5">
+                JAMAAH MEMBER ACCESS
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Sidebar Navigation Items */}
-        <nav className="flex-1 p-4 space-y-1">
-          {bookingData && (
+        <nav className="flex-1 p-4 space-y-4">
+          
+          {/* Category: PORTAL UTAMA */}
+          <div className="space-y-1">
+            <span className="bg-[#FFFDF0] text-[#B28200] font-black uppercase text-[9px] tracking-wider px-3.5 py-1.5 rounded-lg block font-sans border border-amber-100/30">
+              🕋 1. PORTAL UTAMA
+            </span>
+
+            {bookingData && (
+              <button
+                onClick={() => {
+                  setActiveTab('pendaftaran_mandiri');
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                  activeTab === 'pendaftaran_mandiri' 
+                    ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                    : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+                }`}
+              >
+                <span className="text-sm">🕌</span>
+                Portal Mandiri
+              </button>
+            )}
+
             <button
               onClick={() => {
-                setActiveTab('pendaftaran_mandiri');
+                setActiveTab('overview');
+                setKatalogSearch('');
               }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                activeTab === 'pendaftaran_mandiri' 
-                  ? 'bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-600/10 font-black' 
-                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                activeTab === 'overview' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : 'text-slate-655 hover:bg-[#FFFDF0] hover:text-[#B28200]'
               }`}
             >
-              <span className="text-sm">🕌</span>
-              Portal Mandiri
+              <LayoutDashboard className={`w-4 h-4 ${activeTab === 'overview' ? 'text-slate-900' : 'text-gray-500'}`} />
+              Rekomendasi
             </button>
-          )}
 
-          <button
-            onClick={() => {
-              setActiveTab('overview');
-              setKatalogSearch('');
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-              activeTab === 'overview' 
-                ? 'bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <LayoutDashboard className={`w-4 h-4 ${activeTab === 'overview' ? 'text-emerald-700' : 'text-gray-500'}`} />
-            Rekomendasi
-          </button>
+            <button
+              onClick={() => {
+                setActiveTab('katalog');
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                activeTab === 'katalog' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : 'text-slate-655 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Package className={`w-4 h-4 ${activeTab === 'katalog' ? 'text-slate-900' : 'text-gray-500'}`} />
+              Katalog Paket
+            </button>
+          </div>
 
-          <button
-            onClick={() => {
-              setActiveTab('katalog');
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-              activeTab === 'katalog' 
-                ? 'bg-orange-50 text-orange-950 shadow-sm ring-1 ring-orange-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <Package className={`w-4 h-4 ${activeTab === 'katalog' ? 'text-orange-600' : 'text-gray-500'}`} />
-            Katalog Paket
-          </button>
+          {/* Category: TRANSAKSI & AKUN */}
+          <div className="space-y-1">
+            <span className="bg-[#FFFDF0] text-[#B28200] font-black uppercase text-[9px] tracking-wider px-3.5 py-1.5 rounded-lg block font-sans border border-amber-100/30">
+              📋 2. TRANSAKSI & AKUN
+            </span>
 
-          <button
-            onClick={() => {
-              setActiveTab('riwayat');
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer relative ${
-              activeTab === 'riwayat' 
-                ? 'bg-blue-50 text-blue-800 shadow-sm ring-1 ring-blue-600/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <History className={`w-4 h-4 ${activeTab === 'riwayat' ? 'text-blue-700' : 'text-gray-500'}`} />
-            Pesanan Saya
-            {shopOrders.length > 0 && (
-              <span className="absolute right-4 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
-                {shopOrders.length}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={() => {
+                setActiveTab('riwayat');
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer relative ${
+                activeTab === 'riwayat' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : 'text-slate-655 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <History className={`w-4 h-4 ${activeTab === 'riwayat' ? 'text-slate-900' : 'text-gray-500'}`} />
+              Pesanan Saya
+              {shopOrders.length > 0 && (
+                <span className="absolute right-4 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                  {shopOrders.length}
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={() => {
-              setActiveTab('profile');
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-              activeTab === 'profile' 
-                ? 'bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-650/10' 
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <User className={`w-4 h-4 ${activeTab === 'profile' ? 'text-emerald-700' : 'text-gray-500'}`} />
-            ProfilKu
-          </button>
+            <button
+              onClick={() => {
+                setActiveTab('profile');
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                activeTab === 'profile' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : 'text-slate-655 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <User className={`w-4 h-4 ${activeTab === 'profile' ? 'text-slate-900' : 'text-gray-500'}`} />
+              ProfilKu
+            </button>
+          </div>
         </nav>
 
         {/* Sidebar Footer Ask AI */}
@@ -2904,7 +2933,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
           {bookingData && (
             <button
               onClick={() => setActiveTab('pendaftaran_mandiri')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'pendaftaran_mandiri' ? 'text-emerald-700 font-extrabold' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'pendaftaran_mandiri' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
               <span className="text-base">🕌</span>
               <span className="text-[10px] font-bold">Portal Mandiri</span>
@@ -2916,7 +2945,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
               setActiveTab('overview');
               setKatalogSearch('');
             }}
-            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'overview' ? 'text-emerald-700 font-extrabold' : 'text-gray-400'}`}
+            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'overview' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
           >
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-[10px] font-bold">Rekomendasi</span>
@@ -2927,7 +2956,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
             onClick={() => {
               setActiveTab('katalog');
             }}
-            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'katalog' ? 'text-orange-600 font-extrabold' : 'text-gray-400'}`}
+            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'katalog' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
           >
             <Package className="w-5 h-5" />
             <span className="text-[10px] font-bold">Katalog</span>
@@ -2937,7 +2966,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
             onClick={() => {
               setActiveTab('riwayat');
             }}
-            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'riwayat' ? 'text-blue-600 font-extrabold' : 'text-gray-400'}`}
+            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'riwayat' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
           >
             <History className="w-5 h-5" />
             <span className="text-[10px] font-bold">Pesanan</span>
@@ -2945,7 +2974,7 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
           
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'profile' ? 'text-emerald-700 font-extrabold' : 'text-gray-400'}`}
+            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'profile' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
           >
             <User className="w-5 h-5" />
             <span className="text-[10px] font-bold">Profil Ku</span>

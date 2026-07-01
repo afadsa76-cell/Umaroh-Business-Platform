@@ -87,3 +87,127 @@ export const getDaysRemaining = (targetDate: Date): number => {
   const diffTime = target.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
+
+export interface HijriDate {
+  day: number;
+  month: number;
+  year: number;
+  monthName: string;
+}
+
+export const gregorianToHijri = (date: Date, offset = 0): HijriDate => {
+  const adjustedDate = new Date(date);
+  if (offset !== 0) {
+    adjustedDate.setDate(adjustedDate.getDate() + offset);
+  }
+
+  let m = adjustedDate.getMonth() + 1;
+  let y = adjustedDate.getFullYear();
+  const d = adjustedDate.getDate();
+
+  if (m <= 2) {
+    y -= 1;
+    m += 12;
+  }
+  const a = Math.floor(y / 100);
+  const b = Math.floor(a / 4);
+  const c = 2 - a + b;
+  const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + c - 1524;
+
+  const jdIslamic = jd - 1948440 + 10632;
+  const cycle = Math.floor((jdIslamic - 1) / 10631);
+  const extra = jdIslamic - 10631 * cycle;
+  const yearCycle = Math.floor((extra - 1) / 354.366);
+  const hYear = 30 * cycle + yearCycle;
+  const daysInYear = extra - Math.ceil(yearCycle * 354.366);
+  
+  let hMonth = 1;
+  let hDay = daysInYear;
+  
+  const monthLengths = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
+  const leapYears = [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29];
+  const relativeYear = hYear % 30;
+  if (leapYears.includes(relativeYear)) {
+    monthLengths[11] = 30;
+  }
+
+  for (let i = 0; i < 12; i++) {
+    if (hDay <= monthLengths[i]) {
+      hMonth = i + 1;
+      break;
+    }
+    hDay -= monthLengths[i];
+  }
+
+  const hijriMonthNames = [
+    "Muharram",
+    "Safar",
+    "Rabi'ul Awal",
+    "Rabi'ul Akhir",
+    "Jumadil Awal",
+    "Jumadil Akhir",
+    "Rajab",
+    "Sya'ban",
+    "Ramadhan",
+    "Syawal",
+    "Dzulqa'dah",
+    "Dzulhijjah"
+  ];
+
+  return {
+    day: Math.max(1, hDay),
+    month: hMonth,
+    year: hYear,
+    monthName: hijriMonthNames[hMonth - 1] || ""
+  };
+};
+
+export interface UmrahSeasonInfo {
+  monthName: string;
+  year: number;
+  season: "Low Season" | "Medium Season" | "High Season" | "Peak Season" | "Umrah Ditutup" | "Awal Musim (Low Season)";
+  periodText: string;
+}
+
+export const getUmrahSeasonAndPeriod = (date: Date, offset = 0): UmrahSeasonInfo => {
+  const h = gregorianToHijri(date, offset);
+  let season: "Low Season" | "Medium Season" | "High Season" | "Peak Season" | "Umrah Ditutup" | "Awal Musim (Low Season)";
+  
+  switch (h.month) {
+    case 1:
+      season = "Awal Musim (Low Season)";
+      break;
+    case 2:
+      season = "Low Season";
+      break;
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+      season = "Medium Season";
+      break;
+    case 7:
+    case 8:
+      season = "High Season";
+      break;
+    case 9:
+      season = "Peak Season";
+      break;
+    case 10:
+      season = "Low Season";
+      break;
+    case 11:
+    case 12:
+    default:
+      season = "Umrah Ditutup";
+      break;
+  }
+
+  return {
+    monthName: h.monthName,
+    year: h.year,
+    season,
+    periodText: `${h.monthName} ${h.year}H (${season})`
+  };
+};
+
