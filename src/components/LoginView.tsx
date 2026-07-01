@@ -701,15 +701,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                   )}
                 </button>
                 
-                <div className="flex items-center justify-between mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-xs text-amber-600 hover:text-amber-700 font-medium"
-                  >
-                    {isSignUp ? 'Sudah punya akun? Login' : 'Buat akun Jamaah baru'}
-                  </button>
-                  {!isSignUp && (
+                <div className="flex items-center justify-end mt-4">
+                  {isSignUp ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsSignUp(false)}
+                      className="text-xs text-amber-600 hover:text-amber-700 font-medium"
+                    >
+                      Sudah punya akun? Login
+                    </button>
+                  ) : (
                     <button
                       type="button"
                       onClick={handleForgotPassword}
@@ -723,11 +724,35 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
             )}
 
             {loginMode === 'email' && (
-              <>
+              <div className="space-y-3 mt-4">
+                {/* Registration Buttons Row */}
+                {!isSignUp && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {onGoToRegister && (
+                      <button
+                        type="button"
+                        onClick={() => onGoToRegister()}
+                        className="w-full flex justify-center items-center py-3 px-4 border border-amber-600 rounded-xl shadow-sm text-xs font-bold text-amber-600 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all cursor-pointer"
+                      >
+                        Daftar sebagai Mitra
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsSignUp(true)}
+                      className="w-full flex justify-center items-center py-3 px-4 border border-amber-600 rounded-xl shadow-sm text-xs font-bold text-amber-600 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all cursor-pointer"
+                    >
+                      Buat Akun Jamaah
+                    </button>
+                  </div>
+                )}
+
+                {/* Google Sign-In Button (Swapped to bottom) */}
                 <button
+                  type="button"
                   onClick={handleGoogleLogin}
                   disabled={isLoading}
-                  className={`w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-xl shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-xl shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all cursor-pointer ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   {isLoading ? 'Memproses...' : (
                     <>
@@ -736,96 +761,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                     </>
                   )}
                 </button>
-                
-                {onGoToRegister && (
-                  <button
-                    onClick={() => onGoToRegister()}
-                    className="mt-2 w-full flex justify-center items-center py-3 px-4 border border-amber-600 rounded-lg shadow-sm text-sm font-bold text-amber-600 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
-                  >
-                    Daftar sebagai Mitra
-                  </button>
-                )}
-              </>
+              </div>
             )}
           </div>
 
           {/* Banner Lembaga Sertifikasi & Lisensi Resmi */}
           <div className="mt-6 border-t border-gray-100 pt-5">
-            {/* Grid 6 Sertifikasi Logo */}
-            <div className="grid grid-cols-6 gap-2 items-center justify-items-center mb-4 leading-none">
-              {/* 1. 5 Pasti Umroh */}
-              <div className="flex flex-col items-center">
-                <svg className="w-8 h-8 md:w-9 md:h-9 drop-shadow-sm" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="32" cy="32" r="30" fill="#FFFBEB" stroke="#D97706" strokeWidth="2"/>
-                  <path d="M16 42C16 30 20 20 32 20C44 20 48 30 48 42H16Z" fill="#0F172A"/>
-                  <path d="M22 42V30H42V42H22Z" fill="#334155"/>
-                  <path d="M22 30H42V33H22V30Z" fill="#FBBF24"/>
-                  <circle cx="32" cy="32" r="10" fill="#FBBF24" stroke="#D97706" strokeWidth="1.5"/>
-                  <text x="32" y="36.5" fontSize="13" fontWeight="900" fill="#1E293B" textAnchor="middle" fontFamily="sans-serif">5</text>
-                </svg>
-                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">5 PASTI</span>
-              </div>
-
-              {/* 2. IATA */}
-              <div className="flex flex-col items-center">
-                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="32" cy="24" r="14" stroke="#0284C7" strokeWidth="2" strokeDasharray="2 2" fill="#F0F9FF"/>
-                  <path d="M10 24H54" stroke="#0284C7" strokeWidth="2"/>
-                  <path d="M14 20H50" stroke="#0284C7" strokeWidth="1.5"/>
-                  <path d="M18 28H46" stroke="#0284C7" strokeWidth="1.5"/>
-                  <text x="32" y="49" fontSize="13" fontWeight="900" fill="#0284C7" textAnchor="middle" fontFamily="sans-serif" letterSpacing="0.05em">IATA</text>
-                </svg>
-                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">MEMBER</span>
-              </div>
-
-              {/* 3. SISKOPATUH */}
-              <div className="flex flex-col items-center">
-                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="14" y="14" width="36" height="36" rx="6" fill="#0D9488"/>
-                  <path d="M23 31L29 37L41 25" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                  <text x="32" y="58" fontSize="7" fontWeight="900" fill="#0D9488" textAnchor="middle" fontFamily="sans-serif">SISKO</text>
-                </svg>
-                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">PATUH</span>
-              </div>
-
-              {/* 4. KEMENAG */}
-              <div className="flex flex-col items-center">
-                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <polygon points="32,4 58,22 48,56 16,56 6,22" fill="#15803D" stroke="#EAB308" strokeWidth="2"/>
-                  <circle cx="32" cy="32" r="15" fill="#166534"/>
-                  <path d="M32 20V44M20 32H44" stroke="#EAB308" strokeWidth="1.5"/>
-                  <text x="32" y="35" fontSize="9" fontWeight="bold" fill="#FFFFFF" textAnchor="middle" fontFamily="serif">RI</text>
-                </svg>
-                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">KEMENAG</span>
-              </div>
-
-              {/* 5. SAPUHI */}
-              <div className="flex flex-col items-center">
-                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="32" cy="32" r="28" fill="#FFFFFF" stroke="#EAB308" strokeWidth="2"/>
-                  <rect x="22" y="22" width="20" height="20" fill="#1E293B" rx="1"/>
-                  <rect x="22" y="22" width="20" height="4" fill="#EAB308"/>
-                  <circle cx="32" cy="32" r="26" fill="none" stroke="#EAB308" strokeWidth="1" strokeDasharray="3 3"/>
-                  <text x="32" y="54" fontSize="7.5" fontWeight="900" fill="#1E293B" textAnchor="middle" fontFamily="sans-serif">SAPUHI</text>
-                </svg>
-                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">SAPUHI</span>
-              </div>
-
-              {/* 6. KAN */}
-              <div className="flex flex-col items-center">
-                <svg className="w-8 h-8 md:w-9 md:h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 24L24 42L56 14" stroke="#DC2626" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <text x="32" y="52" fontSize="15" fontWeight="900" fill="#1E3A8A" textAnchor="middle" fontFamily="sans-serif">KAN</text>
-                </svg>
-                <span className="text-[6.5px] font-black text-gray-400 uppercase tracking-tighter mt-1 block h-3 text-center">KAN</span>
-              </div>
-            </div>
-
-            {/* Bar Abu-Abu Credentials Lisensi Resmi */}
-            <div className="bg-gray-50 border border-gray-150 rounded-xl py-2 px-1 text-center shadow-inner">
-              <p className="text-[9.5px] font-black text-gray-700 tracking-wider uppercase font-sans leading-none">
-                PT. NAWAITUL UMRAH HAJI <span className="text-gray-300 mx-1">|</span> PPIU : 28092200496140003
-              </p>
+            <div className="flex justify-center items-center">
+              <img 
+                src="https://lh3.googleusercontent.com/d/1Bt5EUjC9cKCggGgB6ZNe_vK0q1I9Zltn" 
+                alt="Lisensi Resmi PT. NAWAITUL UMRAH HAJI" 
+                className="w-full h-auto max-w-[420px] rounded-xl object-contain shadow-sm border border-gray-100"
+                referrerPolicy="no-referrer"
+              />
             </div>
           </div>
         </div>
