@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, onSnapshot, doc, updateDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
-import { CheckCircle2, XCircle, Eye, Search, Filter, AlertCircle, Building2, User, Users, FileText, Printer, CheckSquare } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, Search, Filter, AlertCircle, Building2, User, Users, FileText, Printer, CheckSquare, Download } from 'lucide-react';
 import { openWhatsApp } from '../utils/whatsapp';
 import { logoBase64 } from '../utils/logoBase64';
+import { Capacitor } from '@capacitor/core';
+import html2pdf from 'html2pdf.js';
+import { runWithOklchFix, downloadFile } from '../utils/fileUtils';
 
 export interface PendaftaranMitra {
   id: string;
@@ -60,6 +63,49 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
   const [cashier, setCashier] = useState('Tim Keuangan Umaroh');
   const [invoiceNote, setInvoiceNote] = useState('Pembayaran sah setelah divalidasi oleh Tim Keuangan. Harap simpan bukti pembayaran ini sebagai bukti registrasi kemitraan resmi.');
   const [showInvoiceStamp, setShowInvoiceStamp] = useState(true);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('invoice-print-area');
+    if (!element) {
+      alert('Elemen invoice tidak ditemukan!');
+      return;
+    }
+    
+    setIsGeneratingPDF(true);
+    const invoiceNo = selectedInvoice?.id || 'mitra';
+    const opt = {
+      margin:       0,
+      filename:     `invoice_${invoiceNo}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        letterRendering: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    try {
+      await runWithOklchFix(async () => {
+        const h2p = html2pdf().from(element).set(opt);
+        if (Capacitor.isNativePlatform()) {
+          const pdfDataUri = await h2p.output('datauristring') as string;
+          await downloadFile(pdfDataUri, `invoice_${invoiceNo}.pdf`);
+        } else {
+          await h2p.save();
+        }
+      });
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Gagal mengunduh PDF. Silakan coba lagi.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'pendaftaran_mitra'), (snapshot) => {
@@ -838,11 +884,12 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
 
                 <div className="pt-4 border-t border-gray-100 space-y-2">
                   <button
-                    onClick={() => window.print()}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                    onClick={handleDownloadPDF}
+                    disabled={isGeneratingPDF}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer font-sans"
                   >
-                    <Printer className="w-4 h-4" />
-                    CETAK / PRINT KERTAS A4
+                    <Download className={`w-4 h-4 ${isGeneratingPDF ? 'animate-bounce' : ''}`} />
+                    {isGeneratingPDF ? 'MENGUNDUH PDF...' : 'UNDUH / SIMPAN PDF'}
                   </button>
                   <button
                     onClick={() => {
@@ -860,15 +907,14 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
               <div className="flex-grow bg-slate-200/50 p-4 md:p-8 overflow-y-auto flex justify-center items-start">
                 <div 
                   id="invoice-print-area" 
-                  className="bg-white border border-slate-300 w-[210mm] min-h-[297mm] p-12 shadow-lg flex flex-col justify-between font-sans relative text-slate-800"
+                  className="bg-white border border-slate-300 w-[210mm] h-[297mm] p-8 shadow-lg flex flex-col justify-between font-sans relative text-slate-800"
                 >
                   <div>
                     {/* Header: Company & Invoice Info */}
-                    <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+                    <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-5">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
                           <img src={logoBase64} alt="Umaroh Logo" className="h-8 object-contain" />
-                          <span className="text-xl font-black tracking-wider text-slate-900 uppercase">UMAROH</span>
                         </div>
                         <p className="text-[10px] text-slate-500 font-bold leading-normal max-w-sm font-sans">
                           Umaroh Head Office (Bogor)<br />
@@ -889,7 +935,7 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
                     </div>
 
                     {/* Customer Information (Bill To) */}
-                    <div className="grid grid-cols-2 gap-8 mb-10">
+                    <div className="grid grid-cols-2 gap-8 mb-6">
                       <div>
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Ditagihkan Kepada (Bill To)</span>
                         <div className="text-xs space-y-1.5 font-bold text-slate-600">
@@ -920,7 +966,7 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
                     </div>
 
                     {/* Table: Invoice Items */}
-                    <table className="w-full text-left border-collapse mb-10">
+                    <table className="w-full text-left border-collapse mb-6">
                       <thead>
                         <tr className="border-b border-slate-900 text-slate-900 text-[10px] font-black uppercase tracking-wider">
                           <th className="py-3 font-black">Deskripsi Layanan & Paket</th>
@@ -949,9 +995,26 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
                         <p className="text-[10px] text-slate-500 font-medium leading-relaxed max-w-sm whitespace-pre-line italic font-sans">
                           {invoiceNote}
                         </p>
+
+                        {/* Informasi Rekening Pembayaran */}
+                        <div className="mt-4 p-3 bg-amber-50/40 border border-amber-200/60 rounded-xl max-w-xs font-sans">
+                          <p className="text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1.5 leading-tight">
+                            REKENING RESMI PEMBAYARAN KEMITRAAN
+                          </p>
+                          <p className="text-[9px] text-slate-600 font-bold mb-2">
+                            Segala bentuk pembayaran <strong className="font-extrabold text-slate-950">wajib</strong> dilakukan melalui rekening <strong className="font-extrabold text-slate-950">PT Nawaitul Umroh Haji</strong>:
+                          </p>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="bg-amber-500 text-white font-black text-[10px] px-2 py-0.5 rounded tracking-wide">BCA</span>
+                            <span className="bg-slate-800 text-white font-black text-[11px] px-3 py-0.5 rounded tracking-wider font-mono">7380989918</span>
+                          </div>
+                          <p className="text-[8px] text-slate-400 leading-normal font-medium italic">
+                            Segala bentuk pembayaran di luar nomor rekening di atas bukan tanggung jawab PT Nawaitul Umroh Haji.
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="w-72 space-y-2 border-t border-slate-200 pt-3">
+                      <div className="w-72 space-y-1.5 border-t border-slate-200 pt-2">
                         <div className="flex justify-between text-[11px] text-slate-500 font-bold">
                           <span>Subtotal:</span>
                           <span>{formatCurrency(selectedInvoice.paketHarga)}</span>
@@ -960,7 +1023,7 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
                           <span>Uang Muka / Pembayaran Pertama:</span>
                           <span className="text-emerald-600 font-black">{formatCurrency(paidAmount)}</span>
                         </div>
-                        <div className="flex justify-between border-t border-slate-200 pt-2 text-sm text-slate-900 font-black">
+                        <div className="flex justify-between border-t border-slate-200 pt-1.5 text-sm text-slate-900 font-black">
                           <span>Sisa Pembayaran (Tagihan):</span>
                           <span className={`${sisa > 0 ? 'text-rose-600' : 'text-slate-900'}`}>{formatCurrency(sisa)}</span>
                         </div>
@@ -968,27 +1031,37 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
                     </div>
                   </div>
 
-                  {/* Stamp & Cashier Signature Section */}
-                  <div className="mt-16 border-t border-slate-100 pt-8 flex justify-between items-center relative">
-                    <div className="relative w-48 h-24">
-                      {/* Stamp watermark */}
-                      {showInvoiceStamp && (
-                        <div className={`absolute top-0 left-0 transform -rotate-12 border-4 px-4 py-1.5 rounded-xl font-sans font-black tracking-widest text-base select-none ${
-                          isLunas 
-                            ? 'border-emerald-600 text-emerald-600 bg-emerald-50/20' 
-                            : 'border-amber-600 text-amber-600 bg-amber-50/20'
-                        }`}>
-                          <p className="text-center text-[10px] font-bold tracking-normal leading-none mb-0.5">UMAROH FINANCE</p>
-                          <p className="text-center font-black">{isLunas ? 'PAID / LUNAS' : 'PARTIAL / DP'}</p>
-                          <p className="text-[8px] text-center font-bold tracking-normal leading-none mt-0.5">{invoiceDateFormatted}</p>
-                        </div>
-                      )}
+                  {/* Stamp & Corporate Footer Section */}
+                  <div className="mt-4 pt-4 flex flex-col gap-4 relative">
+                    {/* Stamp row */}
+                    <div className="flex justify-between items-center h-14">
+                      <div className="relative w-48 h-14 flex items-center">
+                        {/* Stamp watermark */}
+                        {showInvoiceStamp && (
+                          <div className={`absolute top-0 left-0 transform -rotate-12 border-4 border-double px-5 py-2 rounded-xl font-sans tracking-widest select-none text-center ${
+                            isLunas 
+                              ? 'border-emerald-600 text-emerald-600 bg-emerald-50/20' 
+                              : 'border-amber-600 text-amber-600 bg-amber-50/20'
+                          }`}>
+                            <p className="text-center text-[9px] font-extrabold tracking-widest leading-none mb-1 uppercase">UMAROH FINANCE</p>
+                            <p className="text-center font-black text-xs tracking-wide leading-none">{isLunas ? 'PAID / LUNAS' : 'PARTIAL / DP'}</p>
+                            <p className="text-[8px] text-center font-bold tracking-widest leading-none mt-1 uppercase">{invoiceDateFormatted}</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="w-56 text-right">
+                        {/* Cashier signature block removed as requested */}
+                      </div>
                     </div>
 
-                    <div className="text-right w-56">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-14">Petugas Verifikasi Keuangan</p>
-                      <p className="text-xs font-black text-slate-900 border-b border-slate-300 pb-1 text-center inline-block min-w-[150px]">{cashier}</p>
-                      <p className="text-[9px] text-slate-400 font-bold text-center mt-1">Umaroh Finance Department</p>
+                    {/* Thank you Corporate Footer Section */}
+                    <div className="border-t border-b border-slate-200 py-3 bg-slate-50/50 text-center font-sans">
+                      <p className="text-[11px] text-slate-600 font-bold leading-relaxed">
+                        Terima kasih atas kepercayaan Anda kepada <strong className="font-extrabold text-slate-900">PT Nawaitul Umroh Haji</strong>
+                      </p>
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1 flex items-center justify-center gap-1">
+                        Semoga Allah SWT memudahkan perjalanan ibadah Anda <span className="text-xs">🤲</span>
+                      </p>
                     </div>
                   </div>
 

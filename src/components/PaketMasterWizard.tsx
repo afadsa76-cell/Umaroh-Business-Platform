@@ -29,7 +29,6 @@ import {
   Sparkles,
   Layers,
   ImagePlus,
-  Lock,
   Globe,
   ArrowRightLeft,
   MessageCircle,
@@ -1366,7 +1365,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       finalTriple: Math.round(baseTriple + totalMarkupCount + adminServiceFee),
       finalDouble: Math.round(baseDouble + totalMarkupCount + adminServiceFee),
       adminFee: Math.round(displayKomisiUmaroh),
-      totalKomisiMitra: Math.round(displayKomisiMitra),
+      totalKomisiMitra: Math.round(displayKomisiMitra - (Number(formData.ujrohPartner) || 0)),
       ujrohAnda: Math.round(margin - (Number(formData.ujrohPartner) || 0)),
       ujrohPartner: Math.round(Number(formData.ujrohPartner) || 0),
       totalKomisiUmaroh: Math.round(displayKomisiUmaroh),
@@ -6459,50 +6458,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
-              {/* 2. TIPE PUBLIKASI */}
+            <div className="pt-6 max-w-xl">
+              {/* 2. TIPE PENJUALAN */}
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <span className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center text-[10px] font-black mt-0.5">
                     2.
-                  </span>
-                  <div className="flex flex-col">
-                    <h3 className="font-black text-gray-900 text-sm tracking-widest uppercase">
-                      TIPE PUBLIKASI
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  {[
-                    { id: "PAKET PRIBADI", icon: Lock },
-                    { id: "TEMPLATE PUBLIK", icon: Globe },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() =>
-                        setFormData({ ...formData, tipePublikasi: item.id })
-                      }
-                      className={`p-6 rounded-2xl border-2 flex flex-col items-center justify-center gap-3 transition-all ${
-                        formData.tipePublikasi === item.id
-                          ? "border-blue-600 bg-blue-50 text-blue-600 shadow-md"
-                          : "border-gray-100 bg-white text-gray-400 hover:border-gray-200"
-                      }`}
-                    >
-                      <item.icon className="w-8 h-8" strokeWidth={1.5} />
-                      <span className="text-[10px] font-black tracking-widest uppercase text-center">
-                        {item.id}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 3. TIPE PENJUALAN */}
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center text-[10px] font-black mt-0.5">
-                    3.
                   </span>
                   <div className="flex flex-col">
                     <h3 className="font-black text-gray-900 text-sm tracking-widest uppercase">
@@ -6537,7 +6498,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </div>
             </div>
 
-            {/* Bagian 4: Pembagian Hasil (hanya muncul jika jual bersama) */}
+            {/* Bagian 3: Pembagian Hasil (hanya muncul jika jual bersama) */}
             {formData.tipePenjualan === "JUAL BERSAMA" && (
               <div className="bg-[#1A1C29] p-8 rounded-[2rem] text-white shadow-2xl relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 mt-8 border border-gray-800">
                 {/* Header Panel */}

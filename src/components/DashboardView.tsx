@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, TrendingUp, Users, Package, ArrowRight, MessageCircle, Clock, Plane, Calendar, Printer, FileText, X, Award, ChevronRight, Shield, Landmark, Sparkles, Building, Bell, Info, AlertTriangle, Check } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Users, Package, ArrowRight, MessageCircle, Clock, Plane, Calendar, Printer, FileText, X, Award, ChevronRight, Shield, Landmark, Sparkles, Building, Bell, Info, AlertTriangle, Check, Download } from 'lucide-react';
 import { TabType } from './Navbar';
 import { format, differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -11,6 +11,9 @@ import { syncBookingToTracker } from '../utils/firebaseSync';
 import { ShopOrder, AppNotification } from '../types';
 import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
 import { MitraLiveMap } from './dashboard/MitraLiveMap';
+import { Capacitor } from '@capacitor/core';
+import html2pdf from 'html2pdf.js';
+import { runWithOklchFix, downloadFile } from '../utils/fileUtils';
 
 interface InvoiceTransaction {
   id: string;
@@ -108,6 +111,49 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [invoiceCustomNum, setInvoiceCustomNum] = useState('');
   const [showInvoiceStamp, setShowInvoiceStamp] = useState(true);
   const [cashierName, setCashierName] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    const element = document.querySelector('.invoice-print-area') as HTMLElement;
+    if (!element) {
+      alert('Elemen invoice tidak ditemukan!');
+      return;
+    }
+    
+    setIsGeneratingPDF(true);
+    const invoiceNo = selectedInvoiceBooking?.id || 'invoice';
+    const opt = {
+      margin:       [4, 4, 4, 4] as [number, number, number, number],
+      filename:     `invoice_${invoiceNo}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        letterRendering: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    try {
+      await runWithOklchFix(async () => {
+        const h2p = html2pdf().from(element).set(opt);
+        if (Capacitor.isNativePlatform()) {
+          const pdfDataUri = await h2p.output('datauristring') as string;
+          await downloadFile(pdfDataUri, `invoice_${invoiceNo}.pdf`);
+        } else {
+          await h2p.save();
+        }
+      });
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Gagal mengunduh PDF. Silakan coba lagi.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   // Load current user profile for invoice branding
   useEffect(() => {
@@ -1424,11 +1470,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
               <div className="pt-4 border-t border-gray-100 space-y-2">
                 <button
-                  onClick={() => window.print()}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <Printer className="w-4 h-4" />
-                  CETAK / PRINT KERTAS A4
+                  <Download className={`w-4 h-4 ${isGeneratingPDF ? 'animate-bounce' : ''}`} />
+                  {isGeneratingPDF ? 'MENGUNDUH PDF...' : 'UNDUH / SIMPAN PDF'}
                 </button>
                 <button
                   onClick={() => {
