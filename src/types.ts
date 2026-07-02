@@ -16,6 +16,7 @@ export interface Maskapai {
   ruteLabel?: string;
   hargaSetoran?: number;
   tipePenerbangan?: 'DIRECT' | 'TRANSIT';
+  statusTiket?: string;
 }
 
 export type RoomType = 'Single' | 'Double' | 'Triple' | 'Quad' | 'Quint' | 'Jr Suite (4pax)' | 'Jr Suite (2pax)' | 'Family Suite (4pax)' | '3 Bed Suite (6pax)' | 'Two Bedroom (10 Pax)' | 'Four Bedroom (15 Pax)';
@@ -107,6 +108,7 @@ export interface WizardFormData {
   nama: string;
   periode: string;
   durasiHari: number;
+  statusTiket?: string;
   durasiWisata: number;
   negaraWisata: string;
   alurPerjalanan: string;

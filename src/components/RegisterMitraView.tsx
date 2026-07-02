@@ -20,6 +20,7 @@ interface RegisterMitraViewProps {
 interface Upline {
   id: string;
   name: string;
+  brandName?: string;
   subRole?: string;
   role?: string;
 }
@@ -786,7 +787,7 @@ export const RegisterMitraView: React.FC<RegisterMitraViewProps> = ({
                           <option value="">-- Daftar Langsung ke Pusat --</option>
                           {uplineList.map(upline => (
                             <option key={upline.id} value={upline.id}>
-                              {upline.name} {upline.subRole ? `(${upline.subRole})` : ''}
+                              {upline.brandName || upline.name} {upline.subRole ? `(${upline.subRole})` : ''}
                             </option>
                           ))}
                         </select>

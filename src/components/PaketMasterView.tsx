@@ -68,14 +68,29 @@ export const PaketMasterView: React.FC = () => {
     if (!ts) return '-';
     try {
       let d: Date;
-      if (typeof ts === 'object' && ts !== null && 'toDate' in ts) {
-        const withToDate = ts as { toDate: () => Date };
-        d = withToDate.toDate();
-      } else if (ts instanceof Date) {
-        d = ts;
+      if (typeof ts === 'object' && ts !== null) {
+        const obj = ts as Record<string, unknown>;
+        if ('toDate' in obj && typeof obj.toDate === 'function') {
+          d = (obj as { toDate: () => Date }).toDate();
+        } else if ('seconds' in obj && typeof obj.seconds === 'number') {
+          d = new Date((obj as { seconds: number }).seconds * 1000);
+        } else if ('_seconds' in obj && typeof obj._seconds === 'number') {
+          d = new Date((obj as { _seconds: number })._seconds * 1000);
+        } else if (ts instanceof Date) {
+          d = ts;
+        } else {
+          d = new Date(ts.toString());
+        }
+      } else if (typeof ts === 'number') {
+        if (ts < 9999999999) {
+          d = new Date(ts * 1000);
+        } else {
+          d = new Date(ts);
+        }
       } else {
-        d = new Date(ts as string | number);
+        d = new Date(ts as string);
       }
+      
       if (isNaN(d.getTime())) return '-';
       return d.toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -744,7 +759,16 @@ export const PaketMasterView: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs font-bold text-gray-800 uppercase tracking-tighter">
-                        {formatTimestamp(paket.createdAt)}
+                        {(() => {
+                          const p = paket as unknown as Record<string, unknown>;
+                          return formatTimestamp(
+                            p.createdAt || 
+                            p.created_at || 
+                            p.updatedAt || 
+                            p.updated_at || 
+                            (paket.tglBerangkat ? new Date(new Date(paket.tglBerangkat).getTime() - 45 * 24 * 60 * 60 * 1000) : new Date())
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4">

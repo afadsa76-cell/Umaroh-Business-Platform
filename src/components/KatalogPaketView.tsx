@@ -4,6 +4,7 @@ import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp
 import { syncBookingToTracker } from '../utils/firebaseSync';
 import { PaketMaster, Maskapai, Hotel } from '../types';
 import { PaketDetailView } from './PaketDetailView';
+import { INDONESIA_EMBARKASI, KATEGORI_PROGRAM } from '../constants';
 
 interface PaketMitra {
   id: string;
@@ -33,6 +34,9 @@ interface DisplayPaket {
   hargaJualTriple?: number;
   hargaJualDouble?: number;
   status?: string;
+  kategori?: string;
+  kotaKeberangkatan?: string;
+  statusTiket?: string;
 }
 
 interface KatalogPaketViewProps {
@@ -67,6 +71,9 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
   const [agencies, setAgencies] = React.useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = React.useState(initialSearch);
   const [showExpired, setShowExpired] = React.useState(false);
+  const [filterEmbarkasi, setFilterEmbarkasi] = React.useState('');
+  const [filterKategori, setFilterKategori] = React.useState('');
+  const [filterTanggal, setFilterTanggal] = React.useState('');
   const [selectedPaket, setSelectedPaket] = React.useState<DisplayPaket | null>(null);
   const [bookingSuccess, setBookingSuccess] = React.useState(false);
   const [viewingDetail, setViewingDetail] = React.useState<PaketMaster | null>(null);
@@ -1786,7 +1793,9 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
         maskapaiId: p.maskapaiId,
         hargaJualQuad: qPrice,
         hargaJualTriple: p.hargaJualTriple || (qPrice ? Math.round(qPrice * 1.1) : 0),
-        hargaJualDouble: p.hargaJualDouble || (qPrice ? Math.round(qPrice * 1.2) : 0)
+        hargaJualDouble: p.hargaJualDouble || (qPrice ? Math.round(qPrice * 1.2) : 0),
+        kategori: p.kategori,
+        kotaKeberangkatan: p.kotaKeberangkatan
       };
     }),
     ...paketMitras.map(p => {
@@ -1809,7 +1818,9 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
         sisaKuota: master?.sisaKuota || 0,
         hargaJualQuad: priceQuad,
         hargaJualTriple: priceTriple,
-        hargaJualDouble: priceDouble
+        hargaJualDouble: priceDouble,
+        kategori: master?.kategori,
+        kotaKeberangkatan: master?.kotaKeberangkatan
       };
     })
   ].filter(p => {
@@ -1823,6 +1834,25 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
     const isExpired = isArchived || hasPassed;
 
     if (!showExpired && isExpired) return false;
+
+    // Apply embarkation filter
+    if (filterEmbarkasi) {
+      const embark = (p.kotaKeberangkatan || masterObj?.kotaKeberangkatan || '').toLowerCase();
+      if (!embark.includes(filterEmbarkasi.toLowerCase())) return false;
+    }
+
+    // Apply category filter
+    if (filterKategori) {
+      const cat = (p.kategori || masterObj?.kategori || '').toLowerCase();
+      if (!cat.includes(filterKategori.toLowerCase())) return false;
+    }
+
+    // Apply departure date filter
+    if (filterTanggal) {
+      const tgl = p.tglBerangkat || masterObj?.tglBerangkat;
+      if (tgl !== filterTanggal) return false;
+    }
+
     return true;
   });
 
@@ -1864,30 +1894,109 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
 
   return (
     <div className="space-y-8">
-      {/* Search Bar & Expiry Filter */}
-      <div className="bg-white p-1.5 md:p-2 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-2 w-full relative z-20">
-        <div className="flex-1 flex items-center px-3 md:px-4 py-2 md:py-3 bg-gray-50 rounded-lg md:rounded-xl border border-gray-100 w-full">
-          <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mr-2 md:mr-3" />
-          <input 
-            type="text" 
-            placeholder="Cari nama paket..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none outline-none w-full text-xs md:text-sm text-gray-700" 
-          />
+      {/* Advanced Filter Panel */}
+      <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 space-y-4 relative z-20">
+        <div className="flex flex-col md:flex-row items-center gap-3 w-full">
+          {/* Search Input */}
+          <div className="flex-1 flex items-center px-3 md:px-4 py-2 md:py-3 bg-gray-50 rounded-lg md:rounded-xl border border-gray-100 w-full">
+            <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mr-2 md:mr-3" />
+            <input 
+              type="text" 
+              placeholder="Cari nama paket..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-transparent border-none outline-none w-full text-xs md:text-sm text-gray-700" 
+            />
+          </div>
+          
+          {/* Toggle Expired */}
+          <button
+            onClick={() => setShowExpired(!showExpired)}
+            className={`px-4 py-2.5 rounded-lg md:rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap w-full md:w-auto justify-center ${
+              showExpired 
+                ? 'bg-rose-50 text-rose-600 border border-rose-200' 
+                : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            {showExpired ? 'Sembunyikan Kadaluarsa' : 'Lihat Paket Kadaluarsa'}
+          </button>
         </div>
-        
-        <button
-          onClick={() => setShowExpired(!showExpired)}
-          className={`px-4 py-2.5 rounded-lg md:rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap w-full md:w-auto justify-center ${
-            showExpired 
-              ? 'bg-rose-50 text-rose-600 border border-rose-200' 
-              : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          {showExpired ? 'Sembunyikan Kadaluarsa' : 'Lihat Paket Kadaluarsa'}
-        </button>
+
+        {/* Multi-Filter Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+          {/* Filter Embarkasi */}
+          <div className="flex flex-col">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Embarkasi</label>
+            <select
+              value={filterEmbarkasi}
+              onChange={(e) => setFilterEmbarkasi(e.target.value)}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+            >
+              <option value="">Semua Embarkasi</option>
+              {INDONESIA_EMBARKASI.map(item => (
+                <option key={item.kode} value={item.kode}>
+                  {item.kota} ({item.kode})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter Kategori Paket */}
+          <div className="flex flex-col">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Kategori Paket</label>
+            <select
+              value={filterKategori}
+              onChange={(e) => setFilterKategori(e.target.value)}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+            >
+              <option value="">Semua Kategori</option>
+              {KATEGORI_PROGRAM.map(kat => (
+                <option key={kat} value={kat}>
+                  {kat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter Tanggal Keberangkatan */}
+          <div className="flex flex-col">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1.5">Tanggal Keberangkatan</label>
+            <div className="relative">
+              <input
+                type="date"
+                value={filterTanggal}
+                onChange={(e) => setFilterTanggal(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 font-bold focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+              />
+              {filterTanggal && (
+                <button
+                  type="button"
+                  onClick={() => setFilterTanggal('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Reset Filter Button */}
+        {(filterEmbarkasi || filterKategori || filterTanggal) && (
+          <div className="flex justify-end pt-1">
+            <button
+              onClick={() => {
+                setFilterEmbarkasi('');
+                setFilterKategori('');
+                setFilterTanggal('');
+              }}
+              className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <X className="w-3 h-3" /> Bersihkan Filter
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Package Grid */}
@@ -1898,6 +2007,15 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
           const isArchived = paket.status === 'archived' || masterRef?.status === 'archived';
           const hasPassed = !!(masterRef?.tglBerangkat && masterRef.tglBerangkat < todayStr);
           const isExpired = isArchived || hasPassed;
+
+          const maskapaiRef = maskapai.find(m => m.id === paket.maskapaiId);
+          const maskapaiName = maskapaiRef ? maskapaiRef.name : (paket.maskapaiId || 'SAUDI');
+          const isOpenTrip = 
+            paket.statusTiket === 'OPEN TRIP' || 
+            masterRef?.statusTiket === 'OPEN TRIP' || 
+            maskapaiRef?.statusTiket === 'OPEN TRIP' ||
+            maskapaiName.toLowerCase().includes('open') || 
+            (maskapaiRef?.ruteLabel || '').toLowerCase().includes('open');
 
           return (
             <div 
@@ -1927,7 +2045,7 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
                   <span className="bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">AKTIF</span>
                 )}
               </div>
-
+              
               {/* Bottom Left Info */}
               <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white">
                 <Calendar className="w-3 h-3" />
@@ -1968,14 +2086,27 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
               </div>
               
               {/* Icon Info Row */}
-              <div className="flex items-center gap-4 mb-5 pb-4 border-b border-gray-50">
-                <div className="flex items-center gap-1.5 text-gray-400">
-                  <Plane className="w-3 h-3" />
-                  <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.maskapaiId || 'SAUDI'}</span>
+              <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-50 gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-1 text-gray-500 font-bold min-w-0">
+                    <Plane className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+                    <span className="text-[9px] uppercase tracking-tight truncate" title={maskapaiName}>{maskapaiName}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-400 flex-shrink-0">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.durasiHari || '9'} HARI</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-gray-400">
-                  <Clock className="w-3 h-3" />
-                  <span className="text-[9px] font-bold uppercase tracking-tighter">{paket.durasiHari || '9'} HARI</span>
+                <div className="flex-shrink-0">
+                  {isOpenTrip ? (
+                    <span className="text-[8px] px-1.5 py-0.5 rounded-md font-black bg-amber-50 text-amber-700 border border-amber-200 tracking-wide uppercase">
+                      OPEN TRIP
+                    </span>
+                  ) : (
+                    <span className="text-[8px] px-1.5 py-0.5 rounded-md font-black bg-emerald-50 text-emerald-700 border border-emerald-200 tracking-wide uppercase">
+                      CONFIRMATION
+                    </span>
+                  )}
                 </div>
               </div>
 
