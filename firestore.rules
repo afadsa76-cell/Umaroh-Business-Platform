@@ -52,6 +52,14 @@ service cloud.firestore {
       );
     }
 
+    function isMitraDev() {
+      return isSignedIn() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.subRole == 'mitra_dev')
+      );
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
@@ -128,10 +136,10 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if true;
-      allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin();
-      allow update: if (isAdmin() || isOperasional() || isOwner(userId)) && 
+      allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin() || isMitraDev();
+      allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId)) && 
                     isValidUserProfile(incoming()) && (
-                      isAdmin() || isOperasional() || (
+                      isAdmin() || isOperasional() || isMitraDev() || (
                         (!('role' in incoming()) || !('role' in existing()) || incoming().role == existing().role) &&
                         (!('email' in incoming()) || !('email' in existing()) || incoming().email == existing().email) &&
                         (!('uid' in incoming()) || !('uid' in existing()) || incoming().get('uid', '') == existing().get('uid', ''))
@@ -246,10 +254,10 @@ service cloud.firestore {
     match /pendaftaran_mitra/{pendaftaranId} {
       allow read: if true;
       allow create: if isValidPendaftaranMitra(incoming()); 
-      allow update: if isOperasional() && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
+      allow update: if (isOperasional() || isAdmin() || isMitraDev()) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'approvedAt', 'rejectedAt', 'rejectReason']) &&
                     isValidPendaftaranMitra(incoming());
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isMitraDev();
     }
 
     match /tracker_paket/{paketId} {
