@@ -36,6 +36,21 @@ export const db = initializeFirestore(app, {
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// One-time startup self-healing to prevent localStorage quota exhaustion by clearing redundant/unused cache keys
+if (typeof window !== 'undefined') {
+  try {
+    const obsoleteKeys = ['hotels_db'];
+    obsoleteKeys.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        console.log(`[Local Cache Cleanup] Cleaned redundant/obsolete key on startup: ${key}`);
+      }
+    });
+  } catch (e) {
+    console.info('[Local Cache Cleanup] Non-critical startup cleanup bypassed:', e);
+  }
+}
+
 // Prevent background Firestore assertion errors and reachability logs from disrupting the UX or appearing as red-critical errors
 if (typeof window !== 'undefined') {
   const originalConsoleError = console.error;
@@ -158,7 +173,18 @@ function saveLocalCollection(collectionName: string, data: any[]) {
   try {
     localStorage.setItem(`db_${collectionName}`, JSON.stringify(data));
   } catch (e) {
-    console.warn(`Failed to save local collection ${collectionName} to localStorage due to space quota:`, e);
+    // Gracefully handle space quota exceeded with console.info to operate perfectly in-memory and suppress noisy on-screen warnings
+    console.info(`[Offline Cache Info] Local collection '${collectionName}' is stored in-memory (localStorage quota reached):`, e);
+    
+    // Attempt self-healing by clearing stale redundant keys on quota exhaustion
+    try {
+      if (localStorage.getItem('hotels_db')) {
+        localStorage.removeItem('hotels_db');
+        console.log('[Local Cache Healing] Cleared redundant hotels_db cache to reclaim space.');
+      }
+    } catch {
+      // ignore
+    }
   }
   // Dispatch local change event to wake up onSnapshot listeners instantly
   window.dispatchEvent(new CustomEvent(`local-db-change:${collectionName}`));

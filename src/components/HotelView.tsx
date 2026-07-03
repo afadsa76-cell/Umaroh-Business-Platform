@@ -22,6 +22,9 @@ const MASTER_PERIODS = [
 
 const newMaysanHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Maysan Int. Group');
 const newEmaarHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Emaar Al Diyafa');
+const newKonozHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Konoz');
+const newAreejTabahHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Areej Tabah');
+const newDiarAlManasikHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Diar Al Manasik');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 const oldMaysanHotelsUnused: any[] = [
   {
@@ -526,10 +529,18 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     if (cached) {
       try {
         const parsed = JSON.parse(cached) as Hotel[];
-        // Replace existing Maysan, ROWA, Alharmain, and Emaar hotels in stored parsed data with updated ones from defaultHotels
+        // Replace existing Maysan, ROWA, Alharmain, Emaar, Konoz, and Areej Tabah hotels in stored parsed data with updated ones from defaultHotels
         const parsedUpdated = parsed.map(ph => {
           const matchingDefault = defaultHotels.find(dh => dh.id === ph.id);
-          if (matchingDefault && (matchingDefault.vendor === 'Maysan Int. Group' || matchingDefault.vendor === 'ROWA' || matchingDefault.vendor === 'Alharmain Hotels Management' || matchingDefault.vendor === 'Emaar Al Diyafa')) {
+          if (matchingDefault && (
+            matchingDefault.vendor === 'Maysan Int. Group' || 
+            matchingDefault.vendor === 'ROWA' || 
+            matchingDefault.vendor === 'Alharmain Hotels Management' || 
+            matchingDefault.vendor === 'Emaar Al Diyafa' ||
+            matchingDefault.vendor === 'Konoz' ||
+            matchingDefault.vendor === 'Areej Tabah' ||
+            matchingDefault.vendor === 'Diar Al Manasik'
+          )) {
             return matchingDefault;
           }
           return ph;
@@ -539,7 +550,11 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         const missingHotels = defaultHotels.filter(h => !parsedIds.has(h.id));
         if (missingHotels.length > 0) {
           const merged = [...parsedUpdated, ...missingHotels];
-          localStorage.setItem('umaroh_db_hotels', JSON.stringify(merged));
+          try {
+            localStorage.setItem('umaroh_db_hotels', JSON.stringify(merged));
+          } catch (err) {
+            console.info('[umaroh_db_hotels cache] Bypassed local caching (quota reached):', err);
+          }
           return merged;
         }
         return parsedUpdated;
@@ -552,7 +567,11 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
 
   const saveHotels = (updated: Hotel[]) => {
     setLocalHotels(updated);
-    localStorage.setItem('umaroh_db_hotels', JSON.stringify(updated));
+    try {
+      localStorage.setItem('umaroh_db_hotels', JSON.stringify(updated));
+    } catch (err) {
+      console.info('[umaroh_db_hotels cache] Failed to save umaroh_db_hotels:', err);
+    }
   };
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -793,6 +812,57 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
           await batch.commit();
           console.log('Automated silent sync for Emaar completed!');
         }
+
+        const qKonoz = query(collection(db, 'master_hotels'), where('vendor', '==', 'Konoz'));
+        const konozSnapshot = await getDocs(qKonoz);
+        if (konozSnapshot.size < newKonozHotels.length) {
+          console.log('Automated silent sync: Konoz hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newKonozHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for Konoz completed!');
+        }
+
+        const qAreej = query(collection(db, 'master_hotels'), where('vendor', '==', 'Areej Tabah'));
+        const areejSnapshot = await getDocs(qAreej);
+        if (areejSnapshot.size < newAreejTabahHotels.length) {
+          console.log('Automated silent sync: Areej Tabah hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newAreejTabahHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for Areej Tabah completed!');
+        }
+
+        const qDiar = query(collection(db, 'master_hotels'), where('vendor', '==', 'Diar Al Manasik'));
+        const diarSnapshot = await getDocs(qDiar);
+        if (diarSnapshot.size < newDiarAlManasikHotels.length) {
+          console.log('Automated silent sync: Diar Al Manasik hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newDiarAlManasikHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for Diar Al Manasik completed!');
+        }
       } catch (e) {
         console.warn('Silent sync checks failed. This is expected if the current user is signed out or non-operational user:', e);
       }
@@ -835,6 +905,30 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         batch.set(itemRef, payload, { merge: true });
       });
       newEmaarHotels.forEach((hotel) => {
+        const itemRef = doc(db, 'master_hotels', hotel.id);
+        const payload = {
+          ...hotel,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, payload, { merge: true });
+      });
+      newKonozHotels.forEach((hotel) => {
+        const itemRef = doc(db, 'master_hotels', hotel.id);
+        const payload = {
+          ...hotel,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, payload, { merge: true });
+      });
+      newAreejTabahHotels.forEach((hotel) => {
+        const itemRef = doc(db, 'master_hotels', hotel.id);
+        const payload = {
+          ...hotel,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, payload, { merge: true });
+      });
+      newDiarAlManasikHotels.forEach((hotel) => {
         const itemRef = doc(db, 'master_hotels', hotel.id);
         const payload = {
           ...hotel,

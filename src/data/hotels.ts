@@ -2448,748 +2448,20 @@ export const newAlharmainHotels: Hotel[] = [
 ];
 
 export const defaultHotels: Hotel[] = [
-  {
-    "id": "dar-al-eiman-al-haram-diar",
-    "name": "Dar Al Eiman Al Haram",
-    "city": "Madinah",
+    {
+    "id": "le-meridien-towers-diar",
+    "name": "Le Meridien Towers",
+    "city": "Makkah",
     "vendor": "Diar Al Manasik",
     "mealPlan": "FB",
     "stars": 5,
     "seasons": [
       {
-        "range": "16/06/2026 TO 30/06/2026",
+        "range": "07/06/2026 TO 13/08/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 1000
-          },
-          {
-            "roomType": "Triple",
-            "price": 1300
-          },
-          {
-            "roomType": "Quad",
-            "price": 1600
-          }
-        ]
-      },
-      {
-        "range": "30/06/2026 TO 15/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 800
-          },
-          {
-            "roomType": "Triple",
-            "price": 925
-          },
-          {
-            "roomType": "Quad",
-            "price": 1050
-          }
-        ]
-      },
-      {
-        "range": "15/08/2026 TO 11/11/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 900
-          },
-          {
-            "roomType": "Triple",
-            "price": 1025
-          },
-          {
-            "roomType": "Quad",
-            "price": 1150
-          }
-        ]
-      },
-      {
-        "range": "11/11/2026 TO 10/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 1100
-          },
-          {
-            "roomType": "Triple",
-            "price": 1225
-          },
-          {
-            "roomType": "Quad",
-            "price": 1350
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "millennium-al-aqeeq-diar",
-    "name": "Millennium Al Aqeeq",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 15/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 750
-          },
-          {
-            "roomType": "Triple",
-            "price": 875
-          },
-          {
-            "roomType": "Quad",
-            "price": 1000
-          }
-        ]
-      },
-      {
-        "range": "15/08/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 800
-          },
-          {
-            "roomType": "Triple",
-            "price": 925
-          },
-          {
-            "roomType": "Quad",
-            "price": 1050
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-harithia-diar",
-    "name": "Al Harithia",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 750
-          },
-          {
-            "roomType": "Triple",
-            "price": 900
-          },
-          {
-            "roomType": "Quad",
-            "price": 1050
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "taiba-front-diar",
-    "name": "Taiba Front",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 15/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 700
-          },
-          {
-            "roomType": "Triple",
-            "price": 825
-          },
-          {
-            "roomType": "Quad",
-            "price": 950
-          }
-        ]
-      },
-      {
-        "range": "15/08/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 750
-          },
-          {
-            "roomType": "Triple",
-            "price": 875
-          },
-          {
-            "roomType": "Quad",
-            "price": 1000
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "shaza-regency-diar",
-    "name": "Shaza Regency",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 580
-          },
-          {
-            "roomType": "Quad",
-            "price": 660
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "ruve-diar",
-    "name": "Ruve",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 15/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 700
-          },
-          {
-            "roomType": "Triple",
-            "price": 825
-          },
-          {
-            "roomType": "Quad",
-            "price": 950
-          }
-        ]
-      },
-      {
-        "range": "15/08/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 725
-          },
-          {
-            "roomType": "Triple",
-            "price": 850
-          },
-          {
-            "roomType": "Quad",
-            "price": 975
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-plaza-al-madinah-diar",
-    "name": "Grand Plaza Al Madinah",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 480
-          },
-          {
-            "roomType": "Triple",
-            "price": 550
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "winner-inn-alkhair-diar",
-    "name": "Winner Inn Alkhair",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 31/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 480
-          },
-          {
-            "roomType": "Triple",
-            "price": 530
-          },
-          {
-            "roomType": "Quad",
-            "price": 580
-          }
-        ]
-      },
-      {
-        "range": "31/08/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 550
-          },
-          {
-            "roomType": "Quad",
-            "price": 600
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-ansar-golden-tulip-diar",
-    "name": "Al Ansar Golden Tulip",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "15/07/2026 TO 01/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 490
-          },
-          {
-            "roomType": "Triple",
-            "price": 535
-          },
-          {
-            "roomType": "Quad",
-            "price": 580
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 01/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 555
-          },
-          {
-            "roomType": "Quad",
-            "price": 600
-          }
-        ]
-      },
-      {
-        "range": "01/09/2026 TO 01/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 530
-          },
-          {
-            "roomType": "Triple",
-            "price": 575
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "deyar-al-eiman-diar",
-    "name": "Deyar Al Eiman",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 15/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 475
-          },
-          {
-            "roomType": "Triple",
-            "price": 525
-          },
-          {
-            "roomType": "Quad",
-            "price": 575
-          }
-        ]
-      },
-      {
-        "range": "15/08/2026 TO 11/11/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 525
-          },
-          {
-            "roomType": "Triple",
-            "price": 575
-          },
-          {
-            "roomType": "Quad",
-            "price": 625
-          }
-        ]
-      },
-      {
-        "range": "11/11/2026 TO 10/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 575
-          },
-          {
-            "roomType": "Triple",
-            "price": 625
-          },
-          {
-            "roomType": "Quad",
-            "price": 675
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "odest-diar",
-    "name": "Odest",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 14/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      },
-      {
-        "range": "14/08/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 460
-          },
-          {
-            "roomType": "Triple",
-            "price": 505
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "astoneast-taiba-hotel-diar",
-    "name": "Astoneast Taiba Hotel",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 15/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 370
-          },
-          {
-            "roomType": "Triple",
-            "price": 410
-          },
-          {
-            "roomType": "Quad",
-            "price": 450
-          }
-        ]
-      },
-      {
-        "range": "15/07/2026 TO 01/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 400
-          },
-          {
-            "roomType": "Triple",
-            "price": 440
-          },
-          {
-            "roomType": "Quad",
-            "price": 480
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 01/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 460
-          },
-          {
-            "roomType": "Triple",
-            "price": 500
-          },
-          {
-            "roomType": "Quad",
-            "price": 540
-          }
-        ]
-      },
-      {
-        "range": "01/09/2026 TO 01/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 540
-          },
-          {
-            "roomType": "Quad",
-            "price": 580
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "durrat-al-eiman-diar",
-    "name": "Durrat Al Eiman",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 15/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 425
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 525
-          }
-        ]
-      },
-      {
-        "range": "15/08/2026 TO 11/11/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 475
-          },
-          {
-            "roomType": "Triple",
-            "price": 525
-          },
-          {
-            "roomType": "Quad",
-            "price": 575
-          }
-        ]
-      },
-      {
-        "range": "11/11/2026 TO 10/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 525
-          },
-          {
-            "roomType": "Triple",
-            "price": 575
-          },
-          {
-            "roomType": "Quad",
-            "price": 625
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "jawharat-al-rashid-diar",
-    "name": "Jawharat Al Rashid",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 350
-          },
-          {
-            "roomType": "Triple",
-            "price": 390
-          },
-          {
-            "roomType": "Quad",
-            "price": 430
-          }
-        ]
-      },
-      {
-        "range": "31/07/2026 TO 31/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 390
-          },
-          {
-            "roomType": "Triple",
-            "price": 430
-          },
-          {
-            "roomType": "Quad",
-            "price": 470
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-zowar-diar",
-    "name": "Grand Zowar",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 31/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 350
-          },
-          {
-            "roomType": "Triple",
-            "price": 390
-          },
-          {
-            "roomType": "Quad",
-            "price": 430
-          }
-        ]
-      },
-      {
-        "range": "31/07/2026 TO 31/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 390
-          },
-          {
-            "roomType": "Triple",
-            "price": 430
-          },
-          {
-            "roomType": "Quad",
-            "price": 470
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "plaza-inn-ohud-diar",
-    "name": "Plaza Inn Ohud",
-    "city": "Madinah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 335
+            "price": 305
           },
           {
             "roomType": "Triple",
@@ -3197,7 +2469,24 @@ export const defaultHotels: Hotel[] = [
           },
           {
             "roomType": "Quad",
-            "price": 435
+            "price": 465
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 19/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 325
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 485
           }
         ]
       }
@@ -3216,15 +2505,15 @@ export const defaultHotels: Hotel[] = [
         "prices": [
           {
             "roomType": "Double",
-            "price": 1150
+            "price": 1125
           },
           {
             "roomType": "Triple",
-            "price": 1420
+            "price": 1395
           },
           {
             "roomType": "Quad",
-            "price": 1690
+            "price": 1665
           }
         ]
       },
@@ -3233,15 +2522,15 @@ export const defaultHotels: Hotel[] = [
         "prices": [
           {
             "roomType": "Double",
-            "price": 1230
+            "price": 1200
           },
           {
             "roomType": "Triple",
-            "price": 1500
+            "price": 1470
           },
           {
             "roomType": "Quad",
-            "price": 1770
+            "price": 1740
           }
         ]
       }
@@ -3260,15 +2549,15 @@ export const defaultHotels: Hotel[] = [
         "prices": [
           {
             "roomType": "Double",
-            "price": 1025
+            "price": 1000
           },
           {
             "roomType": "Triple",
-            "price": 1225
+            "price": 1200
           },
           {
             "roomType": "Quad",
-            "price": 1425
+            "price": 1400
           }
         ]
       },
@@ -3277,15 +2566,15 @@ export const defaultHotels: Hotel[] = [
         "prices": [
           {
             "roomType": "Double",
-            "price": 1100
+            "price": 1075
           },
           {
             "roomType": "Triple",
-            "price": 1300
+            "price": 1275
           },
           {
             "roomType": "Quad",
-            "price": 1500
+            "price": 1475
           }
         ]
       }
@@ -3348,15 +2637,15 @@ export const defaultHotels: Hotel[] = [
         "prices": [
           {
             "roomType": "Double",
-            "price": 1000
+            "price": 975
           },
           {
             "roomType": "Triple",
-            "price": 1130
+            "price": 1105
           },
           {
             "roomType": "Quad",
-            "price": 1260
+            "price": 1235
           }
         ]
       }
@@ -3364,7 +2653,7 @@ export const defaultHotels: Hotel[] = [
   },
   {
     "id": "makkah-towers-owner-diar",
-    "name": "Makkah Towers (Owner Rooms)",
+    "name": "Makkah Towers (Owners Rooms)",
     "city": "Makkah",
     "vendor": "Diar Al Manasik",
     "mealPlan": "FB",
@@ -3415,7 +2704,7 @@ export const defaultHotels: Hotel[] = [
     "stars": 4,
     "seasons": [
       {
-        "range": "16/06/2026 TO 25/06/2026",
+        "range": "16/06/2026 TO 02/07/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -3432,53 +2721,19 @@ export const defaultHotels: Hotel[] = [
         ]
       },
       {
-        "range": "25/06/2026 TO 09/07/2026",
+        "range": "02/07/2026 TO 30/07/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 495
+            "price": 520
           },
           {
             "roomType": "Triple",
-            "price": 575
+            "price": 600
           },
           {
             "roomType": "Quad",
-            "price": 655
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 590
-          },
-          {
-            "roomType": "Quad",
-            "price": 670
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 535
-          },
-          {
-            "roomType": "Triple",
-            "price": 615
-          },
-          {
-            "roomType": "Quad",
-            "price": 695
+            "price": 680
           }
         ]
       },
@@ -3649,7 +2904,7 @@ export const defaultHotels: Hotel[] = [
     "stars": 4,
     "seasons": [
       {
-        "range": "25/06/2026 TO 09/07/2026",
+        "range": "25/06/2026 TO 30/07/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -3666,7 +2921,146 @@ export const defaultHotels: Hotel[] = [
         ]
       },
       {
-        "range": "09/07/2026 TO 30/07/2026",
+        "range": "30/07/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 425
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 525
+          }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-ajyad-diar",
+    "name": "Snood Ajyad",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 385
+          },
+          {
+            "roomType": "Triple",
+            "price": 430
+          },
+          {
+            "roomType": "Quad",
+            "price": 475
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-maqam-diar",
+    "name": "Maysan Al Maqam",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 02/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 400
+          },
+          {
+            "roomType": "Quad",
+            "price": 450
+          }
+        ]
+      },
+      {
+        "range": "02/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 450
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -3683,7 +3077,7 @@ export const defaultHotels: Hotel[] = [
         ]
       },
       {
-        "range": "30/07/2026 TO 05/09/2026",
+        "range": "15/09/2026 TO 15/10/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -3698,165 +3092,19 @@ export const defaultHotels: Hotel[] = [
             "price": 550
           }
         ]
-      },
-      {
-        "range": "05/09/2026 TO 15/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 425
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 525
-          }
-        ]
       }
     ]
   },
   {
-    "id": "maysan-al-maqam-diar",
-    "name": "Maysan Al Maqam",
+    "id": "maather-al-eiman-diar",
+    "name": "Maather Al Eiman",
     "city": "Makkah",
     "vendor": "Diar Al Manasik",
     "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 25/06/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 345
-          },
-          {
-            "roomType": "Triple",
-            "price": 395
-          },
-          {
-            "roomType": "Quad",
-            "price": 445
-          }
-        ]
-      },
-      {
-        "range": "25/06/2026 TO 09/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 385
-          },
-          {
-            "roomType": "Triple",
-            "price": 435
-          },
-          {
-            "roomType": "Quad",
-            "price": 485
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 400
-          },
-          {
-            "roomType": "Triple",
-            "price": 450
-          },
-          {
-            "roomType": "Quad",
-            "price": 500
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 415
-          },
-          {
-            "roomType": "Triple",
-            "price": 465
-          },
-          {
-            "roomType": "Quad",
-            "price": 515
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 450
-          },
-          {
-            "roomType": "Triple",
-            "price": 500
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 15/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 395
-          },
-          {
-            "roomType": "Triple",
-            "price": 445
-          },
-          {
-            "roomType": "Quad",
-            "price": 495
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "mather-al-eiman-diar",
-    "name": "Mather Al Eiman",
-    "city": "Makkah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 3,
+    "stars": 4,
     "seasons": [
       {
         "range": "30/06/2026 TO 01/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 280
-          },
-          {
-            "roomType": "Triple",
-            "price": 325
-          },
-          {
-            "roomType": "Quad",
-            "price": 370
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 19/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -3871,36 +3119,9 @@ export const defaultHotels: Hotel[] = [
             "price": 390
           }
         ]
-      }
-    ]
-  },
-  {
-    "id": "le-meredien-towers-diar",
-    "name": "Le Meredien Towers",
-    "city": "Makkah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "07/06/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 305
-          },
-          {
-            "roomType": "Triple",
-            "price": 385
-          },
-          {
-            "roomType": "Quad",
-            "price": 465
-          }
-        ]
       },
       {
-        "range": "14/08/2026 TO 19/09/2026",
+        "range": "01/08/2026 TO 19/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -3908,55 +3129,11 @@ export const defaultHotels: Hotel[] = [
           },
           {
             "roomType": "Triple",
-            "price": 405
+            "price": 370
           },
           {
             "roomType": "Quad",
-            "price": 485
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "saja-makkah-diar",
-    "name": "Saja Makkah",
-    "city": "Makkah",
-    "vendor": "Diar Al Manasik",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 01/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 280
-          },
-          {
-            "roomType": "Triple",
-            "price": 330
-          },
-          {
-            "roomType": "Quad",
-            "price": 380
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 19/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 300
-          },
-          {
-            "roomType": "Triple",
-            "price": 350
-          },
-          {
-            "roomType": "Quad",
-            "price": 400
+            "price": 415
           }
         ]
       }
@@ -3968,10 +3145,27 @@ export const defaultHotels: Hotel[] = [
     "city": "Makkah",
     "vendor": "Diar Al Manasik",
     "mealPlan": "FB",
-    "stars": 3,
+    "stars": 4,
     "seasons": [
       {
-        "range": "16/06/2026 TO 01/08/2026",
+        "range": "20/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 200
+          },
+          {
+            "roomType": "Triple",
+            "price": 240
+          },
+          {
+            "roomType": "Quad",
+            "price": 280
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 19/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -3986,21 +3180,762 @@ export const defaultHotels: Hotel[] = [
             "price": 300
           }
         ]
-      },
+      }
+    ]
+  },
+  {
+    "id": "al-harithia-diar",
+    "name": "Al Harithia",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
       {
-        "range": "01/08/2026 TO 19/09/2026",
+        "range": "30/06/2026 TO 20/09/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 240
+            "price": 750
           },
           {
             "roomType": "Triple",
-            "price": 280
+            "price": 900
           },
           {
             "roomType": "Quad",
-            "price": 320
+            "price": 1050
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-eiman-al-haram-diar",
+    "name": "Dar Al Eiman Al Haram",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 30/06/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1300
+          },
+          {
+            "roomType": "Quad",
+            "price": 1600
+          }
+        ]
+      },
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 925
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 900
+          },
+          {
+            "roomType": "Triple",
+            "price": 1025
+          },
+          {
+            "roomType": "Quad",
+            "price": 1150
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1225
+          },
+          {
+            "roomType": "Quad",
+            "price": 1350
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "millennium-al-aqeeq-diar",
+    "name": "Millennium Al Aqeeq",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 875
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 925
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shaza-regency-diar",
+    "name": "Shaza Regency",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 580
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taiba-front-diar",
+    "name": "Taiba Front",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 875
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruve-diar",
+    "name": "Ruve",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 850
+          },
+          {
+            "roomType": "Quad",
+            "price": 975
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-al-madinah-diar",
+    "name": "Grand Plaza Al Madinah",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "13/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 545
+          },
+          {
+            "roomType": "Quad",
+            "price": 610
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "winner-inn-alkhair-diar",
+    "name": "Winner Inn Alkhair",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 520
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-ansar-golden-tulip-diar",
+    "name": "Al Ansar Golden Tulip",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 565
+          },
+          {
+            "roomType": "Quad",
+            "price": 610
+          }
+        ]
+      },
+      {
+        "range": "16/09/2026 TO 21/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 540
+          },
+          {
+            "roomType": "Triple",
+            "price": 585
+          },
+          {
+            "roomType": "Quad",
+            "price": 630
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "deyar-al-eiman-diar",
+    "name": "Deyar Al Eiman",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 475
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 625
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 575
+          },
+          {
+            "roomType": "Triple",
+            "price": 625
+          },
+          {
+            "roomType": "Quad",
+            "price": 675
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "odest-diar",
+    "name": "Odest",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 440
+          },
+          {
+            "roomType": "Triple",
+            "price": 485
+          },
+          {
+            "roomType": "Quad",
+            "price": 530
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 505
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "durrat-al-eiman-diar",
+    "name": "Durrat Al Eiman",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 425
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 525
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 475
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 625
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-naeem-diar",
+    "name": "Dar Al Naeem",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taiba-hills-diar",
+    "name": "Taiba Hills",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruaa-grand-diar",
+    "name": "Ruaa Grand",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jawharat-al-rashid-diar",
+    "name": "Jawharat Al Rashid",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 31/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "31/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 430
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-zowar-diar",
+    "name": "Grand Zowar",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 31/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "31/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 430
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "plaza-inn-ohud-diar",
+    "name": "Plaza Inn Ohud",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 335
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 435
           }
         ]
       }
@@ -12683,6 +12618,96 @@ export const defaultHotels: Hotel[] = [
       }
     ]
   },
+    {
+    "id": "fairmont-makkah-konoz",
+    "name": "Fairmont Makkah",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 08/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1350
+          },
+          {
+            "roomType": "Triple",
+            "price": 1680
+          },
+          {
+            "roomType": "Quad",
+            "price": 2010
+          }
+        ]
+      },
+      {
+        "range": "09/07/2026 TO 16/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1470
+          },
+          {
+            "roomType": "Triple",
+            "price": 1800
+          },
+          {
+            "roomType": "Quad",
+            "price": 2130
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "marwa-rotana-konoz",
+    "name": "Marwa Rotana",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1200
+          },
+          {
+            "roomType": "Triple",
+            "price": 1480
+          },
+          {
+            "roomType": "Quad",
+            "price": 1760
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1350
+          },
+          {
+            "roomType": "Triple",
+            "price": 1630
+          },
+          {
+            "roomType": "Quad",
+            "price": 1910
+          }
+        ]
+      }
+    ]
+  },
   {
     "id": "movenpick-makkah-konoz",
     "name": "Movenpick Makkah",
@@ -12690,21 +12715,39 @@ export const defaultHotels: Hotel[] = [
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 5,
+    "bintang": 5,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 01/08/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 950
-          },
-          {
-            "roomType": "Triple",
             "price": 1150
           },
           {
+            "roomType": "Triple",
+            "price": 1375
+          },
+          {
             "roomType": "Quad",
-            "price": 1350
+            "price": 1600
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1200
+          },
+          {
+            "roomType": "Triple",
+            "price": 1420
+          },
+          {
+            "roomType": "Quad",
+            "price": 1640
           }
         ]
       }
@@ -12717,9 +12760,273 @@ export const defaultHotels: Hotel[] = [
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 5,
+    "bintang": 5,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1325
+          },
+          {
+            "roomType": "Quad",
+            "price": 1550
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1200
+          },
+          {
+            "roomType": "Triple",
+            "price": 1425
+          },
+          {
+            "roomType": "Quad",
+            "price": 1650
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-safwa-tower-1-konoz",
+    "name": "Al Safwa (Tower 1)",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1200
+          },
+          {
+            "roomType": "Quad",
+            "price": 1400
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1300
+          },
+          {
+            "roomType": "Quad",
+            "price": 1500
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-safwa-tower-3-konoz",
+    "name": "Al Safwa (Tower 3)",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 900
+          },
+          {
+            "roomType": "Triple",
+            "price": 1100
+          },
+          {
+            "roomType": "Quad",
+            "price": 1300
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1200
+          },
+          {
+            "roomType": "Quad",
+            "price": 1400
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "elaf-kinda-konoz",
+    "name": "Elaf Kinda",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 08/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 780
+          },
+          {
+            "roomType": "Triple",
+            "price": 930
+          },
+          {
+            "roomType": "Quad",
+            "price": 1080
+          }
+        ]
+      },
+      {
+        "range": "09/07/2026 TO 30/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 850
+          },
+          {
+            "roomType": "Triple",
+            "price": 1000
+          },
+          {
+            "roomType": "Quad",
+            "price": 1150
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "makarem-ajyad-front-tower-konoz",
+    "name": "Makarem Ajyad (Front Tower)",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 31/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 845
+          },
+          {
+            "roomType": "Quad",
+            "price": 965
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 11/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 775
+          },
+          {
+            "roomType": "Triple",
+            "price": 895
+          },
+          {
+            "roomType": "Quad",
+            "price": 1015
+          }
+        ]
+      },
+      {
+        "range": "11/10/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 825
+          },
+          {
+            "roomType": "Triple",
+            "price": 945
+          },
+          {
+            "roomType": "Quad",
+            "price": 1065
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "makkah-tower-konoz",
+    "name": "Makkah Tower",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 30/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 750
+          },
+          {
+            "roomType": "Quint",
+            "price": 830
+          }
+        ]
+      },
+      {
+        "range": "30/07/2026 TO 30/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -12727,11 +13034,68 @@ export const defaultHotels: Hotel[] = [
           },
           {
             "roomType": "Triple",
-            "price": 1150
+            "price": 950
           },
           {
             "roomType": "Quad",
-            "price": 1350
+            "price": 950
+          },
+          {
+            "roomType": "Quint",
+            "price": 1080
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "le-meridien-tower-konoz",
+    "name": "Le Meridien Tower",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 350
+          },
+          {
+            "roomType": "Quad",
+            "price": 420
+          },
+          {
+            "roomType": "Quint",
+            "price": 500
+          }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 320
+          },
+          {
+            "roomType": "Triple",
+            "price": 370
+          },
+          {
+            "roomType": "Quad",
+            "price": 440
+          },
+          {
+            "roomType": "Quint",
+            "price": 520
           }
         ]
       }
@@ -12743,39 +13107,40 @@ export const defaultHotels: Hotel[] = [
     "city": "Makkah",
     "vendor": "Konoz",
     "mealPlan": "FB",
-    "stars": 5,
+    "stars": 4,
+    "bintang": 4,
     "seasons": [
       {
-        "range": "16/06/2026 TO 01/08/2026",
+        "range": "16/06/2026 TO 01/07/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 575
+            "price": 600
           },
           {
             "roomType": "Triple",
-            "price": 675
+            "price": 700
           },
           {
             "roomType": "Quad",
-            "price": 775
+            "price": 800
           }
         ]
       },
       {
-        "range": "01/08/2026 TO 05/10/2026",
+        "range": "01/07/2026 TO 01/09/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 670
+            "price": 750
           },
           {
             "roomType": "Triple",
-            "price": 770
+            "price": 850
           },
           {
             "roomType": "Quad",
-            "price": 870
+            "price": 950
           }
         ]
       }
@@ -12787,49 +13152,74 @@ export const defaultHotels: Hotel[] = [
     "city": "Makkah",
     "vendor": "Konoz",
     "mealPlan": "FB",
-    "stars": 5,
+    "stars": 4,
+    "bintang": 4,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 580
+            "price": 600
           },
           {
             "roomType": "Triple",
-            "price": 680
+            "price": 700
           },
           {
             "roomType": "Quad",
-            "price": 780
+            "price": 800
           }
         ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-mashaer-konoz",
-    "name": "Maysan Al Mashaer",
-    "city": "Makkah",
-    "vendor": "Konoz",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
+      },
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "15/08/2026 TO 15/10/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 520
+            "price": 650
           },
           {
             "roomType": "Triple",
-            "price": 610
+            "price": 750
           },
           {
             "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
             "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 800
+          },
+          {
+            "roomType": "Quad",
+            "price": 900
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 950
+          },
+          {
+            "roomType": "Triple",
+            "price": 1050
+          },
+          {
+            "roomType": "Quad",
+            "price": 1150
           }
         ]
       }
@@ -12841,7 +13231,8 @@ export const defaultHotels: Hotel[] = [
     "city": "Makkah",
     "vendor": "Konoz",
     "mealPlan": "FB",
-    "stars": 5,
+    "stars": 4,
+    "bintang": 4,
     "seasons": [
       {
         "range": "20/06/2026 TO 01/07/2026",
@@ -12857,6 +13248,10 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 690
+          },
+          {
+            "roomType": "Quint",
+            "price": 810
           }
         ]
       },
@@ -12874,6 +13269,10 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 780
+          },
+          {
+            "roomType": "Quint",
+            "price": 900
           }
         ]
       },
@@ -12890,7 +13289,11 @@ export const defaultHotels: Hotel[] = [
           },
           {
             "roomType": "Quad",
-            "price": 820
+            "price": 830
+          },
+          {
+            "roomType": "Quint",
+            "price": 950
           }
         ]
       }
@@ -12902,7 +13305,8 @@ export const defaultHotels: Hotel[] = [
     "city": "Makkah",
     "vendor": "Konoz",
     "mealPlan": "FB",
-    "stars": 5,
+    "stars": 4,
+    "bintang": 4,
     "seasons": [
       {
         "range": "20/06/2026 TO 01/07/2026",
@@ -12918,6 +13322,10 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 620
+          },
+          {
+            "roomType": "Quint",
+            "price": 770
           }
         ]
       },
@@ -12935,6 +13343,10 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 700
+          },
+          {
+            "roomType": "Quint",
+            "price": 850
           }
         ]
       },
@@ -12952,6 +13364,89 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 750
+          },
+          {
+            "roomType": "Quint",
+            "price": 900
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-mashaer-konoz",
+    "name": "Maysan Al Mashaer",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 4,
+    "bintang": 4,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 650
+          },
+          {
+            "roomType": "Quad",
+            "price": 750
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 700
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 650
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 850
+          },
+          {
+            "roomType": "Triple",
+            "price": 950
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
           }
         ]
       }
@@ -12964,9 +13459,10 @@ export const defaultHotels: Hotel[] = [
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 4,
+    "bintang": 4,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -12979,6 +13475,73 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 550
+          },
+          {
+            "roomType": "Quint",
+            "price": 650
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          },
+          {
+            "roomType": "Quint",
+            "price": 700
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 650
+          },
+          {
+            "roomType": "Quint",
+            "price": 750
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
+          },
+          {
+            "roomType": "Quint",
+            "price": 900
           }
         ]
       }
@@ -12990,10 +13553,11 @@ export const defaultHotels: Hotel[] = [
     "city": "Makkah",
     "vendor": "Konoz",
     "mealPlan": "FB",
-    "stars": 4,
+    "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 30/07/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13006,6 +13570,31 @@ export const defaultHotels: Hotel[] = [
           {
             "roomType": "Quad",
             "price": 520
+          },
+          {
+            "roomType": "Quint",
+            "price": 620
+          }
+        ]
+      },
+      {
+        "range": "30/07/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          },
+          {
+            "roomType": "Quint",
+            "price": 650
           }
         ]
       }
@@ -13018,21 +13607,73 @@ export const defaultHotels: Hotel[] = [
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 450
+            "price": 440
           },
           {
             "roomType": "Triple",
-            "price": 495
+            "price": 485
           },
           {
             "roomType": "Quad",
+            "price": 530
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 490
+          },
+          {
+            "roomType": "Triple",
+            "price": 535
+          },
+          {
+            "roomType": "Quad",
+            "price": 580
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
             "price": 540
+          },
+          {
+            "roomType": "Triple",
+            "price": 585
+          },
+          {
+            "roomType": "Quad",
+            "price": 630
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 640
+          },
+          {
+            "roomType": "Triple",
+            "price": 685
+          },
+          {
+            "roomType": "Quad",
+            "price": 730
           }
         ]
       }
@@ -13045,9 +13686,10 @@ export const defaultHotels: Hotel[] = [
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13062,6 +13704,57 @@ export const defaultHotels: Hotel[] = [
             "price": 510
           }
         ]
+      },
+      {
+        "range": "15/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 505
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 490
+          },
+          {
+            "roomType": "Triple",
+            "price": 535
+          },
+          {
+            "roomType": "Quad",
+            "price": 580
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 590
+          },
+          {
+            "roomType": "Triple",
+            "price": 635
+          },
+          {
+            "roomType": "Quad",
+            "price": 680
+          }
+        ]
       }
     ]
   },
@@ -13071,10 +13764,11 @@ export const defaultHotels: Hotel[] = [
     "city": "Makkah",
     "vendor": "Konoz",
     "mealPlan": "FB",
-    "stars": 4,
+    "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13089,6 +13783,57 @@ export const defaultHotels: Hotel[] = [
             "price": 550
           }
         ]
+      },
+      {
+        "range": "15/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 650
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
+          }
+        ]
       }
     ]
   },
@@ -13099,9 +13844,10 @@ export const defaultHotels: Hotel[] = [
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13109,134 +13855,16 @@ export const defaultHotels: Hotel[] = [
           },
           {
             "roomType": "Triple",
-            "price": 395
+            "price": 390
           },
           {
             "roomType": "Quad",
-            "price": 440
+            "price": 430
           }
         ]
-      }
-    ]
-  },
-  {
-    "id": "talal-ajyad-konoz",
-    "name": "Talal Ajyad",
-    "city": "Makkah",
-    "vendor": "Konoz",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
+      },
       {
-        "range": "16/06/2026 TO 19/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 310
-          },
-          {
-            "roomType": "Triple",
-            "price": 355
-          },
-          {
-            "roomType": "Quad",
-            "price": 400
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "badr-al-massah-konoz",
-    "name": "Badr Al Massah",
-    "city": "Makkah",
-    "vendor": "Konoz",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 19/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 270
-          },
-          {
-            "roomType": "Triple",
-            "price": 315
-          },
-          {
-            "roomType": "Quad",
-            "price": 360
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "nawazi-towers-konoz",
-    "name": "Nawazi Towers",
-    "city": "Makkah",
-    "vendor": "Konoz",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 19/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 190
-          },
-          {
-            "roomType": "Triple",
-            "price": 235
-          },
-          {
-            "roomType": "Quad",
-            "price": 280
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-al-rayyan-konoz",
-    "name": "Snood Al Rayyan",
-    "city": "Makkah",
-    "vendor": "Konoz",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 19/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 170
-          },
-          {
-            "roomType": "Triple",
-            "price": 210
-          },
-          {
-            "roomType": "Quad",
-            "price": 250
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-barakah-mawddah-konoz",
-    "name": "Al Barakah Mawddah",
-    "city": "Makkah",
-    "vendor": "Konoz",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "15/08/2026 TO 15/10/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13251,19 +13879,736 @@ export const defaultHotels: Hotel[] = [
             "price": 460
           }
         ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 540
+          },
+          {
+            "roomType": "Triple",
+            "price": 585
+          },
+          {
+            "roomType": "Quad",
+            "price": 630
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wahat-ajyad-konoz",
+    "name": "Wahat Ajyad",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 540
+          },
+          {
+            "roomType": "Triple",
+            "price": 585
+          },
+          {
+            "roomType": "Quad",
+            "price": 630
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "badr-al-massah-konoz",
+    "name": "Badr Al Massah",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 270
+          },
+          {
+            "roomType": "Triple",
+            "price": 310
+          },
+          {
+            "roomType": "Quad",
+            "price": 350
+          },
+          {
+            "roomType": "Quint",
+            "price": 440
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 340
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          },
+          {
+            "roomType": "Quint",
+            "price": 470
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 330
+          },
+          {
+            "roomType": "Triple",
+            "price": 370
+          },
+          {
+            "roomType": "Quad",
+            "price": 410
+          },
+          {
+            "roomType": "Quint",
+            "price": 500
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          },
+          {
+            "roomType": "Quint",
+            "price": 550
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rawabi-zamzam-konoz",
+    "name": "Rawabi Zamzam",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          },
+          {
+            "roomType": "Quint",
+            "price": 490
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 01/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          },
+          {
+            "roomType": "Quint",
+            "price": 530
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nawazi-towers-konoz",
+    "name": "Nawazi Towers",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 235
+          },
+          {
+            "roomType": "Quad",
+            "price": 280
+          }
+        ]
+      },
+      {
+        "range": "01/07/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
+            "roomType": "Triple",
+            "price": 260
+          },
+          {
+            "roomType": "Quad",
+            "price": 300
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nada-al-diafa-konoz",
+    "name": "Nada Al Diafa",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 30/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      },
+      {
+        "range": "30/07/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 520
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-al-rayyan-konoz",
+    "name": "Snood Al Rayyan",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/08/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 230
+          },
+          {
+            "roomType": "Quad",
+            "price": 270
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-barakah-mawddah-konoz",
+    "name": "Al Barakah Mawaddah",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "15/06/2026 TO 01/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "01/07/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 475
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jada-ajyad-konoz",
+    "name": "Jada Ajyad",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 340
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 320
+          },
+          {
+            "roomType": "Triple",
+            "price": 360
+          },
+          {
+            "roomType": "Quad",
+            "price": 400
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "address-ajyad-konoz",
+    "name": "Address Ajyad",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 250
+          },
+          {
+            "roomType": "Triple",
+            "price": 290
+          },
+          {
+            "roomType": "Quad",
+            "price": 330
+          }
+        ]
+      },
+      {
+        "range": "01/07/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 280
+          },
+          {
+            "roomType": "Triple",
+            "price": 320
+          },
+          {
+            "roomType": "Quad",
+            "price": 360
+          }
+        ]
       }
     ]
   },
   {
     "id": "maather-al-jiwaar-konoz",
-    "name": "Maather Al Jiwaar",
+    "name": "Maather Al Jiwar",
     "city": "Makkah",
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
+            "roomType": "Triple",
+            "price": 220
+          },
+          {
+            "roomType": "Quad",
+            "price": 220
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kayan-al-raya-konoz",
+    "name": "Kayan Al Raya",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 340
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 320
+          },
+          {
+            "roomType": "Triple",
+            "price": 360
+          },
+          {
+            "roomType": "Quad",
+            "price": 400
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zuwar-al-bait-konoz",
+    "name": "Zuwar Al Bait",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 30/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 250
+          },
+          {
+            "roomType": "Triple",
+            "price": 250
+          },
+          {
+            "roomType": "Quad",
+            "price": 250
+          },
+          {
+            "roomType": "Quint",
+            "price": 200
+          }
+        ]
+      },
+      {
+        "range": "30/07/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 340
+          },
+          {
+            "roomType": "Quad",
+            "price": 330
+          },
+          {
+            "roomType": "Quint",
+            "price": 220
+          }
+        ]
+      },
+      {
+        "range": "30/09/2026 TO 30/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 360
+          },
+          {
+            "roomType": "Quad",
+            "price": 340
+          },
+          {
+            "roomType": "Quint",
+            "price": 230
+          }
+        ]
+      },
+      {
+        "range": "30/11/2026 TO 31/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          },
+          {
+            "roomType": "Quint",
+            "price": 250
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "makareem-al-hijrah-konoz",
+    "name": "Makareem Al Hijrah",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 08/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 230
+          },
+          {
+            "roomType": "Triple",
+            "price": 270
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
+          }
+        ]
+      },
+      {
+        "range": "09/07/2026 TO 30/08/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13282,34 +14627,500 @@ export const defaultHotels: Hotel[] = [
     ]
   },
   {
-    "id": "durrat-al-madinah-konoz",
-    "name": "Durrat Al Madinah",
-    "city": "Madinah",
+    "id": "elaf-bakkah-konoz",
+    "name": "Elaf Bakkah",
+    "city": "Makkah",
     "vendor": "Konoz",
-    "mealPlan": "FB",
+    "mealPlan": "RO",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "16/06/2026 TO 08/07/2026",
         "prices": [
           {
+            "roomType": "Double",
+            "price": 120
+          },
+          {
+            "roomType": "Triple",
+            "price": 120
+          },
+          {
             "roomType": "Quad",
-            "price": 530
+            "price": 120
+          }
+        ]
+      },
+      {
+        "range": "09/07/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 140
+          },
+          {
+            "roomType": "Triple",
+            "price": 140
+          },
+          {
+            "roomType": "Quad",
+            "price": 140
           }
         ]
       }
     ]
   },
   {
-    "id": "ruaa-international-konoz",
-    "name": "Ruaa International",
+    "id": "zelal-al-nuzala-konoz",
+    "name": "Zelal Al Nuzala",
+    "city": "Makkah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 10/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 280
+          },
+          {
+            "roomType": "Triple",
+            "price": 315
+          },
+          {
+            "roomType": "Quad",
+            "price": 350
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "millennium-al-aqeeq-konoz",
+    "name": "Millennium Al Aqeeq",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 850
+          },
+          {
+            "roomType": "Quad",
+            "price": 975
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 925
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-eiman-al-haram-konoz",
+    "name": "Dar Al Eiman Al Haram",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 925
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 900
+          },
+          {
+            "roomType": "Triple",
+            "price": 1025
+          },
+          {
+            "roomType": "Quad",
+            "price": 1150
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1225
+          },
+          {
+            "roomType": "Quad",
+            "price": 1350
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taibah-front-konoz",
+    "name": "Taibah Front",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 4,
+    "bintang": 4,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 810
+          },
+          {
+            "roomType": "Quad",
+            "price": 920
+          }
+        ]
+      },
+      {
+        "range": "31/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 780
+          },
+          {
+            "roomType": "Triple",
+            "price": 890
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dallah-taiba-konoz",
+    "name": "Dallah Taiba",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 720
+          },
+          {
+            "roomType": "Triple",
+            "price": 855
+          },
+          {
+            "roomType": "Quad",
+            "price": 990
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 760
+          },
+          {
+            "roomType": "Triple",
+            "price": 895
+          },
+          {
+            "roomType": "Quad",
+            "price": 1030
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 935
+          },
+          {
+            "roomType": "Quad",
+            "price": 1070
+          }
+        ]
+      },
+      {
+        "range": "20/10/2026 TO 20/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 825
+          },
+          {
+            "roomType": "Triple",
+            "price": 960
+          },
+          {
+            "roomType": "Quad",
+            "price": 1095
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "millennium-taibah-konoz",
+    "name": "Millennium Taibah",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "05/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 650
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 850
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruve-konoz",
+    "name": "Ruve",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 5,
+    "bintang": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 875
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-al-madinah-konoz",
+    "name": "Grand Plaza Al Madinah",
     "city": "Madinah",
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 590
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "concord-dar-al-khair-konoz",
+    "name": "Concord Dar Al Khair",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 650
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jiwar-al-saha-konoz",
+    "name": "Jiwar Al Saha",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13324,6 +15135,237 @@ export const defaultHotels: Hotel[] = [
             "price": 580
           }
         ]
+      },
+      {
+        "range": "15/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 595
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-naeem-konoz",
+    "name": "Dar Al Naeem",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-ansor-golden-tulip-konoz",
+    "name": "Al Ansor Golden Tulip",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 04/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 555
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zowar-international-konoz",
+    "name": "Zowar International",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 04/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 555
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "odest-konoz",
+    "name": "ODEST",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 04/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 555
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
       }
     ]
   },
@@ -13334,9 +15376,27 @@ export const defaultHotels: Hotel[] = [
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "30/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13355,15 +15415,247 @@ export const defaultHotels: Hotel[] = [
     ]
   },
   {
+    "id": "jawharat-al-rashed-konoz",
+    "name": "Jawharat Al Rashed",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 455
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mirage-al-salam-konoz",
+    "name": "Mirage Al Salam",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 545
+          },
+          {
+            "roomType": "Quad",
+            "price": 590
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "al-madinah-azhar-salsabil-konoz",
     "name": "Al Madinah Azhar Salsabil",
     "city": "Madinah",
     "vendor": "Konoz",
     "mealPlan": "FB",
     "stars": 3,
+    "bintang": 3,
     "seasons": [
       {
-        "range": "16/06/2026 TO 19/07/2026",
+        "range": "30/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 340
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 395
+          },
+          {
+            "roomType": "Quad",
+            "price": 440
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "qasr-al-ansor-golden-tulip-konoz",
+    "name": "Qasr Al Ansor Golden Tulip",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 395
+          },
+          {
+            "roomType": "Quad",
+            "price": 440
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 12/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      },
+      {
+        "range": "12/10/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 615
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "triple-one-konoz",
+    "name": "Triple One",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/07/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -13375,7 +15667,193 @@ export const defaultHotels: Hotel[] = [
           },
           {
             "roomType": "Quad",
+            "price": 450
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 495
+          },
+          {
+            "roomType": "Triple",
+            "price": 540
+          },
+          {
+            "roomType": "Quad",
+            "price": 585
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruaa-international-konoz",
+    "name": "Rua International",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-mukhtara-al-gharbi-konoz",
+    "name": "Al Mukhtara Al Gharbi",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
             "price": 460
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rowa-al-baraka-kareem-konoz",
+    "name": "Rowa Al Baraka Kareem",
+    "city": "Madinah",
+    "vendor": "Konoz",
+    "mealPlan": "FB",
+    "stars": 3,
+    "bintang": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
           }
         ]
       }
@@ -14234,6 +16712,1214 @@ export const defaultHotels: Hotel[] = [
       }
     ]
   }
+,
+  {
+    "id": "pullman-zamzam-areej-tabah",
+    "name": "Pullman Zamzam Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 30/06/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 970
+          },
+          {
+            "roomType": "Triple",
+            "price": 1170
+          },
+          {
+            "roomType": "Quad",
+            "price": 1370
+          }
+        ]
+      },
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1020
+          },
+          {
+            "roomType": "Triple",
+            "price": 1220
+          },
+          {
+            "roomType": "Quad",
+            "price": 1420
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1070
+          },
+          {
+            "roomType": "Triple",
+            "price": 1270
+          },
+          {
+            "roomType": "Quad",
+            "price": 1470
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "safwa-tower-1-haram-areej-tabah",
+    "name": "Safwa Tower 1 Hotel (Haram View)",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "18/06/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 970
+          },
+          {
+            "roomType": "Triple",
+            "price": 1170
+          },
+          {
+            "roomType": "Quad",
+            "price": 1370
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 09/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1060
+          },
+          {
+            "roomType": "Triple",
+            "price": 1260
+          },
+          {
+            "roomType": "Quad",
+            "price": 1460
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "safwa-tower-1-kaaba-areej-tabah",
+    "name": "Safwa Tower 1 Hotel (Kaaba View)",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "18/06/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1270
+          },
+          {
+            "roomType": "Triple",
+            "price": 1470
+          },
+          {
+            "roomType": "Quad",
+            "price": 1670
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 09/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1410
+          },
+          {
+            "roomType": "Triple",
+            "price": 1610
+          },
+          {
+            "roomType": "Quad",
+            "price": 1810
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "movenpick-hajar-areej-tabah",
+    "name": "Movenpick Hajar Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1160
+          },
+          {
+            "roomType": "Triple",
+            "price": 1385
+          },
+          {
+            "roomType": "Quad",
+            "price": 1610
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1210
+          },
+          {
+            "roomType": "Triple",
+            "price": 1430
+          },
+          {
+            "roomType": "Quad",
+            "price": 1650
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "safwa-tower-3-areej-tabah",
+    "name": "Safwa Tower 3 Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 910
+          },
+          {
+            "roomType": "Triple",
+            "price": 1110
+          },
+          {
+            "roomType": "Quad",
+            "price": 1310
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1010
+          },
+          {
+            "roomType": "Triple",
+            "price": 1210
+          },
+          {
+            "roomType": "Quad",
+            "price": 1410
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "elaf-kinda-areej-tabah",
+    "name": "Elaf Kinda Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 780
+          },
+          {
+            "roomType": "Triple",
+            "price": 940
+          },
+          {
+            "roomType": "Quad",
+            "price": 1110
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-ajyad-areej-tabah",
+    "name": "Snood Ajyad Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 545
+          },
+          {
+            "roomType": "Quad",
+            "price": 590
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sawaed-alkhair-areej-tabah",
+    "name": "Sawaed Alkhair Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "olayan-ajyad-areej-tabah",
+    "name": "Olayan Ajyad Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 595
+          },
+          {
+            "roomType": "Triple",
+            "price": 695
+          },
+          {
+            "roomType": "Quad",
+            "price": 795
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 680
+          },
+          {
+            "roomType": "Triple",
+            "price": 780
+          },
+          {
+            "roomType": "Quad",
+            "price": 880
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "almassa-grand-areej-tabah",
+    "name": "Almassa Grand Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 510
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 560
+          },
+          {
+            "roomType": "Quad",
+            "price": 610
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "makarem-ajyad-annex-areej-tabah",
+    "name": "Makarem Ajyad Hotel Annex Tower",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 630
+          },
+          {
+            "roomType": "Triple",
+            "price": 710
+          },
+          {
+            "roomType": "Quad",
+            "price": 790
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 680
+          },
+          {
+            "roomType": "Triple",
+            "price": 860
+          },
+          {
+            "roomType": "Quad",
+            "price": 940
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kayan-al-raya-areej-tabah",
+    "name": "Kayan Al Raya Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 30/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 290
+          },
+          {
+            "roomType": "Triple",
+            "price": 330
+          },
+          {
+            "roomType": "Quad",
+            "price": 370
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jada-ajiad-areej-tabah",
+    "name": "Jada Ajiad Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 30/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 290
+          },
+          {
+            "roomType": "Triple",
+            "price": 330
+          },
+          {
+            "roomType": "Quad",
+            "price": 370
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "royal-majestic-areej-tabah",
+    "name": "Royal Majestic Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "09/07/2026 TO 16/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 520
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      },
+      {
+        "range": "16/07/2026 TO 30/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "makareem-al-hijra-areej-tabah",
+    "name": "Makareem Al Hijra Hotel",
+    "city": "Makkah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 30/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 280
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "movinpick-anwar-al-madinah-areej-tabah",
+    "name": "Movinpick Anwar Al Madinah",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "25/06/2026 TO 07/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 880
+          },
+          {
+            "roomType": "Triple",
+            "price": 1120
+          },
+          {
+            "roomType": "Quad",
+            "price": 1360
+          }
+        ]
+      },
+      {
+        "range": "07/07/2026 TO 31/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 960
+          },
+          {
+            "roomType": "Triple",
+            "price": 1200
+          },
+          {
+            "roomType": "Quad",
+            "price": 1440
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-haram-madinah-areej-tabah",
+    "name": "Al Haram Hotel",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 825
+          },
+          {
+            "roomType": "Triple",
+            "price": 950
+          },
+          {
+            "roomType": "Quad",
+            "price": 1075
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-saha-madinah-areej-tabah",
+    "name": "Al Saha",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 510
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-ansar-golden-tulip-madinah-areej-tabah",
+    "name": "Al Ansar Golden Tulip",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kayan-international-madinah-areej-tabah",
+    "name": "Kayan International",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 445
+          },
+          {
+            "roomType": "Quad",
+            "price": 490
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruaa-al-diyafah-madinah-areej-tabah",
+    "name": "Ruaa Al Diyafah",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 330
+          },
+          {
+            "roomType": "Triple",
+            "price": 375
+          },
+          {
+            "roomType": "Quad",
+            "price": 420
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "diwan-roze-madinah-areej-tabah",
+    "name": "Diwan Roze",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 395
+          },
+          {
+            "roomType": "Quad",
+            "price": 440
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "roze-holiday-madinah-areej-tabah",
+    "name": "Roze Holiday",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 395
+          },
+          {
+            "roomType": "Quad",
+            "price": 440
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "azhar-salsabil-madinah-areej-tabah",
+    "name": "Azhar Salsabil",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 335
+          },
+          {
+            "roomType": "Triple",
+            "price": 380
+          },
+          {
+            "roomType": "Quad",
+            "price": 425
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taibah-hils-madinah-areej-tabah",
+    "name": "Taibah Hils",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruaa-international-madinah-areej-tabah",
+    "name": "Ruaa International",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 31/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sky-view-madinah-areej-tabah",
+    "name": "Sky View",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 410
+          },
+          {
+            "roomType": "Quad",
+            "price": 450
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "paradise-madinah-areej-tabah",
+    "name": "Paradise",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 360
+          },
+          {
+            "roomType": "Triple",
+            "price": 400
+          },
+          {
+            "roomType": "Quad",
+            "price": 440
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "orjwan-al-saada-madinah-areej-tabah",
+    "name": "Orjwan Al Saada",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "orjwan-golden-madinah-areej-tabah",
+    "name": "Orjwan Golden",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 360
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 450
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "golden-tulip-al-zahabi-madinah-areej-tabah",
+    "name": "Golden Tulip Al-Zahabi",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 610
+          },
+          {
+            "roomType": "Triple",
+            "price": 660
+          },
+          {
+            "roomType": "Quad",
+            "price": 710
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 710
+          },
+          {
+            "roomType": "Triple",
+            "price": 760
+          },
+          {
+            "roomType": "Quad",
+            "price": 810
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-madinah-areej-tabah",
+    "name": "Grand Plaza Hotel",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 490
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 580
+          },
+          {
+            "roomType": "Quad",
+            "price": 650
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "millennium-al-aqeeq-madinah-areej-tabah",
+    "name": "Millennium Al-Aqeeq Hotel",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 760
+          },
+          {
+            "roomType": "Triple",
+            "price": 885
+          },
+          {
+            "roomType": "Quad",
+            "price": 1010
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 810
+          },
+          {
+            "roomType": "Triple",
+            "price": 935
+          },
+          {
+            "roomType": "Quad",
+            "price": 1060
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taiba-front-madinah-areej-tabah",
+    "name": "Taiba Front",
+    "city": "Madinah",
+    "vendor": "Areej Tabah",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 720
+          },
+          {
+            "roomType": "Triple",
+            "price": 845
+          },
+          {
+            "roomType": "Quad",
+            "price": 970
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 770
+          },
+          {
+            "roomType": "Triple",
+            "price": 895
+          },
+          {
+            "roomType": "Quad",
+            "price": 1020
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export const getHotels = (): Hotel[] => {
@@ -14244,7 +17930,7 @@ export const getHotels = (): Hotel[] => {
       // Replace existing Maysan Int. Group, ROWA and Alharmain Hotels Management hotels in stored parsed data with updated ones from defaultHotels
       const parsedUpdated = parsed.map(ph => {
         const matchingDefault = defaultHotels.find(dh => dh.id === ph.id);
-        if (matchingDefault && (matchingDefault.vendor === 'Maysan Int. Group' || matchingDefault.vendor === 'ROWA' || matchingDefault.vendor === 'Alharmain Hotels Management')) {
+        if (matchingDefault && (matchingDefault.vendor === 'Maysan Int. Group' || matchingDefault.vendor === 'ROWA' || matchingDefault.vendor === 'Alharmain Hotels Management' || matchingDefault.vendor === 'Emaar Al Diyafa' || matchingDefault.vendor === 'Konoz' || matchingDefault.vendor === 'Areej Tabah' || matchingDefault.vendor === 'Diar Al Manasik')) {
           return matchingDefault;
         }
         return ph;
@@ -15339,7 +19025,11 @@ export const getHotels = (): Hotel[] => {
     ]
   }
 ];
-        localStorage.setItem('hotels_db', JSON.stringify(merged));
+        try {
+          localStorage.setItem('hotels_db', JSON.stringify(merged));
+        } catch (err) {
+          console.info('[hotels_db cache] Bypassed local caching (quota reached):', err);
+        }
         return merged as Hotel[];
       }
       return parsed;
@@ -15351,7 +19041,11 @@ export const getHotels = (): Hotel[] => {
 };
 
 export const saveHotels = (hotels: Hotel[]) => {
-  localStorage.setItem('hotels_db', JSON.stringify(hotels));
+  try {
+    localStorage.setItem('hotels_db', JSON.stringify(hotels));
+  } catch (err) {
+    console.info('[hotels_db cache] Failed to save hotels_db cache:', err);
+  }
 };
 
 export const hotels = getHotels();
