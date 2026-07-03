@@ -21,6 +21,7 @@ const MASTER_PERIODS = [
 ];
 
 const newMaysanHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Maysan Int. Group');
+const newEmaarHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Emaar Al Diyafa');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 const oldMaysanHotelsUnused: any[] = [
   {
@@ -524,7 +525,24 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     const cached = localStorage.getItem('umaroh_db_hotels');
     if (cached) {
       try {
-        return JSON.parse(cached);
+        const parsed = JSON.parse(cached) as Hotel[];
+        // Replace existing Maysan, ROWA, Alharmain, and Emaar hotels in stored parsed data with updated ones from defaultHotels
+        const parsedUpdated = parsed.map(ph => {
+          const matchingDefault = defaultHotels.find(dh => dh.id === ph.id);
+          if (matchingDefault && (matchingDefault.vendor === 'Maysan Int. Group' || matchingDefault.vendor === 'ROWA' || matchingDefault.vendor === 'Alharmain Hotels Management' || matchingDefault.vendor === 'Emaar Al Diyafa')) {
+            return matchingDefault;
+          }
+          return ph;
+        });
+        // Merge missing hotels from defaultHotels
+        const parsedIds = new Set(parsedUpdated.map(h => h.id));
+        const missingHotels = defaultHotels.filter(h => !parsedIds.has(h.id));
+        if (missingHotels.length > 0) {
+          const merged = [...parsedUpdated, ...missingHotels];
+          localStorage.setItem('umaroh_db_hotels', JSON.stringify(merged));
+          return merged;
+        }
+        return parsedUpdated;
       } catch (e) {
         console.error('Failed to parse cached hotels:', e);
       }
@@ -710,7 +728,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         const q = query(collection(db, 'master_hotels'), where('vendor', '==', 'Maysan Int. Group'));
         const snapshot = await getDocs(q);
         // If Firestore master_hotels has outdated count or missing hotels, auto-sync them seamlessly
-        if (snapshot.size < 25) {
+        if (snapshot.size < newMaysanHotels.length) {
           console.log('Automated silent sync: Maysan Int. Group hotels missing in Firestore database. Populating...');
           const batch = writeBatch(db);
           newMaysanHotels.forEach((hotel) => {
@@ -727,7 +745,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
 
         const qRowa = query(collection(db, 'master_hotels'), where('vendor', '==', 'ROWA'));
         const rowaSnapshot = await getDocs(qRowa);
-        if (rowaSnapshot.size < 25) {
+        if (rowaSnapshot.size < newRowaHotels.length) {
           console.log('Automated silent sync: ROWA hotels missing in Firestore database. Populating...');
           const batch = writeBatch(db);
           newRowaHotels.forEach((hotel) => {
@@ -744,7 +762,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
 
         const qAlharmain = query(collection(db, 'master_hotels'), where('vendor', '==', 'Alharmain Hotels Management'));
         const alharmainSnapshot = await getDocs(qAlharmain);
-        if (alharmainSnapshot.size < 25) {
+        if (alharmainSnapshot.size < newAlharmainHotels.length) {
           console.log('Automated silent sync: Alharmain Hotels Management hotels missing in Firestore database. Populating...');
           const batch = writeBatch(db);
           newAlharmainHotels.forEach((hotel) => {
@@ -757,6 +775,23 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
           });
           await batch.commit();
           console.log('Automated silent sync for Alharmain completed!');
+        }
+
+        const qEmaar = query(collection(db, 'master_hotels'), where('vendor', '==', 'Emaar Al Diyafa'));
+        const emaarSnapshot = await getDocs(qEmaar);
+        if (emaarSnapshot.size < newEmaarHotels.length) {
+          console.log('Automated silent sync: Emaar Al Diyafa hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newEmaarHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for Emaar completed!');
         }
       } catch (e) {
         console.warn('Silent sync checks failed. This is expected if the current user is signed out or non-operational user:', e);
@@ -792,6 +827,14 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         batch.set(itemRef, payload, { merge: true });
       });
       newAlharmainHotels.forEach((hotel) => {
+        const itemRef = doc(db, 'master_hotels', hotel.id);
+        const payload = {
+          ...hotel,
+          updatedAt: new Date().toISOString()
+        };
+        batch.set(itemRef, payload, { merge: true });
+      });
+      newEmaarHotels.forEach((hotel) => {
         const itemRef = doc(db, 'master_hotels', hotel.id);
         const payload = {
           ...hotel,
