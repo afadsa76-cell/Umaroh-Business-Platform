@@ -15,6 +15,7 @@ import { AIMarketingView } from './AIMarketingView';
 import { AISmartAnalyticsView } from './AISmartAnalyticsView';
 import { FlightTrackerWidget } from './FlightTrackerWidget';
 import { ELearningMitraView } from './ELearningMitraView';
+import { AdBanner } from './AdBanner';
 import { BookOpen } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
 
@@ -1523,6 +1524,9 @@ export const DashboardMitra = () => {
             + BUAT PAKET BARU
           </button>
         </div>
+
+        {/* Dynamic Broadcast Banner */}
+        <AdBanner adSlot="dashboard-embed" className="shadow-sm" />
 
         {/* 4 Core Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

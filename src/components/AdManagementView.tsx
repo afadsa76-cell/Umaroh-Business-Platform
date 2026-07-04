@@ -98,10 +98,18 @@ export const AdManagementView: React.FC = () => {
     setSavingConfig(true);
     try {
       await setDoc(doc(db, 'ad_network_config', 'global'), updatedConfig);
-      localStorage.setItem('ad_network_config', JSON.stringify(updatedConfig));
-    } catch {
-      console.warn("Saving configuration offline fallback");
-      localStorage.setItem('ad_network_config', JSON.stringify(updatedConfig));
+      try {
+        localStorage.setItem('ad_network_config', JSON.stringify(updatedConfig));
+      } catch (e) {
+        console.warn("Failed saving ad_network_config to localStorage:", e);
+      }
+    } catch (err) {
+      console.warn("Saving configuration offline fallback", err);
+      try {
+        localStorage.setItem('ad_network_config', JSON.stringify(updatedConfig));
+      } catch (e) {
+        console.warn("Failed saving ad_network_config to localStorage in offline fallback:", e);
+      }
     } finally {
       setSavingConfig(false);
     }

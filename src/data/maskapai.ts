@@ -17,6 +17,7 @@ export interface Maskapai {
   hargaSetoran?: number;
   updatedAt?: string;
   tipePenerbangan?: 'DIRECT' | 'TRANSIT';
+  flightItinerary?: string;
 }
 
 const rawMaskapaiData: Maskapai[] = [

@@ -17,6 +17,7 @@ export interface Maskapai {
   hargaSetoran?: number;
   tipePenerbangan?: 'DIRECT' | 'TRANSIT';
   statusTiket?: string;
+  flightItinerary?: string;
 }
 
 export type RoomType = 'Single' | 'Double' | 'Triple' | 'Quad' | 'Quint' | 'Jr Suite (4pax)' | 'Jr Suite (2pax)' | 'Family Suite (4pax)' | '3 Bed Suite (6pax)' | 'Two Bedroom (10 Pax)' | 'Four Bedroom (15 Pax)';
@@ -128,6 +129,7 @@ export interface WizardFormData {
   tipePenerbangan: string;
   kelasPenerbangan: string;
   estimasiHargaMaskapai: number;
+  flightItinerary?: string;
   hotelMadinahId: string;
   chkInMadinah: string;
   durasiMadinah: number;

@@ -1,8 +1,191 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download, PlusSquare, FileText, Check } from 'lucide-react';
 import { Maskapai, maskapaiData as initialData } from '../data/maskapai';
 import * as XLSX from 'xlsx';
 import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, query, where } from '../firebase';
+
+const extractAirportCode = (city?: string) => {
+  if (!city) return "";
+  const match = city.match(/\(([A-Z]{3})\)/i);
+  if (match) return match[1].toUpperCase();
+  const cleaned = city.replace(/[^A-Za-z]/g, "").trim();
+  if (cleaned.length === 3) return cleaned.toUpperCase();
+  return city.substring(0, 3).toUpperCase();
+};
+
+const generateDefaultRute = (origin?: string, destination?: string) => {
+  const originCode = extractAirportCode(origin) || "CGK";
+  const destCode = extractAirportCode(destination) || "JED";
+  return `${originCode} - ${destCode} / ${destCode} - ${originCode}`;
+};
+
+const generateDefaultItinerary = (maskapaiName?: string, tglBerangkat?: string, tglPulang?: string, destination?: string) => {
+  if (!tglBerangkat || !tglPulang) return "";
+  
+  const formatDateShort = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+    return `${d.getDate()}${months[d.getMonth()]}`;
+  };
+
+  const depDateFormatted = formatDateShort(tglBerangkat);
+  const retDateFormatted = formatDateShort(tglPulang);
+  const maskapaiShortName = maskapaiName ? maskapaiName.split(' ')[0].toUpperCase() : 'SV';
+  const randomPnr = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const destCity = extractAirportCode(destination) || 'JED';
+  const days = Math.round((new Date(tglPulang).getTime() - new Date(tglBerangkat).getTime()) / (1000 * 3600 * 24)) + 1;
+
+  return `${destCity}${destCity} HK20 ${days}D PNR:${randomPnr}\n` +
+    `${depDateFormatted} ${maskapaiShortName}827 CGK${destCity} 0040 0610\n` +
+    `${retDateFormatted} ${maskapaiShortName}816 ${destCity}CGK 1830 0815+1`;
+};
+
+const parseBulkText = (text: string, manualPrice?: number, customVendor?: string) => {
+  if (!text) return [];
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  
+  // Extract global price if present
+  let defaultPrice = manualPrice || 0;
+  if (!defaultPrice) {
+    const priceRegex = /harga\s*(?:rp\.?\s*)?([\d.]+)/i;
+    for (const line of lines) {
+      const match = line.match(priceRegex);
+      if (match) {
+        defaultPrice = parseInt(match[1].replace(/\./g, '')) || 0;
+        break;
+      }
+    }
+  }
+
+  const flights: Partial<Maskapai>[] = [];
+  
+  // Match flight line like "01NOV SV827 CGKJED 0040 0610"
+  const flightRegex = /(\d{2}[A-Za-z]{3})\s+([A-Za-z]{2}\d+)\s+([A-Za-z]{6})\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
+  
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const cleanLine = line.replace(/\*/g, '').replace(/_/g, '').trim();
+    const match1 = cleanLine.match(flightRegex);
+    
+    if (match1) {
+      let match2: RegExpMatchArray | null = null;
+      let nextFlightIdx = -1;
+      
+      for (let j = i + 1; j <= i + 3 && j < lines.length; j++) {
+        const cleanNextLine = lines[j].replace(/\*/g, '').replace(/_/g, '').trim();
+        const m = cleanNextLine.match(flightRegex);
+        if (m) {
+          match2 = m;
+          nextFlightIdx = j;
+          break;
+        }
+      }
+      
+      if (match2 && nextFlightIdx !== -1) {
+        let programHeader = "";
+        if (i > 0) {
+          const prevLine = lines[i - 1].replace(/\*/g, '').replace(/_/g, '').trim();
+          if (prevLine.toUpperCase().includes('PROG') || prevLine.toUpperCase().includes(' JED') || prevLine.toUpperCase().includes(' D')) {
+            programHeader = prevLine;
+          }
+        }
+        if (!programHeader) {
+          programHeader = "JED JED PROG 9D";
+        }
+        
+        let seatLine = "";
+        let availableSeats = 45;
+        
+        for (let j = nextFlightIdx + 1; j <= nextFlightIdx + 3 && j < lines.length; j++) {
+          const nextLineClean = lines[j].replace(/\*/g, '').replace(/_/g, '').trim();
+          if (
+            nextLineClean.toLowerCase().includes('pax') || 
+            nextLineClean.toLowerCase().includes('hk') || 
+            nextLineClean.toLowerCase().includes('hold')
+          ) {
+            seatLine = nextLineClean;
+            const seatMatch = nextLineClean.match(/(?:pax|hk)\s*(\d+)/i) || nextLineClean.match(/(\d+)\s*(?:pax|hk)/i);
+            if (seatMatch) {
+              availableSeats = parseInt(seatMatch[1]) || 45;
+            }
+            break;
+          }
+        }
+        
+        const itineraryParts = [
+          `*${programHeader}*`,
+          lines[i].replace(/\*/g, '').replace(/_/g, '').trim(),
+          lines[nextFlightIdx].replace(/\*/g, '').replace(/_/g, '').trim()
+        ];
+        if (seatLine) {
+          itineraryParts.push(`*${seatLine}*`);
+        }
+        const fullItinerary = itineraryParts.join('\n');
+        
+        const parseDate = (dateStr: string) => {
+          const day = parseInt(dateStr.substring(0, 2));
+          const monthStr = dateStr.substring(2).toUpperCase();
+          const months: Record<string, number> = {
+            JAN: 0, FEB: 1, MAR: 2, APR: 3, MEI: 4, JUN: 5, JUL: 6, AGT: 7, SEP: 8, OKT: 9, NOV: 10, DES: 11,
+            DEC: 11, OCT: 9, AUG: 7, MAY: 4
+          };
+          const month = months[monthStr] !== undefined ? months[monthStr] : 10;
+          const yyyy = 2026;
+          const mm = String(month + 1).padStart(2, '0');
+          const dd = String(day).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        };
+        
+        const tglBerangkat = parseDate(match1[1]);
+        const tglKepulangan = parseDate(match2[1]);
+        
+        const flightNo = match1[2].toUpperCase();
+        let name = "SAUDIA AIRLINES";
+        if (flightNo.startsWith('GA')) name = "GARUDA INDONESIA";
+        else if (flightNo.startsWith('MH')) name = "MALAYSIA AIRLINES";
+        else if (flightNo.startsWith('WY')) name = "OMAN AIR";
+        else if (flightNo.startsWith('QR')) name = "QATAR AIRWAYS";
+        else if (flightNo.startsWith('EK')) name = "EMIRATES";
+        else if (flightNo.startsWith('EY')) name = "ETIHAD AIRWAYS";
+        
+        const route = match1[3].toUpperCase();
+        const originCity = route.substring(0, 3);
+        const destCity = route.substring(3, 6);
+        
+        const progMatch = programHeader.match(/(\d+)\s*D/i);
+        const programDays = progMatch ? parseInt(progMatch[1]) : 9;
+        
+        flights.push({
+          name,
+          namaVendor: customVendor || "PT. Darmawisata Indonesia",
+          ruteLabel: `${originCity} - ${destCity} / ${destCity} - ${originCity}`,
+          originCityName: originCity === 'CGK' ? 'JAKARTA (CGK)' : originCity,
+          destinationCityName: destCity === 'JED' ? 'JEDDAH (JED)' : (destCity === 'MED' ? 'MADINAH (MED)' : destCity),
+          tanggalKeberangkatan: tglBerangkat,
+          tanggalKepulangan: tglKepulangan,
+          totalSeats: 45,
+          availableSeats: availableSeats,
+          hargaSetoran: defaultPrice,
+          hargaBeli: defaultPrice,
+          hargaJual: defaultPrice,
+          margin: 0,
+          persen: 0,
+          flightItinerary: fullItinerary,
+          tipePenerbangan: 'DIRECT',
+          programDays
+        });
+        
+        i = nextFlightIdx;
+      }
+    }
+    i++;
+  }
+  
+  return flights;
+};
 
 interface MaskapaiViewProps {
   isVendorMode?: boolean;
@@ -20,6 +203,61 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const [filterMinSeats, setFilterMinSeats] = useState<number>(10);
   const [filterVendor, setFilterVendor] = useState<string>('All');
   const [isCleaning, setIsCleaning] = useState(false);
+
+  // Bulk parsing state variables
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkPriceInput, setBulkPriceInput] = useState<string>('');
+  const [isSavingBulk, setIsSavingBulk] = useState(false);
+  const [parsedFlights, setParsedFlights] = useState<Partial<Maskapai>[]>([]);
+
+  useEffect(() => {
+    const manualPrice = parseInt(bulkPriceInput.replace(/\D/g, '')) || 0;
+    const flights = parseBulkText(bulkText, manualPrice, isVendorMode ? vendorName : "PT. Darmawisata Indonesia");
+    setParsedFlights(flights);
+  }, [bulkText, bulkPriceInput, isVendorMode, vendorName]);
+
+  const handleSaveBulk = async () => {
+    if (parsedFlights.length === 0) return;
+    setIsSavingBulk(true);
+    try {
+      const chunks: Partial<Maskapai>[][] = [];
+      const chunkSize = 400;
+      for (let i = 0; i < parsedFlights.length; i += chunkSize) {
+        chunks.push(parsedFlights.slice(i, i + chunkSize));
+      }
+      
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach((flight) => {
+          const docRef = doc(collection(db, 'maskapai'));
+          // clean any undefined fields before writing to firestore
+          const cleanedPayload: Record<string, unknown> = {};
+          Object.entries(flight).forEach(([key, val]) => {
+            if (val !== undefined) {
+              cleanedPayload[key] = val;
+            }
+          });
+          cleanedPayload.createdAt = new Date().toISOString();
+          cleanedPayload.updatedAt = new Date().toISOString();
+          
+          batch.set(docRef, cleanedPayload);
+        });
+        await batch.commit();
+      }
+      
+      showToastMsg(`Sukses mengimpor ${parsedFlights.length} rute penerbangan secara massal!`, 'success');
+      setIsBulkOpen(false);
+      setBulkText('');
+      setBulkPriceInput('');
+      setParsedFlights([]);
+    } catch (error) {
+      console.error("Error saving bulk maskapai:", error);
+      showToastMsg("Gagal mengimpor rute penerbangan massal: " + (error as Error).message, 'error');
+    } finally {
+      setIsSavingBulk(false);
+    }
+  };
 
   // Extract unique vendors for filtering
   const vendors = Array.from(
@@ -53,7 +291,8 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     hargaSetoran: 0,
     hargaJual: 0,
     availableSeats: 0,
-    namaVendor: ''
+    namaVendor: '',
+    flightItinerary: ''
   });
 
   useEffect(() => {
@@ -123,7 +362,8 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         availableSeats: item.availableSeats,
         namaVendor: isVendorMode ? vendorName : item.namaVendor,
         margin: item.margin || 0,
-        persen: item.persen || 0
+        persen: item.persen || 0,
+        flightItinerary: item.flightItinerary || ''
       });
     } else {
       setEditingId(null);
@@ -140,7 +380,8 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         availableSeats: 45,
         namaVendor: isVendorMode ? vendorName : '',
         margin: 0,
-        persen: 0
+        persen: 0,
+        flightItinerary: ''
       });
     }
     setIsFormOpen(true);
@@ -154,14 +395,38 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = {
+      const finalItinerary = formData.flightItinerary?.trim() || generateDefaultItinerary(
+        formData.name,
+        formData.tanggalKeberangkatan,
+        formData.tanggalKepulangan,
+        formData.destinationCityName
+      );
+
+      const finalRuteLabel = formData.ruteLabel?.trim() || generateDefaultRute(
+        formData.originCityName,
+        formData.destinationCityName
+      );
+
+      const payload: Record<string, unknown> = {
         ...formData,
+        ruteLabel: finalRuteLabel,
+        flightItinerary: finalItinerary,
         updatedAt: new Date().toISOString()
       };
+
+      // Clean undefined fields to prevent Firestore serialization errors
+      const cleanedPayload = Object.keys(payload).reduce((acc, key) => {
+        const val = payload[key];
+        if (val !== undefined) {
+          acc[key] = val;
+        }
+        return acc;
+      }, {} as Record<string, unknown>);
+
       if (editingId) {
-        await updateDoc(doc(db, 'maskapai', editingId), payload);
+        await updateDoc(doc(db, 'maskapai', editingId), cleanedPayload);
       } else {
-        await addDoc(collection(db, 'maskapai'), payload);
+        await addDoc(collection(db, 'maskapai'), cleanedPayload);
       }
       handleCloseForm();
     } catch (error) {
@@ -403,6 +668,10 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
           >
             <Download className="w-4 h-4" />
             Download Excel
+          </button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors" onClick={() => setIsBulkOpen(true)}>
+            <PlusSquare className="w-4 h-4" />
+            Bulk Import WA
           </button>
           <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors" onClick={() => handleOpenForm()}>
             <Plus className="w-4 h-4" />
@@ -876,8 +1145,16 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   <input 
                     type="text" 
                     required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})}
+                    value={formData.name || ""}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      const isItineraryEmpty = !formData.flightItinerary || formData.flightItinerary === generateDefaultItinerary(formData.name, formData.tanggalKeberangkatan, formData.tanggalKepulangan, formData.destinationCityName);
+                      const updated = { ...formData, name: val };
+                      if (isItineraryEmpty && val && formData.tanggalKeberangkatan && formData.tanggalKepulangan) {
+                        updated.flightItinerary = generateDefaultItinerary(val, formData.tanggalKeberangkatan, formData.tanggalKepulangan, formData.destinationCityName);
+                      }
+                      setFormData(updated);
+                    }}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold uppercase"
                     placeholder="SAUDIA AIRLINES"
                   />
@@ -887,18 +1164,30 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   <input 
                     type="text" 
                     required
-                    value={formData.namaVendor}
+                    value={formData.namaVendor || ""}
                     onChange={(e) => setFormData({...formData, namaVendor: e.target.value})}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                     placeholder="PT MADINAH IMAN WISATA"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Rute / Label</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-semibold text-gray-700">Rute / Label</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const generated = generateDefaultRute(formData.originCityName, formData.destinationCityName);
+                        setFormData(prev => ({ ...prev, ruteLabel: generated }));
+                      }}
+                      className="text-[10px] text-emerald-650 hover:text-emerald-700 hover:bg-emerald-100 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg transition-colors"
+                    >
+                      <RefreshCw className="w-2.5 h-2.5" /> Auto-Fill
+                    </button>
+                  </div>
                   <input 
                     type="text" 
                     required
-                    value={formData.ruteLabel}
+                    value={formData.ruteLabel || ""}
                     onChange={(e) => setFormData({...formData, ruteLabel: e.target.value})}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                     placeholder="CGK - JED / MED - CGK"
@@ -910,8 +1199,16 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   <input 
                     type="text" 
                     required
-                    value={formData.originCityName}
-                    onChange={(e) => setFormData({...formData, originCityName: e.target.value.toUpperCase()})}
+                    value={formData.originCityName || ""}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      const isRuteEmpty = !formData.ruteLabel || formData.ruteLabel === generateDefaultRute(formData.originCityName, formData.destinationCityName);
+                      const updated = { ...formData, originCityName: val };
+                      if (isRuteEmpty) {
+                        updated.ruteLabel = generateDefaultRute(val, formData.destinationCityName);
+                      }
+                      setFormData(updated);
+                    }}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none uppercase"
                     placeholder="JAKARTA (CGK)"
                   />
@@ -921,8 +1218,20 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   <input 
                     type="text" 
                     required
-                    value={formData.destinationCityName}
-                    onChange={(e) => setFormData({...formData, destinationCityName: e.target.value.toUpperCase()})}
+                    value={formData.destinationCityName || ""}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      const isRuteEmpty = !formData.ruteLabel || formData.ruteLabel === generateDefaultRute(formData.originCityName, formData.destinationCityName);
+                      const isItineraryEmpty = !formData.flightItinerary || formData.flightItinerary === generateDefaultItinerary(formData.name, formData.tanggalKeberangkatan, formData.tanggalKepulangan, formData.destinationCityName);
+                      const updated = { ...formData, destinationCityName: val };
+                      if (isRuteEmpty) {
+                        updated.ruteLabel = generateDefaultRute(formData.originCityName, val);
+                      }
+                      if (isItineraryEmpty && formData.name && formData.tanggalKeberangkatan && formData.tanggalKepulangan) {
+                        updated.flightItinerary = generateDefaultItinerary(formData.name, formData.tanggalKeberangkatan, formData.tanggalKepulangan, val);
+                      }
+                      setFormData(updated);
+                    }}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none uppercase"
                     placeholder="JEDDAH (JED)"
                   />
@@ -933,7 +1242,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                     type="number" 
                     required
                     min={0}
-                    value={formData.availableSeats}
+                    value={formData.availableSeats ?? ""}
                     onChange={(e) => setFormData({...formData, availableSeats: parseInt(e.target.value) || 0, totalSeats: Math.max(parseInt(e.target.value) || 0, formData.totalSeats || 45)})}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
@@ -944,8 +1253,16 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   <input 
                     type="date" 
                     required
-                    value={formData.tanggalKeberangkatan}
-                    onChange={(e) => setFormData({...formData, tanggalKeberangkatan: e.target.value})}
+                    value={formData.tanggalKeberangkatan || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const isItineraryEmpty = !formData.flightItinerary || formData.flightItinerary === generateDefaultItinerary(formData.name, formData.tanggalKeberangkatan, formData.tanggalKepulangan, formData.destinationCityName);
+                      const updated = { ...formData, tanggalKeberangkatan: val };
+                      if (isItineraryEmpty && formData.name && val && formData.tanggalKepulangan) {
+                        updated.flightItinerary = generateDefaultItinerary(formData.name, val, formData.tanggalKepulangan, formData.destinationCityName);
+                      }
+                      setFormData(updated);
+                    }}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>
@@ -954,8 +1271,16 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   <input 
                     type="date" 
                     required
-                    value={formData.tanggalKepulangan}
-                    onChange={(e) => setFormData({...formData, tanggalKepulangan: e.target.value})}
+                    value={formData.tanggalKepulangan || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const isItineraryEmpty = !formData.flightItinerary || formData.flightItinerary === generateDefaultItinerary(formData.name, formData.tanggalKeberangkatan, formData.tanggalKepulangan, formData.destinationCityName);
+                      const updated = { ...formData, tanggalKepulangan: val };
+                      if (isItineraryEmpty && formData.name && formData.tanggalKeberangkatan && val) {
+                        updated.flightItinerary = generateDefaultItinerary(formData.name, formData.tanggalKeberangkatan, val, formData.destinationCityName);
+                      }
+                      setFormData(updated);
+                    }}
                     className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>
@@ -975,7 +1300,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                     type="number" 
                     required
                     min={0}
-                    value={formData.hargaBeli || formData.hargaSetoran}
+                    value={formData.hargaBeli || formData.hargaSetoran || ""}
                     onChange={(e) => {
                       const beli = parseFloat(e.target.value) || 0;
                       if (isVendorMode) {
@@ -1001,7 +1326,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                         type="number" 
                         required
                         min={0}
-                        value={formData.hargaJual}
+                        value={formData.hargaJual ?? ""}
                         onChange={(e) => {
                           const jual = parseFloat(e.target.value) || 0;
                           const beli = formData.hargaBeli || formData.hargaSetoran || 0;
@@ -1020,6 +1345,34 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                     </div>
                   </>
                 )}
+
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-semibold text-gray-700">Deskripsi / Itinerary Penerbangan (PNR)</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const generated = generateDefaultItinerary(
+                          formData.name,
+                          formData.tanggalKeberangkatan,
+                          formData.tanggalKepulangan,
+                          formData.destinationCityName
+                        );
+                        setFormData({ ...formData, flightItinerary: generated });
+                      }}
+                      className="text-xs text-emerald-650 hover:text-emerald-700 hover:bg-emerald-100 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-lg transition-colors"
+                    >
+                      <RefreshCw className="w-3 h-3 animate-spin duration-1000" /> Auto-Generate
+                    </button>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={formData.flightItinerary || ''}
+                    onChange={(e) => setFormData({ ...formData, flightItinerary: e.target.value })}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-xs bg-white leading-relaxed"
+                    placeholder="Contoh:&#10;JEDJED HK20 9D PNR:7Y57CV&#10;18Nov SV817 CGKJED 1000 1555&#10;29Nov SV826 JEDCGK 0900 2245"
+                  />
+                </div>
 
               </div>
 
@@ -1122,6 +1475,158 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                 className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white rounded-xl shadow-lg shadow-rose-950/45 transition-colors uppercase tracking-wider"
               >
                 Mulai Pembersihan Permanen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal */}
+      {isBulkOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 text-blue-700 p-2.5 rounded-2xl">
+                  <PlusSquare className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-gray-900 leading-tight">Bulk Import Rute Penerbangan</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Copas (copy-paste) pesan promo penerbangan dari WhatsApp atau Telegram langsung di sini</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsBulkOpen(false);
+                  setBulkText('');
+                  setBulkPriceInput('');
+                  setParsedFlights([]);
+                }}
+                className="p-2 hover:bg-gray-150 rounded-xl transition-colors text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+              {/* Paste Input Panel */}
+              <div className="p-6 flex flex-col gap-4 border-r border-gray-100 overflow-y-auto">
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Pesan Promo WhatsApp/Telegram</label>
+                  <textarea
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    placeholder="Contoh:&#10;📢 SPECIAL PRICE SAUDIA NOVEMBER 📢&#10;🔥Harga Rp. 16.700.000/pax🔥&#10;01NOV SV827 CGKJED 0040 0610&#10;08NOV SV816 JEDCGK 1730 0735+1&#10;46 PAX"
+                    className="w-full flex-1 min-h-[250px] p-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono leading-relaxed resize-none bg-gray-50 focus:bg-white transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Harga Setoran Default (IDR)</label>
+                    <input
+                      type="text"
+                      value={bulkPriceInput}
+                      onChange={(e) => setBulkPriceInput(e.target.value)}
+                      placeholder="Auto-detect atau ketik nominal..."
+                      className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Vendor</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={isVendorMode ? vendorName : "PT. Darmawisata Indonesia"}
+                      className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 outline-none text-sm font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview Panel */}
+              <div className="p-6 bg-gray-50/50 flex flex-col overflow-hidden">
+                <div className="flex justify-between items-center mb-3 shrink-0">
+                  <span className="text-xs font-black uppercase text-gray-500 tracking-wider flex items-center gap-2">
+                    Hasil Analisa & Preview 
+                    <span className="bg-blue-600 text-white font-black px-2 py-0.5 rounded-full text-[10px]">
+                      {parsedFlights.length} Rute Terdeteksi
+                    </span>
+                  </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                  {parsedFlights.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 gap-3">
+                      <FileText className="w-12 h-12 text-gray-300 stroke-[1.5]" />
+                      <div>
+                        <p className="text-sm font-bold text-gray-650">Menunggu input teks...</p>
+                        <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">Silakan copas text format list rute penerbangan di panel sebelah kiri untuk melihat hasil parsing real-time.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    parsedFlights.map((flight, idx) => (
+                      <div key={idx} className="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm hover:border-blue-300 transition-all">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-black uppercase tracking-wider">{flight.name}</span>
+                              <span className="text-xs text-gray-400 font-bold">{flight.ruteLabel}</span>
+                            </div>
+                            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600 font-medium">
+                              <div>🛫 Berangkat: <strong className="text-gray-900">{flight.tanggalKeberangkatan}</strong></div>
+                              <div>🛬 Pulang: <strong className="text-gray-900">{flight.tanggalKepulangan}</strong></div>
+                              <div>💺 Sisa Kursi: <strong className="text-blue-600">{flight.availableSeats} PAX</strong></div>
+                              <div>💰 Setoran: <strong className="text-gray-900 font-mono">Rp {(flight.hargaSetoran || 0).toLocaleString('id-ID')}</strong></div>
+                            </div>
+                          </div>
+                          <span className="bg-blue-50 text-blue-700 p-1.5 rounded-xl text-[10px] font-black uppercase">Rute {idx + 1}</span>
+                        </div>
+                        {flight.flightItinerary && (
+                          <div className="mt-2.5 p-2 bg-gray-50 border border-gray-100 rounded-xl font-mono text-[10px] text-gray-500 whitespace-pre-line leading-relaxed max-h-24 overflow-y-auto">
+                            {flight.flightItinerary}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsBulkOpen(false);
+                  setBulkText('');
+                  setBulkPriceInput('');
+                  setParsedFlights([]);
+                }}
+                className="px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl text-xs transition-colors uppercase tracking-wider"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveBulk}
+                disabled={parsedFlights.length === 0 || isSavingBulk}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-150 disabled:text-gray-400 text-white font-extrabold rounded-xl text-xs transition-all uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-blue-100 disabled:shadow-none"
+              >
+                {isSavingBulk ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Sedang Menyimpan ({parsedFlights.length} Rute)...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Impor Sekarang ({parsedFlights.length} Rute)
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -41,6 +41,7 @@ import {
   ShoppingBag,
   Shirt,
   AlertCircle,
+  Edit3,
 } from "lucide-react";
 import {
   addDoc,
@@ -116,6 +117,14 @@ interface HotelMetaItem {
   distance: string;
   stars?: number;
 }
+
+const formatDateShort = (dateStr?: string) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+  return `${d.getDate()}${months[d.getMonth()]}`;
+};
 
 interface PaketMasterWizardProps {
   initialData?: Partial<WizardFormData> & { id?: string; paketMasterId?: string; namaPaketMitra?: string };
@@ -465,6 +474,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [bandaraList, setBandaraList] = useState<Bandara[]>([]);
   const [paketWisataList, setPaketWisataList] = useState<PaketWisata[]>([]);
   const [createdDocId, setCreatedDocId] = useState<string | null>(() => initialData?.id || null);
+  const [selectedAirlineBrand, setSelectedAirlineBrand] = useState<string>("");
+  const [isEditingItinerary, setIsEditingItinerary] = useState<boolean>(false);
 
   const [aiResult, setAiResult] = useState<{ title: string; content: string } | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -638,6 +649,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     tipePenerbangan: "DIRECT",
     kelasPenerbangan: "Ekonomi",
     estimasiHargaMaskapai: 0,
+    flightItinerary: "",
     hotelMadinahId: "",
     chkInMadinah: "",
     durasiMadinah: 3,
@@ -671,6 +683,151 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }
     return base;
   });
+
+  // Helper to identify the brand of a maskapai
+  const getAirlineBrand = (name: string): string => {
+    const upper = (name || "").toUpperCase();
+    if (upper.includes("SAUDIA") || upper.includes("SAUDI") || upper.includes("SV")) return "SAUDIA";
+    if (upper.includes("GARUDA") || upper.includes("GA")) return "GARUDA";
+    if (upper.includes("LION") || upper.includes("JT")) return "LION";
+    if (upper.includes("BATIK") || upper.includes("ID")) return "BATIK";
+    if (upper.includes("PELITA")) return "PELITA";
+    if (upper.includes("QATAR") || upper.includes("QR")) return "QATAR";
+    if (upper.includes("EMIRATES") || upper.includes("EK")) return "EMIRATES";
+    if (upper.includes("OMAN") || upper.includes("WY")) return "OMAN";
+    if (upper.includes("TURKISH") || upper.includes("TK")) return "TURKISH";
+    if (upper.includes("ETIHAD") || upper.includes("EY")) return "ETIHAD";
+    if (upper.includes("SINGAPORE") || upper.includes("SQ")) return "SINGAPORE";
+    if (upper.includes("MALAYSIA") || upper.includes("MH")) return "MALAYSIA";
+    if (upper.includes("SCOOT") || upper.includes("TR")) return "SCOOT";
+    if (upper.includes("GULF") || upper.includes("GF")) return "GULF";
+    if (upper.includes("FLYNAS") || upper.includes("XY")) return "FLYNAS";
+    return "LAINNYA";
+  };
+
+  // Helper to parse text-based itinerary into structured segments
+  const parseItineraryLines = (itineraryText: string) => {
+    const lines = (itineraryText || "").split("\n").map(l => l.trim()).filter(Boolean);
+    const flightsParsed = [];
+    const flightRegex = /(\d{1,2}[A-Za-z]{3})\s+([A-Za-z]{2}\d+)\s+([A-Za-z]{6})\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
+    
+    for (const line of lines) {
+      const match = line.match(flightRegex);
+      if (match) {
+        const date = match[1];
+        const flightNo = match[2];
+        const route = match[3];
+        const depTime = match[4];
+        const arrTime = match[5];
+        
+        const origin = route.substring(0, 3).toUpperCase();
+        const destination = route.substring(3, 6).toUpperCase();
+        
+        const formatTime = (t: string) => {
+          if (t.length >= 4) {
+            return `${t.substring(0, 2)}:${t.substring(2, 4)}`;
+          }
+          return t;
+        };
+        
+        flightsParsed.push({
+          date,
+          flightNo: flightNo.toUpperCase(),
+          origin,
+          destination,
+          depTime: formatTime(depTime),
+          arrTime: formatTime(arrTime),
+          originalLine: line
+        });
+      }
+    }
+    return flightsParsed;
+  };
+
+  // Dynamic brand extraction from master database (maskapaiList)
+  const dynamicBrands = useMemo(() => {
+    const brandsSet = new Set<string>();
+    const brandsList: { value: string; label: string }[] = [];
+    
+    const prettyNames: Record<string, string> = {
+      SAUDIA: "Saudi Arabian Airlines (SV)",
+      GARUDA: "Garuda Indonesia (GA)",
+      LION: "Lion Air (JT)",
+      BATIK: "Batik Air (ID)",
+      PELITA: "Pelita Air",
+      QATAR: "Qatar Airways (QR)",
+      EMIRATES: "Emirates (EK)",
+      OMAN: "Oman Air (WY)",
+      TURKISH: "Turkish Airlines (TK)",
+      ETIHAD: "Etihad Airways (EY)",
+      SINGAPORE: "Singapore Airlines (SQ)",
+      MALAYSIA: "Malaysia Airlines (MH)",
+      SCOOT: "Scoot (TR)",
+      GULF: "Gulf Air (GF)",
+      FLYNAS: "Flynas (XY)",
+      INDIGO: "IndiGo Airlines (6E)",
+      HAINAN: "Hainan Airlines (HU)",
+    };
+
+    const filteredMaskapais = maskapaiList.filter((m) => {
+      if (m.tipePenerbangan) return m.tipePenerbangan === formData.tipePenerbangan;
+      
+      const name = (m.name || "").toUpperCase();
+      const directAirlines = ["GARUDA", "SAUDI", "SAUDIA", "LION", "BATIK", "PELITA", "AIRFAST", "JT", "ID", "GA", "SV"];
+      const isKnownDirect = directAirlines.some(brand => {
+        const regex = new RegExp(`\\b${brand}\\b`, 'i');
+        return regex.test(name);
+      });
+      
+      if (formData.tipePenerbangan === "TRANSIT") return !isKnownDirect;
+      if (formData.tipePenerbangan === "DIRECT") return isKnownDirect;
+      return true;
+    });
+
+    filteredMaskapais.forEach((m) => {
+      const brand = getAirlineBrand(m.name);
+      if (brand && brand !== "LAINNYA" && !brandsSet.has(brand)) {
+        brandsSet.add(brand);
+        const label = prettyNames[brand] || `${brand.charAt(0).toUpperCase() + brand.slice(1).toLowerCase()} Airlines`;
+        brandsList.push({ value: brand, label });
+      }
+    });
+
+    const allAirlinesUpper = maskapaiList.map(m => (m.name || "").toUpperCase());
+    const hasIndigo = allAirlinesUpper.some(name => name.includes("INDIGO") || name.includes("6E"));
+    const hasHainan = allAirlinesUpper.some(name => name.includes("HAINAN") || name.includes("HU"));
+
+    if (hasIndigo && formData.tipePenerbangan === "TRANSIT" && !brandsSet.has("INDIGO")) {
+      brandsList.push({ value: "INDIGO", label: "IndiGo Airlines (6E)" });
+    }
+    if (hasHainan && formData.tipePenerbangan === "TRANSIT" && !brandsSet.has("HAINAN")) {
+      brandsList.push({ value: "HAINAN", label: "Hainan Airlines (HU)" });
+    }
+
+    return brandsList.sort((a, b) => a.label.localeCompare(b.label));
+  }, [maskapaiList, formData.tipePenerbangan]);
+
+  // Dynamic destination display formatting (e.g. JEDDAH (JED))
+  const destinationDisplay = useMemo(() => {
+    if (!formData.kotaTujuan) return "JEDDAH (JED)";
+    
+    const target = formData.kotaTujuan.toUpperCase();
+    const match = bandaraList.find(b => 
+      (b.kota || "").toUpperCase() === target ||
+      (b.kode || "").toUpperCase() === target ||
+      target.includes((b.kota || "").toUpperCase())
+    );
+    
+    if (match) {
+      return `${(match.kota || "").toUpperCase()} (${(match.kode || "").toUpperCase()})`;
+    }
+    
+    if (target.includes("(")) {
+      return target;
+    }
+    
+    return target;
+  }, [formData.kotaTujuan, bandaraList]);
 
   // Filter maskapai
   const filteredMaskapaiList = useMemo(() => {
@@ -725,6 +882,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         if (formData.tipePenerbangan === "TRANSIT") return isTransit;
         if (formData.tipePenerbangan === "DIRECT") return !isTransit;
         return true;
+      });
+    }
+
+    // Filter by Selected Airline Brand (Tipe Maskapai / Pesawat)
+    if (selectedAirlineBrand) {
+      list = list.filter((m) => {
+        const brand = getAirlineBrand(m.name);
+        return brand === selectedAirlineBrand;
       });
     }
 
@@ -809,9 +974,22 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       );
     }
     const anchorDate = formData.preferredDepartureDate || formData.tglBerangkat;
-    if (!anchorDate) return list;
+    if (!anchorDate) {
+      // Sort chronologically even when anchor date is not yet selected
+      return [...list].sort((a, b) => {
+        const dateA = a.tanggalKeberangkatan ? new Date(a.tanggalKeberangkatan).getTime() : 0;
+        const dateB = b.tanggalKeberangkatan ? new Date(b.tanggalKeberangkatan).getTime() : 0;
+        return dateA - dateB;
+      });
+    }
     const baseDate = new Date(anchorDate);
-    if (isNaN(baseDate.getTime())) return list;
+    if (isNaN(baseDate.getTime())) {
+      return [...list].sort((a, b) => {
+        const dateA = a.tanggalKeberangkatan ? new Date(a.tanggalKeberangkatan).getTime() : 0;
+        const dateB = b.tanggalKeberangkatan ? new Date(b.tanggalKeberangkatan).getTime() : 0;
+        return dateA - dateB;
+      });
+    }
     
     // Use a window around the anchor date to keep the results stable.
     // This prevents results from disappearing if tglBerangkat updates.
@@ -820,11 +998,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const maxDate = new Date(baseDate);
     maxDate.setDate(maxDate.getDate() + 37); // ~5 weeks after anchor
 
-    return list.filter((m) => {
+    const filtered = list.filter((m) => {
       if (!m.tanggalKeberangkatan) return false;
       const mDate = new Date(m.tanggalKeberangkatan);
       if (isNaN(mDate.getTime())) return false;
       return mDate >= minDate && mDate <= maxDate;
+    });
+
+    // Urutkan sesuai tanggal keberangkatan secara kronologis
+    return [...filtered].sort((a, b) => {
+      const dateA = a.tanggalKeberangkatan ? new Date(a.tanggalKeberangkatan).getTime() : 0;
+      const dateB = b.tanggalKeberangkatan ? new Date(b.tanggalKeberangkatan).getTime() : 0;
+      return dateA - dateB;
     });
   }, [
     maskapaiList, 
@@ -833,7 +1018,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     formData.durasiHari, 
     formData.tipePenerbangan, 
     formData.kotaKeberangkatan, 
-    formData.kotaTujuan
+    formData.kotaTujuan,
+    selectedAirlineBrand
   ]);
 
   // Reset selected maskapai if it's not present in the master database list (deleted)
@@ -1636,6 +1822,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         tipePenerbangan: formData.tipePenerbangan,
         kelasPenerbangan: formData.kelasPenerbangan,
         estimasiHargaMaskapai: Number(formData.estimasiHargaMaskapai || 0),
+        flightItinerary: formData.flightItinerary || "",
         marginBersih: Number(formData.marginBersih || 0),
         ujrohPartner: Number(formData.ujrohPartner || 0),
         markup: Number(formData.markup || 0),
@@ -1762,6 +1949,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       tipePenerbangan: formData.tipePenerbangan,
       kelasPenerbangan: formData.kelasPenerbangan,
       estimasiHargaMaskapai: Number(formData.estimasiHargaMaskapai || 0),
+      flightItinerary: formData.flightItinerary || "",
       marginBersih: Number(formData.marginBersih || 0),
       ujrohPartner: Number(formData.ujrohPartner || 0),
       markup: Number(formData.markup || 0),
@@ -2486,7 +2674,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   {/* Kota Tujuan Utama */}
                   <div>
                     <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
-                      KOTA TUJUAN UTAMA *
+                      RUTE TUJUAN UTAMA *
                     </label>
                     {formData.kategori === "UMRAH PLUS" ||
                     formData.kategori === "WISATA HALAL" ? (
@@ -3720,9 +3908,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     {["DIRECT", "TRANSIT"].map((type) => (
                       <button
                         key={type}
-                        onClick={() =>
-                          setFormData({ ...formData, tipePenerbangan: type })
-                        }
+                        type="button"
+                        onClick={() => {
+                          setFormData({ 
+                            ...formData, 
+                            tipePenerbangan: type,
+                            maskapaiId: "",
+                            estimasiHargaMaskapai: 0,
+                            flightItinerary: ""
+                          });
+                          setSelectedAirlineBrand("");
+                        }}
                         className={`flex-1 py-3 text-sm font-bold transition-all rounded-lg ${
                           formData.tipePenerbangan === type
                             ? "bg-white text-emerald-600 border border-emerald-100 shadow-sm"
@@ -3736,6 +3932,43 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Tipe Maskapai / Pesawat */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                      Tipe Maskapai / Pesawat
+                    </label>
+                    <select
+                      value={selectedAirlineBrand}
+                      onChange={(e) => {
+                        const newBrand = e.target.value;
+                        setSelectedAirlineBrand(newBrand);
+                        // Clear selected maskapai if it doesn't match the new brand
+                        if (newBrand && formData.maskapaiId) {
+                          const currentMaskapai = maskapaiList.find(m => m.id === formData.maskapaiId);
+                          if (currentMaskapai) {
+                            const brandOfCurrent = getAirlineBrand(currentMaskapai.name);
+                            if (brandOfCurrent !== newBrand) {
+                              setFormData(prev => ({
+                                ...prev,
+                                maskapaiId: "",
+                                flightItinerary: "",
+                                estimasiHargaMaskapai: 0
+                              }));
+                            }
+                          }
+                        }
+                      }}
+                      className="w-full p-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-medium appearance-none bg-white"
+                    >
+                      <option value="">-- Semua Tipe Maskapai --</option>
+                      {dynamicBrands.map((brand) => (
+                        <option key={brand.value} value={brand.value}>
+                          {brand.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Pilih Maskapai */}
                   <div>
                     <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
@@ -3765,18 +3998,32 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           }
                         }
 
+                        const depDateFormatted = formatDateShort(selectedMaskapai?.tanggalKeberangkatan);
+                        const retDateFormatted = formatDateShort(selectedMaskapai?.tanggalKepulangan);
+                        const maskapaiShortName = selectedMaskapai ? selectedMaskapai.name.split(' ')[0] : 'SV';
+                        const randomPnr = Math.random().toString(36).substring(2, 8).toUpperCase();
+                        
+                        const generatedItinerary = selectedMaskapai
+                          ? `CGK${selectedMaskapai.destinationCityName || 'JED'} HK20 ${selectedMaskapai.programDays || 9}D PNR:${randomPnr}\n` +
+                            `${depDateFormatted} ${maskapaiShortName}827 CGK${selectedMaskapai.destinationCityName || 'JED'} 0040 0610\n` +
+                            `${retDateFormatted} ${maskapaiShortName}816 ${selectedMaskapai.destinationCityName || 'JED'}CGK 1830 0815+1`
+                          : "";
+
                         setFormData({
                           ...formData,
                           maskapaiId: newId,
                           estimasiHargaMaskapai: selectedMaskapai
                             ? selectedMaskapai.hargaJual || 0
                             : formData.estimasiHargaMaskapai || 0,
+                          flightItinerary: selectedMaskapai?.flightItinerary || generatedItinerary,
                           tglBerangkat: newTglBerangkat,
                           tglKepulangan: newTglPulang,
                           // If we haven't anchored a date yet, use this one as the anchor
                           // so the list doesn't shift unexpectedly if they keep clicking.
                           preferredDepartureDate: formData.preferredDepartureDate || newTglBerangkat
                         });
+                        // Automatically close text edit mode to show the new ticket immediately
+                        setIsEditingItinerary(false);
                       }}
                       className="w-full p-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-medium appearance-none bg-white"
                     >
@@ -3785,66 +4032,213 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         const cleanName = m.namaVendor
                           ? m.name.replace(` (${m.namaVendor})`, '')
                           : m.name.replace(/\s*\(Madani Tour\)/gi, '');
+                        
+                        const formattedDate = m.tanggalKeberangkatan 
+                          ? new Date(m.tanggalKeberangkatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : '-';
+
                         return (
                           <option key={m.id} value={m.id}>
-                            {cleanName} ({m.programDays || 9} Hari) ({m.tanggalKeberangkatan}) - Sisa:{" "}
-                            {m.availableSeats}
+                            [{formattedDate}] {cleanName} - {m.programDays || 9} Hari (Sisa: {m.availableSeats})
                           </option>
                         );
                       })}
                     </select>
                   </div>
-
-                  {/* Kelas Penerbangan */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                      Kelas Penerbangan
-                    </label>
-                    <select
-                      value={formData.kelasPenerbangan}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          kelasPenerbangan: e.target.value,
-                        })
-                      }
-                      className="w-full p-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-medium appearance-none bg-white"
-                    >
-                      <option value="Ekonomi">Ekonomi</option>
-                      <option value="Bisnis">Bisnis</option>
-                      <option value="First Class">First Class</option>
-                    </select>
-                  </div>
                 </div>
 
-                {/* Estimasi Harga Maskapai */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                    Estimasi Harga Maskapai (Per pax)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
-                      Rp
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="0"
-                      value={
-                        formData.estimasiHargaMaskapai
-                          ? Number(
-                              formData.estimasiHargaMaskapai,
-                            ).toLocaleString("id-ID")
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const rawVal = e.target.value.replace(/\D/g, "");
-                        setFormData({
-                          ...formData,
-                          estimasiHargaMaskapai: rawVal ? Number(rawVal) : 0,
-                        });
-                      }}
-                      className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-bold transition-all"
-                    />
+                {/* Estimasi Harga & Deskripsi Penerbangan Side-by-Side */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {/* Estimasi Harga Maskapai */}
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                      Estimasi Harga Maskapai (Per pax)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
+                        Rp
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="0"
+                        value={
+                          formData.estimasiHargaMaskapai
+                            ? Number(
+                                formData.estimasiHargaMaskapai,
+                              ).toLocaleString("id-ID")
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const rawVal = e.target.value.replace(/\D/g, "");
+                          setFormData({
+                            ...formData,
+                            estimasiHargaMaskapai: rawVal ? Number(rawVal) : 0,
+                          });
+                        }}
+                        className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-bold transition-all bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Deskripsi Penerbangan */}
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Deskripsi Penerbangan
+                      </label>
+                      {isEditingItinerary && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingItinerary(false)}
+                          className="text-[11px] font-extrabold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider flex items-center gap-1"
+                        >
+                          Lihat Tampilan Tiket
+                        </button>
+                      )}
+                    </div>
+
+                    {isEditingItinerary ? (
+                      <div className="space-y-3">
+                        <textarea
+                          placeholder="JEDJED HK20 9D PNR:XXX2L5&#10;28Des SV827 CGKJED 0040 0610&#10;04Jan SV816 JEDCGK 1830 0815+1"
+                          value={formData.flightItinerary || ""}
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              flightItinerary: e.target.value,
+                            });
+                          }}
+                          rows={3}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-xs text-gray-800 font-mono transition-all bg-white leading-relaxed resize-none h-[120px]"
+                        />
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingItinerary(false)}
+                            className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-700 transition-all uppercase tracking-wider flex items-center gap-1"
+                          >
+                            <Check className="w-3 h-3" /> Selesai Mengedit
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      (() => {
+                        const parsedFlights = parseItineraryLines(formData.flightItinerary || "");
+                        const pnrMatch = (formData.flightItinerary || "").match(/PNR\s*:\s*([A-Z0-9]+)/i);
+                        const pnrCode = pnrMatch ? pnrMatch[1] : "AUTO-GEN";
+                        
+                        return parsedFlights.length > 0 ? (
+                          <div className="relative bg-[#0d1222] border border-[#1e294b] p-6 rounded-3xl shadow-xl overflow-hidden space-y-5 text-gray-100">
+                            {/* Decorative Cutout Circles for Boarding Pass Style */}
+                            <div className="absolute top-[45%] -left-3.5 w-7 h-7 bg-white rounded-full border border-gray-200 z-10"></div>
+                            <div className="absolute top-[45%] -right-3.5 w-7 h-7 bg-white rounded-full border border-gray-200 z-10"></div>
+                            
+                            {/* Ticket Header */}
+                            <div className="flex justify-between items-center pb-4 border-b border-[#1e294b] border-dashed">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                                  <Plane className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider border border-emerald-500/20">
+                                    BOARDING PASS
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 font-bold ml-2 uppercase">
+                                    {formData.tipePenerbangan || "DIRECT"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[9px] text-gray-400 font-bold uppercase block tracking-wider">RESERVASI (PNR)</span>
+                                <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">{pnrCode}</span>
+                              </div>
+                            </div>
+
+                            {/* Flight Segments */}
+                            <div className="space-y-5">
+                              {parsedFlights.map((flight, idx) => (
+                                <React.Fragment key={idx}>
+                                  {idx > 0 && (
+                                    <div className="border-t border-dashed border-[#1e294b] my-4 pt-4"></div>
+                                  )}
+                                  <div className="grid grid-cols-3 items-center">
+                                    {/* Origin Airport */}
+                                    <div className="space-y-1">
+                                      <span className="text-[9px] font-bold text-gray-400 block uppercase tracking-wider">DEPARTURE</span>
+                                      <span className="text-2xl font-black text-white tracking-tight font-mono">{flight.origin}</span>
+                                      <span className="text-[10px] font-bold text-emerald-400 block">{flight.date}</span>
+                                    </div>
+
+                                    {/* Flight Path / Plane */}
+                                    <div className="flex flex-col items-center px-2">
+                                      <span className="text-[9px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-full mb-1 border border-emerald-500/15">
+                                        {flight.flightNo}
+                                      </span>
+                                      <div className="w-full relative flex items-center justify-center my-1.5">
+                                        <div className="w-full border-t-2 border-dashed border-[#1e294b] absolute"></div>
+                                        <Plane className="w-4 h-4 text-emerald-400 bg-[#0d1222] relative z-10 px-0.5 rotate-90" />
+                                      </div>
+                                      <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">
+                                        Flight Duration
+                                      </span>
+                                    </div>
+
+                                    {/* Destination Airport */}
+                                    <div className="space-y-1 text-right">
+                                      <span className="text-[9px] font-bold text-gray-400 block uppercase tracking-wider">ARRIVAL</span>
+                                      <span className="text-2xl font-black text-white tracking-tight font-mono">{flight.destination}</span>
+                                      <span className="text-[10px] font-bold text-gray-300 block">TIBA: {flight.arrTime}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Sub-card with Details */}
+                                  <div className="flex justify-between items-center bg-[#151b32] p-3 rounded-2xl border border-[#1e294b]/60 text-xs text-gray-300">
+                                    <div className="flex items-center gap-2 font-bold">
+                                      <Calendar className="w-4 h-4 text-emerald-400" />
+                                      <span>Jadwal Keberangkatan:</span>
+                                      <strong className="text-white font-extrabold">{flight.date}</strong>
+                                    </div>
+                                    <div className="font-mono text-xs font-black text-emerald-400 bg-emerald-500/5 px-2.5 py-0.5 rounded border border-emerald-500/10">
+                                      WAKTU: {flight.depTime}
+                                    </div>
+                                  </div>
+                                </React.Fragment>
+                              ))}
+                            </div>
+
+                            {/* Footer Link / Toggle to edit raw text */}
+                            <div className="pt-2 flex justify-between items-center border-t border-[#1e294b]/40">
+                              <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                E-Ticket sinkron dengan manifest utama
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingItinerary(true)}
+                                className="text-[10px] font-black text-emerald-400 hover:text-emerald-300 flex items-center gap-1 uppercase tracking-widest bg-emerald-500/5 hover:bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/10 transition-all"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" /> Edit Text Manual
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-6 border border-dashed border-gray-200 rounded-2xl text-center bg-gray-50 text-gray-400 space-y-3">
+                            <Plane className="w-8 h-8 text-gray-300 mx-auto mb-2 stroke-[1.5]" />
+                            <p className="text-xs font-bold text-gray-500">Belum ada rute penerbangan dipilih</p>
+                            <p className="text-[10px] text-gray-400 max-w-sm mx-auto">
+                              Silakan pilih maskapai di atas untuk memunculkan e-ticket otomatis, atau klik tombol di bawah untuk menulis manual.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingItinerary(true)}
+                              className="text-[10px] font-extrabold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider flex items-center gap-1 mx-auto"
+                            >
+                              <Edit3 className="w-3 h-3" /> Tulis Manual
+                            </button>
+                          </div>
+                        );
+                      })()
+                    )}
                   </div>
                 </div>
               </>
@@ -5840,18 +6234,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                       <>
                                         {formData.negaraWisata || "TURKEY"}{" "}
                                         <ArrowRight className="w-3 h-3 text-gray-400" />{" "}
-                                        SAUDI
+                                        {destinationDisplay}
                                       </>
                                     ) : (
                                       <>
-                                        SAUDI{" "}
+                                        {destinationDisplay}{" "}
                                         <ArrowRight className="w-3 h-3 text-gray-400" />{" "}
                                         {formData.negaraWisata || "TURKEY"}
                                       </>
                                     )}
                                   </>
                                 ) : (
-                                  "SAUDI"
+                                  destinationDisplay
                                 )}
                               </p>
                             </div>
@@ -5887,12 +6281,19 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                               <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
                                 <Plane className="w-4 h-4" />
                               </div>
-                              <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                {maskapaiList.find(
-                                  (m) => m.id === formData.maskapaiId,
-                                )?.name || "MASKAPAI"}{" "}
-                                ({formData.kelasPenerbangan || "EKONOMI"})
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
+                                  {maskapaiList.find(
+                                    (m) => m.id === formData.maskapaiId,
+                                  )?.name || "MASKAPAI"}{" "}
+                                  ({formData.kelasPenerbangan || "EKONOMI"})
+                                </span>
+                                {formData.flightItinerary && (
+                                  <pre className="text-[10px] text-gray-500 font-mono whitespace-pre-wrap mt-1.5 border-l-2 border-emerald-500 pl-2 leading-relaxed bg-gray-50/70 p-2 rounded-lg max-w-sm sm:max-w-md">
+                                    {formData.flightItinerary}
+                                  </pre>
+                                )}
+                              </div>
                             </div>
                             <span className="font-black text-xs sm:text-sm text-blue-600 italic">
                               Rp{" "}
@@ -6902,8 +7303,26 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 </div>
                 <div>
                   <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">KEBERANGKATAN</p>
-                  <div className="text-[11px] font-black text-gray-700 uppercase flex items-center">
-                    {formData.kotaKeberangkatan || "JAKARTA"} <span className="mx-1">→</span> SAUDI
+                  <div className="text-[11px] font-black text-gray-700 uppercase flex items-center flex-wrap gap-1">
+                    {formData.kotaKeberangkatan || "JAKARTA"}
+                    <span className="text-gray-400 font-bold mx-0.5">→</span>
+                    {formData.kategori === "UMRAH PLUS" ? (
+                      formData.alurPerjalanan === "WISATA TERLEBIH DAHULU" ? (
+                        <>
+                          {formData.negaraWisata || "TURKEY"}
+                          <span className="text-gray-400 font-bold mx-0.5">→</span>
+                          {destinationDisplay}
+                        </>
+                      ) : (
+                        <>
+                          {destinationDisplay}
+                          <span className="text-gray-400 font-bold mx-0.5">→</span>
+                          {formData.negaraWisata || "TURKEY"}
+                        </>
+                      )
+                    ) : (
+                      destinationDisplay
+                    )}
                   </div>
                 </div>
               </div>
@@ -6940,9 +7359,16 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                    <Plane className="w-5 h-5" />
                 </div>
-                <span className="font-bold text-sm text-gray-800 uppercase">
-                   {maskapaiList.find(m => m.id === formData.maskapaiId)?.name || 'MASKAPAI'} ({formData.kelasPenerbangan || 'EKONOMI'})
-                </span>
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm text-gray-800 uppercase">
+                     {maskapaiList.find(m => m.id === formData.maskapaiId)?.name || 'MASKAPAI'} ({formData.kelasPenerbangan || 'EKONOMI'})
+                  </span>
+                  {formData.flightItinerary && (
+                    <pre style={{ whiteSpace: 'pre-wrap' }} className="text-[10px] text-gray-500 font-mono mt-1 border-l-2 border-emerald-500 pl-2 leading-relaxed bg-gray-50/70 p-1.5 rounded max-w-sm">
+                      {formData.flightItinerary}
+                    </pre>
+                  )}
+                </div>
               </div>
               <span className="font-black text-blue-700 italic">Rp {Number(formData.estimasiHargaMaskapai || 0).toLocaleString('id-ID')}</span>
             </div>
