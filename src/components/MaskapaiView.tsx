@@ -275,6 +275,11 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const [itemToDelete, setItemToDelete] = useState<Maskapai | null>(null);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
+  // Batch selection states
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false);
+  const [isDeletingSelected, setIsDeletingSelected] = useState(false);
+
   const showToastMsg = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ text, type });
   };
@@ -580,6 +585,32 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     return true;
   });
 
+  // Selection Helpers
+  const allFilteredIds = filteredData.map(item => item.id);
+  const isAllSelected = filteredData.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
+  const isSomeSelected = filteredData.length > 0 && !isAllSelected && allFilteredIds.some(id => selectedIds.includes(id));
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !allFilteredIds.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const unique = new Set([...prev, ...allFilteredIds]);
+        return Array.from(unique);
+      });
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
   // Database maintenance counters
   const expiredCount = data.filter(item => item.tanggalKeberangkatan < todayStr).length;
   const zeroSeatCount = data.filter(item => item.availableSeats <= 0).length;
@@ -737,6 +768,15 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          {selectedIds.length > 0 && (
+            <button
+              onClick={() => setShowBatchDeleteModal(true)}
+              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg shadow-rose-250 cursor-pointer animate-in fade-in slide-in-from-right-3 duration-200"
+            >
+              <Trash2 className="w-4 h-4" />
+              Hapus {selectedIds.length} Terpilih
+            </button>
+          )}
           <button
             onClick={handleCleanupDatabase}
             disabled={isCleaning || outdatedCount === 0}
@@ -843,6 +883,19 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
               <table className="w-full text-sm text-left">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-100">
                   <tr>
+                    <th className="px-4 py-3 text-center w-12">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                        checked={isAllSelected}
+                        ref={(el) => {
+                          if (el) {
+                            el.indeterminate = isSomeSelected;
+                          }
+                        }}
+                        onChange={handleSelectAll}
+                      />
+                    </th>
                     <th className="px-4 py-3 font-semibold">Maskapai & Rute</th>
                     <th className="px-4 py-3 font-semibold text-center">Seats</th>
                     {!isVendorMode && <th className="px-4 py-3 font-semibold">Harga Jual</th>}
@@ -874,6 +927,14 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                                 : 'hover:bg-gray-55/50'
                         }`}
                       >
+                        <td className="px-4 py-3 text-center">
+                          <input 
+                            type="checkbox" 
+                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                            checked={selectedIds.includes(item.id)}
+                            onChange={() => handleSelectOne(item.id)}
+                          />
+                        </td>
                         <td className="px-4 py-3 font-medium text-gray-900">
                           <div className="flex flex-col">
                             <span className="font-bold text-gray-950">{item.name}</span>
@@ -985,25 +1046,56 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
             </div>
 
             {/* Mobile/Tablet Card View */}
+            <div className="xl:hidden bg-gray-50 border-b border-gray-250 px-4 py-2.5 flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) {
+                      el.indeterminate = isSomeSelected;
+                    }
+                  }}
+                  onChange={handleSelectAll}
+                />
+                Pilih Semua ({filteredData.length} Rute)
+              </label>
+              {selectedIds.length > 0 && (
+                <span className="text-xs font-black text-rose-600">
+                  {selectedIds.length} Terpilih
+                </span>
+              )}
+            </div>
+
             <div className="xl:hidden divide-y divide-gray-100">
               {filteredData.map((item) => {
                 const staleInfo = getUpdateStatusText(item);
                 return (
                   <div 
                     key={item.id} 
-                    className={`p-4 transition-colors ${
+                    className={`p-4 transition-colors flex gap-3 ${
                       item.tanggalKeberangkatan < todayStr 
                         ? 'bg-rose-50/15 border-l-4 border-rose-500 opacity-75' 
                         : staleInfo.isStale
                           ? 'bg-orange-50/15 border-l-4 border-orange-500 opacity-80'
                           : item.availableSeats <= 0
                             ? 'bg-gray-50/40 border-l-4 border-gray-400 opacity-80'
-                            : 'hover:bg-gray-50 border-l-4 border-transparent'
+                            : 'hover:bg-gray-55 border-l-4 border-transparent'
                     }`}
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-bold text-gray-950 text-base">{item.name}</h3>
+                    <div className="flex items-start pt-1">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => handleSelectOne(item.id)}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-bold text-gray-950 text-base">{item.name}</h3>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {item.tanggalKeberangkatan < todayStr && (
                             <span className="bg-rose-150 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
@@ -1109,6 +1201,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                         Hapus
                       </button>
                     </div>
+                  </div>
                   </div>
                 );
               })}
@@ -1429,6 +1522,63 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md shadow-rose-200"
               >
                 Hapus Permanen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Deletion Confirmation Modal */}
+      {showBatchDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 overflow-hidden animate-in zoom-in-95 duration-200 text-gray-950">
+            <h3 className="text-lg font-bold flex items-center gap-2 mb-2 text-rose-600">
+              <Trash2 className="w-5 h-5" />
+              Hapus Maskapai Terpilih?
+            </h3>
+            <p className="text-gray-650 text-sm mb-6 leading-relaxed">
+              Apakah Anda yakin ingin menghapus <strong className="text-gray-950">{selectedIds.length} maskapai</strong> yang Anda pilih? Tindakan ini akan menghapus semua data terpilih secara permanen dari database.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                disabled={isDeletingSelected}
+                onClick={() => setShowBatchDeleteModal(false)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                disabled={isDeletingSelected}
+                onClick={async () => {
+                  setIsDeletingSelected(true);
+                  try {
+                    const chunks: string[][] = [];
+                    const chunkSize = 400;
+                    for (let i = 0; i < selectedIds.length; i += chunkSize) {
+                      chunks.push(selectedIds.slice(i, i + chunkSize));
+                    }
+
+                    for (const chunk of chunks) {
+                      const batch = writeBatch(db);
+                      chunk.forEach((id) => {
+                        batch.delete(doc(db, 'maskapai', id));
+                      });
+                      await batch.commit();
+                    }
+
+                    showToastMsg(`Berhasil menghapus ${selectedIds.length} data maskapai`, "success");
+                    setSelectedIds([]);
+                    setShowBatchDeleteModal(false);
+                  } catch (err) {
+                    console.error(err);
+                    showToastMsg("Gagal menghapus data maskapai", "error");
+                  } finally {
+                    setIsDeletingSelected(false);
+                  }
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md shadow-rose-200 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isDeletingSelected ? "Sedang Menghapus..." : "Hapus Terpilih"}
               </button>
             </div>
           </div>
