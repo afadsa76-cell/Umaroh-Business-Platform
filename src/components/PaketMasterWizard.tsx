@@ -480,6 +480,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [aiResult, setAiResult] = useState<{ title: string; content: string } | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+  const [showHandlingDescModal, setShowHandlingDescModal] = useState(false);
+  const [showEquipmentDescModal, setShowEquipmentDescModal] = useState(false);
+  const [zoomFlyerUrl, setZoomFlyerUrl] = useState<string | null>(null);
   const pdfExportRef = React.useRef<HTMLDivElement>(null);
   const [userName, setUserName] = useState("Paket Master System");
 
@@ -514,6 +517,122 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       unsubUser();
     };
   }, []);
+
+  // Custom descriptions retrieved from localStorage with default fallbacks
+  const handlingDesc = useMemo(() => {
+    const cached = localStorage.getItem('umaroh_db_handling_saudi_deskripsi');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed.termasuk) && Array.isArray(parsed.tidakTermasuk)) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to parse cached description:', e);
+      }
+    }
+    return {
+      termasuk: [
+        "Harga diatas adalah harga estimasi, sewaktu-waktu dapat di sesuaikan dengan perubahan komponen di Arab Saudi.",
+        "Harga diatas adalah harga per Pax.",
+        "HANDLING AIRPORT; Meet & Assist Airport JED/MED",
+        "1. Handling Bagasi saat Kedatangan dan Kepulangan",
+        "2. Tip Muasasah",
+        "3. Tip Porter",
+        "4. Air Zam-zam 1 Galon/Pax",
+        "5. Penyambutan dengan Branding Partner",
+        "HANDLING HOTEL; Handling Check-In Check-Out Hotel Makkah dan Madinah, Meliputi:",
+        "1. Pengambilan Kunci Kamar",
+        "2. Room Showing",
+        "3. Checking Aminities",
+        "4. Pengaturan Room List",
+        "5. Penyerahan Kunci",
+        "6. Pengurusan Bagasi Hingga Depan Kamar",
+        "7. Tip Bellman",
+        "HANDLING TRANSPORTASI; Penanganan Transportasi minimal 5 trip regular, dengan detail sebagai berikut:",
+        "1. Memastikan Kedatangan Sesuai Jadwal",
+        "2. Memastikan Kebersihan Kendaraan",
+        "3. Memastikan Fasilitas Kendaraan Sesuai",
+        "4. Snack Box (Sesuai Program)",
+        "5. Tip Sopir",
+        "MEALS;",
+        "1. Meal Box saat Kedatangan",
+        "2. Meal Box saat Kepulangan",
+        "SNACK; diberikan 3 kali dengan detail berikut:",
+        "1. Mazarat Makkah",
+        "2. Mazarat Madinah",
+        "3. Transfer Makkah - Madinah",
+        "GUIDES;",
+        "1. Muthawif 8 Hari",
+        "2. Muthawif 1 Kali di Raudhah",
+        "BRANDING PARTNER;",
+        "1. Sign Board Kedatangan",
+        "2. Welcome Banner Kedatangan",
+        "3. Head Rest Cover sesuai Trip",
+        "4. Snack Paper + Logo Travel",
+        "5. Logo Travel untuk Pack Meal"
+      ],
+      tidakTermasuk: [
+        "Pengeluaran belanja pribadi",
+        "Kelebihan bagasi"
+      ]
+    };
+  }, [showHandlingDescModal]);
+
+  const equipmentDesc = useMemo(() => {
+    const cached = localStorage.getItem('umaroh_db_equipment_deskripsi');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.full && Array.isArray(parsed.full.items) && parsed.aksesoris && Array.isArray(parsed.aksesoris.items)) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to parse cached equipment description:', e);
+      }
+    }
+    return {
+      full: {
+        title: "PERLENGKAPAN UMROH (Eksklusif Umaroh)",
+        subtitle: "Sebelum berangkat umroh sebaiknya siapkan perlengkapan yg wajib anda siapkan dan anda bawa agar memudahkan perjalanan ibadah mu",
+        items: [
+          "Koper Bagasi",
+          "Koper Cabin",
+          "Tas Slempang",
+          "Blazer Batik",
+          "Hijab/Scraft",
+          "Sampul Paspor",
+          "Name tag",
+          "buku umroh",
+          "Mukena/Kain Ihram",
+          "Buku Doa",
+          "Tag Koper",
+          "Sampul Koper"
+        ],
+        note: "Perlengkapan diatas dapat disesuaikan dengan kebutuhan Bapak/Ibu mitra ketika membuat paket dan kebutuhan Calon Jamaah serta kami siapkan terpisah sesuai katagori kebutuhan."
+      },
+      aksesoris: {
+        title: "Aksesoris Perlengkapan",
+        items: [
+          "Sampul Koper",
+          "Sampul Paspor",
+          "Tali ID Card",
+          "Buku Do'a",
+          "Blazer Batik",
+          "Tag Koper"
+        ]
+      }
+    };
+  }, [showEquipmentDescModal]);
+
+  const isHeader = (item: string) => {
+    const trimmed = item.trim();
+    return (
+      trimmed.endsWith(':') || 
+      trimmed.endsWith(';') || 
+      (trimmed === trimmed.toUpperCase() && trimmed.length > 5 && !trimmed.match(/^\d/))
+    );
+  };
 
   useEffect(() => {
     if (autoDownloadPdf) {
@@ -1456,17 +1575,32 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const selectedLayananItems = layananList.reduce((acc: {id: string, nama: string, harga: number}[], item: Layanan) => {
       if (item.isGroup) {
         if (formData.selectedLayanan?.includes(item.id)) {
-          const selectedOpt = item.options?.find((opt) =>
-            formData.selectedLayanan?.includes(opt.id)
-          );
-          if (selectedOpt) {
-            const rawPrice = selectedOpt.price;
-            const roundedPrice = rawPrice > 0 ? Math.ceil(rawPrice / 1000) * 1000 : 0;
-            acc.push({
-              id: selectedOpt.id,
-              nama: `${item.nama}: ${selectedOpt.label}`,
-              harga: roundedPrice,
+          if (item.id === "group_ziarah") {
+            const selectedOpts = item.options?.filter((opt) =>
+              formData.selectedLayanan?.includes(opt.id)
+            ) || [];
+            selectedOpts.forEach((opt) => {
+              const rawPrice = opt.price;
+              const roundedPrice = rawPrice > 0 ? Math.ceil(rawPrice / 1000) * 1000 : 0;
+              acc.push({
+                id: opt.id,
+                nama: `${item.nama}: ${opt.label}`,
+                harga: roundedPrice,
+              });
             });
+          } else {
+            const selectedOpt = item.options?.find((opt) =>
+              formData.selectedLayanan?.includes(opt.id)
+            );
+            if (selectedOpt) {
+              const rawPrice = selectedOpt.price;
+              const roundedPrice = rawPrice > 0 ? Math.ceil(rawPrice / 1000) * 1000 : 0;
+              acc.push({
+                id: selectedOpt.id,
+                nama: `${item.nama}: ${selectedOpt.label}`,
+                harga: roundedPrice,
+              });
+            }
           }
         }
       } else {
@@ -5525,14 +5659,25 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 // For grouped items, if selected, find the active option's price. Otherwise show minimum price.
                 let rawPrice = (item as { harga?: number }).harga || 0;
                 if (isGroup) {
-                  const activeOpt = item.options?.find((opt) =>
-                    formData.selectedLayanan?.includes(opt.id),
-                  );
-                  if (activeOpt) {
-                    rawPrice = activeOpt.price;
+                  if (item.id === "group_ziarah") {
+                    const activeOpts = item.options?.filter((opt) =>
+                      formData.selectedLayanan?.includes(opt.id)
+                    ) || [];
+                    if (activeOpts.length > 0) {
+                      rawPrice = activeOpts.reduce((sum, opt) => sum + opt.price, 0);
+                    } else {
+                      rawPrice = item.options?.[0]?.price || 0;
+                    }
                   } else {
-                    // Defaults to first price, or 0 if empty
-                    rawPrice = item.options?.[0]?.price || 0;
+                    const activeOpt = item.options?.find((opt) =>
+                      formData.selectedLayanan?.includes(opt.id),
+                    );
+                    if (activeOpt) {
+                      rawPrice = activeOpt.price;
+                    } else {
+                      // Defaults to first price, or 0 if empty
+                      rawPrice = item.options?.[0]?.price || 0;
+                    }
                   }
                 }
                 const displayPrice = rawPrice > 0 ? Math.ceil(rawPrice / 1000) * 1000 : 0;
@@ -5654,6 +5799,38 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           {item.deskripsi}
                         </p>
 
+                        {item.id === "hsaudi_auto" && (
+                          <div className="mb-4">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowHandlingDescModal(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 text-[10px] bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm active:scale-95"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              Lihat Deskripsi Master
+                            </button>
+                          </div>
+                        )}
+
+                        {item.id === "group_equip" && (
+                          <div className="mb-4">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowEquipmentDescModal(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 text-[10px] bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm active:scale-95"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              Lihat Deskripsi Master
+                            </button>
+                          </div>
+                        )}
+
                         <div className="mt-auto flex items-end justify-between">
                           <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">
                             BIAYA PER PAX
@@ -5681,17 +5858,35 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   key={opt.id}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    // Remove all options of this group from selected
-                                    const wSelections = (
-                                      formData.selectedLayanan || []
-                                    ).filter(
-                                      (id: string) =>
-                                        !item.options
-                                          ?.map((o: LayananOption) => o.id)
-                                          .includes(id),
-                                    );
-                                    // Add this one
-                                    wSelections.push(opt.id);
+                                    let wSelections = [...(formData.selectedLayanan || [])];
+                                    if (item.id === "group_ziarah") {
+                                      if (wSelections.includes(opt.id)) {
+                                        // Deselect this option
+                                        wSelections = wSelections.filter((id) => id !== opt.id);
+                                        // If no ziarah options are left, we also deselect "group_ziarah"
+                                        const hasAnyZiarahLeft = item.options?.some((o) => wSelections.includes(o.id));
+                                        if (!hasAnyZiarahLeft) {
+                                          wSelections = wSelections.filter((id) => id !== item.id);
+                                        }
+                                      } else {
+                                        // Select this option
+                                        wSelections.push(opt.id);
+                                        // Ensure the group item itself is also in selections
+                                        if (!wSelections.includes(item.id)) {
+                                          wSelections.push(item.id);
+                                        }
+                                      }
+                                    } else {
+                                      // Remove all options of this group from selected
+                                      wSelections = wSelections.filter(
+                                        (id: string) =>
+                                          !item.options
+                                            ?.map((o: LayananOption) => o.id)
+                                            .includes(id),
+                                      );
+                                      // Add this one
+                                      wSelections.push(opt.id);
+                                    }
                                     setFormData({
                                       ...formData,
                                       selectedLayanan: wSelections,
@@ -6311,7 +6506,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 </div>
                                 <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
                                   HOTEL {formData.negaraWisata || "TURKEY"} ★
-                                  {getHelperStars(formData.hotelWisataId, hWisata?.bintang)} (
+                                  {getHelperStars(formData.hotelWisataId, hWisata?.bintang)} - {hWisata?.mealPlan || "FB"} (
                                   {hWisata?.nama || "HILTON"} -{" "}
                                   {(formData.durasiWisata || 0) + 1} HARI{" "}
                                   {formData.durasiWisata || 0} MALAM)
@@ -6330,7 +6525,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <Building2 className="w-4 h-4" />
                                 </div>
                                 <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                  {hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, hMadinah.bintang)} (
+                                  {hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, hMadinah.bintang)} - {hMadinah.mealPlan || "FB"} (
                                   {parseNum(formData.durasiMadinah, 3) + 1} HARI{" "}
                                   {parseNum(formData.durasiMadinah, 3)} MALAM)
                                 </span>
@@ -6348,7 +6543,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <Building2 className="w-4 h-4" />
                                 </div>
                                 <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                  {hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, hMakkah.bintang)} (
+                                  {hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, hMakkah.bintang)} - {hMakkah.mealPlan || "FB"} (
                                   {parseNum(formData.durasiMakkah, 4) + 1} HARI{" "}
                                   {parseNum(formData.durasiMakkah, 4)} MALAM)
                                 </span>
@@ -7235,6 +7430,272 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         </div>
       )}
 
+      {showHandlingDescModal && (() => {
+        const desc = handlingDesc;
+        return (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white rounded-[24px] max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh] overflow-hidden border border-gray-100">
+              {/* Header */}
+              <div className="flex justify-between items-center px-6 py-4 border-b border-gray-150 bg-gray-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-gray-950 uppercase tracking-tight">
+                      Deskripsi Master Handling Saudi
+                    </h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                      Syarat & Ketentuan Layanan (Inclusions & Exclusions)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowHandlingDescModal(false)}
+                  className="p-1.5 hover:bg-gray-200 text-gray-400 hover:text-gray-600 rounded-lg transition-colors focus:outline-none"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
+                {/* Harga Termasuk (Inclusions) */}
+                <div className="bg-emerald-50/20 border border-emerald-100 p-5 rounded-2xl relative overflow-hidden h-fit">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+                  <h4 className="font-extrabold text-emerald-800 text-xs uppercase tracking-wider mb-4 border-b border-emerald-100 pb-2 flex items-center gap-1.5">
+                    <Check className="w-4 h-4" />
+                    Harga Termasuk (Inclusions)
+                  </h4>
+                  <div className="space-y-1.5">
+                    {desc.termasuk.map((item, idx) => {
+                      const isHead = isHeader(item);
+                      if (isHead) {
+                        return (
+                          <div key={idx} className="font-bold text-gray-800 text-xs mt-3 mb-1.5 first:mt-0 tracking-wide border-b border-emerald-100/60 pb-1 flex items-center gap-2">
+                            <span className="w-1.5 h-3 bg-emerald-500 rounded-sm shrink-0"></span>
+                            {item}
+                          </div>
+                        );
+                      }
+                      const hasNumber = item.trim().match(/^\d+\./);
+                      return (
+                        <div 
+                          key={idx} 
+                          className={`text-xs text-gray-600 py-0.5 flex items-start gap-2 ${
+                            hasNumber ? 'pl-4' : 'pl-1'
+                          }`}
+                        >
+                          {!hasNumber && <span className="text-emerald-500 font-bold shrink-0">•</span>}
+                          <span className="leading-relaxed">{item}</span>
+                        </div>
+                      );
+                    })}
+                    {desc.termasuk.length === 0 && (
+                      <p className="text-gray-400 text-xs italic text-center py-4">Belum ada deskripsi.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Harga Tidak Termasuk (Exclusions) */}
+                <div className="bg-red-50/10 border border-red-100 p-5 rounded-2xl relative overflow-hidden h-fit">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -mr-8 -mt-8 pointer-events-none"></div>
+                  <h4 className="font-extrabold text-red-800 text-xs uppercase tracking-wider mb-4 border-b border-red-100 pb-2 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+                    Harga Tidak Termasuk (Exclusions)
+                  </h4>
+                  <div className="space-y-1.5">
+                    {desc.tidakTermasuk.map((item, idx) => (
+                      <div key={idx} className="text-xs text-gray-600 py-0.5 flex items-start gap-2">
+                        <span className="text-red-400 font-bold shrink-0">•</span>
+                        <span className="leading-relaxed">{item}</span>
+                      </div>
+                    ))}
+                    {desc.tidakTermasuk.length === 0 && (
+                      <p className="text-gray-400 text-xs italic text-center py-4">Belum ada deskripsi.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-150 bg-gray-50/50 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowHandlingDescModal(false)}
+                  className="bg-gray-950 hover:bg-gray-800 text-white font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-xl transition-all"
+                >
+                  Tutup Deskripsi
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {showEquipmentDescModal && (() => {
+        const desc = equipmentDesc;
+        return (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white rounded-[24px] max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh] overflow-hidden border border-gray-100">
+              {/* Header */}
+              <div className="flex justify-between items-center px-6 py-4 border-b border-gray-150 bg-gray-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-gray-950 uppercase tracking-tight">
+                      Deskripsi Master Perlengkapan & Aksesoris
+                    </h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                      Syarat & Detail Perlengkapan Umroh (Inclusions)
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowEquipmentDescModal(false)}
+                  className="p-1.5 hover:bg-gray-200 text-gray-400 hover:text-gray-600 rounded-lg transition-colors focus:outline-none"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
+                {/* Full Perlengkapan */}
+                <div className="bg-amber-500/[0.02] border border-amber-500/15 rounded-[24px] p-6 relative overflow-hidden flex flex-col justify-between h-fit">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-400/5 rounded-full -mr-6 -mt-6 pointer-events-none"></div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                      <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider">
+                        {desc.full.title}
+                      </h4>
+                    </div>
+
+                    {/* Flyer Image */}
+                    <div 
+                      onClick={() => setZoomFlyerUrl("https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO")}
+                      className="mb-4 rounded-xl overflow-hidden border border-amber-500/10 shadow-sm bg-white flex items-center justify-center cursor-zoom-in group relative"
+                    >
+                      <img 
+                        src="https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO" 
+                        alt="Flyer Perlengkapan" 
+                        className="max-h-[160px] w-full object-contain group-hover:scale-102 transition-transform duration-300 py-1"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                        <span className="text-[9px] bg-white/95 text-gray-800 font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                          <Search className="w-2.5 h-2.5" /> Klik Zoom
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-gray-500 mb-4 italic leading-relaxed border-l-2 border-amber-400/40 pl-3">
+                      "{desc.full.subtitle}"
+                    </p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
+                      {desc.full.items.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-gray-700 py-0.5 border-b border-gray-100/60">
+                          <span className="text-amber-500 font-extrabold text-sm">•</span>
+                          <span className="font-medium">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {desc.full.note && (
+                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 flex items-start gap-2.5 mt-2">
+                      <span className="text-amber-600 text-xs mt-0.5">⚠️</span>
+                      <p className="text-[10px] text-amber-800 font-medium leading-relaxed">
+                        {desc.full.note}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Aksesoris */}
+                <div className="bg-emerald-500/[0.02] border border-emerald-500/15 rounded-[24px] p-6 relative overflow-hidden flex flex-col justify-between h-fit">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/5 rounded-full -mr-6 -mt-6 pointer-events-none"></div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-4 border-b border-emerald-100 pb-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider">
+                        {desc.aksesoris.title}
+                      </h4>
+                    </div>
+
+                    {/* Flyer Image */}
+                    <div 
+                      onClick={() => setZoomFlyerUrl("https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV")}
+                      className="mb-4 rounded-xl overflow-hidden border border-emerald-500/10 shadow-sm bg-white flex items-center justify-center cursor-zoom-in group relative"
+                    >
+                      <img 
+                        src="https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV" 
+                        alt="Flyer Aksesoris" 
+                        className="max-h-[160px] w-full object-contain group-hover:scale-102 transition-transform duration-300 py-1"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                        <span className="text-[9px] bg-white/95 text-gray-800 font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                          <Search className="w-2.5 h-2.5" /> Klik Zoom
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {desc.aksesoris.items.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2.5 text-xs text-gray-700 py-1 px-2.5 bg-white border border-emerald-100/40 rounded-xl shadow-[0_2px_8px_rgba(16,185,129,0.02)]">
+                          <span className="text-emerald-600 font-bold text-[10px] bg-emerald-50 w-4.5 h-4.5 flex items-center justify-center rounded-md shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span className="font-medium">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-gray-150 bg-gray-50/50 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowEquipmentDescModal(false)}
+                  className="bg-gray-950 hover:bg-gray-800 text-white font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-xl transition-all"
+                >
+                  Tutup Deskripsi
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Local Flyer Zoom Overlay Modal inside Wizard */}
+      {zoomFlyerUrl && (
+        <div 
+          onClick={() => setZoomFlyerUrl(null)}
+          className="fixed inset-0 z-[130] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 cursor-zoom-out"
+        >
+          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center">
+            <button 
+              onClick={(e) => { e.stopPropagation(); setZoomFlyerUrl(null); }}
+              className="absolute -top-12 right-0 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors border border-white/10 focus:outline-none"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img 
+              src={zoomFlyerUrl} 
+              alt="Flyer Zoomed" 
+              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+              referrerPolicy="no-referrer"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
+
       {/* HIDDEN PDF TEMPLATE */}
       <div style={{ height: 0, overflow: 'hidden', position: 'absolute', top: 0, left: 0, width: '100%', pointerEvents: 'none' }}>
         <div id="pdf-export-content" className="bg-white text-gray-900 p-10 w-[210mm] min-h-[297mm]">
@@ -7380,7 +7841,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                      <Building2 className="w-5 h-5" />
                   </div>
                   <span className="font-bold text-sm text-gray-800 uppercase">
-                     {pricingSummary.hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, pricingSummary.hMadinah.bintang)} ({parseNum(formData.durasiMadinah, 3)} MALAM)
+                     {pricingSummary.hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, pricingSummary.hMadinah.bintang)} - {pricingSummary.hMadinah.mealPlan || 'FB'} ({parseNum(formData.durasiMadinah, 3) + 1} HARI {parseNum(formData.durasiMadinah, 3)} MALAM)
                   </span>
                 </div>
                 <span className="font-black text-blue-700 italic">Rp {pricingSummary.hQuadMadinah.toLocaleString('id-ID')}</span>
@@ -7394,7 +7855,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                      <Building2 className="w-5 h-5" />
                   </div>
                   <span className="font-bold text-sm text-gray-800 uppercase">
-                     {pricingSummary.hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, pricingSummary.hMakkah.bintang)} ({parseNum(formData.durasiMakkah, 4)} MALAM)
+                     {pricingSummary.hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, pricingSummary.hMakkah.bintang)} - {pricingSummary.hMakkah.mealPlan || 'FB'} ({parseNum(formData.durasiMakkah, 4) + 1} HARI {parseNum(formData.durasiMakkah, 4)} MALAM)
                   </span>
                 </div>
                 <span className="font-black text-blue-700 italic">Rp {pricingSummary.hQuadMakkah.toLocaleString('id-ID')}</span>

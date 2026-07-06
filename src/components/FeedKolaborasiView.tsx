@@ -92,7 +92,9 @@ export const FeedKolaborasiView = ({ onNavigateToCatalog }: { onNavigateToCatalo
   const getHotelLabel = (id: string) => {
     const h = getHotelObject(id);
     if (!h) return 'Hotel Bintang 5';
-    return h.name || (h as unknown as Record<string, unknown>).nama as string || 'Hotel Bintang 5';
+    const name = h.name || (h as unknown as Record<string, unknown>).nama as string || 'Hotel Bintang 5';
+    const meal = h.mealPlan || (h as unknown as Record<string, unknown>).mealPlan as string;
+    return meal ? `${name} (${meal})` : name;
   };
 
   const getHotelStars = (id: string) => {

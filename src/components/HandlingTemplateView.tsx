@@ -59,8 +59,8 @@ export const HandlingTemplateView: React.FC = () => {
   useEffect(() => {
     autoFillData();
     
-    // Pre-fill some default includes based on standard handling
-    const defaultIncludes = [
+    // Check if custom description exists in localStorage
+    let includesToUse = [
       "Handling Kedatangan Bandara Madinah / Jeddah",
       "Handling kepulangan di Bandara Jeddah / Madinah",
       "Biaya Porter Bandara Madinah & Jeddah",
@@ -75,8 +75,35 @@ export const HandlingTemplateView: React.FC = () => {
       "Makan siang / makan malam saat kepulangan",
       "Air Zamzam 05 Liter (Apabila Diizinkan)"
     ];
+
+    try {
+      const cachedDesc = localStorage.getItem('umaroh_db_handling_saudi_deskripsi');
+      if (cachedDesc) {
+        const parsed = JSON.parse(cachedDesc);
+        if (parsed && Array.isArray(parsed.termasuk) && parsed.termasuk.length > 0) {
+          // Omit the first two pricing notes from the printable includes if desired, or use them all
+          // Usually notes like "Harga diatas adalah..." are not item inclusions. Let's filter them out if they are exactly those, or let the user choose.
+          // Let's filter out general estimate sentences for includes if they are headers or match certain strings, but actually keeping all of them is very straightforward.
+          // Let's filter out the very generic ones or keep everything:
+          includesToUse = parsed.termasuk.filter((item: string) => {
+            const lower = item.toLowerCase();
+            return !lower.includes("estimasi") && !lower.includes("harga diatas");
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load cached handling saudi inclusions:', e);
+    }
     
-    setIncludeRows(defaultIncludes.map(item => ({ item })));
+    // Make sure we have at least 13 rows for A4 height spacing or dynamically size
+    const mapped = includesToUse.map(item => ({ item }));
+    if (mapped.length < 13) {
+      const extraCount = 13 - mapped.length;
+      for (let i = 0; i < extraCount; i++) {
+        mapped.push({ item: "" });
+      }
+    }
+    setIncludeRows(mapped);
   }, []); // Run once on mount
 
   // Recalculate when kurs or margin changes

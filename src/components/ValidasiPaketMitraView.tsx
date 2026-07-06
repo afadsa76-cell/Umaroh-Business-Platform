@@ -436,7 +436,7 @@ Mohon informasinya, terima kasih.`;
                    <div>
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">HOTEL MKK</p>
                       <p className="text-sm font-black text-gray-900 uppercase italic">
-                         {hotelMakkah?.nama || "PULLMAN ZAMZAM"}
+                         {hotelMakkah?.nama || "PULLMAN ZAMZAM"}{hotelMakkah?.mealPlan ? ` (${hotelMakkah.mealPlan})` : ""}
                       </p>
                    </div>
                 </div>
@@ -447,7 +447,7 @@ Mohon informasinya, terima kasih.`;
                    <div>
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">HOTEL MDN</p>
                       <p className="text-sm font-black text-gray-900 uppercase italic">
-                         {hotelMadinah?.nama || "DALLAH TAIBAH"}
+                         {hotelMadinah?.nama || "DALLAH TAIBAH"}{hotelMadinah?.mealPlan ? ` (${hotelMadinah.mealPlan})` : ""}
                       </p>
                    </div>
                 </div>

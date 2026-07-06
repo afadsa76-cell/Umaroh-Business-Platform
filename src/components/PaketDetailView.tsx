@@ -179,7 +179,10 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
 
   const getHotelLabel = (id: string) => {
     const h = getHotelObject(id);
-    return h ? (h.name || (h as unknown as Record<string, unknown>).nama as string || 'Hotel Bintang 5') : 'Hotel Bintang 5';
+    if (!h) return 'Hotel Bintang 5';
+    const name = h.name || (h as unknown as Record<string, unknown>).nama as string || 'Hotel Bintang 5';
+    const meal = h.mealPlan || (h as unknown as Record<string, unknown>).mealPlan as string;
+    return meal ? `${name} (${meal})` : name;
   };
 
   const getHotelPhoto = (id: string) => {

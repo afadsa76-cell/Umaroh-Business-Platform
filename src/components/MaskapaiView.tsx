@@ -317,8 +317,8 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       setData(maskapaiList);
       setLoading(false);
 
-      // Auto-sync missing initial data items in background (only in admin/full mode)
-      if (!isVendorMode) {
+      // Auto-sync missing initial data items in background (only in admin/full mode and only if DB is empty)
+      if (!isVendorMode && maskapaiList.length === 0) {
         const existingIds = new Set(maskapaiList.map(item => item.id));
         const missingItems = initialData.filter(item => !existingIds.has(item.id));
         if (missingItems.length > 0) {
