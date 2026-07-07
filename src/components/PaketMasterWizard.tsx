@@ -4187,9 +4187,16 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   {/* Estimasi Harga Maskapai */}
                   <div className="md:col-span-1">
-                    <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                      Estimasi Harga Maskapai (Per pax)
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Estimasi Harga Maskapai (Per pax)
+                      </label>
+                      {isMitraContext && (
+                        <span className="text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse">
+                          Otomatis
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
                         Rp
@@ -4205,13 +4212,19 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             : ""
                         }
                         onChange={(e) => {
+                          if (isMitraContext) return;
                           const rawVal = e.target.value.replace(/\D/g, "");
                           setFormData({
                             ...formData,
                             estimasiHargaMaskapai: rawVal ? Number(rawVal) : 0,
                           });
                         }}
-                        className="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800 font-bold transition-all bg-white"
+                        disabled={isMitraContext}
+                        className={`w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold transition-all ${
+                          isMitraContext
+                            ? "bg-gray-50 text-gray-500 cursor-not-allowed border-gray-100"
+                            : "bg-white text-gray-800"
+                        }`}
                       />
                     </div>
                   </div>
