@@ -10,10 +10,12 @@ export const EquipmentView: React.FC = () => {
   );
 
   // Master Description default state based on the provided images
+  // Master Description default state based on the provided images
   const defaultDesc = useMemo(() => ({
     full: {
       title: "PERLENGKAPAN UMROH (Eksklusif Umaroh)",
       subtitle: "Sebelum berangkat umroh sebaiknya siapkan perlengkapan yg wajib anda siapkan dan anda bawa agar memudahkan perjalanan ibadah mu",
+      imageUrl: "https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO",
       items: [
         "Koper Bagasi",
         "Koper Cabin",
@@ -32,6 +34,7 @@ export const EquipmentView: React.FC = () => {
     },
     aksesoris: {
       title: "Aksesoris Perlengkapan",
+      imageUrl: "https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV",
       items: [
         "Sampul Koper",
         "Sampul Paspor",
@@ -49,7 +52,20 @@ export const EquipmentView: React.FC = () => {
       try {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.full && Array.isArray(parsed.full.items) && parsed.aksesoris && Array.isArray(parsed.aksesoris.items)) {
-          return parsed;
+          return {
+            full: {
+              title: parsed.full.title || "PERLENGKAPAN UMROH (Eksklusif Umaroh)",
+              subtitle: parsed.full.subtitle || "",
+              imageUrl: parsed.full.imageUrl || "https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO",
+              items: parsed.full.items,
+              note: parsed.full.note || ""
+            },
+            aksesoris: {
+              title: parsed.aksesoris.title || "Aksesoris Perlengkapan",
+              imageUrl: parsed.aksesoris.imageUrl || "https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV",
+              items: parsed.aksesoris.items
+            }
+          };
         }
       } catch (e) {
         console.error('Failed to parse cached equipment description:', e);
@@ -63,13 +79,45 @@ export const EquipmentView: React.FC = () => {
   const [tempFullItems, setTempFullItems] = useState<string[]>([]);
   const [tempFullSubtitle, setTempFullSubtitle] = useState('');
   const [tempFullNote, setTempFullNote] = useState('');
+  const [tempFullImage, setTempFullImage] = useState('');
   const [tempAksesorisItems, setTempAksesorisItems] = useState<string[]>([]);
+  const [tempAksesorisImage, setTempAksesorisImage] = useState('');
+
+  const parseDriveUrl = (url: string): string => {
+    if (!url) return '';
+    if (url.includes('drive.google.com')) {
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/) || url.match(/id=([a-zA-Z0-9-_]+)/);
+      if (match && match[1]) {
+        return `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+    }
+    return url;
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'full' | 'aksesoris') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          if (type === 'full') {
+            setTempFullImage(reader.result);
+          } else {
+            setTempAksesorisImage(reader.result);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const startEditing = () => {
     setTempFullItems([...description.full.items]);
     setTempFullSubtitle(description.full.subtitle);
     setTempFullNote(description.full.note || '');
+    setTempFullImage(description.full.imageUrl || 'https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO');
     setTempAksesorisItems([...description.aksesoris.items]);
+    setTempAksesorisImage(description.aksesoris.imageUrl || 'https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV');
     setIsEditing(true);
   };
 
@@ -78,11 +126,13 @@ export const EquipmentView: React.FC = () => {
       full: {
         title: description.full.title,
         subtitle: tempFullSubtitle.trim(),
+        imageUrl: parseDriveUrl(tempFullImage.trim()),
         items: tempFullItems.map(item => item.trim()).filter(Boolean),
         note: tempFullNote.trim()
       },
       aksesoris: {
         title: description.aksesoris.title,
+        imageUrl: parseDriveUrl(tempAksesorisImage.trim()),
         items: tempAksesorisItems.map(item => item.trim()).filter(Boolean)
       }
     };
@@ -90,6 +140,33 @@ export const EquipmentView: React.FC = () => {
     localStorage.setItem('umaroh_db_equipment_deskripsi', JSON.stringify(updated));
     setIsEditing(false);
   };
+
+  React.useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        full: { title: string; subtitle: string; imageUrl?: string; items: string[]; note?: string };
+        aksesoris: { title: string; imageUrl?: string; items: string[] };
+      }>;
+      if (customEvent.detail) {
+        setDescription({
+          full: {
+            title: customEvent.detail.full.title || "PERLENGKAPAN UMROH (Eksklusif Umaroh)",
+            subtitle: customEvent.detail.full.subtitle || "",
+            imageUrl: customEvent.detail.full.imageUrl || "https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO",
+            items: customEvent.detail.full.items || [],
+            note: customEvent.detail.full.note || ""
+          },
+          aksesoris: {
+            title: customEvent.detail.aksesoris.title || "Aksesoris Perlengkapan",
+            imageUrl: customEvent.detail.aksesoris.imageUrl || "https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV",
+            items: customEvent.detail.aksesoris.items || []
+          }
+        });
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_equipment_deskripsi', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_equipment_deskripsi', handleSync);
+  }, []);
 
   const handleReset = () => {
     if (confirm("Apakah Anda yakin ingin mengembalikan deskripsi perlengkapan ke default?")) {
@@ -99,7 +176,9 @@ export const EquipmentView: React.FC = () => {
         setTempFullItems([...defaultDesc.full.items]);
         setTempFullSubtitle(defaultDesc.full.subtitle);
         setTempFullNote(defaultDesc.full.note);
+        setTempFullImage(defaultDesc.full.imageUrl);
         setTempAksesorisItems([...defaultDesc.aksesoris.items]);
+        setTempAksesorisImage(defaultDesc.aksesoris.imageUrl);
       }
     }
   };
@@ -238,6 +317,33 @@ export const EquipmentView: React.FC = () => {
               </h3>
               
               <div className="mb-4">
+                <label className="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Gambar Flyer (File Upload atau Paste Google Drive Link / URL)</label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={tempFullImage}
+                    onChange={(e) => setTempFullImage(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 bg-white"
+                    placeholder="Paste link gambar atau link share Google Drive..."
+                  />
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer bg-white hover:bg-gray-50 text-gray-700 text-[11px] font-semibold px-3 py-1.5 border border-gray-300 rounded-lg transition-colors shadow-sm">
+                      Upload File Gambar
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'full')}
+                        className="hidden"
+                      />
+                    </label>
+                    {tempFullImage.startsWith('data:image') && (
+                      <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Terunggah lokal (Base64)</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-4">
                 <label className="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Subtitle / Deskripsi Pembuka</label>
                 <textarea
                   value={tempFullSubtitle}
@@ -318,6 +424,33 @@ export const EquipmentView: React.FC = () => {
                 </button>
               </div>
 
+              <div className="mb-4">
+                <label className="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1.5">Gambar Aksesoris (File Upload atau Paste Google Drive Link / URL)</label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={tempAksesorisImage}
+                    onChange={(e) => setTempAksesorisImage(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 bg-white"
+                    placeholder="Paste link gambar atau link share Google Drive..."
+                  />
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer bg-white hover:bg-gray-50 text-gray-700 text-[11px] font-semibold px-3 py-1.5 border border-gray-300 rounded-lg transition-colors shadow-sm">
+                      Upload File Gambar
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'aksesoris')}
+                        className="hidden"
+                      />
+                    </label>
+                    {tempAksesorisImage.startsWith('data:image') && (
+                      <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Terunggah lokal (Base64)</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
                 {tempAksesorisItems.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-2">
@@ -369,11 +502,11 @@ export const EquipmentView: React.FC = () => {
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Flyer Image Container */}
                   <div 
-                    onClick={() => setZoomImage("https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO")}
+                    onClick={() => setZoomImage(description.full.imageUrl || "https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO")}
                     className="lg:w-2/5 aspect-[4/3] lg:aspect-auto lg:h-[260px] rounded-xl overflow-hidden border border-amber-500/10 shadow-sm bg-white flex items-center justify-center cursor-zoom-in group relative"
                   >
                     <img 
-                      src="https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO" 
+                      src={description.full.imageUrl || "https://lh3.googleusercontent.com/d/1Z8WPQumBK99IDgkDFvnHc1LXxtULR8pO"} 
                       alt="Flyer Perlengkapan Umroh" 
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
@@ -434,11 +567,11 @@ export const EquipmentView: React.FC = () => {
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Flyer Image Container */}
                   <div 
-                    onClick={() => setZoomImage("https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV")}
+                    onClick={() => setZoomImage(description.aksesoris.imageUrl || "https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV")}
                     className="lg:w-2/5 aspect-[4/3] lg:aspect-auto lg:h-[260px] rounded-xl overflow-hidden border border-emerald-500/10 shadow-sm bg-white flex items-center justify-center cursor-zoom-in group relative"
                   >
                     <img 
-                      src="https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV" 
+                      src={description.aksesoris.imageUrl || "https://lh3.googleusercontent.com/d/1F8WMjYC0Hl8Okjf6K1_RNnAfNuAQoLTV"} 
                       alt="Flyer Aksesoris Perlengkapan" 
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"

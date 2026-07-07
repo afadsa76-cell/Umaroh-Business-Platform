@@ -574,6 +574,17 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     }
   };
 
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<Hotel[]>;
+      if (customEvent.detail) {
+        setLocalHotels(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_hotels', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_hotels', handleSync);
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [mealFilter, setMealFilter] = useState('ALL');
   const [vendorFilter, setVendorFilter] = useState('ALL');

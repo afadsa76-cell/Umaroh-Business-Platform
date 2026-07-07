@@ -23,6 +23,17 @@ export const HandlingDomestikView: React.FC = () => {
     localStorage.setItem('umaroh_db_handling_domestik', JSON.stringify(updated));
   };
 
+  React.useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<HandlingDomestik[]>;
+      if (customEvent.detail) {
+        setLocalList(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_handling_domestik', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_handling_domestik', handleSync);
+  }, []);
+
   const filteredData = useMemo(() => {
     return localList.filter(item => 
       item.item.toLowerCase().includes(searchTerm.toLowerCase())

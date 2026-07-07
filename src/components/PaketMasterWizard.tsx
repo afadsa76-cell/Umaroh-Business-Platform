@@ -1301,10 +1301,11 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       ? 0 
       : (targetJamaah > 0 ? Math.round(((maxPrice * effectiveKursSar) / targetJamaah) * 1.4) : 0);
 
-    // Clean label: e.g. "BUS - Full Trip" instead of including detailed route route info or vendor
+    // Clean label: include detailed route info if available
+    const routeName = highestRoute ? highestRoute.route : "Full Trip";
     const label = isVisa35to55 
-      ? `${vehicle.name} - Full Trip (Termasuk Visa 35-55)` 
-      : `${vehicle.name} - Full Trip`;
+      ? `${vehicle.name} - ${routeName} (Termasuk Visa 35-55)` 
+      : `${vehicle.name} - ${routeName}`;
 
     transportOptions.push({
       id: `trans_${vehicle.id}_full_trip`,
@@ -1686,6 +1687,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       finalDouble: Math.round(baseDouble + totalMarkupCount + adminServiceFee),
       adminFee: Math.round(displayKomisiUmaroh),
       totalKomisiMitra: Math.round(displayKomisiMitra - (Number(formData.ujrohPartner) || 0)),
+      totalUjrohPaket: Math.round(displayKomisiMitra),
       ujrohAnda: Math.round(margin - (Number(formData.ujrohPartner) || 0)),
       ujrohPartner: Math.round(Number(formData.ujrohPartner) || 0),
       totalKomisiUmaroh: Math.round(displayKomisiUmaroh),
@@ -7126,7 +7128,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       </span>
                       <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
                         MAKS. RP{" "}
-                        {Math.round(Number(formData.marginBersih) || 0).toLocaleString(
+                        {Math.round(pricingSummary.totalUjrohPaket || 0).toLocaleString(
                           "id-ID",
                         )}
                       </span>
@@ -7157,7 +7159,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           setFormData({
                             ...formData,
                             ujrohPartner: Math.min(
-                              Number(formData.marginBersih) || 0,
+                              pricingSummary.totalUjrohPaket || 0,
                               (Number(formData.ujrohPartner) || 0) + 50000,
                             ),
                           })
@@ -7178,7 +7180,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       <span className="font-black text-sm sm:text-base italic text-white flex items-baseline gap-1">
                         Rp{" "}
                         {Math.round(
-                          (Number(formData.marginBersih) || 0) -
+                          (pricingSummary.totalUjrohPaket || 0) -
                           (Number(formData.ujrohPartner) || 0)
                         ).toLocaleString("id-ID")}
                       </span>
@@ -7200,7 +7202,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       </span>
                       <span className="font-black text-base sm:text-lg italic text-blue-400">
                         Rp{" "}
-                        {Math.round(pricingSummary.totalKomisiMitra).toLocaleString(
+                        {Math.round(pricingSummary.totalUjrohPaket || 0).toLocaleString(
                           "id-ID",
                         )}
                       </span>

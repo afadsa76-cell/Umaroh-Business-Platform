@@ -33,6 +33,17 @@ export const ZiarahView: React.FC = () => {
     localStorage.setItem('umaroh_db_ziarah', JSON.stringify(updated));
   };
 
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<Ziarah[]>;
+      if (customEvent.detail) {
+        setLocalList(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_ziarah', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_ziarah', handleSync);
+  }, []);
+
   // Calculator State
   const [selectedItemId, setSelectedItemId] = useState<string>(localList[0]?.id || '');
   const [paxInput, setPaxInput] = useState<number>(localList[0]?.jumlahPax || 45);

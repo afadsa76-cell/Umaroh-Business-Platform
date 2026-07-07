@@ -40,6 +40,7 @@ import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
 import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { JamaahSession } from './types';
+import { startUmarohDbSync } from './utils/umarohDbSync';
 
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
@@ -76,6 +77,9 @@ function App() {
     window.addEventListener('offline', handleOffline);
     window.addEventListener('firestore-offline-detected', handleFirestoreOffline);
     window.addEventListener('firestore-quota-exceeded', handleFirestoreOffline);
+
+    // Start Umaroh master database real-time cloud sync
+    const unsubscribeSync = startUmarohDbSync();
 
     // Restore cached jamaah portal code session
     const cachedSession = localStorage.getItem('jamaah_code_session');
@@ -209,6 +213,7 @@ function App() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('firestore-offline-detected', handleFirestoreOffline);
       window.removeEventListener('firestore-quota-exceeded', handleFirestoreOffline);
+      if (unsubscribeSync) unsubscribeSync();
     };
   }, []);
 

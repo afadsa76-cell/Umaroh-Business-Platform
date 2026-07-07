@@ -34,6 +34,28 @@ export const HandlingSaudiView: React.FC = () => {
     localStorage.setItem('umaroh_db_handling_saudi', JSON.stringify(updated));
   };
 
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<HandlingTier[]>;
+      if (customEvent.detail) {
+        setLocalTiers(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_handling_saudi', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_handling_saudi', handleSync);
+  }, []);
+
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<{ termasuk: string[]; tidakTermasuk: string[] }>;
+      if (customEvent.detail) {
+        setDescription(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_handling_saudi_deskripsi', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_handling_saudi_deskripsi', handleSync);
+  }, []);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);

@@ -57,6 +57,17 @@ export const MutawifView: React.FC = () => {
     localStorage.setItem('umaroh_db_mutawif', JSON.stringify(updated));
   };
 
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<MutawifService[]>;
+      if (customEvent.detail) {
+        setLocalServices(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_mutawif', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_mutawif', handleSync);
+  }, []);
+
   const filteredData = useMemo(() => {
     return localServices.filter(item => 
       item.name.toLowerCase().includes(searchTerm.toLowerCase())

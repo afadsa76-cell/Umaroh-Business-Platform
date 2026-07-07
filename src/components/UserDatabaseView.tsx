@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, collection, onSnapshot, doc, deleteDoc, handleFirestoreError, OperationType, setDoc, getDocs, query, where } from '../firebase';
-import { Users, Shield, User, Search, Edit2, Trash2, Mail, Phone, MapPin, Plus, X, CheckCircle2, Building2 } from 'lucide-react';
+import { Users, Shield, User, Search, Edit2, Trash2, Mail, Phone, MapPin, Plus, X, CheckCircle2, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type UserRole = 'admin' | 'mitra' | 'jamaah' | 'vendor';
 
@@ -63,6 +63,13 @@ export const UserDatabaseView: React.FC = () => {
   const [jenisMitra, setJenisMitra] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeRole, searchQuery]);
+
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserData));
@@ -86,6 +93,25 @@ export const UserDatabaseView: React.FC = () => {
        user.brandName?.toLowerCase().includes(searchQuery.toLowerCase()));
     return roleMatch && searchMatch;
   });
+
+  const getUserDisplayName = (u: UserData) => {
+    if ((u.role === 'mitra' || u.role === 'vendor') && u.brandName) {
+      return u.brandName;
+    }
+    return u.namaLengkap || u.mitraName || 'Tanpa Nama';
+  };
+
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    const nameA = getUserDisplayName(a).toLowerCase();
+    const nameB = getUserDisplayName(b).toLowerCase();
+    return nameA.localeCompare(nameB, 'id');
+  });
+
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+  const paginatedUsers = sortedUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Delete confirm states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -315,132 +341,192 @@ export const UserDatabaseView: React.FC = () => {
           <p className="text-gray-500 font-medium">Sedang memuat data...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredUsers.map((user) => (
-            <div key={user.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    {user.photoURL ? (
-                      <img src={user.photoURL} alt={user.namaLengkap} className="w-12 h-12 rounded-xl object-cover ring-2 ring-gray-50" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300">
-                        <User size={24} />
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedUsers.map((user) => (
+              <div key={user.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt={user.namaLengkap} className="w-12 h-12 rounded-xl object-cover ring-2 ring-gray-50" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300">
+                          <User size={24} />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-gray-900 truncate max-w-[150px]" title={user.brandName || user.namaLengkap || user.mitraName || 'Tanpa Nama'}>
+                          {(user.role === 'mitra' || user.role === 'vendor') && user.brandName ? user.brandName : (user.namaLengkap || user.mitraName || 'Tanpa Nama')}
+                        </h3>
+                        {(user.role === 'mitra' || user.role === 'vendor') && user.brandName && (
+                          <p className="text-[10px] text-gray-500 font-semibold truncate max-w-[150px] mb-1">
+                            PIC: {user.namaLengkap || user.mitraName || 'Tanpa Nama'}
+                          </p>
+                        )}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase ring-1 ${getRoleBadgeColor(user.role)}`}>
+                          {user.role}
+                        </span>
+                        {user.role === 'mitra' && user.jenisMitra && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
+                              {user.jenisMitra}
+                            </span>
+                          </div>
+                        )}
+                        {user.role === 'vendor' && user.subRole && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
+                              {user.subRole === 'vendor_maskapai' ? 'VENDOR MASKAPAI' : 'VENDOR HOTEL'}
+                            </span>
+                          </div>
+                        )}
+                        {user.role === 'admin' && user.subRole && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
+                              {user.subRole === 'mitra_dev' 
+                                ? 'MITRA DEV' 
+                                : user.subRole === 'tour_leader'
+                                  ? 'TOUR LEADER (BAGASI)'
+                                  : user.subRole === 'petugas_bandara'
+                                    ? 'PETUGAS BANDARA (BAGASI)'
+                                    : user.subRole}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5 items-center">
+                      <button 
+                        onClick={() => handleOpenEditModal(user)}
+                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50/80 rounded-xl transition-all duration-200 flex items-center justify-center"
+                        title="Edit Pengguna"
+                        id={`edit-user-btn-${user.id}`}
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                      <button 
+                        onClick={() => handleInitiateDelete(user)}
+                        className="p-2 text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all duration-200 border border-rose-100/50 flex items-center justify-center shadow-sm"
+                        title="Hapus Pengguna"
+                        id={`delete-user-btn-${user.id}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-gray-50">
+                    <div className="flex items-center gap-3 text-gray-500">
+                      <Mail size={14} className="shrink-0" />
+                      <span className="text-xs font-medium truncate">{user.email || '-'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-gray-500">
+                      <Phone size={14} className="shrink-0" />
+                      <span className="text-xs font-medium">{user.phone || '-'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-gray-500">
+                      <MapPin size={14} className="shrink-0" />
+                      <span className="text-xs font-medium truncate">{user.address || '-'}</span>
+                    </div>
+                    {user.role === 'mitra' && user.kota && (
+                      <div className="flex items-center gap-3 text-amber-700 font-semibold bg-amber-500/5 px-2 py-1 rounded-lg w-fit">
+                        <Building2 size={13} className="shrink-0 text-amber-600" />
+                        <span className="text-[10px] uppercase tracking-wider">{user.kota}</span>
                       </div>
                     )}
-                    <div>
-                      <h3 className="font-bold text-gray-900 truncate max-w-[150px]" title={user.brandName || user.namaLengkap || user.mitraName || 'Tanpa Nama'}>
-                        {(user.role === 'mitra' || user.role === 'vendor') && user.brandName ? user.brandName : (user.namaLengkap || user.mitraName || 'Tanpa Nama')}
-                      </h3>
-                      {(user.role === 'mitra' || user.role === 'vendor') && user.brandName && (
-                        <p className="text-[10px] text-gray-500 font-semibold truncate max-w-[150px] mb-1">
-                          PIC: {user.namaLengkap || user.mitraName || 'Tanpa Nama'}
-                        </p>
-                      )}
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase ring-1 ${getRoleBadgeColor(user.role)}`}>
-                        {user.role}
-                      </span>
-                      {user.role === 'mitra' && user.jenisMitra && (
-                        <div className="mt-1">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
-                            {user.jenisMitra}
-                          </span>
-                        </div>
-                      )}
-                      {user.role === 'vendor' && user.subRole && (
-                        <div className="mt-1">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
-                            {user.subRole === 'vendor_maskapai' ? 'VENDOR MASKAPAI' : 'VENDOR HOTEL'}
-                          </span>
-                        </div>
-                      )}
-                      {user.role === 'admin' && user.subRole && (
-                        <div className="mt-1">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black uppercase tracking-wider">
-                            {user.subRole === 'mitra_dev' 
-                              ? 'MITRA DEV' 
-                              : user.subRole === 'tour_leader'
-                                ? 'TOUR LEADER (BAGASI)'
-                                : user.subRole === 'petugas_bandara'
-                                  ? 'PETUGAS BANDARA (BAGASI)'
-                                  : user.subRole}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5 items-center">
-                    <button 
-                      onClick={() => handleOpenEditModal(user)}
-                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50/80 rounded-xl transition-all duration-200 flex items-center justify-center"
-                      title="Edit Pengguna"
-                      id={`edit-user-btn-${user.id}`}
-                    >
-                      <Edit2 size={15} />
-                    </button>
-                    <button 
-                      onClick={() => handleInitiateDelete(user)}
-                      className="p-2 text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all duration-200 border border-rose-100/50 flex items-center justify-center shadow-sm"
-                      title="Hapus Pengguna"
-                      id={`delete-user-btn-${user.id}`}
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    {user.passwordAwal && (
+                      <div className="flex items-center gap-3 text-amber-700/80 bg-amber-50 px-2 py-1 rounded-lg w-fit">
+                        <span className="text-[9px] bg-amber-600/10 text-amber-800 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">Pass Awal</span>
+                        <span className="text-xs font-mono font-bold tracking-wider">{user.passwordAwal}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="space-y-3 pt-4 border-t border-gray-50">
-                  <div className="flex items-center gap-3 text-gray-500">
-                    <Mail size={14} className="shrink-0" />
-                    <span className="text-xs font-medium truncate">{user.email || '-'}</span>
+                
+                <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${user.status === 'inactive' ? 'bg-gray-400' : 'bg-emerald-500 animate-pulse'}`}></div>
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                      {user.status === 'inactive' ? 'Nonaktif' : 'Aktif'}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 text-gray-500">
-                    <Phone size={14} className="shrink-0" />
-                    <span className="text-xs font-medium">{user.phone || '-'}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-500">
-                    <MapPin size={14} className="shrink-0" />
-                    <span className="text-xs font-medium truncate">{user.address || '-'}</span>
-                  </div>
-                  {user.role === 'mitra' && user.kota && (
-                    <div className="flex items-center gap-3 text-amber-700 font-semibold bg-amber-500/5 px-2 py-1 rounded-lg w-fit">
-                      <Building2 size={13} className="shrink-0 text-amber-600" />
-                      <span className="text-[10px] uppercase tracking-wider">{user.kota}</span>
-                    </div>
-                  )}
-                  {user.passwordAwal && (
-                    <div className="flex items-center gap-3 text-amber-700/80 bg-amber-50 px-2 py-1 rounded-lg w-fit">
-                      <span className="text-[9px] bg-amber-600/10 text-amber-800 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">Pass Awal</span>
-                      <span className="text-xs font-mono font-bold tracking-wider">{user.passwordAwal}</span>
-                    </div>
-                  )}
+                  <button 
+                    onClick={() => handleOpenEditModal(user)}
+                    className="text-[10px] font-bold text-blue-600 hover:underline uppercase tracking-widest"
+                  >
+                    Edit Profil
+                  </button>
                 </div>
               </div>
-              
-              <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${user.status === 'inactive' ? 'bg-gray-400' : 'bg-emerald-500 animate-pulse'}`}></div>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                    {user.status === 'inactive' ? 'Nonaktif' : 'Aktif'}
-                  </span>
-                </div>
-                <button 
-                  onClick={() => handleOpenEditModal(user)}
-                  className="text-[10px] font-bold text-blue-600 hover:underline uppercase tracking-widest"
+            ))}
+
+            {sortedUsers.length === 0 && (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-gray-200">
+                <Users className="w-12 h-12 text-gray-200 mb-4" />
+                <p className="text-gray-400 font-medium">Tidak ada data user yang ditemukan.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-100">
+              <p className="text-sm text-gray-500 font-medium">
+                Menampilkan <span className="font-bold text-gray-900">{Math.min(sortedUsers.length, (currentPage - 1) * itemsPerPage + 1)}</span> -{" "}
+                <span className="font-bold text-gray-900">{Math.min(sortedUsers.length, currentPage * itemsPerPage)}</span> dari{" "}
+                <span className="font-bold text-gray-900">{sortedUsers.length}</span> user
+              </p>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-40 disabled:hover:bg-white border border-gray-200 rounded-xl transition-all duration-200"
+                  title="Halaman Sebelumnya"
                 >
-                  Edit Profil
+                  <ChevronLeft size={16} />
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  const isNear = Math.abs(page - currentPage) <= 1 || page === 1 || page === totalPages;
+                  const isEllipsis = Math.abs(page - currentPage) === 2 && page !== 1 && page !== totalPages;
+
+                  if (isNear) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`min-w-[36px] h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-200 ${
+                          currentPage === page
+                            ? "bg-amber-600 text-white shadow-md shadow-amber-600/10"
+                            : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  } else if (isEllipsis) {
+                    return (
+                      <span key={page} className="text-gray-400 text-xs font-bold px-1 select-none">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-40 disabled:hover:bg-white border border-gray-200 rounded-xl transition-all duration-200"
+                  title="Halaman Selanjutnya"
+                >
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
-          ))}
-
-          {filteredUsers.length === 0 && (
-            <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-gray-200">
-              <Users className="w-12 h-12 text-gray-200 mb-4" />
-              <p className="text-gray-400 font-medium">Tidak ada data user yang ditemukan.</p>
-            </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Add / Edit Modal */}

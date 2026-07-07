@@ -33,6 +33,17 @@ export const TransportView: React.FC = () => {
     localStorage.setItem('umaroh_db_transport', JSON.stringify(updated));
   };
 
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<TransportVehicle[]>;
+      if (customEvent.detail) {
+        setLocalTransport(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_transport', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_transport', handleSync);
+  }, []);
+
   // Calculator State
   const [selectedVehicleId, setSelectedVehicleId] = useState(localTransport[0]?.id || 'bus');
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);

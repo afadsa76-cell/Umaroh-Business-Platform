@@ -33,6 +33,17 @@ export const KeretaCepatView: React.FC = () => {
     localStorage.setItem('umaroh_db_kereta_cepat', JSON.stringify(updated));
   };
 
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<KeretaCepat[]>;
+      if (customEvent.detail) {
+        setLocalList(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_kereta_cepat', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_kereta_cepat', handleSync);
+  }, []);
+
   // Calculator State
   const [selectedItemId, setSelectedItemId] = useState<string>(localList[0]?.id || '');
   const [marginPercent, setMarginPercent] = useState<number>(10);

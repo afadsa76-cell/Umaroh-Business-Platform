@@ -379,5 +379,10 @@ service cloud.firestore {
       allow write: if (settingId == 'kurs' && request.resource.data.sarToIdr is number && request.resource.data.usdToIdr is number) ||
                     (settingId == 'accurate_config' && isSignedIn());
     }
+
+    match /umaroh_master_data/{key} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
   }
 }

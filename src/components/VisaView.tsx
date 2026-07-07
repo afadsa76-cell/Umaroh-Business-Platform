@@ -33,6 +33,17 @@ export const VisaView: React.FC = () => {
     localStorage.setItem('umaroh_db_visa', JSON.stringify(updated));
   };
 
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<VisaData[]>;
+      if (customEvent.detail) {
+        setLocalList(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+  }, []);
+
   const filteredData = useMemo(() => {
     return localList.filter((item) =>
       item.vendorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
