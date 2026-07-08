@@ -20,7 +20,6 @@ service cloud.firestore {
         request.auth.token.email == "afadsa76@gmail.com" ||
         request.auth.token.email == "operationalumaroh@gmail.com" ||
         request.auth.token.email == "admin@umaroh.com" ||
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
       );
@@ -29,7 +28,6 @@ service cloud.firestore {
     function isOperasional() {
       return isSignedIn() && (
         isAdmin() || 
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional')
       );
@@ -38,7 +36,6 @@ service cloud.firestore {
     function isFinance() {
       return isSignedIn() && (
         isAdmin() || 
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional' && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'finance')
@@ -48,7 +45,6 @@ service cloud.firestore {
     function isMitra() {
       return isSignedIn() && (
         isAdmin() || 
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'mitra')
       );
@@ -57,7 +53,6 @@ service cloud.firestore {
     function isMitraDev() {
       return isSignedIn() && (
         isAdmin() || 
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'mitra_dev')
       );
