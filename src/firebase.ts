@@ -29,10 +29,13 @@ import {
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId || 'ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393';
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-}, firestoreDbId);
+const isAiStudioProject = firebaseConfig.projectId === 'gen-lang-client-0546120404';
+const defaultDbId = isAiStudioProject ? 'ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393' : '(default)';
+const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId || defaultDbId;
+
+export const db = firestoreDbId && firestoreDbId !== '(default)'
+  ? initializeFirestore(app, { experimentalForceLongPolling: true }, firestoreDbId)
+  : initializeFirestore(app, { experimentalForceLongPolling: true });
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -150,10 +153,32 @@ if (typeof window !== 'undefined') {
 // Local Collection Storage Management helper functions with in-memory caching and quota-exhaustion safety
 const memoryCache: Record<string, any[]> = {};
 
+const EXCLUDED_FROM_LOCALSTORAGE = [
+  'pendaftaran_mitra',
+  'users',
+  'bookings',
+  'shop_orders',
+  'transactions',
+  'notifications',
+  'ad_performance_logs',
+  'ad_campaigns',
+  'package_cost_audit_logs',
+  'tracker_jamaah',
+  'tracker_keberangkatan',
+  'tracking_group',
+  'mitra_tracker',
+  'mitra_followup',
+  'mitra_payment_history',
+  'wallets'
+];
+
 function getLocalCollection(collectionName: string): any[] {
   if (typeof window === 'undefined') return [];
   if (memoryCache[collectionName]) {
     return memoryCache[collectionName];
+  }
+  if (EXCLUDED_FROM_LOCALSTORAGE.includes(collectionName)) {
+    return [];
   }
   try {
     const val = localStorage.getItem(`db_${collectionName}`);
@@ -170,20 +195,23 @@ function getLocalCollection(collectionName: string): any[] {
 function saveLocalCollection(collectionName: string, data: any[]) {
   if (typeof window === 'undefined') return;
   memoryCache[collectionName] = data;
-  try {
-    localStorage.setItem(`db_${collectionName}`, JSON.stringify(data));
-  } catch (e) {
-    // Gracefully handle space quota exceeded with console.info to operate perfectly in-memory and suppress noisy on-screen warnings
-    console.info(`[Offline Cache Info] Local collection '${collectionName}' is stored in-memory (localStorage quota reached):`, e);
-    
-    // Attempt self-healing by clearing stale redundant keys on quota exhaustion
+  
+  if (!EXCLUDED_FROM_LOCALSTORAGE.includes(collectionName)) {
     try {
-      if (localStorage.getItem('hotels_db')) {
-        localStorage.removeItem('hotels_db');
-        console.log('[Local Cache Healing] Cleared redundant hotels_db cache to reclaim space.');
+      localStorage.setItem(`db_${collectionName}`, JSON.stringify(data));
+    } catch (e) {
+      // Gracefully handle space quota exceeded with console.info to operate perfectly in-memory and suppress noisy on-screen warnings
+      console.info(`[Offline Cache Info] Local collection '${collectionName}' is stored in-memory (localStorage quota reached):`, e);
+      
+      // Attempt self-healing by clearing stale redundant keys on quota exhaustion
+      try {
+        if (localStorage.getItem('hotels_db')) {
+          localStorage.removeItem('hotels_db');
+          console.log('[Local Cache Healing] Cleared redundant hotels_db cache to reclaim space.');
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
   }
   // Dispatch local change event to wake up onSnapshot listeners instantly
