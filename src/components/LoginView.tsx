@@ -196,9 +196,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         if (isMA) {
           userDataObj.role = 'admin';
           userDataObj.subRole = null;
+          await setDoc(userDocRef, { ...userDataObj, role: 'admin', subRole: null }, { merge: true });
         }
       } else if (isMA) {
-        userDataObj = { role: 'admin', subRole: null };
+        userDataObj = { 
+          email: user.email?.toLowerCase().trim() || '',
+          role: 'admin', 
+          subRole: null,
+          uid: user.uid,
+          id: user.uid,
+          namaLengkap: 'Master Admin',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await setDoc(userDocRef, userDataObj);
       } else if (user.email) {
         // Look up pre-created user via email query
         try {
@@ -349,9 +360,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
         if (isMA) {
           userDataObj.role = 'admin';
           userDataObj.subRole = null;
+          await setDoc(userDocRef, { ...userDataObj, role: 'admin', subRole: null }, { merge: true });
         }
       } else if (isMA) {
-        userDataObj = { role: 'admin', subRole: null };
+        userDataObj = { 
+          email: user.email?.toLowerCase().trim() || '',
+          role: 'admin', 
+          subRole: null,
+          uid: user.uid,
+          id: user.uid,
+          namaLengkap: 'Master Admin',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await setDoc(userDocRef, userDataObj);
       } else if (user.email) {
         // Look up pre-created user via email query
         try {

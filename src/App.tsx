@@ -37,7 +37,7 @@ import { HotelView } from './components/HotelView';
 import { DashboardVendor } from './components/DashboardVendor';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
-import { auth, db, doc, getDoc, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { JamaahSession } from './types';
 import { startUmarohDbSync } from './utils/umarohDbSync';
@@ -109,6 +109,27 @@ function App() {
         setIsLoggedIn(true);
         setUserEmail(user.email);
         const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+        
+        if (isMA) {
+          // Asynchronously ensure Master Admin profile is fully written in the Firestore 'users' collection
+          const userDocRef = doc(db, 'users', user.uid);
+          getDoc(userDocRef).then((snap) => {
+            if (!snap.exists() || snap.data()?.role !== 'admin') {
+              setDoc(userDocRef, {
+                email: user.email?.toLowerCase().trim() || '',
+                role: 'admin',
+                subRole: null,
+                uid: user.uid,
+                id: user.uid,
+                namaLengkap: 'Master Admin',
+                createdAt: snap.exists() ? (snap.data()?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              }, { merge: true })
+              .then(() => console.info("[Umaroh Auth] Sync: Master Admin document aligned in Firestore 'users' collection."))
+              .catch((e) => console.warn("[Umaroh Auth] Sync: Failed to write Master Admin profile to Firestore:", e));
+            }
+          }).catch((e) => console.warn("[Umaroh Auth] Sync: Failed to fetch Master Admin document status:", e));
+        }
         
         // Fetch user role from Firestore
         try {
