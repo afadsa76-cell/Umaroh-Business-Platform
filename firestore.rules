@@ -17,15 +17,12 @@ service cloud.firestore {
     // Role lookup on a trusted document or checks master/operational emails
     function isAdmin() {
       return isSignedIn() && (
-        (request.auth.token.email_verified == true && (
-          request.auth.token.email == "operationalumaroh@gmail.com" ||
-          request.auth.token.email == "afadsa76@gmail.com" ||
-          request.auth.token.email == "admin@umaroh.com"
-        )) ||
         request.auth.token.email == "afadsa76@gmail.com" ||
         request.auth.token.email == "operationalumaroh@gmail.com" ||
+        request.auth.token.email == "admin@umaroh.com" ||
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
       );
     }
 
@@ -33,7 +30,8 @@ service cloud.firestore {
       return isSignedIn() && (
         isAdmin() || 
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'operasional'
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional')
       );
     }
 
@@ -41,8 +39,9 @@ service cloud.firestore {
       return isSignedIn() && (
         isAdmin() || 
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'operasional' && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.subRole == 'finance')
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional' && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'finance')
       );
     }
 
@@ -50,7 +49,8 @@ service cloud.firestore {
       return isSignedIn() && (
         isAdmin() || 
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'mitra'
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'mitra')
       );
     }
 
@@ -58,7 +58,8 @@ service cloud.firestore {
       return isSignedIn() && (
         isAdmin() || 
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.subRole == 'mitra_dev'
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'mitra_dev')
       );
     }
 
