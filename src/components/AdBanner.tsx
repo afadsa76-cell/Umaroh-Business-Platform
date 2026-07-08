@@ -33,9 +33,30 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
   });
   
   const [activeCampaign, setActiveCampaign] = useState<AdCampaignData | null>(null);
+  const [campaigns, setCampaigns] = useState<AdCampaignData[]>([]);
   const [isDismissed, setIsDismissed] = useState(false);
   const [hasValidWidth, setHasValidWidth] = useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Rotate campaigns every 15 seconds
+  useEffect(() => {
+    if (campaigns.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCampaigns((prevCampaigns) => {
+        if (prevCampaigns.length <= 1) return prevCampaigns;
+        const rotated = [...prevCampaigns];
+        const first = rotated.shift();
+        if (first) {
+          rotated.push(first);
+        }
+        setActiveCampaign(rotated[0]);
+        return rotated;
+      });
+    }, 15000); // 15 seconds
+
+    return () => clearInterval(interval);
+  }, [campaigns]);
 
   // Selective global error interceptor to prevent AdSense tag script noise from bubbling up
   useEffect(() => {
@@ -178,13 +199,16 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
       
       // Select random Campaign or based on slot priority
       const filteredForSlot = merged.sort(() => .5 - Math.random());
+      setCampaigns(filteredForSlot);
       if (filteredForSlot.length > 0) {
         setActiveCampaign(filteredForSlot[0]);
       }
     }, (err) => {
       console.warn("Using offline local campaigns database:", err);
       // Fallback
-      setActiveCampaign(defaultCampaigns[Math.floor(Math.random() * defaultCampaigns.length)]);
+      const shuffled = [...defaultCampaigns].sort(() => .5 - Math.random());
+      setCampaigns(shuffled);
+      setActiveCampaign(shuffled[0]);
     });
 
     return () => {
@@ -340,9 +364,11 @@ export const AdBanner: React.FC<AdBannerProps> = ({ adSlot, className = '', onDi
         activeCampaign && (
           <AnimatePresence mode="wait">
             <motion.div
+              key={activeCampaign.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4 }}
               className={`relative bg-gradient-to-r ${activeCampaign.layoutBg} rounded-2xl p-6 shadow-lg border border-white/10`}
             >
               {/* Top bar info */}

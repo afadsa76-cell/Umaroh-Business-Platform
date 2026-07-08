@@ -255,7 +255,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isValidPendaftaranMitra(incoming()); 
       allow update: if (isOperasional() || isAdmin() || isMitraDev()) && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'approvedAt', 'rejectedAt', 'rejectReason', 'catatan', 'sisaPembayaran', 'tglBatasPelunasan']) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'approvedAt', 'rejectedAt', 'rejectReason', 'catatan', 'sisaPembayaran', 'tglBatasPelunasan', 'submittedToFinanceAt', 'updatedAt']) &&
                     isValidPendaftaranMitra(incoming());
       allow delete: if isAdmin() || isMitraDev();
     }

@@ -1058,9 +1058,41 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       }
     }
 
-    // NEW: Filter by Destination City Hub (Jeddah First vs Madinah First)
+    // NEW: Filter by Destination City Hub (Arriving and Departing combination)
     if (formData.kotaTujuan) {
       const dest = formData.kotaTujuan.toUpperCase();
+      
+      // Determine expected arrival & departure from the selected option
+      let expectedArrival = "";
+      let expectedDeparture = "";
+      
+      if (dest.includes("-")) {
+        const parts = dest.split("-");
+        const part1 = parts[0];
+        const part2 = parts[1];
+        
+        if (part1.includes("MADINAH") || part1.includes("MED")) {
+          expectedArrival = "MED";
+        } else if (part1.includes("JEDDAH") || part1.includes("JED")) {
+          expectedArrival = "JED";
+        }
+        
+        if (part2.includes("MADINAH") || part2.includes("MED")) {
+          expectedDeparture = "MED";
+        } else if (part2.includes("JEDDAH") || part2.includes("JED")) {
+          expectedDeparture = "JED";
+        }
+      } else {
+        // Fallback or single city selection
+        if (dest.includes("MADINAH") || dest === "MED") {
+          expectedArrival = "MED";
+          expectedDeparture = "MED";
+        } else if (dest.includes("JEDDAH") || dest === "JED") {
+          expectedArrival = "JED";
+          expectedDeparture = "JED";
+        }
+      }
+
       list = list.filter((m) => {
         const name = (m.name || "").toUpperCase();
         const rute = (m.ruteLabel || "").toUpperCase();
@@ -1072,15 +1104,24 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         const airportCodes = codesMatch.filter(code => !excludeWords.includes(code));
         
         const saudiCodes = ["JED", "MED", "RUH", "DMM", "ELQ", "HAS"];
-        // The "Destination First" is the FIRST time the plane touches Saudi ground
-        const firstSaudiArrival = airportCodes.find(code => saudiCodes.includes(code));
+        // All Saudi codes visited in the flight's route/label
+        const saudiCodesInRoute = airportCodes.filter(code => saudiCodes.includes(code));
         
-        if (dest.includes("JEDDAH") || dest === "JED") {
-           return firstSaudiArrival === "JED";
+        if (saudiCodesInRoute.length === 0) return true; // No Saudi codes matched, skip filtering to be safe
+        
+        const firstSaudiArrival = saudiCodesInRoute[0];
+        const lastSaudiDeparture = saudiCodesInRoute[saudiCodesInRoute.length - 1];
+        
+        // Check arrival airport
+        if (expectedArrival && firstSaudiArrival !== expectedArrival) {
+          return false;
         }
-        if (dest.includes("MADINAH") || dest === "MED") {
-           return firstSaudiArrival === "MED";
+        
+        // Check departure airport
+        if (expectedDeparture && lastSaudiDeparture !== expectedDeparture) {
+          return false;
         }
+        
         return true;
       });
     }
@@ -1634,6 +1675,13 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       } else {
         mitraMarkup = Number(formData.marginBersih) || 0;
         margin = 0;
+      }
+    }
+
+    if (formData.kategori === "TIKET ONLY") {
+      margin = Math.max(100000, Math.min(1000000, margin));
+      if (effectiveIsMitra) {
+        mitraMarkup = Math.max(100000, Math.min(1000000, mitraMarkup));
       }
     }
 
@@ -2828,22 +2876,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         }
                         className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 font-bold appearance-none"
                       >
-                        <option value="">-- Pilih Kota Tujuan --</option>
-                        {bandaraList
-                          .filter(
-                            (b) => (b.negara || "").toUpperCase() === "ARAB SAUDI",
-                          )
-                          .map((b) => (
-                            <option key={b.id} value={(b.kota || "").toUpperCase()}>
-                              {(b.kota || "").toUpperCase()} ({(b.kode || "")})
-                            </option>
-                          ))}
+                        <option value="">-- Pilih Rute Tujuan --</option>
+                        <option value="MADINAH (MED) - JEDDAH (JED)">MADINAH (MED) - JEDDAH (JED)</option>
+                        <option value="JEDDAH (JED) - MADINAH (MED)">JEDDAH (JED) - MADINAH (MED)</option>
+                        <option value="MADINAH (MED) - MADINAH (MED)">MADINAH (MED) - MADINAH (MED)</option>
+                        <option value="JEDDAH (JED) - JEDDAH (JED)">JEDDAH (JED) - JEDDAH (JED)</option>
                       </select>
                     )}
                   </div>
 
                   {/* Alur Perjalanan & Urutan Kunjungan */}
-                  {formData.kategori === "UMRAH PLUS" ? (
+                  {formData.kategori === "TIKET ONLY" ? null : formData.kategori === "UMRAH PLUS" ? (
                     <div>
                       <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
                         ALUR PERJALANAN *
@@ -6125,7 +6168,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 onClick={() =>
                                   setFormData({
                                     ...formData,
-                                    [isMitraContext ? "markup" : "marginBersih"]: Math.max(0, currentMarkup - 500000),
+                                    [isMitraContext ? "markup" : "marginBersih"]: formData.kategori === "TIKET ONLY"
+                                      ? Math.max(100000, currentMarkup - 100000)
+                                      : Math.max(0, currentMarkup - 500000),
                                   })
                                 }
                                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-colors bg-white shadow-sm shrink-0"
@@ -6160,7 +6205,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 onClick={() =>
                                   setFormData({
                                     ...formData,
-                                    [isMitraContext ? "markup" : "marginBersih"]: Math.min(10000000, currentMarkup + 500000),
+                                    [isMitraContext ? "markup" : "marginBersih"]: formData.kategori === "TIKET ONLY"
+                                      ? Math.min(1000000, currentMarkup + 100000)
+                                      : Math.min(10000000, currentMarkup + 500000),
                                   })
                                 }
                                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition-colors shrink-0"
@@ -6173,18 +6220,22 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             <div className="w-full max-w-md mx-auto mb-6 px-1 sm:px-2">
                               <div className="flex justify-between items-center mb-2">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                                  GESER MARGIN (KELIPATAN 500RB)
+                                  {formData.kategori === "TIKET ONLY"
+                                    ? "GESER MARGIN (KELIPATAN 100RB)"
+                                    : "GESER MARGIN (KELIPATAN 500RB)"}
                                 </span>
                                 <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-[9px] font-black uppercase">
-                                  Rp {(currentMarkup / 1000000).toFixed(1)} JT
+                                  {formData.kategori === "TIKET ONLY"
+                                    ? `Rp ${Math.round(currentMarkup).toLocaleString("id-ID")}`
+                                    : `Rp ${(currentMarkup / 1000000).toFixed(1)} JT`}
                                 </span>
                               </div>
                               <div className="pt-2 pb-1 relative group">
                                 <input
                                   type="range"
-                                  min="0"
-                                  max="10000000"
-                                  step="500000"
+                                  min={formData.kategori === "TIKET ONLY" ? "100000" : "0"}
+                                  max={formData.kategori === "TIKET ONLY" ? "1000000" : "10000000"}
+                                  step={formData.kategori === "TIKET ONLY" ? "100000" : "500000"}
                                   value={currentMarkup || 0}
                                   onChange={(e) =>
                                     setFormData({
@@ -6195,8 +6246,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                 />
                                 <div className="flex justify-between text-[9px] font-bold text-blue-300 mt-2">
-                                  <span>Rp 0</span>
-                                  <span>Rp 10.000.000</span>
+                                  <span>{formData.kategori === "TIKET ONLY" ? "Rp 100.000" : "Rp 0"}</span>
+                                  <span>{formData.kategori === "TIKET ONLY" ? "Rp 1.000.000" : "Rp 10.000.000"}</span>
                                 </div>
                               </div>
                             </div>
@@ -6381,7 +6432,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     selectedLayananItems,
                     finalQuad,
                     finalTriple,
-                    finalDouble
+                    finalDouble,
+                    baseQuad,
+                    totalUjrohPaket: currentMarkup
                   } = pricingSummary;
 
                 return (
@@ -6461,14 +6514,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             </div>
                             <div className="col-span-2 sm:col-span-1">
                               <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                                TANGGAL & URUTAN
+                                {formData.kategori === "TIKET ONLY" ? "TANGGAL KEBERANGKATAN" : "TANGGAL & URUTAN"}
                               </p>
                               <p className="text-xs sm:text-sm font-black text-gray-700 uppercase">
-                                {formData.tglBerangkat || "-"} •{" "}
-                                {formData.kategori === "UMRAH PLUS"
-                                  ? formData.alurPerjalanan
-                                  : formData.urutanKunjungan ||
-                                    "MADINAH-MAKKAH"}
+                                {formData.tglBerangkat || "-"}
+                                {formData.kategori !== "TIKET ONLY" && (
+                                  <>
+                                    {" • "}
+                                    {formData.kategori === "UMRAH PLUS"
+                                      ? formData.alurPerjalanan
+                                      : formData.urutanKunjungan || "MADINAH-MAKKAH"}
+                                  </>
+                                )}
                               </p>
                             </div>
                           </div>
@@ -6639,51 +6696,81 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       </div>
                     </div>
 
-                    <div className="lg:sticky lg:top-8 bg-[#1A1C29] rounded-[2rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden text-white border border-gray-800">
-                      <Receipt className="absolute -right-8 -top-8 w-40 h-40 text-blue-900/20 z-0" />
-
-                      <div className="relative z-10 text-center mb-8 pb-6 border-b border-gray-800">
-                        <div className="inline-block px-4 py-1.5 rounded-full border border-blue-900/50 bg-blue-900/20 text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2">
-                          HARGA JUAL FINAL
+                    {formData.kategori === "TIKET ONLY" ? (
+                      <div className="lg:sticky lg:top-8 bg-white border border-gray-100 p-8 sm:p-10 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] max-w-sm mx-auto w-full">
+                        <div className="inline-block px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-4">
+                          HARGA JUAL FINAL TIKET
                         </div>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+                        <div className="text-3xl sm:text-4xl font-black text-gray-800 italic mb-2 tracking-tighter">
+                          <span className="text-lg mr-1 inline-block">Rp</span>
+                          {Math.round(finalQuad || 0).toLocaleString("id-ID")}
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">
                           LUMRAH DIBAYARKAN JAMAAH
-                        </p>
-                      </div>
-
-                      <div className="relative z-10 space-y-8">
-                        {[
-                          { title: "QUAD ROOM", val: finalQuad },
-                          { title: "TRIPLE ROOM", val: finalTriple },
-                          { title: "DOUBLE ROOM", val: finalDouble },
-                        ].map((item, idx) => (
-                          <div
-                            key={item.title}
-                            className={
-                              idx !== 2 ? "border-b border-gray-800 pb-8" : ""
-                            }
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                {item.title}
-                              </span>
-                              <span className="px-2 py-0.5 bg-blue-600 rounded text-[8px] font-black italic">
-                                PROFIT
-                              </span>
-                            </div>
-                            <div className="text-xl sm:text-2xl font-black italic mb-1 flex items-baseline tracking-tighter">
-                              <span className="text-sm mr-1 opacity-50">Rp</span>
-                              {Math.round(item.val || 0).toLocaleString("id-ID")}
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-                              <Layers className="w-3 h-3" />
-                              INC. ADMIN (RP{" "}
-                              {Math.round(pricingSummary.adminFee || 0).toLocaleString("id-ID")})
-                            </div>
+                        </span>
+                        
+                        <div className="w-full pt-6 border-t border-gray-100/80 flex flex-col items-center gap-2">
+                          <div className="flex justify-between w-full text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                            <span>HPP DASAR TIKET:</span>
+                            <span className="text-gray-700">Rp {Math.round(baseQuad || 0).toLocaleString("id-ID")}</span>
                           </div>
-                        ))}
+                          <div className="flex justify-between w-full text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                            <span>PROFIT (UJROH):</span>
+                            <span className="text-blue-600">Rp {Math.round(currentMarkup || 0).toLocaleString("id-ID")}</span>
+                          </div>
+                          <div className="flex justify-between w-full text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                            <span>BIAYA ADMIN (10%):</span>
+                            <span className="text-gray-700">Rp {Math.round(pricingSummary.adminFee || 0).toLocaleString("id-ID")}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="lg:sticky lg:top-8 bg-[#1A1C29] rounded-[2rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden text-white border border-gray-800">
+                        <Receipt className="absolute -right-8 -top-8 w-40 h-40 text-blue-900/20 z-0" />
+
+                        <div className="relative z-10 text-center mb-8 pb-6 border-b border-gray-800">
+                          <div className="inline-block px-4 py-1.5 rounded-full border border-blue-900/50 bg-blue-900/20 text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                            HARGA JUAL FINAL
+                          </div>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+                            LUMRAH DIBAYARKAN JAMAAH
+                          </p>
+                        </div>
+
+                        <div className="relative z-10 space-y-8">
+                          {[
+                            { title: "QUAD ROOM", val: finalQuad },
+                            { title: "TRIPLE ROOM", val: finalTriple },
+                            { title: "DOUBLE ROOM", val: finalDouble },
+                          ].map((item, idx) => (
+                            <div
+                              key={item.title}
+                              className={
+                                idx !== 2 ? "border-b border-gray-800 pb-8" : ""
+                              }
+                            >
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                  {item.title}
+                                </span>
+                                <span className="px-2 py-0.5 bg-blue-600 rounded text-[8px] font-black italic">
+                                  PROFIT
+                                </span>
+                              </div>
+                              <div className="text-xl sm:text-2xl font-black italic mb-1 flex items-baseline tracking-tighter">
+                                <span className="text-sm mr-1 opacity-50">Rp</span>
+                                {Math.round(item.val || 0).toLocaleString("id-ID")}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                                <Layers className="w-3 h-3" />
+                                INC. ADMIN (RP{" "}
+                                {Math.round(pricingSummary.adminFee || 0).toLocaleString("id-ID")})
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
