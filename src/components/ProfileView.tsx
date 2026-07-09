@@ -934,23 +934,33 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <div className="space-y-6">
             {/* HERO COVER IMAGE FOR DESKTOP */}
             <div className="relative w-full h-48 md:h-64 bg-slate-900 rounded-2xl overflow-hidden shrink-0 shadow-sm">
-              <img 
-                src={profile.coverImage} 
-                alt="Ka'bah Travel Background" 
-                className="w-full h-full object-cover opacity-80"
-                referrerPolicy="no-referrer"
-              />
+              {profile.coverImage ? (
+                <img 
+                  src={profile.coverImage} 
+                  alt="Ka'bah Travel Background" 
+                  className="w-full h-full object-cover opacity-80"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
               
               {/* Logo Overlay */}
               <div className="absolute bottom-6 left-6 flex items-end gap-4">
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white p-1 border-2 border-amber-400 shadow-xl overflow-hidden shrink-0">
-                  <img 
-                    src={profile.logo} 
-                    alt="Logo Mitra" 
-                    className="w-full h-full object-cover rounded-xl"
-                    referrerPolicy="no-referrer"
-                  />
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white p-1 border-2 border-amber-400 shadow-xl overflow-hidden shrink-0 flex items-center justify-center">
+                  {profile.logo ? (
+                    <img 
+                      src={profile.logo} 
+                      alt="Logo Mitra" 
+                      className="w-full h-full object-cover rounded-xl"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 font-bold text-lg uppercase">
+                      {profile.travelName ? profile.travelName.substring(0, 2).toUpperCase() : 'UM'}
+                    </div>
+                  )}
                 </div>
                 <div className="mb-2 text-white font-sans">
                   <div className="flex flex-wrap gap-1.5 mb-1.5">
@@ -1811,23 +1821,33 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <>
             {/* HERO SECTION WITH EXPANSIVE ASSETS */}
             <div className="relative w-full h-48 sm:h-52 bg-slate-900 overflow-hidden shrink-0">
-              <img 
-                src={profile.coverImage} 
-                alt="Ka'bah Travel Background" 
-                className="w-full h-full object-cover opacity-80"
-                referrerPolicy="no-referrer"
-              />
+              {profile.coverImage ? (
+                <img 
+                  src={profile.coverImage} 
+                  alt="Ka'bah Travel Background" 
+                  className="w-full h-full object-cover opacity-80"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               
               {/* Logo Circle Overlay */}
               <div className="absolute bottom-4 left-4 flex items-end gap-3.5">
-                <div className="w-20 h-20 rounded-2xl bg-white p-1 border-2 border-amber-400 shadow-xl overflow-hidden shrink-0">
-                  <img 
-                    src={profile.logo} 
-                    alt="Logo Mitra" 
-                    className="w-full h-full object-cover rounded-xl"
-                    referrerPolicy="no-referrer"
-                  />
+                <div className="w-20 h-20 rounded-2xl bg-white p-1 border-2 border-amber-400 shadow-xl overflow-hidden shrink-0 flex items-center justify-center">
+                  {profile.logo ? (
+                    <img 
+                      src={profile.logo} 
+                      alt="Logo Mitra" 
+                      className="w-full h-full object-cover rounded-xl"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 font-bold text-lg uppercase">
+                      {profile.travelName ? profile.travelName.substring(0, 2).toUpperCase() : 'UM'}
+                    </div>
+                  )}
                 </div>
                 <div className="mb-1 text-white pr-2">
                   <div className="flex flex-wrap gap-1 mb-1">

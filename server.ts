@@ -243,6 +243,44 @@ async function startServer() {
     }
   });
 
+  // API Route to fetch all users from Firebase Authentication (Server-side)
+  app.get('/api/auth/list-users', async (req, res) => {
+    try {
+      const { initializeApp, getApps } = await import('firebase-admin/app');
+      const { getAuth } = await import('firebase-admin/auth');
+
+      if (getApps().length === 0) {
+        initializeApp({
+          projectId: 'gen-lang-client-0546120404'
+        });
+      }
+
+      const listUsersResult = await getAuth().listUsers(1000);
+      const authUsers = listUsersResult.users.map(u => ({
+        uid: u.uid,
+        email: u.email || '',
+        displayName: u.displayName || '',
+        phoneNumber: u.phoneNumber || '',
+        disabled: u.disabled,
+        createdAt: u.metadata.creationTime,
+        lastSignInTime: u.metadata.lastSignInTime,
+      }));
+
+      res.json({ success: true, users: authUsers });
+    } catch (error) {
+      console.error('Failed to list Firebase Auth users:', error);
+      const errorStr = error instanceof Error ? error.message : String(error);
+      const isApiNotEnabled = errorStr.includes('identitytoolkit.googleapis.com') || 
+                              errorStr.includes('403') || 
+                              errorStr.includes('Identity Toolkit API');
+      res.status(500).json({ 
+        success: false, 
+        error: errorStr,
+        apiNotEnabled: isApiNotEnabled
+      });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

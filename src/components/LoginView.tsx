@@ -213,40 +213,189 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else if (user.email) {
         // Look up pre-created user via email query
         try {
-          const { query, collection, where, getDocs, deleteDoc } = await import('firebase/firestore');
-          const q = query(collection(db, 'users'), where('email', '==', user.email.toLowerCase().trim()));
-          const querySnap = await getDocs(q);
-          if (!querySnap.empty) {
-            const preDoc = querySnap.docs[0];
+          const { query, collection, where, getDocs, runTransaction } = await import('firebase/firestore');
+          const trimmedEmail = user.email.toLowerCase().trim();
+          
+          // 1. Check pre_users first
+          const qPre = query(collection(db, 'pre_users'), where('email', '==', trimmedEmail));
+          const preSnap = await getDocs(qPre);
+          
+          if (!preSnap.empty) {
+            const preDoc = preSnap.docs[0];
             const preData = preDoc.data();
+            
+            // Build the users document object
             userDataObj = {
               ...preData,
               uid: user.uid,
               id: user.uid,
+              status: 'aktif',
               updatedAt: new Date().toISOString()
             };
-            // Set the new user.uid document
-            await setDoc(userDocRef, userDataObj);
-            // Delete the temporary pre-created document if the ID is different
-            if (preDoc.id !== user.uid) {
-              // Also update wallet if it exists (must do before deleting the old user document,
-              // as the wallet deletion permissions check relies on the user document's existence)
-              const oldWalletRef = doc(db, 'wallets', preDoc.id);
-              const walletSnap = await getDoc(oldWalletRef);
-              if (walletSnap.exists()) {
-                await setDoc(doc(db, 'wallets', user.uid), {
-                  ...walletSnap.data(),
+            
+            // Run transaction for atomic copy and status update
+            await runTransaction(db, async (transaction) => {
+              const targetUserRef = doc(db, 'users', user.uid);
+              const sourcePreRef = doc(db, 'pre_users', preDoc.id);
+              
+              // Set the users/{uid} doc
+              transaction.set(targetUserRef, userDataObj);
+              
+              // Update pre_users document status to 'activated' instead of deleting
+              transaction.update(sourcePreRef, {
+                status: 'activated',
+                activatedAt: new Date().toISOString(),
+                activatedByUid: user.uid
+              });
+              
+              // If Role is Mitra, make sure they have a wallet under wallets/{uid}
+              if (preData.role === 'mitra') {
+                const walletRef = doc(db, 'wallets', user.uid);
+                transaction.set(walletRef, {
                   userId: user.uid,
+                  balance: 0,
                   updatedAt: new Date().toISOString()
                 });
-                await deleteDoc(oldWalletRef);
               }
-              // Delete the old user document last
-              await deleteDoc(doc(db, 'users', preDoc.id));
+            });
+            
+            console.log("Successfully activated user from pre_users in an atomic transaction:", user.uid);
+          } else {
+            // 2. Compatibility Layer: Check if they are in the older 'users' collection with a random ID
+            const qUsers = query(collection(db, 'users'), where('email', '==', trimmedEmail));
+            const usersSnap = await getDocs(qUsers);
+            
+            // Find if there is an unmigrated document (different from user.uid)
+            const oldUserDoc = usersSnap.docs.find(d => d.id !== user.uid);
+            if (oldUserDoc) {
+              const oldUserData = oldUserDoc.data();
+              userDataObj = {
+                ...oldUserData,
+                uid: user.uid,
+                id: user.uid,
+                updatedAt: new Date().toISOString()
+              };
+              
+              await runTransaction(db, async (transaction) => {
+                const targetUserRef = doc(db, 'users', user.uid);
+                const sourceUserRef = doc(db, 'users', oldUserDoc.id);
+                
+                // Set the users/{uid} doc
+                transaction.set(targetUserRef, userDataObj);
+                
+                // Update old users document status to 'migrated' instead of deleting
+                transaction.update(sourceUserRef, {
+                  status: 'migrated',
+                  migratedAt: new Date().toISOString(),
+                  migratedToUid: user.uid
+                });
+                
+                // Keep wallet compatibility
+                const oldWalletRef = doc(db, 'wallets', oldUserDoc.id);
+                const oldWalletSnap = await transaction.get(oldWalletRef);
+                if (oldWalletSnap.exists()) {
+                  const targetWalletRef = doc(db, 'wallets', user.uid);
+                  transaction.set(targetWalletRef, {
+                    ...(oldWalletSnap.data() as Record<string, unknown>),
+                    userId: user.uid,
+                    updatedAt: new Date().toISOString()
+                  });
+                  // Mark old wallet as migrated instead of deleting
+                  transaction.update(oldWalletRef, {
+                    status: 'migrated',
+                    migratedToUid: user.uid,
+                    updatedAt: new Date().toISOString()
+                  });
+                } else if (oldUserData.role === 'mitra') {
+                  const targetWalletRef = doc(db, 'wallets', user.uid);
+                  transaction.set(targetWalletRef, {
+                    userId: user.uid,
+                    balance: 0,
+                    updatedAt: new Date().toISOString()
+                  });
+                }
+              });
+              
+              console.log("Successfully migrated existing user with random ID to UID in an atomic transaction:", user.uid);
             }
           }
         } catch (queryErr) {
           console.error("Failed to migrate pre-created user:", queryErr);
+        }
+      }
+
+      // [Solusi 3 Fallback] If user document is still not found, check pendaftaran_mitra to auto-heal
+      if (!userDataObj && user.email) {
+        try {
+          const { query, collection, where, getDocs } = await import('firebase/firestore');
+          const qMitra = query(collection(db, 'pendaftaran_mitra'), where('email', '==', user.email.toLowerCase().trim()));
+          const mitraSnap = await getDocs(qMitra);
+          if (!mitraSnap.empty) {
+            const mit = mitraSnap.docs[0].data();
+            let roleToRestore: Role = 'mitra';
+            let subRoleToRestore: string | null = null;
+            
+            // Try to read cached roles if any
+            const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`);
+            const cachedSubRole = localStorage.getItem(`umaroh_cached_subrole_${user.uid}`);
+            if (cachedRole) roleToRestore = cachedRole as Role;
+            if (cachedSubRole) subRoleToRestore = cachedSubRole;
+
+            userDataObj = {
+              uid: user.uid,
+              id: user.uid,
+              email: user.email.toLowerCase().trim(),
+              role: roleToRestore,
+              subRole: subRoleToRestore,
+              namaLengkap: mit.nama || mit.namaLengkap || 'Mitra',
+              name: mit.nama || mit.namaLengkap || 'Mitra',
+              phone: mit.phone || '',
+              brandName: mit.brandName || '',
+              paketId: mit.paketId || '',
+              uplineId: mit.uplineId || '',
+              provinsi: mit.provinsi || '',
+              kota: mit.kota || '',
+              kecamatan: mit.kecamatan || '',
+              desaKelurahan: mit.desaKelurahan || '',
+              address: mit.alamatLengkap || mit.address || '',
+              createdAt: mit.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            await setDoc(userDocRef, userDataObj);
+            console.info("[LoginView Auto-Heal] Successfully restored Firestore users doc via pendaftaran_mitra match!");
+          } else {
+            // If not found in pendaftaran_mitra, but email contains role indicators
+            const emailLower = user.email.toLowerCase();
+            let roleToRestore: Role = 'jamaah';
+            if (emailLower.includes('mitra')) {
+              roleToRestore = 'mitra';
+            } else if (emailLower.includes('vendor')) {
+              roleToRestore = 'vendor';
+            } else if (emailLower.includes('jamaah') || emailLower.includes('customer')) {
+              roleToRestore = 'jamaah';
+            }
+            
+            const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`);
+            if (cachedRole) roleToRestore = cachedRole as Role;
+
+            if (roleToRestore !== 'jamaah' || cachedRole) {
+              userDataObj = {
+                uid: user.uid,
+                id: user.uid,
+                email: user.email.toLowerCase().trim(),
+                role: roleToRestore,
+                subRole: localStorage.getItem(`umaroh_cached_subrole_${user.uid}`) || null,
+                namaLengkap: user.email.split('@')[0],
+                name: user.email.split('@')[0],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
+              await setDoc(userDocRef, userDataObj);
+              console.info(`[LoginView Auto-Heal] Restored user doc via email heuristics/cache as ${roleToRestore}`);
+            }
+          }
+        } catch (autoHealErr) {
+          console.error("Auto-heal in LoginView failed:", autoHealErr);
         }
       }
 
@@ -377,40 +526,189 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else if (user.email) {
         // Look up pre-created user via email query
         try {
-          const { query, collection, where, getDocs, deleteDoc } = await import('firebase/firestore');
-          const q = query(collection(db, 'users'), where('email', '==', user.email.toLowerCase().trim()));
-          const querySnap = await getDocs(q);
-          if (!querySnap.empty) {
-            const preDoc = querySnap.docs[0];
+          const { query, collection, where, getDocs, runTransaction } = await import('firebase/firestore');
+          const trimmedEmail = user.email.toLowerCase().trim();
+          
+          // 1. Check pre_users first
+          const qPre = query(collection(db, 'pre_users'), where('email', '==', trimmedEmail));
+          const preSnap = await getDocs(qPre);
+          
+          if (!preSnap.empty) {
+            const preDoc = preSnap.docs[0];
             const preData = preDoc.data();
+            
+            // Build the users document object
             userDataObj = {
               ...preData,
               uid: user.uid,
               id: user.uid,
+              status: 'aktif',
               updatedAt: new Date().toISOString()
             };
-            // Set the new user.uid document
-            await setDoc(userDocRef, userDataObj);
-            // Delete the temporary pre-created document if the ID is different
-            if (preDoc.id !== user.uid) {
-              // Also update wallet if it exists (must do before deleting the old user document,
-              // as the wallet deletion permissions check relies on the user document's existence)
-              const oldWalletRef = doc(db, 'wallets', preDoc.id);
-              const walletSnap = await getDoc(oldWalletRef);
-              if (walletSnap.exists()) {
-                await setDoc(doc(db, 'wallets', user.uid), {
-                  ...walletSnap.data(),
+            
+            // Run transaction for atomic copy and status update
+            await runTransaction(db, async (transaction) => {
+              const targetUserRef = doc(db, 'users', user.uid);
+              const sourcePreRef = doc(db, 'pre_users', preDoc.id);
+              
+              // Set the users/{uid} doc
+              transaction.set(targetUserRef, userDataObj);
+              
+              // Update pre_users document status to 'activated' instead of deleting
+              transaction.update(sourcePreRef, {
+                status: 'activated',
+                activatedAt: new Date().toISOString(),
+                activatedByUid: user.uid
+              });
+              
+              // If Role is Mitra, make sure they have a wallet under wallets/{uid}
+              if (preData.role === 'mitra') {
+                const walletRef = doc(db, 'wallets', user.uid);
+                transaction.set(walletRef, {
                   userId: user.uid,
+                  balance: 0,
                   updatedAt: new Date().toISOString()
                 });
-                await deleteDoc(oldWalletRef);
               }
-              // Delete the old user document last
-              await deleteDoc(doc(db, 'users', preDoc.id));
+            });
+            
+            console.log("Successfully activated user from pre_users in an atomic transaction:", user.uid);
+          } else {
+            // 2. Compatibility Layer: Check if they are in the older 'users' collection with a random ID
+            const qUsers = query(collection(db, 'users'), where('email', '==', trimmedEmail));
+            const usersSnap = await getDocs(qUsers);
+            
+            // Find if there is an unmigrated document (different from user.uid)
+            const oldUserDoc = usersSnap.docs.find(d => d.id !== user.uid);
+            if (oldUserDoc) {
+              const oldUserData = oldUserDoc.data();
+              userDataObj = {
+                ...oldUserData,
+                uid: user.uid,
+                id: user.uid,
+                updatedAt: new Date().toISOString()
+              };
+              
+              await runTransaction(db, async (transaction) => {
+                const targetUserRef = doc(db, 'users', user.uid);
+                const sourceUserRef = doc(db, 'users', oldUserDoc.id);
+                
+                // Set the users/{uid} doc
+                transaction.set(targetUserRef, userDataObj);
+                
+                // Update old users document status to 'migrated' instead of deleting
+                transaction.update(sourceUserRef, {
+                  status: 'migrated',
+                  migratedAt: new Date().toISOString(),
+                  migratedToUid: user.uid
+                });
+                
+                // Keep wallet compatibility
+                const oldWalletRef = doc(db, 'wallets', oldUserDoc.id);
+                const oldWalletSnap = await transaction.get(oldWalletRef);
+                if (oldWalletSnap.exists()) {
+                  const targetWalletRef = doc(db, 'wallets', user.uid);
+                  transaction.set(targetWalletRef, {
+                    ...(oldWalletSnap.data() as Record<string, unknown>),
+                    userId: user.uid,
+                    updatedAt: new Date().toISOString()
+                  });
+                  // Mark old wallet as migrated instead of deleting
+                  transaction.update(oldWalletRef, {
+                    status: 'migrated',
+                    migratedToUid: user.uid,
+                    updatedAt: new Date().toISOString()
+                  });
+                } else if (oldUserData.role === 'mitra') {
+                  const targetWalletRef = doc(db, 'wallets', user.uid);
+                  transaction.set(targetWalletRef, {
+                    userId: user.uid,
+                    balance: 0,
+                    updatedAt: new Date().toISOString()
+                  });
+                }
+              });
+              
+              console.log("Successfully migrated existing user with random ID to UID in an atomic transaction:", user.uid);
             }
           }
         } catch (queryErr) {
           console.error("Failed to migrate pre-created user:", queryErr);
+        }
+      }
+
+      // [Solusi 3 Fallback] If user document is still not found, check pendaftaran_mitra to auto-heal
+      if (!userDataObj && user.email) {
+        try {
+          const { query, collection, where, getDocs } = await import('firebase/firestore');
+          const qMitra = query(collection(db, 'pendaftaran_mitra'), where('email', '==', user.email.toLowerCase().trim()));
+          const mitraSnap = await getDocs(qMitra);
+          if (!mitraSnap.empty) {
+            const mit = mitraSnap.docs[0].data();
+            let roleToRestore: Role = 'mitra';
+            let subRoleToRestore: string | null = null;
+            
+            // Try to read cached roles if any
+            const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`);
+            const cachedSubRole = localStorage.getItem(`umaroh_cached_subrole_${user.uid}`);
+            if (cachedRole) roleToRestore = cachedRole as Role;
+            if (cachedSubRole) subRoleToRestore = cachedSubRole;
+
+            userDataObj = {
+              uid: user.uid,
+              id: user.uid,
+              email: user.email.toLowerCase().trim(),
+              role: roleToRestore,
+              subRole: subRoleToRestore,
+              namaLengkap: mit.nama || mit.namaLengkap || 'Mitra',
+              name: mit.nama || mit.namaLengkap || 'Mitra',
+              phone: mit.phone || '',
+              brandName: mit.brandName || '',
+              paketId: mit.paketId || '',
+              uplineId: mit.uplineId || '',
+              provinsi: mit.provinsi || '',
+              kota: mit.kota || '',
+              kecamatan: mit.kecamatan || '',
+              desaKelurahan: mit.desaKelurahan || '',
+              address: mit.alamatLengkap || mit.address || '',
+              createdAt: mit.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            await setDoc(userDocRef, userDataObj);
+            console.info("[LoginView Google Auto-Heal] Successfully restored Firestore users doc via pendaftaran_mitra match!");
+          } else {
+            // If not found in pendaftaran_mitra, but email contains role indicators
+            const emailLower = user.email.toLowerCase();
+            let roleToRestore: Role = 'jamaah';
+            if (emailLower.includes('mitra')) {
+              roleToRestore = 'mitra';
+            } else if (emailLower.includes('vendor')) {
+              roleToRestore = 'vendor';
+            } else if (emailLower.includes('jamaah') || emailLower.includes('customer')) {
+              roleToRestore = 'jamaah';
+            }
+            
+            const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`);
+            if (cachedRole) roleToRestore = cachedRole as Role;
+
+            if (roleToRestore !== 'jamaah' || cachedRole) {
+              userDataObj = {
+                uid: user.uid,
+                id: user.uid,
+                email: user.email.toLowerCase().trim(),
+                role: roleToRestore,
+                subRole: localStorage.getItem(`umaroh_cached_subrole_${user.uid}`) || null,
+                namaLengkap: user.email.split('@')[0],
+                name: user.email.split('@')[0],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
+              await setDoc(userDocRef, userDataObj);
+              console.info(`[LoginView Google Auto-Heal] Restored user doc via email heuristics/cache as ${roleToRestore}`);
+            }
+          }
+        } catch (autoHealErr) {
+          console.error("Auto-heal in Google Login failed:", autoHealErr);
         }
       }
 

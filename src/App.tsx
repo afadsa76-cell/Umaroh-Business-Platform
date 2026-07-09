@@ -37,7 +37,7 @@ import { HotelView } from './components/HotelView';
 import { DashboardVendor } from './components/DashboardVendor';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
-import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType, collection, where, query, getDocs } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { JamaahSession } from './types';
 import { startUmarohDbSync } from './utils/umarohDbSync';
@@ -135,7 +135,102 @@ function App() {
         try {
           let data: { role?: string; subRole?: string | null; [key: string]: unknown } | null = null;
           try {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            let userDoc = await getDoc(doc(db, 'users', user.uid));
+            
+            // [Solusi 3] Auto-healing missing user profile document in Firestore
+            if (!userDoc.exists() && !isMA) {
+              console.info(`[Umaroh Auth Auto-Heal] Missing user document for: ${user.email}. Restoring...`);
+              let roleToRestore: Role = 'jamaah';
+              let subRoleToRestore: string | null = null;
+              let namaLengkapToRestore = user.email ? user.email.split('@')[0] : 'User';
+              let phoneToRestore = '';
+              let brandNameToRestore = '';
+              let additionalData: Record<string, unknown> = {};
+
+              // A. Check localStorage cache
+              const cachedUserStr = localStorage.getItem(`umaroh_cached_user_${user.uid}`);
+              const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`);
+              const cachedSubRole = localStorage.getItem(`umaroh_cached_subrole_${user.uid}`);
+              if (cachedRole) roleToRestore = cachedRole as Role;
+              if (cachedSubRole) subRoleToRestore = cachedSubRole;
+              if (cachedUserStr) {
+                try {
+                  const cachedObj = JSON.parse(cachedUserStr);
+                  namaLengkapToRestore = cachedObj.namaLengkap || cachedObj.name || namaLengkapToRestore;
+                  phoneToRestore = cachedObj.phone || '';
+                  brandNameToRestore = cachedObj.brandName || '';
+                  additionalData = { ...cachedObj };
+                } catch (e) {
+                  console.warn("[Umaroh Auth Auto-Heal] Failed to parse cache:", e);
+                }
+              }
+
+              // B. Check pendaftaran_mitra in Firestore (real-time query fallback)
+              if (user.email) {
+                try {
+                  const qMitra = query(collection(db, 'pendaftaran_mitra'), where('email', '==', user.email.toLowerCase().trim()));
+                  const mitraSnap = await getDocs(qMitra);
+                  if (!mitraSnap.empty) {
+                    const mit = mitraSnap.docs[0].data();
+                    roleToRestore = 'mitra';
+                    namaLengkapToRestore = mit.nama || mit.namaLengkap || namaLengkapToRestore;
+                    phoneToRestore = mit.phone || phoneToRestore;
+                    brandNameToRestore = mit.brandName || brandNameToRestore;
+                    additionalData = {
+                      ...additionalData,
+                      paketId: mit.paketId || '',
+                      uplineId: mit.uplineId || '',
+                      provinsi: mit.provinsi || '',
+                      kota: mit.kota || '',
+                      kecamatan: mit.kecamatan || '',
+                      desaKelurahan: mit.desaKelurahan || '',
+                      address: mit.alamatLengkap || mit.address || ''
+                    };
+                    console.info("[Umaroh Auth Auto-Heal] Re-routing to 'mitra' based on pendaftaran_mitra.");
+                  }
+                } catch (errMitra) {
+                  console.warn("[Umaroh Auth Auto-Heal] pendaftaran_mitra query failed:", errMitra);
+                }
+              }
+
+              // C. Check email keywords
+              if (user.email) {
+                const emailLower = user.email.toLowerCase();
+                if (emailLower.includes('mitra')) {
+                  roleToRestore = 'mitra';
+                } else if (emailLower.includes('vendor')) {
+                  roleToRestore = 'vendor';
+                } else if (emailLower.includes('jamaah') || emailLower.includes('customer')) {
+                  roleToRestore = 'jamaah';
+                }
+              }
+
+              // D. Save restored document to Firestore users collection
+              const restoredDoc = {
+                uid: user.uid,
+                id: user.uid,
+                email: user.email?.toLowerCase().trim() || '',
+                role: roleToRestore,
+                subRole: subRoleToRestore,
+                namaLengkap: namaLengkapToRestore,
+                name: namaLengkapToRestore,
+                phone: phoneToRestore,
+                brandName: brandNameToRestore,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                ...additionalData
+              };
+
+              try {
+                await setDoc(doc(db, 'users', user.uid), restoredDoc);
+                console.info("[Umaroh Auth Auto-Heal] Successfully restored Firestore users doc for user:", user.uid);
+                // Re-fetch userDoc to get actual Firestore state
+                userDoc = await getDoc(doc(db, 'users', user.uid));
+              } catch (writeErr) {
+                console.warn("[Umaroh Auth Auto-Heal] Write fallback failed:", writeErr);
+              }
+            }
+
             if (userDoc.exists()) {
               data = userDoc.data() as { role?: string; subRole?: string | null; [key: string]: unknown };
               // Cache values in localStorage for safety & offline robustness
