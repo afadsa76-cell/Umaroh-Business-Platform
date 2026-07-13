@@ -1,0 +1,30 @@
+// ===============================================================
+// WALLET RULES & VALIDATION
+// ===============================================================
+function isValidWallet(data) {
+  return data.get('balance', 0) is number &&
+         data.get('updatedAt', null) != null;
+}
+
+function isValidTransaction(data) {
+  return data.get('userId', '') is string &&
+         data.get('amount', 0) is number &&
+         data.get('status', '') in ['pending', 'success', 'failed', 'approved', 'rejected'];
+}
+
+match /wallets/{walletId} {
+  allow read: if true;
+  allow update: if isFinance() && 
+                isValidWallet(incoming()) &&
+                incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt']);
+  allow create: if isFinance() || (isSignedIn() && isOwner(walletId) && isValidWallet(incoming()));
+  allow delete: if isFinance() || isOwner(walletId) || isAdmin();
+}
+
+match /transactions/{transactionId} {
+  allow read: if true;
+  allow create: if isSignedIn() && 
+                incoming().get('userId', '') == request.auth.uid && 
+                isValidTransaction(incoming());
+  allow write: if (isFinance() || isAdmin()) && isValidTransaction(incoming());
+}

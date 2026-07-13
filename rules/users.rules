@@ -1,0 +1,22 @@
+// ===============================================================
+// USERS RULES & VALIDATION
+// ===============================================================
+function isValidUserProfile(data) {
+  return data.get('email', '') is string &&
+         data.get('role', '') in ['admin', 'operasional', 'mitra', 'jamaah', 'finance', 'vendor'] &&
+         (data.get('uid', '') == '' || data.get('uid', '') is string);
+}
+
+match /users/{userId} {
+  allow read: if true;
+  allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin() || isMitraDev();
+  allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId)) && 
+                isValidUserProfile(incoming()) && (
+                  isAdmin() || isOperasional() || isMitraDev() || (
+                    incoming().get('role', '') == existing().get('role', '') &&
+                    incoming().get('email', '') == existing().get('email', '') &&
+                    incoming().get('uid', '') == existing().get('uid', '')
+                  )
+                );
+  allow delete: if isAdmin() || isOperasional() || (isSignedIn() && (resource != null && resource.data != null && (resource.data.get('email', '') == request.auth.token.email)));
+}

@@ -1,0 +1,26 @@
+// ===============================================================
+// BOOKING RULES & VALIDATION
+// ===============================================================
+function isValidBooking(data) {
+  return data.get('status', '') in ['pending', 'confirmed', 'cancelled', 'completed', 'active'] &&
+         data.get('paketId', '') is string;
+}
+
+match /bookings/{bookingId} {
+  allow read: if true;
+  allow create: if isSignedIn() && 
+                ((incoming().get('jamaahId', '') == request.auth.uid) || 
+                 (incoming().get('mitraId', '') == request.auth.uid) || 
+                 isOperasional() || isAdmin()) &&
+                isValidBooking(incoming());
+  allow update: if isOperasional() || isAdmin() || 
+                (isSignedIn() && (
+                  (existing().get('jamaahId', '') == request.auth.uid) || 
+                  (existing().get('mitraId', '') == request.auth.uid)
+                ) && isValidBooking(incoming()));
+  allow delete: if isOperasional() || isAdmin() || 
+                (isSignedIn() && (
+                  (existing().get('jamaahId', '') == request.auth.uid) || 
+                  (existing().get('mitraId', '') == request.auth.uid)
+                ));
+}

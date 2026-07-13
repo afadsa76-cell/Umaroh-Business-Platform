@@ -1,0 +1,173 @@
+// ===============================================================
+// MASTER DATA RULES & VALIDATION
+// ===============================================================
+function isValidPaketMaster(data) {
+  return (data.get('harga', 0) is number || data.get('price', 0) is number) &&
+         data.get('maskapai', '') is string &&
+         data.get('hotel', '') is string;
+}
+
+function isValidPendaftaranMitra(data) {
+  return data.get('email', '') is string &&
+         data.get('name', '') is string;
+}
+
+function isValidBlueprintNode(data) {
+  return data.get('name', '') is string;
+}
+
+function isValidShopOrder(data) {
+  return data.get('status', '') is string;
+}
+
+match /paket_master/{paketId} {
+  allow read: if true;
+  allow create: if (isOperasional() || isMitra()) && isValidId(paketId) && isValidPaketMaster(incoming());
+  allow update: if isValidId(paketId) && (
+    isAdmin() || 
+    (isValidPaketMaster(incoming()) && (
+      isOperasional() || 
+      (isMitra() && existing().get('mitraId', '') == request.auth.uid && (
+        (incoming().get('status', '') == 'published' ? (existing().get('validationStatus', 'pending') == 'approved') : true)
+      ))
+    ))
+  );
+  allow delete: if isAdmin() || (isMitra() && existing().get('mitraId', '') == request.auth.uid);
+}
+
+match /paket_mitra/{paketId} {
+  allow read: if true;
+  allow create: if isMitra() && incoming().get('mitraId', '') == request.auth.uid && isValidId(paketId);
+  allow update: if (isMitra() && existing().get('mitraId', '') == request.auth.uid) || isOperasional();
+  allow delete: if (isMitra() && existing().get('mitraId', '') == request.auth.uid) || isOperasional();
+}
+
+match /maskapai/{maskapaiId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(maskapaiId);
+}
+
+match /vendor_services/{serviceId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(serviceId);
+}
+
+match /master_hotels/{hotelId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(hotelId);
+}
+
+match /master_layanan/{layananId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(layananId);
+}
+
+match /layanan/{layananId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(layananId);
+}
+
+match /master_merchandise/{merchId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(merchId);
+}
+
+match /master_bandara/{bandaraId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(bandaraId);
+}
+
+match /master_paket_wisata/{paketWisataId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(paketWisataId);
+}
+
+match /hotel_metadata/{mediaId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(mediaId);
+}
+
+match /paket_kemitraan/{paketId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(paketId);
+}
+
+match /pendaftaran_mitra/{pendaftaranId} {
+  allow read: if true;
+  allow create: if isValidPendaftaranMitra(incoming()); 
+  allow update: if isOperasional() || isAdmin() || isMitraDev() || isFinance();
+  allow delete: if isAdmin() || isMitraDev();
+}
+
+match /perlengkapan_master/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /perlengkapan_packing/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /perlengkapan_pengiriman/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /perlengkapan_penerimaan/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /perlengkapan_komplain/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /package_cost_components/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /package_cost_audit_logs/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /ad_network_config/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /ad_campaigns/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /ad_performance_logs/{id} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(id);
+}
+
+match /shop_orders/{orderId} {
+  allow read: if true;
+  allow create: if isSignedIn() && (incoming().get('jamaahId', '') == request.auth.uid || incoming().get('mitraId', '') == request.auth.uid) && isValidShopOrder(incoming());
+  allow update: if isOperasional() || isAdmin();
+  allow delete: if isAdmin();
+}
+
+match /system_blueprint_nodes/{nodeId} {
+  allow read: if true;
+  allow write: if isValidId(nodeId) && isValidBlueprintNode(incoming());
+}
+
+match /settings/{settingId} {
+  allow read: if true;
+  allow write: if (settingId == 'kurs' && request.resource.data.sarToIdr is number && request.resource.data.usdToIdr is number) ||
+                (settingId == 'accurate_config' && isSignedIn());
+}
+
+match /umaroh_master_data/{key} {
+  allow read: if true;
+  allow write: if isSignedIn();
+}

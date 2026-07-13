@@ -6,7 +6,7 @@ import {
   BadgePercent, Send, X, Bell, AlertTriangle, Printer, Upload, FileText
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc, limit } from '../firebase';
+import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc, limit, updateDoc } from '../firebase';
 import { KatalogPaketView } from './KatalogPaketView';
 import { RiwayatPemesananView } from './RiwayatPemesananView';
 import { ProfileView } from './ProfileView';
@@ -589,7 +589,6 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
     }
     setSavingManifest(true);
     try {
-      const { updateDoc, doc, db } = await import('../firebase');
       await updateDoc(doc(db, 'bookings', id), {
         ...manifestForm,
         namaJamaah: manifestForm.nama_paspor || bookingData.namaJamaah,
@@ -629,8 +628,6 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
       const base64 = await fileToBase64Value(file);
       const targetDocId = bookingData?.id;
       if (!targetDocId) return;
-
-      const { updateDoc, doc, db } = await import('../firebase');
       
       // Map correctly to make sure sync fields match both types of references in listings
       const isFileField = field.startsWith('file');

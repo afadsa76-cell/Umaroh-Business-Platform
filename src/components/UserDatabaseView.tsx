@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, collection, onSnapshot, doc, deleteDoc, handleFirestoreError, OperationType, setDoc, getDocs, query, where } from '../firebase';
 import { Users, Shield, User, Search, Edit2, Trash2, Mail, Phone, MapPin, Plus, X, CheckCircle2, Building2, ChevronLeft, ChevronRight, RefreshCw, FileText } from 'lucide-react';
+import { normalizeEmail } from '../utils/email';
 
 type UserRole = 'admin' | 'mitra' | 'jamaah' | 'vendor';
 
@@ -168,7 +169,7 @@ export const UserDatabaseView: React.FC = () => {
         // Jalankan sinkronisasi berbasis Firebase Auth (Komprehensif!)
         for (const authUser of authUsers) {
           const uid = authUser.uid;
-          const emailLower = authUser.email?.toLowerCase().trim();
+          const emailLower = normalizeEmail(authUser.email);
 
           // Jika user sudah ada di Firestore users, lewati
           if (existingUserUids.has(uid)) {
@@ -178,14 +179,14 @@ export const UserDatabaseView: React.FC = () => {
           // Cari kecocokan di pendaftaran_mitra berdasarkan uid atau email
           const matchedMitra = mitraList.find((m: SyncUserDetail) => 
             (m.uid === uid || m.id === uid) || 
-            (m.email && m.email.toLowerCase().trim() === emailLower)
+            (m.email && normalizeEmail(m.email) === emailLower)
           );
 
           if (matchedMitra) {
             const restoredDoc = {
               uid: uid,
               id: uid,
-              email: emailLower || matchedMitra.email?.toLowerCase().trim() || '',
+              email: emailLower || normalizeEmail(matchedMitra.email) || '',
               role: 'mitra',
               namaLengkap: matchedMitra.nama || matchedMitra.namaLengkap || authUser.displayName || 'Mitra',
               name: matchedMitra.nama || matchedMitra.namaLengkap || authUser.displayName || 'Mitra',
@@ -210,15 +211,15 @@ export const UserDatabaseView: React.FC = () => {
           // Cari kecocokan di bookings berdasarkan jamaahId atau email
           const matchedBooking = bookingsList.find((b: SyncUserDetail) => 
             (b.jamaahId === uid) || 
-            (b.email && b.email.toLowerCase().trim() === emailLower) || 
-            (b.emailJamaah && b.emailJamaah.toLowerCase().trim() === emailLower)
+            (b.email && normalizeEmail(b.email) === emailLower) || 
+            (b.emailJamaah && normalizeEmail(b.emailJamaah) === emailLower)
           );
 
           if (matchedBooking) {
             const restoredDoc = {
               uid: uid,
               id: uid,
-              email: emailLower || matchedBooking.email?.toLowerCase().trim() || matchedBooking.emailJamaah?.toLowerCase().trim() || `${uid.substring(0, 8)}@umaroh.temp`,
+              email: emailLower || normalizeEmail(matchedBooking.email) || normalizeEmail(matchedBooking.emailJamaah) || `${uid.substring(0, 8)}@umaroh.temp`,
               role: 'jamaah',
               namaLengkap: matchedBooking.namaJamaah || matchedBooking.nama_paspor || authUser.displayName || 'Jamaah',
               name: matchedBooking.namaJamaah || matchedBooking.nama_paspor || authUser.displayName || 'Jamaah',
@@ -325,7 +326,7 @@ export const UserDatabaseView: React.FC = () => {
         const uidMatch = trimmed.match(uidRegex);
 
         if (emailMatch) {
-          currentEmail = emailMatch[0].toLowerCase().trim();
+          currentEmail = normalizeEmail(emailMatch[0]);
         }
         if (uidMatch && !uidMatch[0].includes('@') && !uidMatch[0].includes('.')) {
           currentUid = uidMatch[0].trim();
@@ -346,7 +347,7 @@ export const UserDatabaseView: React.FC = () => {
         const minLen = Math.min(allEmails.length, allUids.length);
         for (let i = 0; i < minLen; i++) {
           parsedUsers.push({
-            email: allEmails[i].toLowerCase().trim(),
+            email: normalizeEmail(allEmails[i]),
             uid: allUids[i].trim()
           });
         }
@@ -368,14 +369,14 @@ export const UserDatabaseView: React.FC = () => {
         // Cari di pendaftaran_mitra
         const matchedMitra = mitraList.find((m: SyncUserDetail) => 
           (m.uid === uid || m.id === uid) || 
-          (m.email && m.email.toLowerCase().trim() === emailLower)
+          (m.email && normalizeEmail(m.email) === emailLower)
         );
 
         if (matchedMitra) {
           const restoredDoc = {
             uid: uid,
             id: uid,
-            email: emailLower || matchedMitra.email?.toLowerCase().trim() || '',
+            email: emailLower || normalizeEmail(matchedMitra.email) || '',
             role: 'mitra',
             namaLengkap: matchedMitra.nama || matchedMitra.namaLengkap || 'Mitra',
             name: matchedMitra.nama || matchedMitra.namaLengkap || 'Mitra',
@@ -400,15 +401,15 @@ export const UserDatabaseView: React.FC = () => {
         // Cari di bookings
         const matchedBooking = bookingsList.find((b: SyncUserDetail) => 
           (b.jamaahId === uid) || 
-          (b.email && b.email.toLowerCase().trim() === emailLower) || 
-          (b.emailJamaah && b.emailJamaah.toLowerCase().trim() === emailLower)
+          (b.email && normalizeEmail(b.email) === emailLower) || 
+          (b.emailJamaah && normalizeEmail(b.emailJamaah) === emailLower)
         );
 
         if (matchedBooking) {
           const restoredDoc = {
             uid: uid,
             id: uid,
-            email: emailLower || matchedBooking.email?.toLowerCase().trim() || matchedBooking.emailJamaah?.toLowerCase().trim() || `${uid.substring(0, 8)}@umaroh.temp`,
+            email: emailLower || normalizeEmail(matchedBooking.email) || normalizeEmail(matchedBooking.emailJamaah) || `${uid.substring(0, 8)}@umaroh.temp`,
             role: 'jamaah',
             namaLengkap: matchedBooking.namaJamaah || matchedBooking.nama_paspor || 'Jamaah',
             name: matchedBooking.namaJamaah || matchedBooking.nama_paspor || 'Jamaah',
@@ -481,6 +482,20 @@ export const UserDatabaseView: React.FC = () => {
   }, [activeRole, searchQuery, showAuditView]);
 
   useEffect(() => {
+    if (!auth.currentUser) {
+      setLoading(false);
+      return;
+    }
+    const currentUid = auth.currentUser.uid;
+    const cachedRole = localStorage.getItem(`umaroh_cached_role_${currentUid}`);
+    const isUserAdmin = isMasterAdmin || cachedRole === 'admin' || cachedRole === 'operasional';
+    
+    if (!isUserAdmin) {
+      console.warn("[UserDatabaseView] Subscription cancelled: User is not validated as Admin or Operasional");
+      setLoading(false);
+      return;
+    }
+
     const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserData));
       setUsers(data);
@@ -501,7 +516,7 @@ export const UserDatabaseView: React.FC = () => {
       unsubscribeUsers();
       unsubscribePreUsers();
     };
-  }, []);
+  }, [isMasterAdmin]);
 
   const filteredUsers = users.filter(user => {
     const roleMatch = user.role === activeRole;
@@ -686,7 +701,7 @@ export const UserDatabaseView: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedEmail = normalizeEmail(email);
       const payload: Omit<UserData, 'id'> = {
         namaLengkap: namaLengkap.trim(),
         name: namaLengkap.trim(), // Dual support

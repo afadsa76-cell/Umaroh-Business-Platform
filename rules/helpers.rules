@@ -1,0 +1,59 @@
+// ===============================================================
+// HELPERS
+// ===============================================================
+function isValidId(id) { 
+  return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+}
+function incoming() { return request.resource.data; }
+function existing() { return resource.data; }
+function isSignedIn() { 
+  return request.auth != null; 
+}
+
+// Role lookup on a trusted document or checks master/operational emails
+function isAdmin() {
+  return isSignedIn() && (
+    request.auth.token.email == "afadsa76@gmail.com" ||
+    request.auth.token.email == "operationalumaroh@gmail.com" ||
+    request.auth.token.email == "admin@umaroh.com" ||
+    (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
+  );
+}
+
+function isOperasional() {
+  return isSignedIn() && (
+    isAdmin() || 
+    (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional')
+  );
+}
+
+function isFinance() {
+  return isSignedIn() && (
+    isAdmin() || 
+    (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional' && 
+     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'finance')
+  );
+}
+
+function isMitra() {
+  return isSignedIn() && (
+    isAdmin() || 
+    (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'mitra')
+  );
+}
+
+function isMitraDev() {
+  return isSignedIn() && (
+    isAdmin() || 
+    (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'mitra_dev')
+  );
+}
+
+function isOwner(userId) {
+  return isSignedIn() && request.auth.uid == userId;
+}

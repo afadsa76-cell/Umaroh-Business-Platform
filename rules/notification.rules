@@ -1,0 +1,7 @@
+// ===============================================================
+// NOTIFICATIONS RULES & VALIDATION
+// ===============================================================
+match /notifications/{notificationId} {
+  allow read: if true;
+  allow write: if isSignedIn() && isValidId(notificationId);
+}

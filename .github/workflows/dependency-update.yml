@@ -1,0 +1,35 @@
+name: Automated Dependency Compliance & Updates
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Every Monday at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  dependency-update:
+    name: Dependency Audit & Updates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify Dependency Health
+        run: |
+          echo "Scanning for outdated NPM packages..."
+          npm outdated || echo "Completed dependency checks"
+
+      - name: Audit for High/Critical Vulnerabilities
+        run: |
+          echo "Executing high-risk vulnerability scan..."
+          npm audit --audit-level=high
+
+      - name: Lockfile Integrity Verification
+        run: |
+          echo "Verifying lockfile consistency..."
+          npm ci

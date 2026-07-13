@@ -4,6 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OPERASIONAL UMAROH</title>
+    <script>
+      // Graceful Monaco environment web worker configuration to prevent "Could not create web worker" fallbacks
+      window.MonacoEnvironment = {
+        getWorker: function (workerId, label) {
+          let workerUrl = '';
+          if (label === 'json') {
+            workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/language/json/json.worker.js';
+          } else if (label === 'css' || label === 'scss' || label === 'less') {
+            workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/language/css/css.worker.js';
+          } else if (label === 'html' || label === 'handlebars' || label === 'razor') {
+            workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/language/html/html.worker.js';
+          } else if (label === 'typescript' || label === 'javascript') {
+            workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/language/typescript/ts.worker.js';
+          } else {
+            workerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/base/worker/workerMain.js';
+          }
+
+          // Cross-origin Web Worker loading is restricted, so we use blob workers to import workerMain safely.
+          try {
+            const blobCode = "importScripts('" + workerUrl + "');";
+            const blob = new Blob([blobCode], { type: 'application/javascript' });
+            return new Worker(URL.createObjectURL(blob));
+          } catch (e) {
+            const fallbackCode = "self.addEventListener('message', function(e) {});";
+            const blob = new Blob([fallbackCode], { type: 'application/javascript' });
+            return new Worker(URL.createObjectURL(blob));
+          }
+        }
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>

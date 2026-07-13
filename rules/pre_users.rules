@@ -1,0 +1,26 @@
+// ===============================================================
+// PRE_USERS RULES & VALIDATION
+// ===============================================================
+function isValidPreUser(data) {
+  return data.get('email', '') is string &&
+         data.get('role', '') in ['admin', 'operasional', 'mitra', 'jamaah', 'finance', 'vendor'];
+}
+
+match /pre_users/{docId} {
+  allow read: if isOperasional() || isAdmin() || 
+               (isSignedIn() && (
+                 (resource != null && resource.data != null && resource.data.get('email', '') == request.auth.token.email) ||
+                 (request.auth.token.email == "afadsa76@gmail.com" || request.auth.token.email == "operationalumaroh@gmail.com")
+               ));
+               
+  allow create: if isOperasional() || isAdmin() || 
+                (isSignedIn() && isValidPreUser(incoming()));
+                
+  allow update: if isOperasional() || isAdmin() || 
+                (isSignedIn() && (
+                  (resource != null && resource.data != null && resource.data.get('email', '') == request.auth.token.email) ||
+                  (request.auth.token.email == "afadsa76@gmail.com" || request.auth.token.email == "operationalumaroh@gmail.com")
+                ));
+                
+  allow delete: if isOperasional() || isAdmin();
+}

@@ -33,6 +33,7 @@ import { AdManagementView } from './components/AdManagementView';
 import { OwnerKpiDashboard } from './components/OwnerKpiDashboard';
 import { MaskapaiView } from './components/MaskapaiView';
 import { BlueprintFlowView } from './components/BlueprintFlowView';
+import { normalizeEmail } from './utils/email';
 import { HotelView } from './components/HotelView';
 import { DashboardVendor } from './components/DashboardVendor';
 import { logoBase64 } from './utils/logoBase64';
@@ -116,7 +117,7 @@ function App() {
           getDoc(userDocRef).then((snap) => {
             if (!snap.exists() || snap.data()?.role !== 'admin') {
               setDoc(userDocRef, {
-                email: user.email?.toLowerCase().trim() || '',
+                email: normalizeEmail(user.email),
                 role: 'admin',
                 subRole: null,
                 uid: user.uid,
@@ -168,7 +169,7 @@ function App() {
               // B. Check pendaftaran_mitra in Firestore (real-time query fallback)
               if (user.email) {
                 try {
-                  const qMitra = query(collection(db, 'pendaftaran_mitra'), where('email', '==', user.email.toLowerCase().trim()));
+                  const qMitra = query(collection(db, 'pendaftaran_mitra'), where('email', '==', normalizeEmail(user.email)));
                   const mitraSnap = await getDocs(qMitra);
                   if (!mitraSnap.empty) {
                     const mit = mitraSnap.docs[0].data();
@@ -195,7 +196,7 @@ function App() {
 
               // C. Check email keywords
               if (user.email) {
-                const emailLower = user.email.toLowerCase();
+                const emailLower = normalizeEmail(user.email);
                 if (emailLower.includes('mitra')) {
                   roleToRestore = 'mitra';
                 } else if (emailLower.includes('vendor')) {
@@ -209,7 +210,7 @@ function App() {
               const restoredDoc = {
                 uid: user.uid,
                 id: user.uid,
-                email: user.email?.toLowerCase().trim() || '',
+                email: normalizeEmail(user.email),
                 role: roleToRestore,
                 subRole: subRoleToRestore,
                 namaLengkap: namaLengkapToRestore,

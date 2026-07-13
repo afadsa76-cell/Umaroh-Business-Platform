@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { logoBase64 } from '../utils/logoBase64';
 import { Code2, ArrowRight, User as UserIcon } from 'lucide-react';
-import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, handleFirestoreError, OperationType } from '../firebase';
+import { auth, db, doc, getDoc, setDoc, signInWithEmailAndPassword, handleFirestoreError, OperationType, query, collection, where, getDocs, runTransaction } from '../firebase';
 import { signInWithCredential, GoogleAuthProvider, User, sendPasswordResetEmail, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
 import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { JamaahSession, BookingRecord } from '../types';
+import { normalizeEmail } from '../utils/email';
 
 const AutoplayVideoLogo: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
@@ -70,7 +71,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
     setError('');
     setIsLoading(true);
     try {
-      const { query, collection, where, getDocs, db } = await import('../firebase');
       const q = query(
         collection(db, 'bookings'), 
         where('kodeBooking', '==', inputKode.trim().toUpperCase())
@@ -109,15 +109,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    const cleanEmail = normalizeEmail(email);
+    if (!cleanEmail) {
       setError('Masukkan email Anda terlebih dahulu untuk mengatur password');
       return;
     }
     setError('');
     setIsLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email);
-      alert('Email pengaturan ulang password telah dikirim ke ' + email + '. Silakan cek inbox/spam Anda.');
+      await sendPasswordResetEmail(auth, cleanEmail);
+      alert('Email pengaturan ulang password telah dikirim ke ' + cleanEmail + '. Silakan cek inbox/spam Anda.');
     } catch (err: unknown) {
       setError('Gagal mengirim email: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
@@ -127,7 +128,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
 
   const handleManualAction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    const cleanEmail = normalizeEmail(email);
+    if (!cleanEmail || !password) {
       setError('Email dan Password wajib diisi');
       return;
     }
@@ -138,12 +140,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       let user;
       if (isSignUp) {
         // Create new account
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
         user = userCredential.user;
       } else {
         // Login existing account
         try {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
           user = userCredential.user;
         } catch (signInErr: unknown) {
           const authError = signInErr as { code?: string; message?: string };
@@ -158,7 +160,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
             try {
               // Try to automatically register them under the hood. Since their profile is already in Firestore, 
               // they can transition seamlessly by typing their email and password and clicking Login.
-              const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+              const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
               user = userCredential.user;
             } catch {
               // If signup also fails (e.g. email already exists in Auth, meaning it's just a wrong password),
@@ -213,7 +215,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else if (user.email) {
         // Look up pre-created user via email query
         try {
-          const { query, collection, where, getDocs, runTransaction } = await import('firebase/firestore');
           const trimmedEmail = user.email.toLowerCase().trim();
           
           // 1. Check pre_users first
@@ -327,7 +328,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       // [Solusi 3 Fallback] If user document is still not found, check pendaftaran_mitra to auto-heal
       if (!userDataObj && user.email) {
         try {
-          const { query, collection, where, getDocs } = await import('firebase/firestore');
           const qMitra = query(collection(db, 'pendaftaran_mitra'), where('email', '==', user.email.toLowerCase().trim()));
           const mitraSnap = await getDocs(qMitra);
           if (!mitraSnap.empty) {
@@ -429,7 +429,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else {
         console.warn("Expected Auth validation handled gracefully:", errCode || errMsg);
       }
-      const isTargetEmail = email ? (email.trim().toLowerCase() === 'afadsa76@gmail.com') : false;
+      const isTargetEmail = email ? (normalizeEmail(email) === 'afadsa76@gmail.com') : false;
 
       const isInvalidCredOrNotFound = errCode === 'auth/user-not-found' || 
                                       errCode === 'auth/wrong-password' || 
@@ -526,7 +526,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else if (user.email) {
         // Look up pre-created user via email query
         try {
-          const { query, collection, where, getDocs, runTransaction } = await import('firebase/firestore');
           const trimmedEmail = user.email.toLowerCase().trim();
           
           // 1. Check pre_users first
@@ -640,7 +639,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       // [Solusi 3 Fallback] If user document is still not found, check pendaftaran_mitra to auto-heal
       if (!userDataObj && user.email) {
         try {
-          const { query, collection, where, getDocs } = await import('firebase/firestore');
           const qMitra = query(collection(db, 'pendaftaran_mitra'), where('email', '==', user.email.toLowerCase().trim()));
           const mitraSnap = await getDocs(qMitra);
           if (!mitraSnap.empty) {

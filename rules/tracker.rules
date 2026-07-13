@@ -1,0 +1,51 @@
+// ===============================================================
+// TRACKER RULES & VALIDATION
+// ===============================================================
+match /tracker_paket/{paketId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(paketId);
+}
+
+match /tracker_jamaah/{jamaahId} {
+  allow read: if true;
+  allow write: if isOperasional() || (isSignedIn() && (
+                incoming().get('mitraId', '') == request.auth.uid || 
+                incoming().get('jamaahId', '') == request.auth.uid ||
+                incoming().get('bookingId', '') == request.auth.uid ||
+                (resource != null && resource.data != null && (
+                  resource.data.get('mitraId', '') == request.auth.uid || 
+                  resource.data.get('jamaahId', '') == request.auth.uid ||
+                  resource.data.get('bookingId', '') == request.auth.uid
+                ))
+              ));
+}
+
+match /tracker_keberangkatan/{keberangkatanId} {
+  allow read: if true;
+  allow write: if isOperasional() && isValidId(keberangkatanId);
+}
+
+match /tracking_group/{groupId} {
+  allow read: if true;
+  allow write: if isOperasional() || (isSignedIn() && incoming().get('leader_id', '') == request.auth.uid) || isValidId(groupId);
+}
+
+match /mitra_tracker/{trackerId} {
+  allow read: if true;
+  allow write: if (isFinance() || isOperasional()) && isValidId(trackerId);
+}
+
+match /mitra_followup/{followupId} {
+  allow read: if true;
+  allow write: if (isFinance() || isOperasional()) && isValidId(followupId);
+}
+
+match /mitra_payment_history/{payId} {
+  allow read: if true;
+  allow write: if (isFinance() || isOperasional()) && isValidId(payId);
+}
+
+match /tracker_bagasi/{baggageId} {
+  allow read: if true;
+  allow write: if isValidId(baggageId);
+}

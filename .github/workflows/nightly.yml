@@ -1,0 +1,46 @@
+name: Nightly Maintenance & Stress Test
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # Every night at 1:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  nightly-suite:
+    name: Nightly Performance & Resilience Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build App
+        run: npm run build
+
+      - name: Run Load & Performance Profiling Tests
+        run: |
+          echo "Simulating 100, 500, 1000, and 5000 concurrent users..."
+          npm run test:performance
+
+      - name: Run Chaos Engineering Simulation Experiments
+        run: |
+          echo "Injecting service failures and observing resilience..."
+          npm run test:chaos
+
+      - name: Verify Backup and Recovery Procedures
+        run: |
+          echo "Simulating backup extraction and point-in-time database restore..."
+          npm run backup:verify
+
+      - name: Generate and Log SLA Compliance and Cost Telemetry
+        run: |
+          echo "Extracting telemetry and generating SLA/Cost forecast report..."
+          npm run report:sla-cost

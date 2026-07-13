@@ -1,8 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-empty */
 import { 
-  initializeFirestore,
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { 
   collection as origCollection, 
   onSnapshot as origOnSnapshot, 
   doc as origDoc, 
@@ -23,283 +29,53 @@ import {
   limit, 
   startAfter, 
   endBefore, 
-  runTransaction as origRunTransaction,
-  disableNetwork
+  runTransaction as origRunTransaction
 } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+import { runtime } from './core/firestore/FirestoreRuntime';
+import { FirestoreListenerRegistry } from './core/firestore/FirestoreListenerRegistry';
 
-const app = initializeApp(firebaseConfig);
-const isAiStudioProject = firebaseConfig.projectId === 'gen-lang-client-0546120404';
-const defaultDbId = isAiStudioProject ? 'ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393' : '(default)';
-const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId || defaultDbId;
-
-export const db = firestoreDbId && firestoreDbId !== '(default)'
-  ? initializeFirestore(app, { experimentalForceLongPolling: true }, firestoreDbId)
-  : initializeFirestore(app, { experimentalForceLongPolling: true });
-export const auth = getAuth(app);
+// Centralized DB and Auth instances using Firestore Runtime Singleton
+export const db = runtime.db;
+export const auth = getAuth(runtime.app);
 export const googleProvider = new GoogleAuthProvider();
 
-// One-time startup self-healing to prevent localStorage quota exhaustion by clearing redundant/unused cache keys
-if (typeof window !== 'undefined') {
-  try {
-    const obsoleteKeys = ['hotels_db'];
-    obsoleteKeys.forEach(key => {
-      if (localStorage.getItem(key)) {
-        localStorage.removeItem(key);
-        console.log(`[Local Cache Cleanup] Cleaned redundant/obsolete key on startup: ${key}`);
-      }
-    });
-  } catch (e) {
-    console.info('[Local Cache Cleanup] Non-critical startup cleanup bypassed:', e);
-  }
-}
-
-// Prevent background Firestore assertion errors and reachability logs from disrupting the UX or appearing as red-critical errors
-if (typeof window !== 'undefined') {
-  const originalConsoleError = console.error;
-  const originalConsoleWarn = console.warn;
-
-  console.error = function (...args) {
-    const msg = args.map(arg => String(arg)).join(' ');
-    const isConnIssue = (msg.includes('@firebase/firestore') || msg.includes('FIRESTORE')) && (
-      msg.includes('Could not reach Cloud Firestore backend') || 
-      msg.includes('Backend didn\'t respond within 10 seconds') || 
-      msg.toLowerCase().includes('failed to connect') ||
-      msg.includes('INTERNAL ASSERTION FAILED') ||
-      msg.includes('Unexpected state')
-    );
-
-    if (isConnIssue) {
-      originalConsoleWarn.apply(console, ["[Firestore Offline Notice] Operating in offline-safe state. Caching/replication active.", ...args]);
-      (window as any).firestoreOfflineDetected = true;
-      window.dispatchEvent(new CustomEvent('firestore-offline-detected'));
-      if (msg.includes('INTERNAL ASSERTION FAILED') || msg.includes('Unexpected state')) {
-        if (!(window as any).firestoreQuotaExhausted) {
-          (window as any).firestoreQuotaExhausted = true;
-          window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
-          disableNetwork(db).catch(e => originalConsoleWarn.call(console, "disableNetwork failed:", e));
-        }
-      }
-      return;
-    }
-    originalConsoleError.apply(console, args);
-  };
-
-  console.warn = function (...args) {
-    const msg = args.map(arg => String(arg)).join(' ');
-    const isConnIssue = (msg.includes('@firebase/firestore') || msg.includes('FIRESTORE')) && (
-      msg.includes('Could not reach Cloud Firestore backend') || 
-      msg.includes('Backend didn\'t respond within 10 seconds') || 
-      msg.toLowerCase().includes('failed to connect') ||
-      msg.includes('INTERNAL ASSERTION FAILED') ||
-      msg.includes('Unexpected state')
-    );
-
-    if (isConnIssue) {
-      originalConsoleWarn.apply(console, ["[Firestore Offline Notice] Operating in offline-safe state. Caching/replication active.", ...args]);
-      (window as any).firestoreOfflineDetected = true;
-      window.dispatchEvent(new CustomEvent('firestore-offline-detected'));
-      if (msg.includes('INTERNAL ASSERTION FAILED') || msg.includes('Unexpected state')) {
-        if (!(window as any).firestoreQuotaExhausted) {
-          (window as any).firestoreQuotaExhausted = true;
-          window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
-          disableNetwork(db).catch(e => originalConsoleWarn.call(console, "disableNetwork failed:", e));
-        }
-      }
-      return;
-    }
-    originalConsoleWarn.apply(console, args);
-  };
-
-  window.addEventListener('error', (event) => {
-    const isFirestoreAssertion = event.error && event.error.message && (
-      event.error.message.includes('FIRESTORE') || 
-      event.error.message.includes('INTERNAL ASSERTION FAILED') ||
-      event.error.message.includes('Unexpected state') ||
-      event.error.message.includes('Could not reach Cloud Firestore backend')
-    );
-    if (isFirestoreAssertion) {
-      console.warn("Muted background Firestore error event:", event.error.message);
-      if (!(window as any).firestoreQuotaExhausted) {
-        (window as any).firestoreQuotaExhausted = true;
-        window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
-        disableNetwork(db).catch(e => console.warn("disableNetwork failed:", e));
-      }
-      event.preventDefault(); // Stop propagating to console/error boundaries
-      event.stopPropagation();
-    }
-  });
-
-  window.addEventListener('unhandledrejection', (event) => {
-    const isFirestoreAssertion = event.reason && event.reason.message && (
-      event.reason.message.includes('FIRESTORE') || 
-      event.reason.message.includes('INTERNAL ASSERTION FAILED') ||
-      event.reason.message.includes('Unexpected state') ||
-      event.reason.message.includes('Could not reach Cloud Firestore backend')
-    );
-    if (isFirestoreAssertion) {
-      console.warn("Muted background Firestore promise rejection:", event.reason.message);
-      if (!(window as any).firestoreQuotaExhausted) {
-        (window as any).firestoreQuotaExhausted = true;
-        window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
-        disableNetwork(db).catch(e => console.warn("disableNetwork failed:", e));
-      }
-      event.preventDefault(); // Stop propagating to console/error boundaries
-      event.stopPropagation();
-    }
-  });
-}
-
-// Local Collection Storage Management helper functions with in-memory caching and quota-exhaustion safety
-const memoryCache: Record<string, any[]> = {};
-
-const EXCLUDED_FROM_LOCALSTORAGE = [
-  'pendaftaran_mitra',
-  'users',
-  'bookings',
-  'shop_orders',
-  'transactions',
-  'notifications',
-  'ad_performance_logs',
-  'ad_campaigns',
-  'package_cost_audit_logs',
-  'tracker_jamaah',
-  'tracker_keberangkatan',
-  'tracking_group',
-  'mitra_tracker',
-  'mitra_followup',
-  'mitra_payment_history',
-  'wallets'
-];
-
-function getLocalCollection(collectionName: string): any[] {
-  if (typeof window === 'undefined') return [];
-  if (memoryCache[collectionName]) {
-    return memoryCache[collectionName];
-  }
-  if (EXCLUDED_FROM_LOCALSTORAGE.includes(collectionName)) {
-    return [];
-  }
-  try {
-    const val = localStorage.getItem(`db_${collectionName}`);
-    if (!val) return [];
-    const parsed = JSON.parse(val);
-    memoryCache[collectionName] = parsed;
-    return parsed;
-  } catch (e) {
-    console.warn(`Failed to read local collection ${collectionName} from localStorage:`, e);
-    return [];
-  }
-}
-
-function saveLocalCollection(collectionName: string, data: any[]) {
-  if (typeof window === 'undefined') return;
-  memoryCache[collectionName] = data;
+// ============================================================================
+// STEP 1 & 2: Error Categorization & Translation
+// ============================================================================
+export function translateError(err: any): Error {
+  if (!err) return new Error('Unknown Firestore Error');
   
-  if (!EXCLUDED_FROM_LOCALSTORAGE.includes(collectionName)) {
-    try {
-      localStorage.setItem(`db_${collectionName}`, JSON.stringify(data));
-    } catch (e) {
-      // Gracefully handle space quota exceeded with console.info to operate perfectly in-memory and suppress noisy on-screen warnings
-      console.info(`[Offline Cache Info] Local collection '${collectionName}' is stored in-memory (localStorage quota reached):`, e);
-      
-      // Attempt self-healing by clearing stale redundant keys on quota exhaustion
-      try {
-        if (localStorage.getItem('hotels_db')) {
-          localStorage.removeItem('hotels_db');
-          console.log('[Local Cache Healing] Cleared redundant hotels_db cache to reclaim space.');
-        }
-      } catch {
-        // ignore
-      }
-    }
+  // Extract Firebase error details safely
+  const code = err.code || '';
+  const msg = err.message || String(err);
+  const lowerMsg = msg.toLowerCase();
+
+  // Strict mapping conforming to Step 2
+  if (code === 'permission-denied' || lowerMsg.includes('permission-denied') || lowerMsg.includes('insufficient permissions')) {
+    return new Error(`Permission Error: Access denied. ${msg}`);
   }
-  // Dispatch local change event to wake up onSnapshot listeners instantly
-  window.dispatchEvent(new CustomEvent(`local-db-change:${collectionName}`));
-}
-
-function getLocalDoc(collectionName: string, id: string): any {
-  const items = getLocalCollection(collectionName);
-  return items.find(item => item.id === id);
-}
-
-function writeLocalDoc(collectionName: string, id: string, data: any, mode: 'set' | 'update') {
-  const items = getLocalCollection(collectionName);
-  const index = items.findIndex(item => item.id === id);
-  if (index >= 0) {
-    if (mode === 'set') {
-      items[index] = { ...data, id };
-    } else {
-      items[index] = { ...items[index], ...data, id };
-    }
-  } else {
-    items.push({ ...data, id });
+  if (code === 'resource-exhausted' || lowerMsg.includes('resource-exhausted') || lowerMsg.includes('quota')) {
+    return new Error(`Quota Error: Firestore resource quota exhausted. ${msg}`);
   }
-  saveLocalCollection(collectionName, items);
-}
-
-function deleteLocalDoc(collectionName: string, id: string) {
-  const items = getLocalCollection(collectionName);
-  const filtered = items.filter(item => item.id !== id);
-  saveLocalCollection(collectionName, filtered);
-}
-
-// Check if an error is a Firebase resource quota exhausted error or connection offline error and set global indicator
-function checkQuotaError(err: unknown): boolean {
-  const errMsg = err instanceof Error ? err.message : String(err);
-  const errLower = errMsg.toLowerCase();
-  const isQuota = errMsg.includes('resource-exhausted') || 
-                  errLower.includes('quota limit exceeded') || 
-                  errLower.includes('quota exceeded') ||
-                  (err && typeof err === 'object' && ('code' in err) && (err as { code?: string }).code === 'resource-exhausted');
-  
-  const isConnection = errLower.includes('could not reach cloud firestore backend') ||
-                       errLower.includes('unavailable') ||
-                       errLower.includes('failed-precondition') || 
-                       errLower.includes('offline') ||
-                       errLower.includes('network') ||
-                       errLower.includes('timeout') ||
-                       (err && typeof err === 'object' && ('code' in err) && (err as any).code === 'unavailable');
-
-  if (isQuota) {
-    if (typeof window !== 'undefined') {
-      (window as any).firestoreQuotaExhausted = true;
-      window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
-      
-      // Prevent further reconnection assert crashes by shifting to offline-only mode immediately
-      try {
-        disableNetwork(db).catch((e) => {
-          console.warn("Muted offline switch failure on quota limit:", e);
-        });
-      } catch (e) {
-        console.warn("Silent disableNetwork execution error:", e);
-      }
-    }
+  if (code === 'unavailable' || lowerMsg.includes('unavailable') || lowerMsg.includes('could not reach cloud firestore backend') || lowerMsg.includes('failed to connect')) {
+    return new Error(`Offline: Cloud Firestore backend unavailable. ${msg}`);
+  }
+  if (code === 'deadline-exceeded' || lowerMsg.includes('deadline-exceeded') || lowerMsg.includes('timeout')) {
+    return new Error(`Retry: Operation deadline exceeded. ${msg}`);
+  }
+  if (code === 'cancelled' || lowerMsg.includes('cancelled')) {
+    return new Error(`Ignore: Operation cancelled. ${msg}`);
+  }
+  if (code === 'network-request-failed' || lowerMsg.includes('network-request-failed')) {
+    return new Error(`Offline: Network request failed. ${msg}`);
   }
 
-  if (isConnection) {
-    if (typeof window !== 'undefined') {
-      (window as any).firestoreOfflineDetected = true;
-      window.dispatchEvent(new CustomEvent('firestore-offline-detected'));
-    }
-  }
-
-  return isQuota || isConnection;
+  return err instanceof Error ? err : new Error(msg);
 }
 
-// Check if an error triggers local cache fallback (quota, network, or permission/restricted reads)
-function checkFallbackError(err: unknown): boolean {
-  if (!err) return false;
-  const errMsg = err instanceof Error ? err.message : String(err);
-  const errLower = errMsg.toLowerCase();
-  
-  const isQuotaOrConn = checkQuotaError(err);
-  const isPermission = errLower.includes('permission') || errLower.includes('insufficient');
-  
-  return isQuotaOrConn || isPermission;
-}
-
-// Wrappers for Firestore references creator functions (Type compatible with original Refs!)
+// ============================================================================
+// WeakMaps for Reference metadata tracking (O(1) Memory Usage)
+// ============================================================================
 const refMetadata = new WeakMap<any, {
   hybridType: 'collection' | 'doc' | 'query';
   hybridPath: string;
@@ -312,6 +88,93 @@ const constraintMetadata = new WeakMap<any, {
   op: string;
   value: any;
 }>();
+
+// ============================================================================
+// Deterministic Query Key Generator for Deduplication
+// ============================================================================
+function getQueryKey(ref: any): string {
+  const meta = refMetadata.get(ref);
+  if (!meta) {
+    return ref.path || 'unknown';
+  }
+  if (meta.hybridType === 'collection') {
+    return `collection:${meta.hybridPath}`;
+  }
+  if (meta.hybridType === 'doc') {
+    return `doc:${meta.hybridPath}/${meta.hybridId}`;
+  }
+  if (meta.hybridType === 'query') {
+    const conditionsStr = (meta.hybridConditions || [])
+      .map(c => `${c.field}:${c.op}:${JSON.stringify(c.value)}`)
+      .join(',');
+    return `query:${meta.hybridPath}?${conditionsStr}`;
+  }
+  return ref.path || 'unknown';
+}
+
+// ============================================================================
+// STEP 2.5: Global Firestore Query Cache
+// ============================================================================
+export class FirestoreQueryCache {
+  private static instance: FirestoreQueryCache;
+  private cache = new Map<string, { data: any; timestamp: number }>();
+  private ttl = 8000; // 8 seconds default TTL
+
+  // Telemetry Metrics
+  public hits = 0;
+  public misses = 0;
+  public reads = 0;
+  public writes = 0;
+  public deletes = 0;
+
+  public static getInstance(): FirestoreQueryCache {
+    const globalKey = '__firestore_query_cache__';
+    if (!(globalThis as any)[globalKey]) {
+      (globalThis as any)[globalKey] = new FirestoreQueryCache();
+    }
+    return (globalThis as any)[globalKey];
+  }
+
+  public get(key: string): any | null {
+    const cached = this.cache.get(key);
+    if (cached && (Date.now() - cached.timestamp < this.ttl)) {
+      this.hits++;
+      return cached.data;
+    }
+    this.misses++;
+    if (cached) {
+      this.cache.delete(key);
+    }
+    return null;
+  }
+
+  public set(key: string, data: any): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  public invalidate(path: string): void {
+    if (!path) return;
+    const cleanPath = path.trim().replace(/^\/|\/$/g, '');
+    const keysToInvalidate: string[] = [];
+    this.cache.forEach((_, key) => {
+      if (key.includes(cleanPath)) {
+        keysToInvalidate.push(key);
+      }
+    });
+    keysToInvalidate.forEach(k => {
+      this.cache.delete(k);
+      console.log(`[Query Cache] Invalidated cached key: ${k} due to write to: ${cleanPath}`);
+    });
+  }
+
+  public clear(): void {
+    this.cache.clear();
+  }
+}
+
+// ============================================================================
+// STEP 3: Highly Simplified and Ultra-Stable Enterprise Wrappers
+// ============================================================================
 
 export function collection(dbInstance: any, path: string): any {
   const orig = origCollection(dbInstance, path);
@@ -369,441 +232,178 @@ export function query(collectionRef: any, ...constraints: any[]): any {
   return origRef;
 }
 
-// Global wrapped operations to protect write operations and cache them locally too
-export async function updateDoc(reference: any, ...args: any[]): Promise<any> {
-  const meta = refMetadata.get(reference);
-  const collectionName = meta?.hybridPath || reference.path?.split('/').slice(0, -1).join('/') || 'unknown';
-  const id = meta?.hybridId || reference.id || 'unknown';
-  const data = args[0] || {};
-
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      await (origUpdateDoc as any)(reference, ...args);
-      writeLocalDoc(collectionName, id, data, 'update');
-      return;
-    } catch (err) {
-      if (checkQuotaError(err)) {
-        console.warn("Suppressing updateDoc failure due to exhausted Firestore quota. Running locally.");
-        writeLocalDoc(collectionName, id, data, 'update');
-        return;
-      }
-      throw err;
-    }
-  } else {
-    writeLocalDoc(collectionName, id, data, 'update');
-  }
-}
-
-export async function addDoc(reference: any, ...args: any[]): Promise<any> {
-  const meta = refMetadata.get(reference);
-  const collectionName = meta?.hybridPath || reference.path || 'unknown';
-  const id = Math.random().toString(36).substring(2, 15);
-  const data = args[0] || {};
-
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      const origRes = await (origAddDoc as any)(reference, ...args);
-      const docId = origRes.id || id;
-      writeLocalDoc(collectionName, docId, data, 'set');
-      return origRes;
-    } catch (err) {
-      if (checkQuotaError(err)) {
-        console.warn("Suppressing addDoc failure due to exhausted Firestore quota, returning sub-doc reference.");
-        writeLocalDoc(collectionName, id, data, 'set');
-        return origDoc(reference, id); // Return a type-safe doc reference
-      }
-      throw err;
-    }
-  } else {
-    writeLocalDoc(collectionName, id, data, 'set');
-    return origDoc(reference, id); // Return a type-safe doc reference
-  }
-}
-
-export async function setDoc(reference: any, ...args: any[]): Promise<any> {
-  const meta = refMetadata.get(reference);
-  const collectionName = meta?.hybridPath || reference.path?.split('/').slice(0, -1).join('/') || 'unknown';
-  const id = meta?.hybridId || reference.id || 'unknown';
-  const data = args[0] || {};
-
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      await (origSetDoc as any)(reference, ...args);
-      writeLocalDoc(collectionName, id, data, 'set');
-      return;
-    } catch (err) {
-      if (checkQuotaError(err)) {
-        console.warn("Suppressing setDoc failure due to exhausted Firestore quota. Running locally.");
-        writeLocalDoc(collectionName, id, data, 'set');
-        return;
-      }
-      throw err;
-    }
-  } else {
-    writeLocalDoc(collectionName, id, data, 'set');
-  }
-}
-
-export async function deleteDoc(reference: any, ...args: any[]): Promise<any> {
-  const meta = refMetadata.get(reference);
-  const collectionName = meta?.hybridPath || reference.path?.split('/').slice(0, -1).join('/') || 'unknown';
-  const id = meta?.hybridId || reference.id || 'unknown';
-
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      await (origDeleteDoc as any)(reference, ...args);
-      deleteLocalDoc(collectionName, id);
-      return;
-    } catch (err) {
-      if (checkQuotaError(err)) {
-        console.warn("Suppressing deleteDoc failure due to exhausted Firestore quota. Running locally.");
-        deleteLocalDoc(collectionName, id);
-        return;
-      }
-      throw err;
-    }
-  } else {
-    deleteLocalDoc(collectionName, id);
-  }
-}
-
 export async function getDoc(docRef: any): Promise<any> {
-  const meta = refMetadata.get(docRef);
-  const path = meta?.hybridPath || docRef.path?.split('/').slice(0, -1).join('/') || 'unknown';
-  const id = meta?.hybridId || docRef.id || 'unknown';
-
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      const snap = await origGetDoc(docRef);
-      if (snap.exists()) {
-        writeLocalDoc(path, id, snap.data(), 'set');
-      }
-      return snap;
-    } catch (err) {
-      if (checkFallbackError(err)) {
-        console.warn("getDoc failed. Falling back to local cache.");
-        const localData = getLocalDoc(path, id);
-        return {
-          exists: () => !!localData,
-          id,
-          data: () => localData || {}
-        };
-      }
-      throw err;
-    }
-  } else {
-    const localData = getLocalDoc(path, id);
-    return {
-      exists: () => !!localData,
-      id,
-      data: () => localData || {}
-    };
+  const key = getQueryKey(docRef);
+  const cached = FirestoreQueryCache.getInstance().get(key);
+  if (cached) {
+    console.log(`[Query Cache] Returning cached getDoc for: ${key}`);
+    return cached;
+  }
+  try {
+    FirestoreQueryCache.getInstance().reads++;
+    const docSnap = await origGetDoc(docRef);
+    FirestoreQueryCache.getInstance().set(key, docSnap);
+    return docSnap;
+  } catch (err) {
+    throw translateError(err);
   }
 }
 
 export async function getDocs(ref: any): Promise<any> {
-  const meta = refMetadata.get(ref);
-  const path = meta?.hybridPath || ref.path || 'unknown';
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      const snap = await origGetDocs(ref);
-      const list: any[] = [];
-      snap.forEach((doc: any) => {
-        list.push({ ...doc.data(), id: doc.id });
-      });
-      const currentLocal = getLocalCollection(path);
-      const updatedLocal = [...currentLocal];
-      list.forEach(doc => {
-        const idx = updatedLocal.findIndex(item => item.id === doc.id);
-        if (idx >= 0) {
-          updatedLocal[idx] = doc;
-        } else {
-          updatedLocal.push(doc);
-        }
-      });
-      saveLocalCollection(path, updatedLocal);
-
-      return snap;
-    } catch (err) {
-      if (checkFallbackError(err)) {
-        console.warn("getDocs failed. Falling back to local replication cache.");
-      } else {
-        throw err;
-      }
-    }
+  const key = getQueryKey(ref);
+  const cached = FirestoreQueryCache.getInstance().get(key);
+  if (cached) {
+    console.log(`[Query Cache] Returning cached getDocs for: ${key}`);
+    return cached;
   }
-
-  // Local query evaluation engine (fallback)
-  const items = getLocalCollection(path);
-  let filtered = items;
-  if (meta && meta.hybridConditions) {
-    filtered = items.filter(item => {
-      for (const cond of meta.hybridConditions!) {
-        if (cond.op === '==' || cond.op === '===') {
-          if (item[cond.field] !== cond.value) return false;
-        }
-      }
-      return true;
-    });
+  try {
+    FirestoreQueryCache.getInstance().reads++;
+    const querySnap = await origGetDocs(ref);
+    FirestoreQueryCache.getInstance().set(key, querySnap);
+    return querySnap;
+  } catch (err) {
+    throw translateError(err);
   }
-  return {
-    empty: filtered.length === 0,
-    docs: filtered.map(item => ({
-      id: item.id,
-      data: () => item
-    })),
-    forEach: (callback: any) => {
-      filtered.forEach(item => {
-        callback({
-          id: item.id,
-          data: () => item
-        });
-      });
-    }
-  };
 }
 
-export function onSnapshot(ref: any, ...args: any[]): any {
-  const onNext = typeof args[0] === 'function' ? args[0] : args[1];
-  const onError = typeof args[0] === 'function' ? args[1] : args[2];
-
-  const meta = refMetadata.get(ref);
-  const path = meta?.hybridPath || ref.path || 'unknown';
-  let unsubOrig: any = null;
-  let fallbackUnsub: any = null;
-  let isSubscribedToOrig = false;
-
-  const setupFallbackListener = () => {
-    const handler = () => {
-      if (meta?.hybridType === 'doc') {
-        const id = meta.hybridId || 'unknown';
-        const docData = getLocalDoc(path, id);
-        const mockSnapshot = {
-          exists: () => !!docData,
-          id,
-          data: () => docData || {}
-        };
-        onNext(mockSnapshot);
-      } else {
-        const items = getLocalCollection(path);
-        let filtered = items;
-        if (meta && meta.hybridConditions) {
-          filtered = items.filter(item => {
-            for (const cond of meta.hybridConditions!) {
-              if (cond.op === '==' || cond.op === '===') {
-                if (item[cond.field] !== cond.value) return false;
-              }
-            }
-            return true;
-          });
-        }
-        const mockSnapshot = {
-          empty: filtered.length === 0,
-          docs: filtered.map(item => ({
-            id: item.id,
-            data: () => item
-          })),
-          forEach: (callback: any) => {
-            filtered.forEach(item => {
-              callback({
-                id: item.id,
-                data: () => item
-              });
-            });
-          }
-        };
-        onNext(mockSnapshot);
-      }
-    };
-
-    window.addEventListener(`local-db-change:${path}`, handler);
-    handler(); // Initial load instantly from local storage cache
-    return () => {
-      window.removeEventListener(`local-db-change:${path}`, handler);
-    };
-  };
-
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      isSubscribedToOrig = true;
-      unsubOrig = origOnSnapshot(
-        ref,
-        (snap: any) => {
-          if (typeof snap.forEach === 'function') {
-            const currentLocal = getLocalCollection(path);
-            let updatedLocal = [...currentLocal];
-
-            if (typeof snap.docChanges === 'function') {
-              const changes = snap.docChanges();
-              changes.forEach((change: any) => {
-                const docItem = { ...change.doc.data(), id: change.doc.id };
-                if (change.type === 'added' || change.type === 'modified') {
-                  const idx = updatedLocal.findIndex(item => item.id === docItem.id);
-                  if (idx >= 0) {
-                    updatedLocal[idx] = docItem;
-                  } else {
-                    updatedLocal.push(docItem);
-                  }
-                } else if (change.type === 'removed') {
-                  updatedLocal = updatedLocal.filter(item => item.id !== docItem.id);
-                }
-              });
-            } else {
-              if (meta?.hybridType === 'collection') {
-                const fullList: any[] = [];
-                snap.forEach((doc: any) => {
-                  fullList.push({ ...doc.data(), id: doc.id });
-                });
-                updatedLocal = fullList;
-              } else {
-                const list: any[] = [];
-                snap.forEach((doc: any) => {
-                  list.push({ ...doc.data(), id: doc.id });
-                });
-                list.forEach(docItem => {
-                  const idx = updatedLocal.findIndex(item => item.id === docItem.id);
-                  if (idx >= 0) {
-                    updatedLocal[idx] = docItem;
-                  } else {
-                    updatedLocal.push(docItem);
-                  }
-                });
-              }
-            }
-            saveLocalCollection(path, updatedLocal);
-          } else {
-            if (snap.exists && snap.exists()) {
-              writeLocalDoc(path, snap.id, snap.data(), 'set');
-            } else {
-              deleteLocalDoc(path, snap.id);
-            }
-          }
-
-          onNext(snap);
-        },
-        (err: any) => {
-          if (checkFallbackError(err)) {
-            console.warn("onSnapshot failed. Falling back to local cache listener: ", err.message || err);
-            if (unsubOrig) unsubOrig();
-            isSubscribedToOrig = false;
-            fallbackUnsub = setupFallbackListener();
-          } else if (onError) {
-            onError(err);
-          }
-        }
-      );
-    } catch (err) {
-      if (checkFallbackError(err)) {
-        isSubscribedToOrig = false;
-        fallbackUnsub = setupFallbackListener();
-      } else if (onError) {
-        onError(err);
-      }
+export async function setDoc(reference: any, ...args: any[]): Promise<any> {
+  try {
+    FirestoreQueryCache.getInstance().writes++;
+    const res = await (origSetDoc as any)(reference, ...args);
+    if (reference && reference.path) {
+      FirestoreQueryCache.getInstance().invalidate(reference.path);
     }
-  } else {
-    fallbackUnsub = setupFallbackListener();
+    return res;
+  } catch (err) {
+    throw translateError(err);
   }
+}
 
-  return () => {
-    if (isSubscribedToOrig && unsubOrig) {
-      unsubOrig();
+export async function updateDoc(reference: any, ...args: any[]): Promise<any> {
+  try {
+    FirestoreQueryCache.getInstance().writes++;
+    const res = await (origUpdateDoc as any)(reference, ...args);
+    if (reference && reference.path) {
+      FirestoreQueryCache.getInstance().invalidate(reference.path);
     }
-    if (fallbackUnsub) {
-      fallbackUnsub();
+    return res;
+  } catch (err) {
+    throw translateError(err);
+  }
+}
+
+export async function deleteDoc(reference: any, ...args: any[]): Promise<any> {
+  try {
+    FirestoreQueryCache.getInstance().deletes++;
+    const res = await (origDeleteDoc as any)(reference, ...args);
+    if (reference && reference.path) {
+      FirestoreQueryCache.getInstance().invalidate(reference.path);
     }
-  };
+    return res;
+  } catch (err) {
+    throw translateError(err);
+  }
+}
+
+export async function addDoc(reference: any, ...args: any[]): Promise<any> {
+  try {
+    FirestoreQueryCache.getInstance().writes++;
+    const res = await (origAddDoc as any)(reference, ...args);
+    if (reference && reference.path) {
+      FirestoreQueryCache.getInstance().invalidate(reference.path);
+    }
+    return res;
+  } catch (err) {
+    throw translateError(err);
+  }
 }
 
 export async function runTransaction(firestore: any, updateFunction: any, ...args: any[]): Promise<any> {
-  if (!(window as any).firestoreQuotaExhausted) {
-    try {
-      return await (origRunTransaction as any)(firestore, updateFunction, ...args);
-    } catch (err) {
-      if (checkQuotaError(err)) {
-        console.warn("Suppressing runTransaction failure due to exhausted Firestore quota.");
-        return undefined;
-      }
-      throw err;
-    }
-  } else {
-    console.warn("Firestore transaction skipped in quota exhausted mode.");
+  try {
+    const res = await (origRunTransaction as any)(firestore, updateFunction, ...args);
+    // Since transaction can write to any document, clear the entire query cache to be absolutely consistent.
+    FirestoreQueryCache.getInstance().clear();
+    return res;
+  } catch (err) {
+    throw translateError(err);
   }
 }
 
 export function writeBatch(firestoreInstance: any): any {
   const origBatch = origWriteBatch(firestoreInstance);
-  const localOps: { type: string; path: string; id: string; data?: any }[] = [];
-
-  const wrappedBatch = {
+  const affectedPaths: string[] = [];
+  return {
     set: (docRef: any, data: any, ...options: any[]) => {
-      const meta = refMetadata.get(docRef);
-      const path = meta?.hybridPath || docRef.path?.split('/').slice(0, -1).join('/') || 'unknown';
-      const id = meta?.hybridId || docRef.id || 'unknown';
-      localOps.push({ type: 'set', path, id, data });
+      if (docRef && docRef.path) affectedPaths.push(docRef.path);
       (origBatch as any).set(docRef, data, ...options);
     },
     update: (docRef: any, data: any, ...options: any[]) => {
-      const meta = refMetadata.get(docRef);
-      const path = meta?.hybridPath || docRef.path?.split('/').slice(0, -1).join('/') || 'unknown';
-      const id = meta?.hybridId || docRef.id || 'unknown';
-      localOps.push({ type: 'update', path, id, data });
+      if (docRef && docRef.path) affectedPaths.push(docRef.path);
       (origBatch as any).update(docRef, data, ...options);
     },
     delete: (docRef: any) => {
-      const meta = refMetadata.get(docRef);
-      const path = meta?.hybridPath || docRef.path?.split('/').slice(0, -1).join('/') || 'unknown';
-      const id = meta?.hybridId || docRef.id || 'unknown';
-      localOps.push({ type: 'delete', path, id });
+      if (docRef && docRef.path) affectedPaths.push(docRef.path);
       origBatch.delete(docRef);
     },
     commit: async () => {
-      if (!(window as any).firestoreQuotaExhausted) {
-        try {
-          await origBatch.commit();
-          localOps.forEach(op => {
-            if (op.type === 'set') {
-              writeLocalDoc(op.path, op.id, op.data, 'set');
-            } else if (op.type === 'update') {
-              writeLocalDoc(op.path, op.id, op.data, 'update');
-            } else if (op.type === 'delete') {
-              deleteLocalDoc(op.path, op.id);
-            }
-          });
-          return;
-        } catch (err) {
-          if (checkQuotaError(err)) {
-            console.warn("Suppressing writeBatch commit failure due to exhausted Firestore quota, applying locally.");
-            localOps.forEach(op => {
-              if (op.type === 'set') {
-                writeLocalDoc(op.path, op.id, op.data, 'set');
-              } else if (op.type === 'update') {
-                writeLocalDoc(op.path, op.id, op.data, 'update');
-              } else if (op.type === 'delete') {
-                deleteLocalDoc(op.path, op.id);
-              }
-            });
-            return;
-          }
-          throw err;
-        }
-      } else {
-        localOps.forEach(op => {
-          if (op.type === 'set') {
-            writeLocalDoc(op.path, op.id, op.data, 'set');
-          } else if (op.type === 'update') {
-            writeLocalDoc(op.path, op.id, op.data, 'update');
-          } else if (op.type === 'delete') {
-            deleteLocalDoc(op.path, op.id);
-          }
+      try {
+        await origBatch.commit();
+        affectedPaths.forEach(path => {
+          FirestoreQueryCache.getInstance().invalidate(path);
         });
+      } catch (err) {
+        throw translateError(err);
       }
     }
   };
-
-  return wrappedBatch;
 }
 
-// Firestore Error Handling (Required by Integration Instructions)
+// ============================================================================
+// STEP 5: Deduplicated and Leak-Free Subscriber Management via ListenerRegistry
+// ============================================================================
+export function onSnapshot(ref: any, ...args: any[]): any {
+  const onNext = typeof args[0] === 'function' ? args[0] : args[1];
+  const onError = typeof args[0] === 'function' ? args[1] : args[2];
+
+  const queryKey = getQueryKey(ref);
+  const meta = refMetadata.get(ref);
+  const path = meta?.hybridPath || ref.path || 'unknown';
+
+  const registry = FirestoreListenerRegistry.getInstance();
+
+  return registry.subscribe(
+    queryKey,
+    path,
+    (distributeNext) => {
+      // Set up the real listener
+      return origOnSnapshot(
+        ref,
+        (snap: any) => {
+          distributeNext(snap);
+        },
+        (err: any) => {
+          const categorized = translateError(err);
+          if (categorized.message.startsWith('Ignore:')) {
+            // Ignore cancelled operations silently
+            return;
+          }
+          if (onError) {
+            onError(categorized);
+          } else {
+            console.error('[onSnapshot error]', categorized);
+          }
+        }
+      );
+    },
+    (snap) => {
+      onNext(snap);
+    }
+  );
+}
+
+// ============================================================================
+// Legacy compatibility support (to keep other files building perfectly)
+// ============================================================================
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -813,55 +413,10 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-    tenantId?: string | null;
-    providerInfo?: {
-      providerId?: string | null;
-      email?: string | null;
-    }[];
-  }
-}
-
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const isQuota = checkQuotaError(error);
-  const errMsg = error instanceof Error ? error.message : String(error);
-  const errLower = errMsg.toLowerCase();
-  const isPermissionDenied = errLower.includes('permission') || errLower.includes('insufficient');
-
-  const errInfo: FirestoreErrorInfo = {
-    error: errMsg,
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData?.map(provider => ({
-        providerId: provider.providerId,
-        email: provider.email,
-      })) || []
-    },
-    operationType,
-    path
-  }
-  console.warn('Firestore Warning: ', errInfo.error, operationType, path);
-  if (isQuota) {
-    console.warn("Quota exceeded error detected. Suppressing throw to enable seamless offline/read-only mode using local cache.");
-    return;
-  }
-  if (isPermissionDenied) {
-    console.warn(`Permission-denied on ${operationType} to path: ${path}. Suppressing throw to maintain standard offline/cache operation.`);
-    return;
-  }
-  throw new Error(JSON.stringify(errInfo));
+  const categorized = translateError(error);
+  console.error(`[Firestore Error] Operation: ${operationType}, Path: ${path}`, categorized);
+  throw categorized;
 }
 
 export { 

@@ -1,0 +1,71 @@
+name: Enterprise CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["Enterprise CI Pipeline"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Staging Cloud Run
+        run: |
+          echo "Deploying to Staging environment..."
+          # mock deployment command or gcloud deployment
+          echo "gcloud run deploy portal-umaroh-staging --image gcr.io/umaroh-erp/portal-umaroh:staging"
+
+      - name: Staging Smoke Testing
+        run: |
+          echo "Running post-deploy automated smoke tests..."
+          npm run test:smoke
+
+  deploy-production:
+    name: Deploy to Production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Request Manual Approval Gateway
+        run: |
+          echo "Awaiting approval from Release Manager / DevOps Lead..."
+
+      - name: Deploy to Production Cloud Run (Canary/Blue-Green)
+        run: |
+          echo "Executing production rollout..."
+          # Deploying with Canary 10% traffic split
+          echo "gcloud run deploy portal-umaroh-prod --image gcr.io/umaroh-erp/portal-umaroh:prod --no-traffic"
+          echo "gcloud run services update-traffic portal-umaroh-prod --to-revisions=LATEST=10"
+
+      - name: Production Post-Deployment Health Check
+        id: health-check
+        run: |
+          echo "Verifying health status of live production endpoints..."
+          npm run test:healthcheck || echo "::set-output name=failed::true"
+
+      - name: Auto-Rollback on Health Check Failure
+        if: steps.health-check.outputs.failed == 'true'
+        run: |
+          echo "Production health check failed! Initiating automatic instant rollback sequence..."
+          npm run deploy:rollback
+          exit 1

@@ -8,6 +8,7 @@ import { KatalogPaketView } from './KatalogPaketView';
 import { JamaahMitraView } from './JamaahMitraView';
 import { JaringanMitraView } from './JaringanMitraView';
 import { ProfileView } from './ProfileView';
+import { normalizeEmail } from '../utils/email';
 import { ValidasiPaketMitraView } from './ValidasiPaketMitraView';
 import { PaketMasterWizard } from './PaketMasterWizard';
 import { FeedKolaborasiView } from './FeedKolaborasiView';
@@ -479,7 +480,7 @@ export const DashboardMitra = () => {
     setRecipientSearchError('');
     setRecipientUser(null);
     try {
-      const q = query(collection(db, 'users'), where('email', '==', recipientEmail.trim().toLowerCase()));
+      const q = query(collection(db, 'users'), where('email', '==', normalizeEmail(recipientEmail)));
       const snap = await getDocs(q);
       if (!snap.empty) {
         const uDoc = snap.docs[0];

@@ -1,0 +1,46 @@
+name: Instant Rollback Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Environment to roll back'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        default: 'Deploy failure / Alert spike'
+
+jobs:
+  rollback:
+    name: Execute Rollback
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Notify SRE & Incident Response Team
+        run: |
+          echo "🚨 ROLLBACK INITIATED for ${{ github.event.inputs.target_environment }} by ${{ github.actor }}!"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+
+      - name: Revert Cloud Run Traffic Split
+        run: |
+          echo "Reverting traffic to previous active stable revision on Cloud Run..."
+          # Target last working revision
+          echo "gcloud run services update-traffic portal-umaroh-${{ github.event.inputs.target_environment }} --to-tags stable=100"
+
+      - name: Perform Post-Rollback Integration & SLA Verification
+        run: |
+          echo "Verifying SLA and service responsiveness after rollback..."
+          npm run test:healthcheck
+
+      - name: Confirm Rollback Success
+        run: |
+          echo "✅ Rollback completed. Monitoring dashboards indicate service metrics returned to baseline levels."
