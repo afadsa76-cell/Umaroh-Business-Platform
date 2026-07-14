@@ -81,7 +81,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if true;
       allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin() || isMitraDev();
-      allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId)) && 
+      allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId) || (isSignedIn() && existing().get('email', '') == request.auth.token.email)) && 
                     isValidUserProfile(incoming()) && (
                       isAdmin() || isOperasional() || isMitraDev() || (
                         incoming().get('role', '') == existing().get('role', '') &&
@@ -141,11 +141,22 @@ service cloud.firestore {
              data.get('status', '') in ['pending', 'success', 'failed', 'approved', 'rejected'];
     }
     
+    function isWalletAssociatedWithAuthUser(walletId) {
+      return isSignedIn() && (
+        isOwner(walletId) || 
+        (exists(/databases/$(database)/documents/users/$(walletId)) && 
+         get(/databases/$(database)/documents/users/$(walletId)).data.get('email', '') == request.auth.token.email)
+      );
+    }
+    
     match /wallets/{walletId} {
       allow read: if true;
-      allow update: if isFinance() && 
+      allow update: if (isFinance() && 
                     isValidWallet(incoming()) &&
-                    incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt']);
+                    incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt'])) ||
+                    (isWalletAssociatedWithAuthUser(walletId) &&
+                    isValidWallet(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'migratedToUid', 'updatedAt']));
       allow create: if isFinance() || (isSignedIn() && isOwner(walletId) && isValidWallet(incoming()));
       allow delete: if isFinance() || isOwner(walletId) || isAdmin();
     }

@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { normalizeEmail } from '../utils/email';
+import { DatabaseResolver } from '../core/firestore/DatabaseResolver';
 
 // Get the correct Firebase Admin App instance
 export function getAdminApp(): App {
@@ -16,8 +17,7 @@ export function getAdminApp(): App {
 // Get the dedicated Firestore instance (using AI Studio database ID)
 export function getAdminDb() {
   const app = getAdminApp();
-  const isAiStudioProject = app.options.projectId === 'gen-lang-client-0546120404';
-  const databaseId = isAiStudioProject ? 'ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393' : '(default)';
+  const databaseId = DatabaseResolver.resolveDatabaseId();
   return getFirestore(app, databaseId);
 }
 

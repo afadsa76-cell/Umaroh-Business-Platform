@@ -10,7 +10,7 @@ function isValidUserProfile(data) {
 match /users/{userId} {
   allow read: if true;
   allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin() || isMitraDev();
-  allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId)) && 
+  allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId) || (isSignedIn() && existing().get('email', '') == request.auth.token.email)) && 
                 isValidUserProfile(incoming()) && (
                   isAdmin() || isOperasional() || isMitraDev() || (
                     incoming().get('role', '') == existing().get('role', '') &&

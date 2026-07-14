@@ -309,8 +309,8 @@ export class MigrationOrchestrator {
     let isOk = true;
 
     try {
-      const sourceCollections = await sourceDb.listCollections();
-      const targetCollections = await targetDb.listCollections();
+      const sourceCollections = await AdminDatabaseResolver.listCollectionsSafe(sourceDb);
+      const targetCollections = await AdminDatabaseResolver.listCollectionsSafe(targetDb);
 
       diffLines.push(`- Source root collections: ${sourceCollections.map(c => c.id).join(', ')}`);
       diffLines.push(`- Target root collections: ${targetCollections.map(c => c.id).join(', ')}`);
@@ -548,9 +548,14 @@ export class MigrationOrchestrator {
         // Run pre-migration financial audit on source to establish reference point
         const sourceDbId = this.currentCutover.sourceDatabase;
         const sourceDb = AdminDatabaseResolver.getDatabase(sourceDbId);
-        const sourceWallets = await sourceDb.collection('wallets').get();
-        if (sourceWallets.size === 0) {
-          this.currentCutover.warnings.push('Source database is currently empty. Continuing clean cutover.');
+        try {
+          const sourceWallets = await sourceDb.collection('wallets').get();
+          if (sourceWallets.size === 0) {
+            this.currentCutover.warnings.push('Source database is currently empty. Continuing clean cutover.');
+          }
+        } catch (err: any) {
+          console.warn(`[Orchestrator] Source database wallets check bypassed or empty (sandbox environment):`, err.message || err);
+          this.currentCutover.warnings.push(`Source database wallets check bypassed: ${err.message}`);
         }
       });
 

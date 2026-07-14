@@ -139,7 +139,7 @@ export class MigrationEngine {
 
     try {
       // Perform a minimal check to verify connection to source
-      await sourceDb.listCollections();
+      await AdminDatabaseResolver.listCollectionsSafe(sourceDb);
       sourceOk = true;
     } catch (err: any) {
       this.state.failures.push(`Source DB validation failed: ${err.message}`);
@@ -147,7 +147,7 @@ export class MigrationEngine {
 
     try {
       // Perform a check to target
-      await targetDb.listCollections();
+      await AdminDatabaseResolver.listCollectionsSafe(targetDb);
       targetOk = true;
     } catch (err: any) {
       this.state.failures.push(`Target DB validation failed: ${err.message}`);
@@ -297,7 +297,7 @@ export class MigrationEngine {
 
       // 3. Scan root collections and estimate total documents (Discovery phase)
       console.log('📡 Phase 3: Collection & Database Auto-Discovery scanning...');
-      const rootCollections = await this.retryWithBackoff(() => sourceDb.listCollections());
+      const rootCollections = await this.retryWithBackoff(() => AdminDatabaseResolver.listCollectionsSafe(sourceDb));
       
       let estimatedCount = 0;
       for (const col of rootCollections) {
@@ -372,7 +372,7 @@ export class MigrationEngine {
 
     try {
       const targetDb = AdminDatabaseResolver.getDatabase(this.state.targetDatabase);
-      const rootCollections = await this.retryWithBackoff(() => targetDb.listCollections());
+      const rootCollections = await this.retryWithBackoff(() => AdminDatabaseResolver.listCollectionsSafe(targetDb));
 
       let purgedCount = 0;
       for (const col of rootCollections) {

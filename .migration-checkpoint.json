@@ -1,25 +1,6 @@
 {
-  "lastProcessedAuthUserIndex": 5,
-  "migratedCollections": {
-    "users": {
-      "totalMigrated": 0,
-      "completed": true
-    },
-    "wallets": {
-      "totalMigrated": 0,
-      "completed": true
-    },
-    "transactions": {
-      "totalMigrated": 0,
-      "completed": true
-    },
-    "bookings": {
-      "totalMigrated": 0,
-      "completed": true
-    },
-    "notifications": {
-      "totalMigrated": 0,
-      "completed": true
-    }
-  }
+  "processedDocuments": 0,
+  "currentCollection": "",
+  "timestamp": "2026-07-14T09:29:43.287Z",
+  "completedCollections": []
 }

@@ -1,14 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // 0. Global Safety Net
-    match /{document=**} {
-      allow read, write: if false;
-    }
 
     // ===============================================================
-    // HELPERS (PILLAR 3: Path Variable Hardening)
+    // FROM FILE: helpers.rules
+    // ===============================================================
+    // ===============================================================
+    // HELPERS
     // ===============================================================
     function isValidId(id) { 
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
@@ -16,240 +14,447 @@ service cloud.firestore {
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     function isSignedIn() { 
-      return request.auth != null && request.auth.token.email_verified == true; 
+      return request.auth != null; 
     }
     
-    // Auth tokens NEVER contain custom claims. explicitly lookup roles on a trusted document.
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-
+    // Role lookup on a trusted document or checks master/operational emails
     function isAdmin() {
       return isSignedIn() && (
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData(request.auth.uid).role == 'admin') ||
-        (request.auth.token.email in ["operationalumaroh@gmail.com", "afadsa76@gmail.com"] && request.auth.token.email_verified == true)
+        request.auth.token.email == "afadsa76@gmail.com" ||
+        request.auth.token.email == "operationalumaroh@gmail.com" ||
+        request.auth.token.email == "admin@umaroh.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
       );
     }
-
+    
     function isOperasional() {
       return isSignedIn() && (
         isAdmin() || 
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData(request.auth.uid).role == 'operasional')
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional')
       );
     }
-
+    
     function isFinance() {
       return isSignedIn() && (
         isAdmin() || 
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         getUserData(request.auth.uid).role == 'operasional' && 
-         getUserData(request.auth.uid).subRole == 'finance')
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'operasional' && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'finance')
       );
     }
-
+    
     function isMitra() {
       return isSignedIn() && (
         isAdmin() || 
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData(request.auth.uid).role == 'mitra')
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'mitra')
       );
     }
-
+    
+    function isMitraDev() {
+      return isSignedIn() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('subRole', '') == 'mitra_dev')
+      );
+    }
+    
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
-    // ===============================================================
-    // VALIDATION BLUEPRINTS (PILLAR 2: Anti-Update-Gap)
-    // ===============================================================
     
+
+    // ===============================================================
+    // FROM FILE: users.rules
+    // ===============================================================
+    // ===============================================================
+    // USERS RULES & VALIDATION
+    // ===============================================================
     function isValidUserProfile(data) {
-      return data.uid is string && data.uid.size() <= 128 &&
-             data.name is string && data.name.size() <= 255 &&
-             data.email is string && data.email.size() <= 255 &&
-             data.role in ['operasional', 'mitra', 'jamaah', 'admin'];
+      return data.get('email', '') is string &&
+             data.get('role', '') in ['admin', 'operasional', 'mitra', 'jamaah', 'finance', 'vendor'] &&
+             (data.get('uid', '') == '' || data.get('uid', '') is string);
     }
-
-    function isValidWallet(data) {
-      return data.userId is string && data.userId.size() <= 128 &&
-             data.balance is number &&
-             data.updatedAt is timestamp;
-    }
-
-    function isValidTransaction(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.userId is string && data.userId.size() <= 128 &&
-             data.type in ['komisi', 'withdraw', 'pembayaran', 'bonus_rekrut'] &&
-             data.amount is number &&
-             data.status in ['pending', 'approved', 'rejected', 'success'] &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidPaketMaster(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.nama is string && data.nama.size() <= 255 &&
-             data.hargaDasar is number && data.hargaDasar >= 0 &&
-             data.kuota is number && data.kuota >= 0 &&
-             data.status in ['draft', 'published', 'closed'];
-    }
-
-    function isValidBooking(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.jamaahId is string && data.jamaahId.size() <= 128 &&
-             data.statusPembayaran in ['pending', 'dp', 'lunas'] &&
-             data.totalHarga is number && data.totalHarga >= 0;
-    }
-
-    function isValidPendaftaranMitra(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.namaLengkap is string && data.namaLengkap.size() <= 255 &&
-             data.email is string && data.email.size() <= 255 &&
-             data.status in ['pending_validation', 'approved', 'rejected'];
-    }
-
-    // ===============================================================
-    // COLLECTIONS
-    // ===============================================================
-
+    
     match /users/{userId} {
-      allow get: if isOwner(userId) || isOperasional();
-      allow list: if isOperasional();
-      allow create: if isSignedIn() && isOwner(userId) && isValidUserProfile(incoming()) && 
-                    incoming().role in ['mitra', 'jamaah'] &&
-                    incoming().uid == request.auth.uid;
-      allow create: if isAdmin() && isValidUserProfile(incoming());
-      allow update: if (isAdmin() || isOwner(userId)) && 
+      allow read: if true;
+      allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin() || isMitraDev();
+      allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId) || (isSignedIn() && existing().get('email', '') == request.auth.token.email)) && 
                     isValidUserProfile(incoming()) && (
-                      isAdmin() ||
-                      incoming().diff(existing()).affectedKeys().hasOnly(['name', 'subRole', 'uplineId', 'createdAt'])
+                      isAdmin() || isOperasional() || isMitraDev() || (
+                        incoming().get('role', '') == existing().get('role', '') &&
+                        incoming().get('email', '') == existing().get('email', '') &&
+                        incoming().get('uid', '') == existing().get('uid', '')
+                      )
                     );
+      allow delete: if isAdmin() || isOperasional() || (isSignedIn() && (resource != null && resource.data != null && (resource.data.get('email', '') == request.auth.token.email)));
     }
+    
 
+    // ===============================================================
+    // FROM FILE: pre_users.rules
+    // ===============================================================
+    // ===============================================================
+    // PRE_USERS RULES & VALIDATION
+    // ===============================================================
+    function isValidPreUser(data) {
+      return data.get('email', '') is string &&
+             data.get('role', '') in ['admin', 'operasional', 'mitra', 'jamaah', 'finance', 'vendor'];
+    }
+    
+    match /pre_users/{docId} {
+      allow read: if isOperasional() || isAdmin() || 
+                   (isSignedIn() && (
+                     (resource != null && resource.data != null && resource.data.get('email', '') == request.auth.token.email) ||
+                     (request.auth.token.email == "afadsa76@gmail.com" || request.auth.token.email == "operationalumaroh@gmail.com")
+                   ));
+                   
+      allow create: if isOperasional() || isAdmin() || 
+                    (isSignedIn() && isValidPreUser(incoming()));
+                    
+      allow update: if isOperasional() || isAdmin() || 
+                    (isSignedIn() && (
+                      (resource != null && resource.data != null && resource.data.get('email', '') == request.auth.token.email) ||
+                      (request.auth.token.email == "afadsa76@gmail.com" || request.auth.token.email == "operationalumaroh@gmail.com")
+                    ));
+                    
+      allow delete: if isOperasional() || isAdmin();
+    }
+    
+
+    // ===============================================================
+    // FROM FILE: wallet.rules
+    // ===============================================================
+    // ===============================================================
+    // WALLET RULES & VALIDATION
+    // ===============================================================
+    function isValidWallet(data) {
+      return data.get('balance', 0) is number &&
+             data.get('updatedAt', null) != null;
+    }
+    
+    function isValidTransaction(data) {
+      return data.get('userId', '') is string &&
+             data.get('amount', 0) is number &&
+             data.get('status', '') in ['pending', 'success', 'failed', 'approved', 'rejected'];
+    }
+    
+    function isWalletAssociatedWithAuthUser(walletId) {
+      return isSignedIn() && (
+        isOwner(walletId) || 
+        (exists(/databases/$(database)/documents/users/$(walletId)) && 
+         get(/databases/$(database)/documents/users/$(walletId)).data.get('email', '') == request.auth.token.email)
+      );
+    }
+    
     match /wallets/{walletId} {
-      allow get: if isOwner(walletId) || isFinance();
-      allow list: if isFinance();
-      allow update: if isFinance() && 
+      allow read: if true;
+      allow update: if (isFinance() && 
                     isValidWallet(incoming()) &&
-                    incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt']);
+                    incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt'])) ||
+                    (isWalletAssociatedWithAuthUser(walletId) &&
+                    isValidWallet(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'migratedToUid', 'updatedAt']));
+      allow create: if isFinance() || (isSignedIn() && isOwner(walletId) && isValidWallet(incoming()));
+      allow delete: if isFinance() || isOwner(walletId) || isAdmin();
     }
-
+    
     match /transactions/{transactionId} {
-      allow get: if isOwner(resource.data.userId) || isFinance();
-      allow list: if isFinance() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if true;
       allow create: if isSignedIn() && 
-                    incoming().userId == request.auth.uid && 
-                    incoming().type == 'withdraw' && 
-                    incoming().status == 'pending' &&
+                    incoming().get('userId', '') == request.auth.uid && 
                     isValidTransaction(incoming());
-      allow write: if isFinance() && isValidTransaction(incoming());
+      allow write: if (isFinance() || isAdmin()) && isValidTransaction(incoming());
     }
+    
 
-    match /paket_master/{paketId} {
-      allow read: if isSignedIn();
-      allow create: if isOperasional() && isValidId(paketId) && isValidPaketMaster(incoming());
-      allow update: if isOperasional() && isValidId(paketId) && isValidPaketMaster(incoming());
-      allow delete: if isAdmin();
+    // ===============================================================
+    // FROM FILE: booking.rules
+    // ===============================================================
+    // ===============================================================
+    // BOOKING RULES & VALIDATION
+    // ===============================================================
+    function isValidBooking(data) {
+      return data.get('status', '') in ['pending', 'confirmed', 'cancelled', 'completed', 'active'] &&
+             data.get('paketId', '') is string;
     }
-
-    match /paket_mitra/{paketId} {
-      allow read: if isSignedIn();
-      allow create: if isMitra() && incoming().mitraId == request.auth.uid && isValidId(paketId);
-      allow update: if (isMitra() && existing().mitraId == request.auth.uid) || isOperasional();
-      allow delete: if (isMitra() && existing().mitraId == request.auth.uid) || isOperasional();
-    }
-
+    
     match /bookings/{bookingId} {
-      allow get: if isSignedIn() && (
-                    resource.data.jamaahId == request.auth.uid || 
-                    resource.data.mitraId == request.auth.uid || 
-                    isOperasional()
-                  );
-      allow list: if isSignedIn() && (
-                    resource.data.jamaahId == request.auth.uid || 
-                    resource.data.mitraId == request.auth.uid || 
-                    isOperasional()
-                  );
+      allow read: if true;
       allow create: if isSignedIn() && 
-                    (incoming().jamaahId == request.auth.uid || (isMitra() && incoming().mitraId == request.auth.uid)) &&
+                    ((incoming().get('jamaahId', '') == request.auth.uid) || 
+                     (incoming().get('mitraId', '') == request.auth.uid) || 
+                     isOperasional() || isAdmin()) &&
                     isValidBooking(incoming());
-      allow update: if isOperasional() || 
-                    (isOwner(existing().jamaahId) && 
-                     incoming().diff(existing()).affectedKeys().hasOnly(['statusPembayaran']) &&
-                     isValidBooking(incoming()));
+      allow update: if isOperasional() || isAdmin() || 
+                    (isSignedIn() && (
+                      (existing().get('jamaahId', '') == request.auth.uid) || 
+                      (existing().get('mitraId', '') == request.auth.uid)
+                    ) && isValidBooking(incoming()));
+      allow delete: if isOperasional() || isAdmin() || 
+                    (isSignedIn() && (
+                      (existing().get('jamaahId', '') == request.auth.uid) || 
+                      (existing().get('mitraId', '') == request.auth.uid)
+                    ));
     }
+    
 
-    match /maskapai/{maskapaiId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(maskapaiId);
-    }
-
-    match /vendor_services/{serviceId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(serviceId);
-    }
-
-    match /master_hotels/{hotelId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(hotelId);
-    }
-
-    match /master_layanan/{layananId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(layananId);
-    }
-
-    match /master_merchandise/{merchId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(merchId);
-    }
-
-    match /master_bandara/{bandaraId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(bandaraId);
-    }
-
-    match /master_paket_wisata/{paketWisataId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(paketWisataId);
-    }
-
-    match /hotel_metadata/{mediaId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(mediaId);
-    }
-
-    match /paket_kemitraan/{paketId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(paketId);
-    }
-
-    match /pendaftaran_mitra/{pendaftaranId} {
-      allow get: if isOperasional() || (isSignedIn() && resource.data.email == request.auth.token.email);
-      allow list: if isOperasional();
-      allow create: if isValidPendaftaranMitra(incoming()); 
-      allow update: if isOperasional() && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
-                    isValidPendaftaranMitra(incoming());
-      allow delete: if isAdmin();
-    }
-
+    // ===============================================================
+    // FROM FILE: tracker.rules
+    // ===============================================================
+    // ===============================================================
+    // TRACKER RULES & VALIDATION
+    // ===============================================================
     match /tracker_paket/{paketId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(paketId);
     }
-
+    
     match /tracker_jamaah/{jamaahId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() && isValidId(jamaahId);
+      allow read: if true;
+      allow write: if isOperasional() || (isSignedIn() && (
+                    incoming().get('mitraId', '') == request.auth.uid || 
+                    incoming().get('jamaahId', '') == request.auth.uid ||
+                    incoming().get('bookingId', '') == request.auth.uid ||
+                    (resource != null && resource.data != null && (
+                      resource.data.get('mitraId', '') == request.auth.uid || 
+                      resource.data.get('jamaahId', '') == request.auth.uid ||
+                      resource.data.get('bookingId', '') == request.auth.uid
+                    ))
+                  ));
     }
-
+    
     match /tracker_keberangkatan/{keberangkatanId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isOperasional() && isValidId(keberangkatanId);
     }
-
+    
     match /tracking_group/{groupId} {
-      allow read: if isSignedIn();
-      allow write: if isOperasional() || (isMitra() && incoming().leader_id == request.auth.uid);
+      allow read: if true;
+      allow write: if isOperasional() || (isSignedIn() && incoming().get('leader_id', '') == request.auth.uid) || isValidId(groupId);
     }
+    
+    match /mitra_tracker/{trackerId} {
+      allow read: if true;
+      allow write: if (isFinance() || isOperasional()) && isValidId(trackerId);
+    }
+    
+    match /mitra_followup/{followupId} {
+      allow read: if true;
+      allow write: if (isFinance() || isOperasional()) && isValidId(followupId);
+    }
+    
+    match /mitra_payment_history/{payId} {
+      allow read: if true;
+      allow write: if (isFinance() || isOperasional()) && isValidId(payId);
+    }
+    
+    match /tracker_bagasi/{baggageId} {
+      allow read: if true;
+      allow write: if isValidId(baggageId);
+    }
+    
+
+    // ===============================================================
+    // FROM FILE: master.rules
+    // ===============================================================
+    // ===============================================================
+    // MASTER DATA RULES & VALIDATION
+    // ===============================================================
+    function isValidPaketMaster(data) {
+      return (data.get('harga', 0) is number || data.get('price', 0) is number) &&
+             data.get('maskapai', '') is string &&
+             data.get('hotel', '') is string;
+    }
+    
+    function isValidPendaftaranMitra(data) {
+      return data.get('email', '') is string &&
+             data.get('name', '') is string;
+    }
+    
+    function isValidBlueprintNode(data) {
+      return data.get('name', '') is string;
+    }
+    
+    function isValidShopOrder(data) {
+      return data.get('status', '') is string;
+    }
+    
+    match /paket_master/{paketId} {
+      allow read: if true;
+      allow create: if (isOperasional() || isMitra()) && isValidId(paketId) && isValidPaketMaster(incoming());
+      allow update: if isValidId(paketId) && (
+        isAdmin() || 
+        (isValidPaketMaster(incoming()) && (
+          isOperasional() || 
+          (isMitra() && existing().get('mitraId', '') == request.auth.uid && (
+            (incoming().get('status', '') == 'published' ? (existing().get('validationStatus', 'pending') == 'approved') : true)
+          ))
+        ))
+      );
+      allow delete: if isAdmin() || (isMitra() && existing().get('mitraId', '') == request.auth.uid);
+    }
+    
+    match /paket_mitra/{paketId} {
+      allow read: if true;
+      allow create: if isMitra() && incoming().get('mitraId', '') == request.auth.uid && isValidId(paketId);
+      allow update: if (isMitra() && existing().get('mitraId', '') == request.auth.uid) || isOperasional();
+      allow delete: if (isMitra() && existing().get('mitraId', '') == request.auth.uid) || isOperasional();
+    }
+    
+    match /maskapai/{maskapaiId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(maskapaiId);
+    }
+    
+    match /vendor_services/{serviceId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(serviceId);
+    }
+    
+    match /master_hotels/{hotelId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(hotelId);
+    }
+    
+    match /master_layanan/{layananId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(layananId);
+    }
+    
+    match /layanan/{layananId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(layananId);
+    }
+    
+    match /master_merchandise/{merchId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(merchId);
+    }
+    
+    match /master_bandara/{bandaraId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(bandaraId);
+    }
+    
+    match /master_paket_wisata/{paketWisataId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(paketWisataId);
+    }
+    
+    match /hotel_metadata/{mediaId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(mediaId);
+    }
+    
+    match /paket_kemitraan/{paketId} {
+      allow read: if true;
+      allow write: if isOperasional() && isValidId(paketId);
+    }
+    
+    match /pendaftaran_mitra/{pendaftaranId} {
+      allow read: if true;
+      allow create: if isValidPendaftaranMitra(incoming()); 
+      allow update: if isOperasional() || isAdmin() || isMitraDev() || isFinance();
+      allow delete: if isAdmin() || isMitraDev();
+    }
+    
+    match /perlengkapan_master/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /perlengkapan_packing/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /perlengkapan_pengiriman/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /perlengkapan_penerimaan/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /perlengkapan_komplain/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /package_cost_components/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /package_cost_audit_logs/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /ad_network_config/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /ad_campaigns/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /ad_performance_logs/{id} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(id);
+    }
+    
+    match /shop_orders/{orderId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (incoming().get('jamaahId', '') == request.auth.uid || incoming().get('mitraId', '') == request.auth.uid) && isValidShopOrder(incoming());
+      allow update: if isOperasional() || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    match /system_blueprint_nodes/{nodeId} {
+      allow read: if true;
+      allow write: if isValidId(nodeId) && isValidBlueprintNode(incoming());
+    }
+    
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if (settingId == 'kurs' && request.resource.data.sarToIdr is number && request.resource.data.usdToIdr is number) ||
+                    (settingId == 'accurate_config' && isSignedIn());
+    }
+    
+    match /umaroh_master_data/{key} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+
+    // ===============================================================
+    // FROM FILE: notification.rules
+    // ===============================================================
+    // ===============================================================
+    // NOTIFICATIONS RULES & VALIDATION
+    // ===============================================================
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(notificationId);
+    }
+    
+
+    // ===============================================================
+    // FROM FILE: storage.rules
+    // ===============================================================
+    // ===============================================================
+    // STORAGE RULES
+    // ===============================================================
+    // Storage configurations and bucket access validations
+    // Left empty or as placeholder for modular parity
+    
   }
 }

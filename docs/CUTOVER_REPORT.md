@@ -1,22 +1,22 @@
 
 # PORTAL UMAROH ENTERPRISE — ZERO-DOWNTIME CUTOVER & INTEGRITY REPORT
 **Status**: ROLLBACK
-**Completed At**: 2026-07-13T17:36:24.267Z
-**Trace ID**: `tr_1783964106467`
-**Correlation ID**: `corr_1783964106467_m58uewcc0`
+**Completed At**: 2026-07-14T08:50:09.516Z
+**Trace ID**: `tr_1784018965502`
+**Correlation ID**: `corr_1784018965502_1c9dkmepy`
 
 ---
 
 ## Technical Performance & Operational Metrics
-- **Total Duration**: 1.14 seconds
+- **Total Duration**: 36.91 seconds
 - **Database Switched**: NO (ROLLED BACK)
 - **Active Database ID**: `ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393`
 - **Total Processed Docs**: 0
 - **Estimated Docs**: 0
 - **Avg Write Speed**: 0 docs/sec
-- **Memory Consumption**: 31 MB
+- **Memory Consumption**: 32.66 MB
 - **Rollback Processed**: YES (AUTOMATED)
-- **Rollback Cause**: `7 PERMISSION_DENIED: Missing or insufficient permissions.`
+- **Rollback Cause**: `Financial balance integrity verified: balance imbalances and double-entry mismatches detected.`
 
 ## Phase 1: Pre-Migration System Check
 - Source Database Reachable: YES

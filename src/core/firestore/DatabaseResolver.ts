@@ -31,6 +31,9 @@ export class DatabaseResolver {
     const mode: DatabaseMode = (env.DATABASE_MODE as DatabaseMode) || 'development';
     console.log(`[DatabaseResolver] Current DATABASE_MODE resolved: ${mode}`);
 
+    // Default to the config file's database ID if nothing else is specified or if we are in development/default
+    const configDbId = firebaseConfig.firestoreDatabaseId || '';
+
     switch (mode) {
       case 'production':
         // The target production enterprise database
@@ -41,8 +44,8 @@ export class DatabaseResolver {
 
       case 'development':
       default:
-        // The source development database
-        return 'ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393';
+        // Fallback to the config database ID, or the active source development database
+        return configDbId || 'ai-studio-umarohbusinesspl-69cde675-c52d-43da-bfaa-45caeabd2393';
     }
   }
 

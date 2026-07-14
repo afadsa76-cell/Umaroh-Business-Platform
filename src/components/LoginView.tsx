@@ -129,7 +129,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
   const handleManualAction = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = normalizeEmail(email);
-    if (!cleanEmail || !password) {
+    const enteredPassword = password;
+    if (!cleanEmail || !enteredPassword) {
       setError('Email dan Password wajib diisi');
       return;
     }
@@ -280,6 +281,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
               await runTransaction(db, async (transaction) => {
                 const targetUserRef = doc(db, 'users', user.uid);
                 const sourceUserRef = doc(db, 'users', oldUserDoc.id);
+                const oldWalletRef = doc(db, 'wallets', oldUserDoc.id);
+                
+                // Perform all reads first to satisfy Firestore transaction order
+                const oldWalletSnap = await transaction.get(oldWalletRef);
                 
                 // Set the users/{uid} doc
                 transaction.set(targetUserRef, userDataObj);
@@ -292,8 +297,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                 });
                 
                 // Keep wallet compatibility
-                const oldWalletRef = doc(db, 'wallets', oldUserDoc.id);
-                const oldWalletSnap = await transaction.get(oldWalletRef);
                 if (oldWalletSnap.exists()) {
                   const targetWalletRef = doc(db, 'wallets', user.uid);
                   transaction.set(targetWalletRef, {
@@ -427,7 +430,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       if (!isExpectedAuthError) {
         console.error(err);
       } else {
-        console.warn("Expected Auth validation handled gracefully:", errCode || errMsg);
+        if (errCode === 'auth/invalid-credential' || errMsg.includes('invalid-credential')) {
+          console.warn("Warning\n Expected Auth validation handled gracefully:\n  auth/invalid-credential");
+        } else {
+          console.warn("Expected Auth validation handled gracefully:", errCode || errMsg);
+        }
       }
       const isTargetEmail = email ? (normalizeEmail(email) === 'afadsa76@gmail.com') : false;
 
@@ -439,9 +446,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                                       errMsg.includes('user-not-found');
 
       if (isInvalidCredOrNotFound) {
-        setError(isTargetEmail 
-          ? 'Credential tidak valid. Karena email ini terdaftar lewat Google, Anda HARUS klik "Lupa Password" di bawah untuk mengatur password "D@rkman31" pertama kali agar bisa login manual.'
-          : 'Email atau Password salah. Jika Anda biasanya login dengan Google, silakan klik "Lupa Password" di bawah untuk mengatur password pertama kali.');
+        let isMismatchedPassword = false;
+        try {
+          const qU = query(collection(db, 'users'), where('email', '==', cleanEmail));
+          const snapU = await getDocs(qU);
+          if (!snapU.empty) {
+            const uData = snapU.docs[0].data();
+            if (uData.passwordAwal && enteredPassword === uData.passwordAwal) {
+              isMismatchedPassword = true;
+            }
+          }
+        } catch (checkErr) {
+          console.error("Non-blocking check of passwordAwal failed:", checkErr);
+        }
+
+        if (isMismatchedPassword) {
+          setError(`Password "${enteredPassword}" cocok dengan data pendaftaran awal Anda di database, namun akun Firebase Authentication Anda memiliki password berbeda. Silakan klik "Lupa Password / Set Password" di bawah untuk menyinkronkan password Anda.`);
+        } else {
+          setError(isTargetEmail 
+            ? 'Credential tidak valid. Karena email ini terdaftar lewat Google, Anda HARUS klik "Lupa Password" di bawah untuk mengatur password "D@rkman31" pertama kali agar bisa login manual.'
+            : 'Email atau Password salah. Jika Anda biasanya login dengan Google, silakan klik "Lupa Password" di bawah untuk mengatur password pertama kali.');
+        }
       } else if (errCode === 'auth/email-already-in-use' || errMsg.includes('email-already-in-use')) {
         setError('Email ini sudah terdaftar. Silakan login menggunakan email ini. Jika Anda mendaftar melalui Google atau lupa password, silakan klik "Lupa Password" di bawah untuk mengatur ulang password Anda.');
       } else if (errCode === 'auth/operation-not-allowed' || errMsg.includes('operation-not-allowed')) {
@@ -591,6 +616,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
               await runTransaction(db, async (transaction) => {
                 const targetUserRef = doc(db, 'users', user.uid);
                 const sourceUserRef = doc(db, 'users', oldUserDoc.id);
+                const oldWalletRef = doc(db, 'wallets', oldUserDoc.id);
+                
+                // Perform all reads first to satisfy Firestore transaction order
+                const oldWalletSnap = await transaction.get(oldWalletRef);
                 
                 // Set the users/{uid} doc
                 transaction.set(targetUserRef, userDataObj);
@@ -603,8 +632,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
                 });
                 
                 // Keep wallet compatibility
-                const oldWalletRef = doc(db, 'wallets', oldUserDoc.id);
-                const oldWalletSnap = await transaction.get(oldWalletRef);
                 if (oldWalletSnap.exists()) {
                   const targetWalletRef = doc(db, 'wallets', user.uid);
                   transaction.set(targetWalletRef, {
@@ -735,7 +762,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       if (!isExpectedAuthError) {
         console.error(err);
       } else {
-        console.warn("Expected Web Google Auth validation/popup behavior handled gracefully:", errCode || errMsg);
+        if (errCode === 'auth/invalid-credential' || errMsg.includes('invalid-credential')) {
+          console.warn("Warning\n Expected Auth validation handled gracefully:\n  auth/invalid-credential");
+        } else {
+          console.warn("Expected Web Google Auth validation/popup behavior handled gracefully:", errCode || errMsg);
+        }
       }
 
       if (errCode === 'auth/invalid-credential' || errMsg.includes('invalid-credential')) {

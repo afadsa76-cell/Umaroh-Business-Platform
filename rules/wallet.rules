@@ -12,11 +12,22 @@ function isValidTransaction(data) {
          data.get('status', '') in ['pending', 'success', 'failed', 'approved', 'rejected'];
 }
 
+function isWalletAssociatedWithAuthUser(walletId) {
+  return isSignedIn() && (
+    isOwner(walletId) || 
+    (exists(/databases/$(database)/documents/users/$(walletId)) && 
+     get(/databases/$(database)/documents/users/$(walletId)).data.get('email', '') == request.auth.token.email)
+  );
+}
+
 match /wallets/{walletId} {
   allow read: if true;
-  allow update: if isFinance() && 
+  allow update: if (isFinance() && 
                 isValidWallet(incoming()) &&
-                incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt']);
+                incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt'])) ||
+                (isWalletAssociatedWithAuthUser(walletId) &&
+                isValidWallet(incoming()) &&
+                incoming().diff(existing()).affectedKeys().hasOnly(['status', 'migratedToUid', 'updatedAt']));
   allow create: if isFinance() || (isSignedIn() && isOwner(walletId) && isValidWallet(incoming()));
   allow delete: if isFinance() || isOwner(walletId) || isAdmin();
 }

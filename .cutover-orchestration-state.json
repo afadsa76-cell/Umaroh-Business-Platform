@@ -1,18 +1,20 @@
 {
   "state": "ROLLBACK",
-  "correlationId": "corr_1783964106467_m58uewcc0",
-  "traceId": "tr_1783964106467",
-  "startTime": 1783964106467,
-  "endTime": 1783964107606,
-  "durationMs": 1139,
+  "correlationId": "corr_1784018965502_1c9dkmepy",
+  "traceId": "tr_1784018965502",
+  "startTime": 1784018965502,
+  "endTime": 1784019002407,
+  "durationMs": 36905,
   "sourceDatabase": "ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393",
   "targetDatabase": "ai-studio-umarohbusinesspl-69cde675-c52d-43da-bfaa-45caeabd2393",
   "progressPercent": 0,
   "totalDocsProcessed": 0,
   "totalDocsEstimated": 0,
-  "warnings": [],
+  "warnings": [
+    "Source database wallets check bypassed: 7 PERMISSION_DENIED: Missing or insufficient permissions."
+  ],
   "failures": [
-    "[BACKUP_VALIDATION] 7 PERMISSION_DENIED: Missing or insufficient permissions."
+    "[VERIFY_FINANCIALS] Financial balance integrity verified: balance imbalances and double-entry mismatches detected."
   ],
   "perf": {
     "avgReadSpeedDocsSec": 0,
@@ -20,12 +22,12 @@
     "batchDurationMs": 0,
     "retryCount": 0,
     "throttleCount": 0,
-    "memoryUsageMb": 31,
-    "cpuUsagePercent": 3.3,
+    "memoryUsageMb": 32.66,
+    "cpuUsagePercent": 4.4,
     "gcPausesMs": 0,
     "firestoreLatencyMs": 0,
     "etaSeconds": -1
   },
   "rollbackExecuted": true,
-  "rollbackReason": "7 PERMISSION_DENIED: Missing or insufficient permissions."
+  "rollbackReason": "Financial balance integrity verified: balance imbalances and double-entry mismatches detected."
 }
