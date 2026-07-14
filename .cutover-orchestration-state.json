@@ -1,0 +1,31 @@
+{
+  "state": "ROLLBACK",
+  "correlationId": "corr_1783964106467_m58uewcc0",
+  "traceId": "tr_1783964106467",
+  "startTime": 1783964106467,
+  "endTime": 1783964107606,
+  "durationMs": 1139,
+  "sourceDatabase": "ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393",
+  "targetDatabase": "ai-studio-umarohbusinesspl-69cde675-c52d-43da-bfaa-45caeabd2393",
+  "progressPercent": 0,
+  "totalDocsProcessed": 0,
+  "totalDocsEstimated": 0,
+  "warnings": [],
+  "failures": [
+    "[BACKUP_VALIDATION] 7 PERMISSION_DENIED: Missing or insufficient permissions."
+  ],
+  "perf": {
+    "avgReadSpeedDocsSec": 0,
+    "avgWriteSpeedDocsSec": 0,
+    "batchDurationMs": 0,
+    "retryCount": 0,
+    "throttleCount": 0,
+    "memoryUsageMb": 31,
+    "cpuUsagePercent": 3.3,
+    "gcPausesMs": 0,
+    "firestoreLatencyMs": 0,
+    "etaSeconds": -1
+  },
+  "rollbackExecuted": true,
+  "rollbackReason": "7 PERMISSION_DENIED: Missing or insufficient permissions."
+}

@@ -18,14 +18,16 @@ import { HotelMediaView } from './database/HotelMediaView';
 import { SupabaseBridgeView } from './database/SupabaseBridgeView';
 import { GoogleDriveSyncView } from './database/GoogleDriveSyncView';
 import { MasterKursView } from './MasterKursView';
-import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon, Layers, CloudUpload, Coins } from 'lucide-react';
+import { MigrationStatusView } from './database/MigrationStatusView';
+import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Package, Handshake, MapPin, Image as ImageIcon, Layers, CloudUpload, Coins, Shield } from 'lucide-react';
 
-type DatabaseTab = 'paketMaster' | 'kemitraan' | 'googleDriveSync' | 'masterKurs' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'manasik' | 'ziarah' | 'mutawif' | 'handlingDomestik' | 'keretaCepat' | 'supabaseBridge';
+type DatabaseTab = 'migrationControl' | 'paketMaster' | 'kemitraan' | 'googleDriveSync' | 'masterKurs' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'manasik' | 'ziarah' | 'mutawif' | 'handlingDomestik' | 'keretaCepat' | 'supabaseBridge';
 
 export const DatabaseView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<DatabaseTab>('googleDriveSync');
+  const [activeTab, setActiveTab] = useState<DatabaseTab>('migrationControl');
 
   const tabs: { id: DatabaseTab; label: string; icon: React.ElementType }[] = [
+    { id: 'migrationControl', label: 'Prod Migration Control', icon: Shield },
     { id: 'googleDriveSync', label: 'Google Drive Auto-Backup', icon: CloudUpload },
     { id: 'supabaseBridge', label: 'Migration Bridge (Supabase)', icon: Layers },
     { id: 'masterKurs', label: 'Master Kurs', icon: Coins },
@@ -50,6 +52,7 @@ export const DatabaseView: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'migrationControl': return <MigrationStatusView />;
       case 'googleDriveSync': return <GoogleDriveSyncView />;
       case 'supabaseBridge': return <SupabaseBridgeView />;
       case 'masterKurs': return <MasterKursView />;

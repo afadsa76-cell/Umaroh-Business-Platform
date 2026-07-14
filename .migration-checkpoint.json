@@ -1,0 +1,25 @@
+{
+  "lastProcessedAuthUserIndex": 5,
+  "migratedCollections": {
+    "users": {
+      "totalMigrated": 0,
+      "completed": true
+    },
+    "wallets": {
+      "totalMigrated": 0,
+      "completed": true
+    },
+    "transactions": {
+      "totalMigrated": 0,
+      "completed": true
+    },
+    "bookings": {
+      "totalMigrated": 0,
+      "completed": true
+    },
+    "notifications": {
+      "totalMigrated": 0,
+      "completed": true
+    }
+  }
+}

@@ -1,8 +1,11 @@
 import express from 'express';
 import path from 'path';
 import os from 'os';
+import * as fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
+import { MigrationEngine } from './src/services/MigrationEngine';
+import { MigrationOrchestrator } from './src/migration/MigrationOrchestrator';
 import {
   apiRegisterControlledUser,
   apiCreateUserProfile,
@@ -830,6 +833,104 @@ async function startServer() {
   app.post('/api/v1/auth/update-user-status', authenticateMiddleware, requireAdmin(), updateUserStatusHandler);
   app.post('/api/v1/auth/audit-create-user', authenticateMiddleware, requireAdmin(), auditCreateUserHandler);
   app.post('/api/v1/auth/send-welcome-notification', authenticateMiddleware, requireAdmin(), sendWelcomeNotificationHandler);
+
+  // Enterprise Zero Downtime Multi-Database Migration Endpoints
+  app.get('/api/v1/migration/status', (req, res) => {
+    const engine = MigrationEngine.getInstance();
+    res.json({ success: true, state: engine.getState() });
+  });
+
+  app.post('/api/v1/migration/start', (req, res) => {
+    const dryRun = req.body.dryRun === true;
+    const engine = MigrationEngine.getInstance();
+    const state = engine.getState();
+    if (state.status === 'running') {
+      return res.status(400).json({ success: false, error: 'Migration is already in progress.' });
+    }
+    engine.executeMigration(dryRun).catch(err => {
+      console.error('[API Migration] Background migration failed:', err);
+    });
+    res.json({ success: true, message: `Migration started in background (Dry Run: ${dryRun})` });
+  });
+
+  app.get('/api/v1/migration/report', (req, res) => {
+    const reportPath = './docs/MIGRATION_REPORT.md';
+    if (fs.existsSync(reportPath)) {
+      const content = fs.readFileSync(reportPath, 'utf8');
+      res.json({ success: true, report: content });
+    } else {
+      res.json({ success: true, report: '# No migration report generated yet.' });
+    }
+  });
+
+  app.get('/api/v1/migration/checkpoint', (req, res) => {
+    const checkpointPath = './.migration-checkpoint.json';
+    if (fs.existsSync(checkpointPath)) {
+      try {
+        const raw = fs.readFileSync(checkpointPath, 'utf8');
+        res.json({ success: true, checkpoint: JSON.parse(raw) });
+      } catch (err: unknown) {
+        const error = err as Error;
+        res.status(500).json({ success: false, error: `Failed to read checkpoint: ${error.message}` });
+      }
+    } else {
+      res.json({ success: true, checkpoint: null, message: 'No active checkpoints found.' });
+    }
+  });
+
+  app.post('/api/v1/migration/rollback', async (req, res) => {
+    const engine = MigrationEngine.getInstance();
+    const state = engine.getState();
+    if (state.status === 'running') {
+      return res.status(400).json({ success: false, error: 'Cannot trigger rollback while migration is running.' });
+    }
+    const ok = await engine.executeRollback();
+    if (ok) {
+      res.json({ success: true, message: 'Rollback purge operation completed successfully.' });
+    } else {
+      res.status(500).json({ success: false, error: 'Rollback operation failed. Inspect logs for details.' });
+    }
+  });
+
+  // Enterprise Zero Downtime Production Cutover Endpoints (Sprint 11)
+  app.get('/api/v1/cutover/status', (req, res) => {
+    const orchestrator = MigrationOrchestrator.getInstance();
+    const status = orchestrator.getStatus();
+    res.json({
+      success: true,
+      state: status.state,
+      progress: status.progressPercent,
+      eta: status.perf.etaSeconds,
+      speed: status.perf.avgWriteSpeedDocsSec,
+      collections: status.totalDocsProcessed > 0 ? ['users', 'wallets', 'transactions', 'bookings'] : [],
+      documents: status.totalDocsProcessed,
+      retries: status.perf.retryCount,
+      warnings: status.warnings,
+      errors: status.failures,
+      currentDatabase: process.env.ACTIVE_DATABASE || status.sourceDatabase,
+      targetDatabase: status.targetDatabase,
+      checkpoint: status.checkpointState || 'ACTIVE_CHECKPOINT_OK'
+    });
+  });
+
+  app.post('/api/v1/cutover/start', (req, res) => {
+    const dryRun = req.body.dryRun === true;
+    const orchestrator = MigrationOrchestrator.getInstance();
+    const status = orchestrator.getStatus();
+    if (status.state !== 'IDLE' && status.state !== 'SUCCESS' && status.state !== 'ROLLBACK') {
+      return res.status(400).json({ success: false, error: 'Cutover is already in progress or executing rollback.' });
+    }
+    
+    // Run in background to prevent API gateway timeouts
+    orchestrator.executeCutoverOrchestration(dryRun).catch(err => {
+      console.error('[Cutover API] Background cutover error:', err);
+    });
+
+    res.json({
+      success: true,
+      message: `Production cutover sequence initiated in background (Dry Run: ${dryRun})`
+    });
+  });
 
   // Backward Compatible API Routes (legacy aliases for frontend consistency)
   app.post('/api/auth/register-controlled-user', registerRateLimiter, registerControlledUserHandler);

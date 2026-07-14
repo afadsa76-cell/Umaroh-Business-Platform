@@ -33,6 +33,7 @@ import {
 } from 'firebase/firestore';
 import { runtime } from './core/firestore/FirestoreRuntime';
 import { FirestoreListenerRegistry } from './core/firestore/FirestoreListenerRegistry';
+import { FeatureFlagsManager } from './core/firestore/FeatureFlagsManager';
 
 // Centralized DB and Auth instances using Firestore Runtime Singleton
 export const db = runtime.db;
@@ -267,6 +268,11 @@ export async function getDocs(ref: any): Promise<any> {
 }
 
 export async function setDoc(reference: any, ...args: any[]): Promise<any> {
+  const collName = reference && reference.path ? reference.path.split('/')[0] : 'unknown';
+  const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed(collName);
+  if (!lockCheck.allowed) {
+    throw new Error(`LockError: ${lockCheck.reason}`);
+  }
   try {
     FirestoreQueryCache.getInstance().writes++;
     const res = await (origSetDoc as any)(reference, ...args);
@@ -280,6 +286,11 @@ export async function setDoc(reference: any, ...args: any[]): Promise<any> {
 }
 
 export async function updateDoc(reference: any, ...args: any[]): Promise<any> {
+  const collName = reference && reference.path ? reference.path.split('/')[0] : 'unknown';
+  const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed(collName);
+  if (!lockCheck.allowed) {
+    throw new Error(`LockError: ${lockCheck.reason}`);
+  }
   try {
     FirestoreQueryCache.getInstance().writes++;
     const res = await (origUpdateDoc as any)(reference, ...args);
@@ -293,6 +304,11 @@ export async function updateDoc(reference: any, ...args: any[]): Promise<any> {
 }
 
 export async function deleteDoc(reference: any, ...args: any[]): Promise<any> {
+  const collName = reference && reference.path ? reference.path.split('/')[0] : 'unknown';
+  const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed(collName);
+  if (!lockCheck.allowed) {
+    throw new Error(`LockError: ${lockCheck.reason}`);
+  }
   try {
     FirestoreQueryCache.getInstance().deletes++;
     const res = await (origDeleteDoc as any)(reference, ...args);
@@ -306,6 +322,11 @@ export async function deleteDoc(reference: any, ...args: any[]): Promise<any> {
 }
 
 export async function addDoc(reference: any, ...args: any[]): Promise<any> {
+  const collName = reference && reference.path ? reference.path.split('/')[0] : 'unknown';
+  const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed(collName);
+  if (!lockCheck.allowed) {
+    throw new Error(`LockError: ${lockCheck.reason}`);
+  }
   try {
     FirestoreQueryCache.getInstance().writes++;
     const res = await (origAddDoc as any)(reference, ...args);
@@ -319,6 +340,10 @@ export async function addDoc(reference: any, ...args: any[]): Promise<any> {
 }
 
 export async function runTransaction(firestore: any, updateFunction: any, ...args: any[]): Promise<any> {
+  const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed('transaction');
+  if (!lockCheck.allowed) {
+    throw new Error(`LockError: ${lockCheck.reason}`);
+  }
   try {
     const res = await (origRunTransaction as any)(firestore, updateFunction, ...args);
     // Since transaction can write to any document, clear the entire query cache to be absolutely consistent.
@@ -334,14 +359,29 @@ export function writeBatch(firestoreInstance: any): any {
   const affectedPaths: string[] = [];
   return {
     set: (docRef: any, data: any, ...options: any[]) => {
+      const collName = docRef && docRef.path ? docRef.path.split('/')[0] : 'unknown';
+      const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed(collName);
+      if (!lockCheck.allowed) {
+        throw new Error(`LockError: ${lockCheck.reason}`);
+      }
       if (docRef && docRef.path) affectedPaths.push(docRef.path);
       (origBatch as any).set(docRef, data, ...options);
     },
     update: (docRef: any, data: any, ...options: any[]) => {
+      const collName = docRef && docRef.path ? docRef.path.split('/')[0] : 'unknown';
+      const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed(collName);
+      if (!lockCheck.allowed) {
+        throw new Error(`LockError: ${lockCheck.reason}`);
+      }
       if (docRef && docRef.path) affectedPaths.push(docRef.path);
       (origBatch as any).update(docRef, data, ...options);
     },
     delete: (docRef: any) => {
+      const collName = docRef && docRef.path ? docRef.path.split('/')[0] : 'unknown';
+      const lockCheck = FeatureFlagsManager.getInstance().checkMutationAllowed(collName);
+      if (!lockCheck.allowed) {
+        throw new Error(`LockError: ${lockCheck.reason}`);
+      }
       if (docRef && docRef.path) affectedPaths.push(docRef.path);
       origBatch.delete(docRef);
     },

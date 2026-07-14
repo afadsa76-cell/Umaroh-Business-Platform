@@ -17,6 +17,7 @@ import { FirestoreOfflineCoordinator } from './FirestoreOfflineCoordinator';
 import { FirestoreRetryController } from './FirestoreRetryController';
 import { FirestoreWatchStreamGuard } from './FirestoreWatchStreamGuard';
 import firebaseConfig from '../../../firebase-applet-config.json';
+import { DatabaseResolver } from './DatabaseResolver';
 
 export class FirestoreRuntime {
   private static instance: FirestoreRuntime;
@@ -61,9 +62,7 @@ export class FirestoreRuntime {
       this.app = initializeApp(firebaseConfig);
     }
 
-    const isAiStudioProject = firebaseConfig.projectId === 'gen-lang-client-0546120404';
-    const defaultDbId = isAiStudioProject ? 'ai-studio-69cde675-c52d-43da-bfaa-45caeabd2393' : '(default)';
-    const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId || defaultDbId;
+    const firestoreDbId = DatabaseResolver.resolveDatabaseId();
 
     const globalDbKey = '__firestore_db_instance__';
     if ((globalThis as any)[globalDbKey]) {
