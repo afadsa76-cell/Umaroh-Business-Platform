@@ -20,12 +20,13 @@ import {
   Layers,
   Crown,
   LogOut,
-  Landmark
+  Landmark,
+  Package
 } from 'lucide-react';
 import { Role } from './LoginView';
 import { logoBase64 } from '../utils/logoBase64';
 
-export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative' | 'blueprint-flow';
+export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative' | 'blueprint-flow' | 'paket-master';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing' | 'tour_leader' | 'petugas_bandara';
 
 interface NavbarProps {
@@ -45,6 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
     { id: 'validasi-mitra', label: 'Validasi Mitra', icon: Users },
     { id: 'user-database', label: 'Database User', icon: Users },
     { id: 'database', label: 'Database Master', icon: Database },
+    { id: 'paket-master', label: 'Paket Master', icon: Package },
     { id: 'templates', label: 'Templates', icon: FileSpreadsheet },
     { id: 'sales-order', label: 'Sales Order', icon: ShoppingCart },
     { id: 'flights', label: 'Monitoring Penerbangan', icon: Plane },
@@ -81,7 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
       id: 'operasional',
       label: '2. OPERASIONAL',
       icon: Sliders,
-      items: ['owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan', 'blueprint-flow']
+      items: ['owner-kpi', 'database', 'paket-master', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan', 'blueprint-flow']
     },
     {
       id: 'finance',

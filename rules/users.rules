@@ -10,13 +10,17 @@ function isValidUserProfile(data) {
 match /users/{userId} {
   allow read: if true;
   allow create: if (isSignedIn() && isOwner(userId) && isValidUserProfile(incoming())) || isOperasional() || isAdmin() || isMitraDev();
-  allow update: if (isAdmin() || isOperasional() || isMitraDev() || isOwner(userId) || (isSignedIn() && existing().get('email', '') == request.auth.token.email)) && 
+  allow update: if ((isAdmin() || isOperasional() || isMitraDev() || isOwner(userId) || (isSignedIn() && existing().get('email', '') == request.auth.token.email)) && 
                 isValidUserProfile(incoming()) && (
                   isAdmin() || isOperasional() || isMitraDev() || (
                     incoming().get('role', '') == existing().get('role', '') &&
                     incoming().get('email', '') == existing().get('email', '') &&
                     incoming().get('uid', '') == existing().get('uid', '')
                   )
+                )) || (
+                  isSignedIn() &&
+                  incoming().get('migratedToUid', '') == request.auth.uid &&
+                  incoming().diff(existing()).affectedKeys().hasOnly(['status', 'migratedAt', 'migratedToUid'])
                 );
   allow delete: if isAdmin() || isOperasional() || (isSignedIn() && (resource != null && resource.data != null && (resource.data.get('email', '') == request.auth.token.email)));
 }

@@ -32,6 +32,7 @@ import { ProfileView } from './components/ProfileView';
 import { AdManagementView } from './components/AdManagementView';
 import { OwnerKpiDashboard } from './components/OwnerKpiDashboard';
 import { MaskapaiView } from './components/MaskapaiView';
+import { PaketMasterView } from './components/PaketMasterView';
 import { BlueprintFlowView } from './components/BlueprintFlowView';
 import { normalizeEmail } from './utils/email';
 import { HotelView } from './components/HotelView';
@@ -45,7 +46,7 @@ import { startUmarohDbSync } from './utils/umarohDbSync';
 
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
-  operasional: ['dashboard', 'owner-kpi', 'database', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
+  operasional: ['dashboard', 'owner-kpi', 'database', 'paket-master', 'sales-order', 'flights', 'tracker', 'manifest', 'tl-portal', 'inventory', 'perlengkapan'],
   finance: ['revenue', 'finance', 'mitra-tracker', 'tracker-vendor', 'finance-cumulative'],
   marketing: ['templates', 'ad-management', 'profile'],
   tour_leader: ['tracker'],
@@ -566,6 +567,8 @@ function App() {
         return <UserDatabaseView />;
       case 'database':
         return <DatabaseView />;
+      case 'paket-master':
+        return <PaketMasterView />;
       case 'templates':
         return <TemplatesView />;
       case 'sales-order':

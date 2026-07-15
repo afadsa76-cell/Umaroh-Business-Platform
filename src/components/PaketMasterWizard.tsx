@@ -54,10 +54,12 @@ import {
   handleFirestoreError,
   OperationType,
   auth,
+  writeBatch,
 } from "../firebase";
 import { generateWALink, openWhatsApp } from "../utils/whatsapp";
 import { hotels } from "../data/hotels";
 import { equipmentData } from "../data/equipment";
+import { maskapaiData } from "../data/maskapai";
 import { handlingDomestikData } from "../data/handlingDomestik";
 import { visaData } from "../data/visa";
 import { keretaCepatData } from "../data/keretaCepat";
@@ -831,7 +833,11 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const flightRegex = /(\d{1,2}[A-Za-z]{3})\s+([A-Za-z]{2}\d+)\s+([A-Za-z]{6})\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
     
     for (const line of lines) {
-      const match = line.match(flightRegex);
+      // Clean line of common markdown formatting characters
+      const cleanLine = line.replace(/[*#_`~]/g, "").trim();
+      
+      // Try strict matching first (SV format)
+      const match = cleanLine.match(flightRegex);
       if (match) {
         const date = match[1];
         const flightNo = match[2];
@@ -858,7 +864,57 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           arrTime: formatTime(arrTime),
           originalLine: line
         });
+        continue;
       }
+      
+      // Robust Fallback parsing for GDS format:
+      // "QR 955 10OCT CGKDOH HK45 0055 0505" or "1  QR 955 G 08OCT 4 CGKDOH HK45      3  0055 0515   *1A/E*"
+      
+      // Extract Route pair (6 consecutive letters, but exclude known non-route words)
+      const routeMatch = cleanLine.match(/\b([A-Za-z]{6})\b/);
+      if (!routeMatch) continue;
+      
+      const potentialRoute = routeMatch[1].toUpperCase();
+      if (['DAHLIA', 'TRAVEL', 'TICKET', 'STATUS', 'ONLINE', 'KEMBAR', 'WIZARD', 'VIRTUAL', 'FLIGHT', 'DOUBLE', 'TRIPLE', 'SYSTEM'].includes(potentialRoute)) {
+        continue;
+      }
+      
+      const origin = potentialRoute.substring(0, 3);
+      const destination = potentialRoute.substring(3, 6);
+      
+      // Extract Date: e.g., 10OCT, 08OCT, 28Des, 28Dec, 04NOV, 13NOV, 08DEC, 17OCT
+      const dateMatch = cleanLine.match(/\b(\d{1,2}\s*[A-Za-z]{3})\b/i);
+      if (!dateMatch) continue;
+      const date = dateMatch[1];
+      
+      // Extract Flight Number: e.g. "QR 955", "QR1178", "SV 827", "SV827"
+      const flightNoMatch = cleanLine.match(/\b([A-Za-z]{2}\s*\d{2,4})\b/i);
+      if (!flightNoMatch) continue;
+      const flightNo = flightNoMatch[1];
+      
+      // Extract Times: Look for all 4-digit numbers or 4-digit numbers with optional +1/+2
+      const timeMatches = [...cleanLine.matchAll(/\b(\d{4}(?:\+\d)?)\b/g)].map(m => m[1]);
+      if (timeMatches.length < 2) continue; // Needs departure and arrival
+      
+      const depTime = timeMatches[timeMatches.length - 2];
+      const arrTime = timeMatches[timeMatches.length - 1];
+      
+      const formatTime = (t: string) => {
+        if (t.length >= 4) {
+          return `${t.substring(0, 2)}:${t.substring(2, 4)}`;
+        }
+        return t;
+      };
+      
+      flightsParsed.push({
+        date,
+        flightNo: flightNo.toUpperCase(),
+        origin,
+        destination,
+        depTime: formatTime(depTime),
+        arrTime: formatTime(arrTime),
+        originalLine: line
+      });
     }
     return flightsParsed;
   };
@@ -1362,7 +1418,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       : 0;
     return {
       id: `mutawif_${item.id}`,
-      label: `${item.name} (${days} Hari, ${item.hargaAsingPerHari} SAR/Hari)`,
+      label: `${item.name} (${days} Hari)`,
       price: pricePerPax,
     };
   });
@@ -1761,6 +1817,33 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           ...doc.data(),
         } as Maskapai));
         setMaskapaiList(data);
+
+        // Auto-sync missing initial data items in background (only for users with write permission)
+        const existingIds = new Set(data.map(item => item.id));
+        const missingItems = maskapaiData.filter(item => !existingIds.has(item.id));
+        if (missingItems.length > 0) {
+          console.log(`Auto-syncing ${missingItems.length} missing maskapai records from Wizard...`);
+          const chunkSize = 400;
+          for (let i = 0; i < missingItems.length; i += chunkSize) {
+            const chunk = missingItems.slice(i, i + chunkSize);
+            try {
+              const batch = writeBatch(db);
+              chunk.forEach((item) => {
+                const itemRef = doc(db, 'maskapai', item.id);
+                batch.set(itemRef, {
+                  ...item,
+                  updatedAt: new Date().toISOString()
+                }, { merge: true });
+              });
+              batch.commit()
+                .then(() => console.log('Wizard auto-sync batch completed.'))
+                .catch(err => console.warn('Wizard auto-sync batch write error (likely non-admin role):', err.message || err));
+            } catch (err) {
+              const errMsg = err instanceof Error ? err.message : String(err);
+              console.warn('Failed to build wizard auto-sync batch:', errMsg);
+            }
+          }
+        }
       },
       (error) => handleFirestoreError(error, OperationType.GET, "maskapai"),
     );
@@ -2663,6 +2746,56 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Tanggal Berangkat */}
+                  <div>
+                    <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+                      TANGGAL KEBERANGKATAN *
+                    </label>
+                    <HijriGregorianDatePicker
+                      value={formData.tglBerangkat || ""}
+                      onChange={(newTglBerangkat) => {
+                        let newTglPulang = formData.tglKepulangan;
+                        let autoPeriode = formData.periode;
+                        if (newTglBerangkat) {
+                          const dt = new Date(newTglBerangkat);
+                          if (!isNaN(dt.getTime())) {
+                            dt.setDate(dt.getDate() + (formData.durasiHari || 9));
+                            newTglPulang = dt.toISOString().split("T")[0];
+                            
+                            // Calculate automatic Hijri period and Umrah season
+                            const departureDateObj = new Date(newTglBerangkat);
+                            const offsetStr = localStorage.getItem("hijri_offset");
+                            const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
+                            const seasonInfo = getUmrahSeasonAndPeriod(departureDateObj, offset);
+                            autoPeriode = seasonInfo.periodText;
+                          }
+                        }
+                        setFormData({
+                          ...formData,
+                          tglBerangkat: newTglBerangkat,
+                          preferredDepartureDate: newTglBerangkat,
+                          tglKepulangan: newTglPulang,
+                          periode: autoPeriode,
+                        });
+                      }}
+                    />
+                  </div>
+
+                  {/* Tanggal Kepulangan (Otomatis) */}
+                  <div>
+                    <label className="block text-[10px] sm:text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">
+                      TANGGAL KEPULANGAN (OTOMATIS)
+                    </label>
+                    <div className="w-full p-4 bg-gray-50/30 text-gray-400 font-bold rounded-xl border border-transparent">
+                      {formData.tglKepulangan && !isNaN(new Date(formData.tglKepulangan).getTime())
+                        ? new Date(formData.tglKepulangan).toLocaleDateString(
+                            "id-ID",
+                            { year: "numeric", month: "long", day: "numeric" },
+                          )
+                        : "dd/mm/yyyy"}
+                    </div>
+                  </div>
+
                   {/* Pilih Periode */}
                   <div>
                     <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
@@ -2938,55 +3071,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     </div>
                   )}
 
-                  {/* Tanggal Berangkat */}
-                  <div>
-                    <label className="block text-[10px] sm:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
-                      TANGGAL KEBERANGKATAN *
-                    </label>
-                    <HijriGregorianDatePicker
-                      value={formData.tglBerangkat || ""}
-                      onChange={(newTglBerangkat) => {
-                        let newTglPulang = formData.tglKepulangan;
-                        let autoPeriode = formData.periode;
-                        if (newTglBerangkat) {
-                          const dt = new Date(newTglBerangkat);
-                          if (!isNaN(dt.getTime())) {
-                            dt.setDate(dt.getDate() + (formData.durasiHari || 9));
-                            newTglPulang = dt.toISOString().split("T")[0];
-                            
-                            // Calculate automatic Hijri period and Umrah season
-                            const departureDateObj = new Date(newTglBerangkat);
-                            const offsetStr = localStorage.getItem("hijri_offset");
-                            const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
-                            const seasonInfo = getUmrahSeasonAndPeriod(departureDateObj, offset);
-                            autoPeriode = seasonInfo.periodText;
-                          }
-                        }
-                        setFormData({
-                          ...formData,
-                          tglBerangkat: newTglBerangkat,
-                          preferredDepartureDate: newTglBerangkat,
-                          tglKepulangan: newTglPulang,
-                          periode: autoPeriode,
-                        });
-                      }}
-                    />
-                  </div>
 
-                  {/* Tanggal Kepulangan (Otomatis) */}
-                  <div>
-                    <label className="block text-[10px] sm:text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider">
-                      TANGGAL KEPULANGAN (OTOMATIS)
-                    </label>
-                    <div className="w-full p-4 bg-gray-50/30 text-gray-400 font-bold rounded-xl border border-transparent">
-                      {formData.tglKepulangan && !isNaN(new Date(formData.tglKepulangan).getTime())
-                        ? new Date(formData.tglKepulangan).toLocaleDateString(
-                            "id-ID",
-                            { year: "numeric", month: "long", day: "numeric" },
-                          )
-                        : "dd/mm/yyyy"}
-                    </div>
-                  </div>
 
                   {/* Durasi Umrah (Otomatis) - Only if UMRAH PLUS */}
                   {formData.kategori === "UMRAH PLUS" && (

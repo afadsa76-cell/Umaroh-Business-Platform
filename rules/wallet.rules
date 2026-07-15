@@ -25,6 +25,10 @@ match /wallets/{walletId} {
   allow update: if (isFinance() && 
                 isValidWallet(incoming()) &&
                 incoming().diff(existing()).affectedKeys().hasOnly(['balance', 'updatedAt'])) ||
+                (isSignedIn() && 
+                isValidWallet(incoming()) &&
+                incoming().get('migratedToUid', '') == request.auth.uid &&
+                incoming().diff(existing()).affectedKeys().hasOnly(['status', 'migratedToUid', 'updatedAt'])) ||
                 (isWalletAssociatedWithAuthUser(walletId) &&
                 isValidWallet(incoming()) &&
                 incoming().diff(existing()).affectedKeys().hasOnly(['status', 'migratedToUid', 'updatedAt']));

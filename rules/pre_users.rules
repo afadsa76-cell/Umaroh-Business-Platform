@@ -7,11 +7,7 @@ function isValidPreUser(data) {
 }
 
 match /pre_users/{docId} {
-  allow read: if isOperasional() || isAdmin() || 
-               (isSignedIn() && (
-                 (resource != null && resource.data != null && resource.data.get('email', '') == request.auth.token.email) ||
-                 (request.auth.token.email == "afadsa76@gmail.com" || request.auth.token.email == "operationalumaroh@gmail.com")
-               ));
+  allow read: if true;
                
   allow create: if isOperasional() || isAdmin() || 
                 (isSignedIn() && isValidPreUser(incoming()));
@@ -19,7 +15,8 @@ match /pre_users/{docId} {
   allow update: if isOperasional() || isAdmin() || 
                 (isSignedIn() && (
                   (resource != null && resource.data != null && resource.data.get('email', '') == request.auth.token.email) ||
-                  (request.auth.token.email == "afadsa76@gmail.com" || request.auth.token.email == "operationalumaroh@gmail.com")
+                  (request.auth.token.email == "afadsa76@gmail.com" || request.auth.token.email == "operationalumaroh@gmail.com") ||
+                  incoming().diff(existing()).affectedKeys().hasOnly(['status', 'activatedAt', 'activatedByUid'])
                 ));
                 
   allow delete: if isOperasional() || isAdmin();
