@@ -1,4 +1,5 @@
 import html2canvas from 'html2canvas';
+import { runWithOklchFix } from './fileUtils';
 
 /**
  * Aggressively sanitizes a document clone for html2canvas compatibility.
@@ -100,19 +101,21 @@ export const captureToDataUrl = async (element: HTMLElement, options: { pixelRat
     const width = element.offsetWidth;
     const height = element.offsetHeight;
 
-    const canvas = await html2canvas(element, {
-      scale: options.pixelRatio || 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      // CRITICAL: Force capture area to match original exactly
-      width: width,
-      height: height,
-      scrollX: 0,
-      scrollY: 0,
-      onclone: (clonedDoc) => {
-        sanitizeForHtml2Canvas(clonedDoc, element);
-      }
+    const canvas = await runWithOklchFix(async () => {
+      return await html2canvas(element, {
+        scale: options.pixelRatio || 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        // CRITICAL: Force capture area to match original exactly
+        width: width,
+        height: height,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+          sanitizeForHtml2Canvas(clonedDoc, element);
+        }
+      });
     });
 
     return canvas.toDataURL('image/jpeg', options.quality || 0.95);

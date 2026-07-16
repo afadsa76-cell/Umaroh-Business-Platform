@@ -11,6 +11,7 @@ import { db, collection, onSnapshot, query, where, doc } from '../firebase';
 import { JamaahTracker } from './tracker/types';
 import { hotels as staticHotels } from '../data/hotels';
 import { getNormalizedHotelNameKey } from './database/HotelMediaView';
+import { FlyerCreatorModal } from './FlyerCreatorModal';
 
 interface PaketDetailViewProps {
   paket: PaketMaster;
@@ -50,10 +51,11 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   const [isBlasting, setIsBlasting] = React.useState(false);
   const [isUsingMarketplace, setIsUsingMarketplace] = React.useState(false);
   const [showManifest, setShowManifest] = React.useState(false);
+  const [showFlyerCreator, setShowFlyerCreator] = React.useState(false);
   const [jamaahs, setJamaahs] = React.useState<JamaahTracker[]>([]);
   const [notification, setNotification] = React.useState<{type: 'success' | 'error', message: string} | null>(null);
   const [hotelMetas, setHotelMetas] = React.useState<HotelMetaItem[]>([]);
-  const [mitraDetails, setMitraDetails] = React.useState<{ brandName: string; name: string } | null>(null);
+  const [mitraDetails, setMitraDetails] = React.useState<{ brandName: string; name: string; hp?: string } | null>(null);
 
   const todayStr = React.useMemo(() => new Date().toISOString().split('T')[0], []);
   const isExpired = React.useMemo(() => {
@@ -91,14 +93,16 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
           const data = snapshot.data();
           setMitraDetails({
             brandName: data.brandName || data.namaLengkap || data.nama || 'Umaroh',
-            name: data.namaLengkap || data.nama || 'Umaroh'
+            name: data.namaLengkap || data.nama || 'Umaroh',
+            hp: data.hp || data.telepon || '0812-3456-7890'
           });
         }
       });
     } else {
       setMitraDetails({
         brandName: 'Umaroh Pusat',
-        name: 'Umaroh Pusat'
+        name: 'Umaroh Pusat',
+        hp: '0812-3456-7890'
       });
     }
 
@@ -637,6 +641,13 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
                 >
                   {isBlasting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : 'BLAST KE JARINGAN'}
                 </button>
+
+                <button 
+                  onClick={() => setShowFlyerCreator(true)}
+                  className="relative w-full bg-indigo-500 hover:bg-indigo-700 text-white border border-indigo-400 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 mt-3 flex items-center justify-center gap-2"
+                >
+                  <span>🖼️ BUAT FLYER PROMO</span>
+                </button>
               </div>
             </>
           )}
@@ -718,6 +729,18 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Flyer Creator Modal */}
+      <AnimatePresence>
+        {showFlyerCreator && (
+          <FlyerCreatorModal
+            paket={paket}
+            onClose={() => setShowFlyerCreator(false)}
+            mitraDetails={mitraDetails}
+            maskapai={maskapai}
+          />
         )}
       </AnimatePresence>
     </div>

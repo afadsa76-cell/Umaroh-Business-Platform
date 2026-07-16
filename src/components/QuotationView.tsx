@@ -6,7 +6,7 @@ import { HANDLING_TIERS } from '../data/handlingSaudi';
 import { visaData } from '../data/visa';
 import { captureToDataUrl } from '../utils/exportUtils';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 import { logoBase64 } from '../utils/logoBase64';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';

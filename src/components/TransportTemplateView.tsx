@@ -3,7 +3,7 @@ import { Calendar, RefreshCw, Download, MapPin, DollarSign, Bus } from 'lucide-r
 import { captureToDataUrl } from '../utils/exportUtils';
 import { transportData } from '../data/transport';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 import { logoBase64 } from '../utils/logoBase64';
 import { useKurs } from '../hooks/useKurs';
 

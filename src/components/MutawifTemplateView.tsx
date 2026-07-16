@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, RefreshCw, Download, Users, DollarSign, MapPin } from 'lucide-react';
 import { captureToDataUrl } from '../utils/exportUtils';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 import { logoBase64 } from '../utils/logoBase64';
 
 export const MutawifTemplateView: React.FC = () => {

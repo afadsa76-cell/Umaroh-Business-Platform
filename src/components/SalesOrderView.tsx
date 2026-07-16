@@ -14,7 +14,7 @@ import { umrahAirports } from '../data/airports';
 import { FileSpreadsheet, Image as ImageIcon, FileText, Save } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 import jsPDF from 'jspdf';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { saveTransaction } from '../data/transactions';

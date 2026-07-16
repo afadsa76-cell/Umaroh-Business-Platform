@@ -26,7 +26,7 @@ const getEnv = (): 'development' | 'staging' | 'production' => {
 };
 
 const getPort = (): number => {
-  return Number(process.env.PORT) || 3000;
+  return 3000;
 };
 
 const getCorsWhitelist = (env: 'development' | 'staging' | 'production'): string[] => {

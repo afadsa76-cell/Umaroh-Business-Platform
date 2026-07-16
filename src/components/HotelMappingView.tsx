@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Hotel, Calendar, CheckSquare, Square, Calculator, AlertCircle, TrendingUp as TrendingUpIcon, MessageCircle } from 'lucide-react';
 import { openWhatsApp } from '../utils/whatsapp';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 
 interface MappingRow {
   id: string;

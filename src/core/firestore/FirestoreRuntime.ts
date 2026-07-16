@@ -70,7 +70,6 @@ export class FirestoreRuntime {
     } else {
       const configOpts = {
         experimentalForceLongPolling: true,
-        useFetchStreams: false,
       } as any;
 
       if (firestoreDbId && firestoreDbId !== '(default)') {

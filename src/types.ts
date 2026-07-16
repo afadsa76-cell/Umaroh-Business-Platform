@@ -325,3 +325,12 @@ export interface JamaahSession {
   nomorPassport?: string;
 }
 
+export enum Type {
+  STRING = 'STRING',
+  NUMBER = 'NUMBER',
+  INTEGER = 'INTEGER',
+  BOOLEAN = 'BOOLEAN',
+  ARRAY = 'ARRAY',
+  OBJECT = 'OBJECT',
+}
+

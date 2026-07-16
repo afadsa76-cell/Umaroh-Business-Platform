@@ -3,7 +3,7 @@ import { Calendar, RefreshCw, Download, MapPin, DollarSign, Wand2 } from 'lucide
 import { captureToDataUrl } from '../utils/exportUtils';
 import { HANDLING_TIERS, HANDLING_CONSTANTS } from '../data/handlingSaudi';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 import { logoBase64 } from '../utils/logoBase64';
 
 export const HandlingTemplateView: React.FC = () => {

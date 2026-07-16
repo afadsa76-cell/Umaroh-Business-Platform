@@ -3,7 +3,7 @@ import { Download, RefreshCw, MapPin, Search } from 'lucide-react';
 import { captureToDataUrl } from '../utils/exportUtils';
 import { maskapaiData } from '../data/maskapai';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 import { logoBase64 } from '../utils/logoBase64';
 
 import { INDONESIA_EMBARKASI } from '../constants';

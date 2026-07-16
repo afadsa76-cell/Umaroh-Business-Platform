@@ -4,7 +4,7 @@ import { captureToDataUrl } from '../utils/exportUtils';
 import { hotels, Hotel } from '../data/hotels';
 import { isDateInRange, parseDateRange } from '../utils/dateUtils';
 import { AIPromptInput } from './AIPromptInput';
-import { Type } from '@google/genai';
+import { Type } from '../types';
 import { logoBase64 } from '../utils/logoBase64';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
