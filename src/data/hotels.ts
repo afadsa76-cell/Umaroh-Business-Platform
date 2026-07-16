@@ -2305,146 +2305,11625 @@ export const newRowaHotels: Hotel[] = [
 ];
 
 export const newAlharmainHotels: Hotel[] = [
-  {
-    "id": "fajr-al-badee-4-alharmain",
-    "name": "Fajr Al Badee 4",
-    "city": "Makkah",
-    "vendor": "Alharmain Hotels Management",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 01/08/2026",
-        "prices": [
-          { "roomType": "Double", "price": 280 },
-          { "roomType": "Triple", "price": 320 },
-          { "roomType": "Quad", "price": 360 }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 19/09/2026",
-        "prices": [
-          { "roomType": "Double", "price": 300 },
-          { "roomType": "Triple", "price": 340 },
-          { "roomType": "Quad", "price": 380 }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-al-rayan-alharmain",
-    "name": "Snood Al Rayan",
-    "city": "Makkah",
-    "vendor": "Alharmain Hotels Management",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 01/08/2026",
-        "prices": [
-          { "roomType": "Double", "price": 235 },
-          { "roomType": "Triple", "price": 275 },
-          { "roomType": "Quad", "price": 315 }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 05/10/2026",
-        "prices": [
-          { "roomType": "Double", "price": 265 },
-          { "roomType": "Triple", "price": 305 },
-          { "roomType": "Quad", "price": 345 }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "mawteen-snood-alharmain",
-    "name": "Mawteen Snood",
-    "city": "Makkah",
-    "vendor": "Alharmain Hotels Management",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 01/08/2026",
-        "prices": [
-          { "roomType": "Double", "price": 200 },
-          { "roomType": "Triple", "price": 245 },
-          { "roomType": "Quad", "price": 290 }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "winner-inn-ajyad-alharmain",
-    "name": "Winner Inn Ajyad (ex Mather Al Eiman)",
-    "city": "Makkah",
-    "vendor": "Alharmain Hotels Management",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 01/08/2026",
-        "prices": [
-          { "roomType": "Double", "price": 340 },
-          { "roomType": "Triple", "price": 385 },
-          { "roomType": "Quad", "price": 430 }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 10/12/2026",
-        "prices": [
-          { "roomType": "Double", "price": 360 },
-          { "roomType": "Triple", "price": 405 },
-          { "roomType": "Quad", "price": 450 }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-zowar-alharmain",
-    "name": "Grand Zowar",
-    "city": "Madinah",
-    "vendor": "Alharmain Hotels Management",
-    "mealPlan": "RO",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 31/07/2026",
-        "prices": [
-          { "roomType": "Double", "price": 390 },
-          { "roomType": "Triple", "price": 430 },
-          { "roomType": "Quad", "price": 470 }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 30/08/2026",
-        "prices": [
-          { "roomType": "Double", "price": 430 },
-          { "roomType": "Triple", "price": 470 },
-          { "roomType": "Quad", "price": 510 }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "plaza-in-houd-alharmain",
-    "name": "Plaza In Houd",
-    "city": "Madinah",
-    "vendor": "Alharmain Hotels Management",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 15/08/2026",
-        "prices": [
-          { "roomType": "Double", "price": 375 },
-          { "roomType": "Triple", "price": 425 },
-          { "roomType": "Quad", "price": 475 }
-        ]
-      }
-    ]
-  }
+{
+  "id": "hotel-hilton-madinah-alharmain",
+  "name": "Hotel Hilton Madinah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 1505
+        },
+        {
+          "roomType": "Double",
+          "price": 1910
+        },
+        {
+          "roomType": "Triple",
+          "price": 2500
+        }
+      ]
+    },
+    {
+      "range": "01/09/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 1810
+        },
+        {
+          "roomType": "Double",
+          "price": 2215
+        },
+        {
+          "roomType": "Triple",
+          "price": 2810
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 18/11/2026",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 1875
+        },
+        {
+          "roomType": "Double",
+          "price": 2290
+        },
+        {
+          "roomType": "Triple",
+          "price": 2930
+        }
+      ]
+    },
+    {
+      "range": "19/11/2026 TO 18/12/2026",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 2240
+        },
+        {
+          "roomType": "Double",
+          "price": 2650
+        },
+        {
+          "roomType": "Triple",
+          "price": 3300
+        }
+      ]
+    },
+    {
+      "range": "19/12/2026 TO 11/01/2027",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 2795
+        },
+        {
+          "roomType": "Double",
+          "price": 3200
+        },
+        {
+          "roomType": "Triple",
+          "price": 3855
+        }
+      ]
+    },
+    {
+      "range": "12/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 2055
+        },
+        {
+          "roomType": "Double",
+          "price": 2465
+        },
+        {
+          "roomType": "Triple",
+          "price": 3115
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-dar-al-taqwa-alharmain",
+  "name": "Hotel Dar Al Taqwa",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "05/06/2026 TO 30/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2080
+        },
+        {
+          "roomType": "Triple",
+          "price": 2970
+        },
+        {
+          "roomType": "Quad",
+          "price": 3860
+        }
+      ]
+    },
+    {
+      "range": "30/08/2026 TO 23/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2520
+        },
+        {
+          "roomType": "Triple",
+          "price": 3410
+        },
+        {
+          "roomType": "Quad",
+          "price": 4300
+        }
+      ]
+    },
+    {
+      "range": "23/09/2026 TO 27/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2770
+        },
+        {
+          "roomType": "Triple",
+          "price": 3660
+        },
+        {
+          "roomType": "Quad",
+          "price": 4550
+        }
+      ]
+    },
+    {
+      "range": "27/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2520
+        },
+        {
+          "roomType": "Triple",
+          "price": 3410
+        },
+        {
+          "roomType": "Quad",
+          "price": 4300
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-burj-al-madinah-alharmain",
+  "name": "Hotel Burj Al Madinah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1050
+        },
+        {
+          "roomType": "Triple",
+          "price": 1300
+        },
+        {
+          "roomType": "Quad",
+          "price": 1550
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 05/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1100
+        },
+        {
+          "roomType": "Triple",
+          "price": 1350
+        },
+        {
+          "roomType": "Quad",
+          "price": 1600
+        }
+      ]
+    },
+    {
+      "range": "06/11/2026 TO 15/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1700
+        },
+        {
+          "roomType": "Triple",
+          "price": 1950
+        },
+        {
+          "roomType": "Quad",
+          "price": 2200
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 05/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1820
+        },
+        {
+          "roomType": "Triple",
+          "price": 2070
+        },
+        {
+          "roomType": "Quad",
+          "price": 2320
+        }
+      ]
+    },
+    {
+      "range": "06/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1700
+        },
+        {
+          "roomType": "Triple",
+          "price": 1950
+        },
+        {
+          "roomType": "Quad",
+          "price": 2200
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-le-bosphorus-alharmain",
+  "name": "Hotel Le Bosphorus",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "HB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 885
+        },
+        {
+          "roomType": "Triple",
+          "price": 1005
+        },
+        {
+          "roomType": "Quad",
+          "price": 1130
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 15/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1005
+        },
+        {
+          "roomType": "Triple",
+          "price": 1130
+        },
+        {
+          "roomType": "Quad",
+          "price": 1250
+        }
+      ]
+    },
+    {
+      "range": "15/09/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1130
+        },
+        {
+          "roomType": "Triple",
+          "price": 1250
+        },
+        {
+          "roomType": "Quad",
+          "price": 1375
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 15/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1160
+        },
+        {
+          "roomType": "Triple",
+          "price": 1280
+        },
+        {
+          "roomType": "Quad",
+          "price": 1403
+        }
+      ]
+    },
+    {
+      "range": "15/12/2026 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1590
+        },
+        {
+          "roomType": "Triple",
+          "price": 1715
+        },
+        {
+          "roomType": "Quad",
+          "price": 1835
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-waqf-al-safi-alharmain",
+  "name": "Hotel Waqf Al Safi",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "HB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 885
+        },
+        {
+          "roomType": "Triple",
+          "price": 1005
+        },
+        {
+          "roomType": "Quad",
+          "price": 1130
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 15/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1005
+        },
+        {
+          "roomType": "Triple",
+          "price": 1130
+        },
+        {
+          "roomType": "Quad",
+          "price": 1250
+        }
+      ]
+    },
+    {
+      "range": "15/09/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1130
+        },
+        {
+          "roomType": "Triple",
+          "price": 1250
+        },
+        {
+          "roomType": "Quad",
+          "price": 1375
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 15/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1160
+        },
+        {
+          "roomType": "Triple",
+          "price": 1280
+        },
+        {
+          "roomType": "Quad",
+          "price": 1403
+        }
+      ]
+    },
+    {
+      "range": "15/12/2026 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1590
+        },
+        {
+          "roomType": "Triple",
+          "price": 1715
+        },
+        {
+          "roomType": "Quad",
+          "price": 1835
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "makarem-haram-view-suites-alharmain",
+  "name": "Makarem Haram View Suites",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "RO",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Jr Suite (2pax)",
+          "price": 1085
+        },
+        {
+          "roomType": "Family Suite (4pax)",
+          "price": 1570
+        },
+        {
+          "roomType": "3 Bed Suite (6pax)",
+          "price": 1905
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "maden-hotel-alharmain",
+  "name": "Maden Hotel",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1050
+        },
+        {
+          "roomType": "Triple",
+          "price": 1200
+        },
+        {
+          "roomType": "Quad",
+          "price": 1350
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 01/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1150
+        },
+        {
+          "roomType": "Triple",
+          "price": 1300
+        },
+        {
+          "roomType": "Quad",
+          "price": 1450
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1200
+        },
+        {
+          "roomType": "Triple",
+          "price": 1350
+        },
+        {
+          "roomType": "Quad",
+          "price": 1500
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 20/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1300
+        },
+        {
+          "roomType": "Triple",
+          "price": 1500
+        },
+        {
+          "roomType": "Quad",
+          "price": 1700
+        }
+      ]
+    },
+    {
+      "range": "20/12/2026 TO 20/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2250
+        },
+        {
+          "roomType": "Triple",
+          "price": 2550
+        },
+        {
+          "roomType": "Quad",
+          "price": 2950
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-maden-al-rawda-alharmain",
+  "name": "Hotel Maden Al Rawda",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1100
+        },
+        {
+          "roomType": "Quad",
+          "price": 1300
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 01/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1050
+        },
+        {
+          "roomType": "Triple",
+          "price": 1200
+        },
+        {
+          "roomType": "Quad",
+          "price": 1400
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1100
+        },
+        {
+          "roomType": "Triple",
+          "price": 1250
+        },
+        {
+          "roomType": "Quad",
+          "price": 1450
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 20/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1200
+        },
+        {
+          "roomType": "Triple",
+          "price": 1400
+        },
+        {
+          "roomType": "Quad",
+          "price": 1600
+        }
+      ]
+    },
+    {
+      "range": "20/12/2026 TO 20/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2250
+        },
+        {
+          "roomType": "Triple",
+          "price": 2550
+        },
+        {
+          "roomType": "Quad",
+          "price": 3050
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-maden-taiba-alharmain",
+  "name": "Hotel Maden Taiba",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 1000
+        },
+        {
+          "roomType": "Quad",
+          "price": 1200
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 01/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1100
+        },
+        {
+          "roomType": "Quad",
+          "price": 1300
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1000
+        },
+        {
+          "roomType": "Triple",
+          "price": 1150
+        },
+        {
+          "roomType": "Quad",
+          "price": 1350
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 20/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1100
+        },
+        {
+          "roomType": "Triple",
+          "price": 1300
+        },
+        {
+          "roomType": "Quad",
+          "price": 1500
+        }
+      ]
+    },
+    {
+      "range": "20/12/2026 TO 20/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2050
+        },
+        {
+          "roomType": "Triple",
+          "price": 2350
+        },
+        {
+          "roomType": "Quad",
+          "price": 2850
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-millenium-taiba-alharmain",
+  "name": "Hotel Millenium Taiba",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 875
+        },
+        {
+          "roomType": "Quad",
+          "price": 1000
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 975
+        },
+        {
+          "roomType": "Quad",
+          "price": 1100
+        }
+      ]
+    },
+    {
+      "range": "11/12/2026 TO 10/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1300
+        },
+        {
+          "roomType": "Triple",
+          "price": 1435
+        },
+        {
+          "roomType": "Quad",
+          "price": 1570
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-peninsula-worth-alharmain",
+  "name": "Hotel Peninsula Worth",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 19/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 810
+        },
+        {
+          "roomType": "Quad",
+          "price": 920
+        }
+      ]
+    },
+    {
+      "range": "19/08/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 920
+        },
+        {
+          "roomType": "Quad",
+          "price": 1040
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1250
+        },
+        {
+          "roomType": "Triple",
+          "price": 1400
+        },
+        {
+          "roomType": "Quad",
+          "price": 1550
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1100
+        },
+        {
+          "roomType": "Quad",
+          "price": 1250
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-dallah-taiba-alharmain",
+  "name": "Hotel Dallah Taiba",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 20/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 806
+        },
+        {
+          "roomType": "Triple",
+          "price": 947
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 1209
+        }
+      ]
+    },
+    {
+      "range": "20/08/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 866
+        },
+        {
+          "roomType": "Triple",
+          "price": 1007
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 1269
+        }
+      ]
+    },
+    {
+      "range": "01/09/2026 TO 20/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 806
+        },
+        {
+          "roomType": "Triple",
+          "price": 947
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 1209
+        }
+      ]
+    },
+    {
+      "range": "20/11/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1349
+        },
+        {
+          "roomType": "Triple",
+          "price": 1551
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 1873
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 20/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 866
+        },
+        {
+          "roomType": "Triple",
+          "price": 1007
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 1269
+        }
+      ]
+    },
+    {
+      "range": "20/12/2026 TO 10/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1470
+        },
+        {
+          "roomType": "Triple",
+          "price": 1671
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 1994
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "dar-al-hijra-intercontinental-alharmain",
+  "name": "Dar Al Hijra Intercontinental",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "23/06/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 790
+        },
+        {
+          "roomType": "Triple",
+          "price": 975
+        },
+        {
+          "roomType": "Quad",
+          "price": 1160
+        }
+      ]
+    },
+    {
+      "range": "01/09/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 895
+        },
+        {
+          "roomType": "Triple",
+          "price": 1080
+        },
+        {
+          "roomType": "Quad",
+          "price": 1265
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 985
+        },
+        {
+          "roomType": "Triple",
+          "price": 1170
+        },
+        {
+          "roomType": "Quad",
+          "price": 1355
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-the-venue-al-harithia-alharmain",
+  "name": "Hotel The Venue Al Harithia",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "23/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 820
+        },
+        {
+          "roomType": "Triple",
+          "price": 970
+        },
+        {
+          "roomType": "Quad",
+          "price": 1120
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 870
+        },
+        {
+          "roomType": "Triple",
+          "price": 1020
+        },
+        {
+          "roomType": "Quad",
+          "price": 1170
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "grand-plaza-badr-al-maqom-alharmain",
+  "name": "Grand Plaza Badr Al Maqom",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "20/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 590
+        },
+        {
+          "roomType": "Triple",
+          "price": 670
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 620
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 780
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-shaza-regency-plaza-alharmain",
+  "name": "Hotel Shaza Regency Plaza",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "27/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 570
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 730
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 680
+        },
+        {
+          "roomType": "Quad",
+          "price": 760
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "dar-al-iman-intercontinental-alharmain",
+  "name": "Dar Al Iman Intercontinental",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "11/06/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1370
+        },
+        {
+          "roomType": "Triple",
+          "price": 1680
+        },
+        {
+          "roomType": "Quad",
+          "price": 1990
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1490
+        },
+        {
+          "roomType": "Triple",
+          "price": 1800
+        },
+        {
+          "roomType": "Quad",
+          "price": 2100
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1736
+        },
+        {
+          "roomType": "Triple",
+          "price": 2106
+        },
+        {
+          "roomType": "Quad",
+          "price": 2476
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-millenium-aqeeq-alharmain",
+  "name": "Hotel Millenium Aqeeq",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 825
+        },
+        {
+          "roomType": "Triple",
+          "price": 950
+        },
+        {
+          "roomType": "Quad",
+          "price": 1075
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 910
+        },
+        {
+          "roomType": "Triple",
+          "price": 1035
+        },
+        {
+          "roomType": "Quad",
+          "price": 1160
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-dar-al-eiman-al-haram-alharmain",
+  "name": "Hotel Dar Al Eiman Al Haram",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 30/06/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1050
+        },
+        {
+          "roomType": "Triple",
+          "price": 1350
+        },
+        {
+          "roomType": "Quad",
+          "price": 1650
+        }
+      ]
+    },
+    {
+      "range": "30/06/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 975
+        },
+        {
+          "roomType": "Quad",
+          "price": 1100
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1075
+        },
+        {
+          "roomType": "Quad",
+          "price": 1200
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1150
+        },
+        {
+          "roomType": "Triple",
+          "price": 1275
+        },
+        {
+          "roomType": "Quad",
+          "price": 1400
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "the-oberoi-hotel-alharmain",
+  "name": "The Oberoi Hotel",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 1550
+        },
+        {
+          "roomType": "Double",
+          "price": 1750
+        },
+        {
+          "roomType": "Triple",
+          "price": 2250
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 1750
+        },
+        {
+          "roomType": "Double",
+          "price": 1950
+        },
+        {
+          "roomType": "Triple",
+          "price": 2450
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Single",
+          "price": 2250
+        },
+        {
+          "roomType": "Double",
+          "price": 2450
+        },
+        {
+          "roomType": "Triple",
+          "price": 2950
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-movenpick-madina-alharmain",
+  "name": "Hotel Movenpick Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "10/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 900
+        },
+        {
+          "roomType": "Triple",
+          "price": 1050
+        },
+        {
+          "roomType": "Quad",
+          "price": 1200
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 02/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1100
+        },
+        {
+          "roomType": "Quad",
+          "price": 1250
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-emaar-royal-alharmain",
+  "name": "Hotel Emaar Royal",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 19/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 625
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 775
+        }
+      ]
+    },
+    {
+      "range": "19/08/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 725
+        },
+        {
+          "roomType": "Triple",
+          "price": 825
+        },
+        {
+          "roomType": "Quad",
+          "price": 925
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1150
+        },
+        {
+          "roomType": "Triple",
+          "price": 1300
+        },
+        {
+          "roomType": "Quad",
+          "price": 1450
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 825
+        },
+        {
+          "roomType": "Triple",
+          "price": 925
+        },
+        {
+          "roomType": "Quad",
+          "price": 1025
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-ritz-madina-alharmain",
+  "name": "Hotel Al Ritz Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 730
+        },
+        {
+          "roomType": "Quad",
+          "price": 810
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 780
+        },
+        {
+          "roomType": "Quad",
+          "price": 870
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 770
+        },
+        {
+          "roomType": "Triple",
+          "price": 860
+        },
+        {
+          "roomType": "Quad",
+          "price": 950
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 970
+        },
+        {
+          "roomType": "Triple",
+          "price": 1080
+        },
+        {
+          "roomType": "Quad",
+          "price": 1190
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-waqf-uthman-bin-affan-alharmain",
+  "name": "Hotel Waqf Uthman Bin Affan",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 670
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 580
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 720
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 630
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 780
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 830
+        },
+        {
+          "roomType": "Triple",
+          "price": 930
+        },
+        {
+          "roomType": "Quad",
+          "price": 1030
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-jiwar-al-saha-alharmain",
+  "name": "Hotel Jiwar Al Saha",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 510
+        },
+        {
+          "roomType": "Triple",
+          "price": 560
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        }
+      ]
+    },
+    {
+      "range": "14/09/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 560
+        },
+        {
+          "roomType": "Triple",
+          "price": 610
+        },
+        {
+          "roomType": "Quad",
+          "price": 660
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-leader-muna-kareem-alharmain",
+  "name": "Hotel Leader Muna Kareem",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "20/06/2026 TO 15/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 720
+        },
+        {
+          "roomType": "Triple",
+          "price": 820
+        },
+        {
+          "roomType": "Quad",
+          "price": 920
+        }
+      ]
+    },
+    {
+      "range": "16/09/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 875
+        },
+        {
+          "roomType": "Triple",
+          "price": 1000
+        },
+        {
+          "roomType": "Quad",
+          "price": 1125
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-ansar-platinum-alharmain",
+  "name": "Hotel Ansar Platinum",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 10/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 09/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 750
+        },
+        {
+          "roomType": "Quad",
+          "price": 800
+        }
+      ]
+    },
+    {
+      "range": "10/12/2026 TO 08/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    },
+    {
+      "range": "08/02/2027 TO 21/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 900
+        },
+        {
+          "roomType": "Quad",
+          "price": 950
+        }
+      ]
+    },
+    {
+      "range": "22/02/2027 TO 09/03/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    },
+    {
+      "range": "10/03/2027 TO 13/03/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    },
+    {
+      "range": "14/03/2027 TO 06/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-deyar-al-eiman-alharmain",
+  "name": "Hotel Deyar Al Eiman",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 575
+        },
+        {
+          "roomType": "Quad",
+          "price": 625
+        },
+        {
+          "roomType": "Quint",
+          "price": 675
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 575
+        },
+        {
+          "roomType": "Triple",
+          "price": 625
+        },
+        {
+          "roomType": "Quad",
+          "price": 675
+        },
+        {
+          "roomType": "Quint",
+          "price": 725
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 625
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 725
+        },
+        {
+          "roomType": "Quint",
+          "price": 775
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-grand-plaza-al-madina-alharmain",
+  "name": "Hotel Grand Plaza Al Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "26/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 620
+        },
+        {
+          "roomType": "Quad",
+          "price": 690
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 570
+        },
+        {
+          "roomType": "Triple",
+          "price": 640
+        },
+        {
+          "roomType": "Quad",
+          "price": 710
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-province-shams-alharmain",
+  "name": "Hotel Province Shams",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 540
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-elaf-taiba-alharmain",
+  "name": "Hotel Elaf Taiba",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 15/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 775
+        },
+        {
+          "roomType": "Triple",
+          "price": 900
+        },
+        {
+          "roomType": "Quad",
+          "price": 1025
+        }
+      ]
+    },
+    {
+      "range": "15/10/2026 TO 15/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 875
+        },
+        {
+          "roomType": "Triple",
+          "price": 1000
+        },
+        {
+          "roomType": "Quad",
+          "price": 1125
+        }
+      ]
+    },
+    {
+      "range": "05/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 925
+        },
+        {
+          "roomType": "Triple",
+          "price": 1050
+        },
+        {
+          "roomType": "Quad",
+          "price": 1175
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-nozol-royal-inn-alharmain",
+  "name": "Hotel Nozol Royal Inn",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 950
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 01/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 950
+        },
+        {
+          "roomType": "Quad",
+          "price": 1050
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 900
+        },
+        {
+          "roomType": "Triple",
+          "price": 1000
+        },
+        {
+          "roomType": "Quad",
+          "price": 1100
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 20/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1000
+        },
+        {
+          "roomType": "Triple",
+          "price": 1150
+        },
+        {
+          "roomType": "Quad",
+          "price": 1300
+        }
+      ]
+    },
+    {
+      "range": "20/12/2026 TO 20/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1850
+        },
+        {
+          "roomType": "Triple",
+          "price": 2100
+        },
+        {
+          "roomType": "Quad",
+          "price": 2350
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-taiba-front-alharmain",
+  "name": "Hotel Taiba Front",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 860
+        },
+        {
+          "roomType": "Quad",
+          "price": 970
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-mias-madina-alharmain",
+  "name": "Hotel Mias Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 680
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 920
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 20/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 710
+        },
+        {
+          "roomType": "Triple",
+          "price": 830
+        },
+        {
+          "roomType": "Quad",
+          "price": 950
+        }
+      ]
+    },
+    {
+      "range": "20/10/2026 TO 15/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 810
+        },
+        {
+          "roomType": "Triple",
+          "price": 950
+        },
+        {
+          "roomType": "Quad",
+          "price": 1090
+        }
+      ]
+    },
+    {
+      "range": "15/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1190
+        },
+        {
+          "roomType": "Triple",
+          "price": 1350
+        },
+        {
+          "roomType": "Quad",
+          "price": 1510
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 930
+        },
+        {
+          "roomType": "Triple",
+          "price": 1080
+        },
+        {
+          "roomType": "Quad",
+          "price": 1230
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-tharawat-worth-alharmain",
+  "name": "Hotel Tharawat Worth",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 19/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "19/08/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 775
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 950
+        },
+        {
+          "roomType": "Quad",
+          "price": 1050
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 775
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 925
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-zahabi-golden-tulip-alharmain",
+  "name": "Hotel Al Zahabi Golden Tulip",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 10/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 09/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    },
+    {
+      "range": "10/12/2026 TO 08/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1000
+        },
+        {
+          "roomType": "Quad",
+          "price": 1050
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 900
+        },
+        {
+          "roomType": "Triple",
+          "price": 950
+        },
+        {
+          "roomType": "Quad",
+          "price": 1000
+        }
+      ]
+    },
+    {
+      "range": "08/02/2027 TO 21/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1000
+        },
+        {
+          "roomType": "Quad",
+          "price": 1050
+        }
+      ]
+    },
+    {
+      "range": "22/02/2027 TO 09/03/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1150
+        },
+        {
+          "roomType": "Triple",
+          "price": 1200
+        },
+        {
+          "roomType": "Quad",
+          "price": 1250
+        }
+      ]
+    },
+    {
+      "range": "10/03/2027 TO 13/03/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 900
+        },
+        {
+          "roomType": "Triple",
+          "price": 950
+        },
+        {
+          "roomType": "Quad",
+          "price": 1000
+        }
+      ]
+    },
+    {
+      "range": "14/03/2027 TO 06/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-mokhtara-diamond-alharmain",
+  "name": "Hotel Al Mokhtara Diamond",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        },
+        {
+          "roomType": "Quint",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 530
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        },
+        {
+          "roomType": "Quint",
+          "price": 630
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 510
+        },
+        {
+          "roomType": "Triple",
+          "price": 560
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        },
+        {
+          "roomType": "Quint",
+          "price": 660
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        },
+        {
+          "roomType": "Quint",
+          "price": 800
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-mokhtara-golden-alharmain",
+  "name": "Hotel Al Mokhtara Golden",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 480
+        },
+        {
+          "roomType": "Quad",
+          "price": 530
+        },
+        {
+          "roomType": "Quint",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        },
+        {
+          "roomType": "Quint",
+          "price": 610
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 540
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        },
+        {
+          "roomType": "Quint",
+          "price": 640
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 630
+        },
+        {
+          "roomType": "Triple",
+          "price": 680
+        },
+        {
+          "roomType": "Quad",
+          "price": 730
+        },
+        {
+          "roomType": "Quint",
+          "price": 780
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-manazil-al-marsa-alharmain",
+  "name": "Hotel Manazil Al Marsa",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/07/2026 TO 14/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 580
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    },
+    {
+      "range": "14/09/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 580
+        },
+        {
+          "roomType": "Triple",
+          "price": 630
+        },
+        {
+          "roomType": "Quad",
+          "price": 680
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-dar-al-naeem-alharmain",
+  "name": "Hotel Dar Al Naeem",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 435
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    },
+    {
+      "range": "01/09/2026 TO 15/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 420
+        },
+        {
+          "roomType": "Triple",
+          "price": 465
+        },
+        {
+          "roomType": "Quad",
+          "price": 510
+        }
+      ]
+    },
+    {
+      "range": "15/10/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 515
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-durrat-al-eiman-alharmain",
+  "name": "Hotel Durrat Al Eiman",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 475
+        },
+        {
+          "roomType": "Triple",
+          "price": 525
+        },
+        {
+          "roomType": "Quad",
+          "price": 575
+        },
+        {
+          "roomType": "Quint",
+          "price": 625
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 575
+        },
+        {
+          "roomType": "Quad",
+          "price": 625
+        },
+        {
+          "roomType": "Quint",
+          "price": 675
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 575
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 725
+        },
+        {
+          "roomType": "Quint",
+          "price": 775
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "ancra-hotel-by-continent-alharmain",
+  "name": "Ancra Hotel by Continent",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 625
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 725
+        },
+        {
+          "roomType": "Quad",
+          "price": 800
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 950
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hayah-golden-hotel-alharmain",
+  "name": "Hayah Golden Hotel",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    },
+    {
+      "range": "16/08/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "araek-taiba-hotel-alharmain",
+  "name": "Araek Taiba Hotel",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    },
+    {
+      "range": "16/08/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hayah-plaza-hotel-alharmain",
+  "name": "Hayah Plaza Hotel",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    },
+    {
+      "range": "16/08/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-emaar-elite-alharmain",
+  "name": "Hotel Emaar Elite",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 19/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "19/08/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1125
+        },
+        {
+          "roomType": "Triple",
+          "price": 1275
+        },
+        {
+          "roomType": "Quad",
+          "price": 1425
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 900
+        },
+        {
+          "roomType": "Quad",
+          "price": 1000
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-emaar-el-mektan-alharmain",
+  "name": "Hotel Emaar El Mektan",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 19/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "19/08/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1125
+        },
+        {
+          "roomType": "Triple",
+          "price": 1275
+        },
+        {
+          "roomType": "Quad",
+          "price": 1425
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 900
+        },
+        {
+          "roomType": "Quad",
+          "price": 1000
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-emaar-taibah-alharmain",
+  "name": "Hotel Emaar Taibah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 19/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 470
+        },
+        {
+          "roomType": "Quad",
+          "price": 510
+        }
+      ]
+    },
+    {
+      "range": "19/08/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 475
+        },
+        {
+          "roomType": "Triple",
+          "price": 535
+        },
+        {
+          "roomType": "Quad",
+          "price": 595
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 710
+        },
+        {
+          "roomType": "Quad",
+          "price": 770
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-jiwar-taibah-alharmain",
+  "name": "Hotel Jiwar Taibah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-sedrat-al-madina-alharmain",
+  "name": "Hotel Sedrat Al Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-manazel-taibah-al-salam-alharmain",
+  "name": "Hotel Manazel Taibah Al Salam",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 420
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 580
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-kayan-al-masi-alharmain",
+  "name": "Hotel Kayan Al Masi",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 430
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    },
+    {
+      "range": "14/09/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-bara-taibah-alharmain",
+  "name": "Hotel Bara Taibah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/07/2026 TO 14/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 430
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    },
+    {
+      "range": "14/09/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-burj-mawaddah-alharmain",
+  "name": "Hotel Burj Mawaddah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 330
+        },
+        {
+          "roomType": "Triple",
+          "price": 375
+        },
+        {
+          "roomType": "Quad",
+          "price": 420
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-mokhtara-plaza-alharmain",
+  "name": "Hotel Al Mokhtara Plaza",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        },
+        {
+          "roomType": "Quint",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 530
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        },
+        {
+          "roomType": "Quint",
+          "price": 630
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 510
+        },
+        {
+          "roomType": "Triple",
+          "price": 560
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        },
+        {
+          "roomType": "Quint",
+          "price": 660
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        },
+        {
+          "roomType": "Quint",
+          "price": 800
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-sanabel-al-madina-alharmain",
+  "name": "Hotel Sanabel Al Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 570
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 720
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 590
+        },
+        {
+          "roomType": "Triple",
+          "price": 670
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-kayan-international-alharmain",
+  "name": "Hotel Kayan International",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 525
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-wardat-al-rayan-alharmain",
+  "name": "Hotel Wardat Al Rayan",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-wardat-saadah-alharmain",
+  "name": "Hotel Wardat Saadah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 440
+        },
+        {
+          "roomType": "Triple",
+          "price": 485
+        },
+        {
+          "roomType": "Quad",
+          "price": 530
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-jawharat-al-rasheed-alharmain",
+  "name": "Hotel Jawharat Al Rasheed",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/06/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 380
+        },
+        {
+          "roomType": "Triple",
+          "price": 425
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-mirage-salam-alharmain",
+  "name": "Hotel Mirage Salam",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "02/07/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 535
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        },
+        {
+          "roomType": "Quint",
+          "price": 625
+        }
+      ]
+    },
+    {
+      "range": "16/08/2026 TO 20/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 540
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        },
+        {
+          "roomType": "Quint",
+          "price": 675
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-rose-holiday-i2-alharmain",
+  "name": "Hotel Rose Holiday I2",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 350
+        },
+        {
+          "roomType": "Triple",
+          "price": 395
+        },
+        {
+          "roomType": "Quad",
+          "price": 440
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-rose-holiday-i3-alharmain",
+  "name": "Hotel Rose Holiday I3",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 380
+        },
+        {
+          "roomType": "Triple",
+          "price": 425
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-swiss-international-alharmain",
+  "name": "Hotel Swiss International",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 19/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "19/08/2026 TO 21/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-manazel-al-taqwa-alharmain",
+  "name": "Hotel Manazel Al Taqwa",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-sama-al-masi-alharmain",
+  "name": "Hotel Sama Al Masi",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 530
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 900
+        },
+        {
+          "roomType": "Quad",
+          "price": 950
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-sama-al-zahabi-alharmain",
+  "name": "Hotel Sama Al Zahabi",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-maysan-rehab-al-misk-alharmain",
+  "name": "Hotel Maysan Rehab Al Misk",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 560
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 645
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-arkan-al-manar-alharmain",
+  "name": "Hotel Arkan Al Manar",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 560
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 645
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-maysan-al-taqwa-alharmain",
+  "name": "Hotel Maysan Al Taqwa",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "23/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 480
+        },
+        {
+          "roomType": "Quad",
+          "price": 530
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-plaza-inn-ohud-alharmain",
+  "name": "Hotel Plaza Inn Ohud",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "26/06/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 405
+        },
+        {
+          "roomType": "Triple",
+          "price": 455
+        },
+        {
+          "roomType": "Quad",
+          "price": 505
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 425
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 525
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-maysan-rotana-el-mesk-alharmain",
+  "name": "Hotel Maysan Rotana El Mesk",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "15/07/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 560
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 22/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 645
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-one-inn-alharmain",
+  "name": "Hotel One Inn",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 455
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 545
+        }
+      ]
+    },
+    {
+      "range": "15/07/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 505
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 595
+        }
+      ]
+    },
+    {
+      "range": "12/09/2026 TO 12/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 575
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "12/10/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 635
+        },
+        {
+          "roomType": "Triple",
+          "price": 680
+        },
+        {
+          "roomType": "Quad",
+          "price": 725
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-triple-one-alharmain",
+  "name": "Hotel Triple One",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 410
+        },
+        {
+          "roomType": "Triple",
+          "price": 455
+        },
+        {
+          "roomType": "Quad",
+          "price": 500
+        }
+      ]
+    },
+    {
+      "range": "15/07/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 505
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 615
+        }
+      ]
+    },
+    {
+      "range": "12/09/2026 TO 12/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 560
+        },
+        {
+          "roomType": "Triple",
+          "price": 605
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    },
+    {
+      "range": "12/10/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 605
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 695
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-qasr-al-ansar-golden-tulip-alharmain",
+  "name": "Hotel Qasr Al Ansar Golden Tulip",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 415
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    },
+    {
+      "range": "15/07/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 535
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "12/09/2026 TO 12/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 565
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        }
+      ]
+    },
+    {
+      "range": "12/10/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 565
+        },
+        {
+          "roomType": "Triple",
+          "price": 610
+        },
+        {
+          "roomType": "Quad",
+          "price": 655
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-saraya-harmony-alharmain",
+  "name": "Hotel Saraya Harmony",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "31/06/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 450
+        },
+        {
+          "roomType": "Quad",
+          "price": 500
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    },
+    {
+      "range": "12/10/2026 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    },
+    {
+      "range": "08/02/2027 TO 22/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    },
+    {
+      "range": "22/02/2027 TO 08/03/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 750
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-rehab-harmony-alharmain",
+  "name": "Hotel Rehab Harmony",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "31/06/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 300
+        },
+        {
+          "roomType": "Triple",
+          "price": 350
+        },
+        {
+          "roomType": "Quad",
+          "price": 400
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 350
+        },
+        {
+          "roomType": "Triple",
+          "price": 400
+        },
+        {
+          "roomType": "Quad",
+          "price": 450
+        }
+      ]
+    },
+    {
+      "range": "12/10/2026 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 450
+        },
+        {
+          "roomType": "Quad",
+          "price": 500
+        }
+      ]
+    },
+    {
+      "range": "08/02/2027 TO 22/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "22/02/2027 TO 08/03/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "winner-inn-al-kheir-ex-concorde-dar-al-khair-alharmain",
+  "name": "Winner Inn Al Kheir ex Concorde Dar Al Khair",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 20/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 575
+        },
+        {
+          "roomType": "Triple",
+          "price": 625
+        },
+        {
+          "roomType": "Quad",
+          "price": 675
+        }
+      ]
+    },
+    {
+      "range": "20/08/2026 TO 12/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 630
+        },
+        {
+          "roomType": "Triple",
+          "price": 680
+        },
+        {
+          "roomType": "Quad",
+          "price": 730
+        }
+      ]
+    },
+    {
+      "range": "12/11/2026 TO 17/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 750
+        },
+        {
+          "roomType": "Quad",
+          "price": 800
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-ansar-golden-tulip-alharmain",
+  "name": "Hotel Al Ansar Golden Tulip",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 20/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 565
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        }
+      ]
+    },
+    {
+      "range": "20/08/2026 TO 12/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 590
+        },
+        {
+          "roomType": "Triple",
+          "price": 635
+        },
+        {
+          "roomType": "Quad",
+          "price": 680
+        }
+      ]
+    },
+    {
+      "range": "12/11/2026 TO 17/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 690
+        },
+        {
+          "roomType": "Triple",
+          "price": 735
+        },
+        {
+          "roomType": "Quad",
+          "price": 780
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-rose-holiday-i1-alharmain",
+  "name": "Hotel Rose Holiday I1",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 340
+        },
+        {
+          "roomType": "Triple",
+          "price": 385
+        },
+        {
+          "roomType": "Quad",
+          "price": 430
+        }
+      ]
+    },
+    {
+      "range": "16/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 360
+        },
+        {
+          "roomType": "Triple",
+          "price": 405
+        },
+        {
+          "roomType": "Quad",
+          "price": 450
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "sebal-hotel-alharmain",
+  "name": "Sebal Hotel",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 435
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-sebal-palace-alharmain",
+  "name": "Hotel Sebal Palace",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 435
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-sebal-al-masi-alharmain",
+  "name": "Hotel Sebal Al Masi",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-zowar-international-alharmain",
+  "name": "Hotel Zowar International",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 555
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        },
+        {
+          "roomType": "Quint",
+          "price": 685
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 540
+        },
+        {
+          "roomType": "Triple",
+          "price": 605
+        },
+        {
+          "roomType": "Quad",
+          "price": 670
+        },
+        {
+          "roomType": "Quint",
+          "price": 755
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 620
+        },
+        {
+          "roomType": "Triple",
+          "price": 685
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        },
+        {
+          "roomType": "Quint",
+          "price": 815
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 740
+        },
+        {
+          "roomType": "Triple",
+          "price": 835
+        },
+        {
+          "roomType": "Quad",
+          "price": 930
+        },
+        {
+          "roomType": "Quint",
+          "price": 1025
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-odest-al-madina-alharmain",
+  "name": "Hotel Odest Al Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 555
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        },
+        {
+          "roomType": "Quint",
+          "price": 685
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 540
+        },
+        {
+          "roomType": "Triple",
+          "price": 605
+        },
+        {
+          "roomType": "Quad",
+          "price": 670
+        },
+        {
+          "roomType": "Quint",
+          "price": 755
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 620
+        },
+        {
+          "roomType": "Triple",
+          "price": 685
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        },
+        {
+          "roomType": "Quint",
+          "price": 815
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 740
+        },
+        {
+          "roomType": "Triple",
+          "price": 835
+        },
+        {
+          "roomType": "Quad",
+          "price": 930
+        },
+        {
+          "roomType": "Quint",
+          "price": 1025
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-mokhtara-international-alharmain",
+  "name": "Hotel Al Mokhtara International",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 535
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        },
+        {
+          "roomType": "Quint",
+          "price": 665
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        },
+        {
+          "roomType": "Quint",
+          "price": 715
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 665
+        },
+        {
+          "roomType": "Quad",
+          "price": 730
+        },
+        {
+          "roomType": "Quint",
+          "price": 795
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 720
+        },
+        {
+          "roomType": "Triple",
+          "price": 815
+        },
+        {
+          "roomType": "Quad",
+          "price": 910
+        },
+        {
+          "roomType": "Quint",
+          "price": 1005
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-abraj-tabah-alharmain",
+  "name": "Hotel Abraj Tabah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 700
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 750
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 900
+        },
+        {
+          "roomType": "Triple",
+          "price": 950
+        },
+        {
+          "roomType": "Quad",
+          "price": 1000
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-safwat-al-madina-alharmain",
+  "name": "Hotel Safwat Al Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 580
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 750
+        },
+        {
+          "roomType": "Quad",
+          "price": 800
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 950
+        },
+        {
+          "roomType": "Triple",
+          "price": 1000
+        },
+        {
+          "roomType": "Quad",
+          "price": 1050
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-manazel-al-falah-alharmain",
+  "name": "Hotel Manazel Al Falah",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 530
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 700
+        }
+      ]
+    },
+    {
+      "range": "11/10/2026 TO 01/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 750
+        },
+        {
+          "roomType": "Quad",
+          "price": 800
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 900
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-diyafat-al-mokhtara-alharmain",
+  "name": "Hotel Diyafat Al Mokhtara",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 470
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 530
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 670
+        },
+        {
+          "roomType": "Quad",
+          "price": 720
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-mokhtara-tower-alharmain",
+  "name": "Hotel Al Mokhtara Tower",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 400
+        },
+        {
+          "roomType": "Quad",
+          "price": 460
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 430
+        },
+        {
+          "roomType": "Quad",
+          "price": 490
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 450
+        },
+        {
+          "roomType": "Quad",
+          "price": 510
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-jadda-al-ghamama-alharmain",
+  "name": "Hotel Jadda Al Ghamama",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 260
+        },
+        {
+          "roomType": "Triple",
+          "price": 300
+        },
+        {
+          "roomType": "Quad",
+          "price": 340
+        }
+      ]
+    },
+    {
+      "range": "15/07/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 320
+        },
+        {
+          "roomType": "Triple",
+          "price": 360
+        },
+        {
+          "roomType": "Quad",
+          "price": 400
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 21/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 340
+        },
+        {
+          "roomType": "Triple",
+          "price": 380
+        },
+        {
+          "roomType": "Quad",
+          "price": 420
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-saman-al-jadid-alharmain",
+  "name": "Hotel Al Saman Al Jadid",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 260
+        },
+        {
+          "roomType": "Triple",
+          "price": 300
+        },
+        {
+          "roomType": "Quad",
+          "price": 340
+        }
+      ]
+    },
+    {
+      "range": "15/07/2026 TO 15/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 320
+        },
+        {
+          "roomType": "Triple",
+          "price": 360
+        },
+        {
+          "roomType": "Quad",
+          "price": 400
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 21/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 340
+        },
+        {
+          "roomType": "Triple",
+          "price": 380
+        },
+        {
+          "roomType": "Quad",
+          "price": 420
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-karam-taiba-al-masi-alharmain",
+  "name": "Hotel Karam Taiba Al Masi",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 425
+        },
+        {
+          "roomType": "Triple",
+          "price": 470
+        },
+        {
+          "roomType": "Quad",
+          "price": 555
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 525
+        },
+        {
+          "roomType": "Quad",
+          "price": 595
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-karam-elite-alharmain",
+  "name": "Hotel Karam Elite",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 545
+        },
+        {
+          "roomType": "Quad",
+          "price": 615
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-karam-al-madina-alharmain",
+  "name": "Hotel Karam Al Madina",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 425
+        },
+        {
+          "roomType": "Triple",
+          "price": 470
+        },
+        {
+          "roomType": "Quad",
+          "price": 555
+        },
+        {
+          "roomType": "Quint",
+          "price": 625
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 525
+        },
+        {
+          "roomType": "Quad",
+          "price": 595
+        },
+        {
+          "roomType": "Quint",
+          "price": 650
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-karam-al-hejaz-alharmain",
+  "name": "Hotel Karam Al Hejaz",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 410
+        },
+        {
+          "roomType": "Triple",
+          "price": 455
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        },
+        {
+          "roomType": "Quint",
+          "price": 615
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 465
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        },
+        {
+          "roomType": "Quint",
+          "price": 635
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-karam-al-khair-alharmain",
+  "name": "Hotel Karam Al Khair",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 410
+        },
+        {
+          "roomType": "Triple",
+          "price": 425
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        },
+        {
+          "roomType": "Quint",
+          "price": 615
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 465
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        },
+        {
+          "roomType": "Quint",
+          "price": 635
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-al-mokhtara-al-gharbi-alharmain",
+  "name": "Hotel Al Mokhtara Al Gharbi",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 480
+        },
+        {
+          "roomType": "Quad",
+          "price": 530
+        },
+        {
+          "roomType": "Quint",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        },
+        {
+          "roomType": "Quint",
+          "price": 510
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 540
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        },
+        {
+          "roomType": "Quint",
+          "price": 640
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 630
+        },
+        {
+          "roomType": "Triple",
+          "price": 680
+        },
+        {
+          "roomType": "Quad",
+          "price": 730
+        },
+        {
+          "roomType": "Quint",
+          "price": 780
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-grand-zowar-alharmain",
+  "name": "Hotel Grand Zowar",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 470
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        },
+        {
+          "roomType": "Quint",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 550
+        },
+        {
+          "roomType": "Quint",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 530
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        },
+        {
+          "roomType": "Quint",
+          "price": 630
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Triple",
+          "price": 670
+        },
+        {
+          "roomType": "Quad",
+          "price": 720
+        },
+        {
+          "roomType": "Quint",
+          "price": 770
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hotel-rawdat-al-mokhtara-alharmain",
+  "name": "Hotel Rawdat Al Mokhtara",
+  "city": "Madinah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 480
+        },
+        {
+          "roomType": "Quad",
+          "price": 530
+        },
+        {
+          "roomType": "Quint",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "15/08/2026 TO 20/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 510
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        },
+        {
+          "roomType": "Quint",
+          "price": 610
+        }
+      ]
+    },
+    {
+      "range": "21/09/2026 TO 08/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 540
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        },
+        {
+          "roomType": "Quint",
+          "price": 640
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 01/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 630
+        },
+        {
+          "roomType": "Triple",
+          "price": 680
+        },
+        {
+          "roomType": "Quad",
+          "price": 730
+        },
+        {
+          "roomType": "Quint",
+          "price": 780
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "al-safwah-tower-3-hotel-alharmain",
+  "name": "Al Safwah Tower 3 Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 940
+        },
+        {
+          "roomType": "Triple",
+          "price": 1140
+        },
+        {
+          "roomType": "Quad",
+          "price": 1340
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1040
+        },
+        {
+          "roomType": "Triple",
+          "price": 1240
+        },
+        {
+          "roomType": "Quad",
+          "price": 1440
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "marwa-rayhan-rotana-hotel-alharmain",
+  "name": "Marwa Rayhan Rotana Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "07/06/2026 TO 07/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1310
+        },
+        {
+          "roomType": "Triple",
+          "price": 1600
+        },
+        {
+          "roomType": "Quad",
+          "price": 1870
+        }
+      ]
+    },
+    {
+      "range": "08/10/2026 TO 04/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1370
+        },
+        {
+          "roomType": "Triple",
+          "price": 1640
+        },
+        {
+          "roomType": "Quad",
+          "price": 1910
+        }
+      ]
+    },
+    {
+      "range": "05/11/2026 TO 25/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1420
+        },
+        {
+          "roomType": "Triple",
+          "price": 1690
+        },
+        {
+          "roomType": "Quad",
+          "price": 1960
+        }
+      ]
+    },
+    {
+      "range": "26/11/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1510
+        },
+        {
+          "roomType": "Triple",
+          "price": 1780
+        },
+        {
+          "roomType": "Quad",
+          "price": 2050
+        }
+      ]
+    },
+    {
+      "range": "17/12/2026 TO 05/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2070
+        },
+        {
+          "roomType": "Triple",
+          "price": 2340
+        },
+        {
+          "roomType": "Quad",
+          "price": 2610
+        }
+      ]
+    },
+    {
+      "range": "06/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1510
+        },
+        {
+          "roomType": "Triple",
+          "price": 1780
+        },
+        {
+          "roomType": "Quad",
+          "price": 2050
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 17/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1370
+        },
+        {
+          "roomType": "Triple",
+          "price": 1640
+        },
+        {
+          "roomType": "Quad",
+          "price": 1910
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "double-tree-hotel-alharmain",
+  "name": "Double Tree Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "06/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1440
+        },
+        {
+          "roomType": "Triple",
+          "price": 1863
+        },
+        {
+          "roomType": "Quad",
+          "price": 2286
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1500
+        },
+        {
+          "roomType": "Triple",
+          "price": 1923
+        },
+        {
+          "roomType": "Quad",
+          "price": 2346
+        }
+      ]
+    },
+    {
+      "range": "12/11/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1580
+        },
+        {
+          "roomType": "Triple",
+          "price": 2003
+        },
+        {
+          "roomType": "Quad",
+          "price": 2426
+        }
+      ]
+    },
+    {
+      "range": "17/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2060
+        },
+        {
+          "roomType": "Triple",
+          "price": 2545
+        },
+        {
+          "roomType": "Quad",
+          "price": 3030
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "conrad-makkah-hotel-alharmain",
+  "name": "Conrad Makkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "06/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1869
+        },
+        {
+          "roomType": "Triple",
+          "price": 2346
+        },
+        {
+          "roomType": "Quad",
+          "price": 2823
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2029
+        },
+        {
+          "roomType": "Triple",
+          "price": 2536
+        },
+        {
+          "roomType": "Quad",
+          "price": 3043
+        }
+      ]
+    },
+    {
+      "range": "12/11/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2129
+        },
+        {
+          "roomType": "Triple",
+          "price": 2636
+        },
+        {
+          "roomType": "Quad",
+          "price": 3143
+        }
+      ]
+    },
+    {
+      "range": "17/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2709
+        },
+        {
+          "roomType": "Triple",
+          "price": 3311
+        },
+        {
+          "roomType": "Quad",
+          "price": 3913
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hilton-suites-hotel-alharmain",
+  "name": "Hilton Suites Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "06/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1784
+        },
+        {
+          "roomType": "Triple",
+          "price": 2261
+        },
+        {
+          "roomType": "Quad",
+          "price": 2738
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1964
+        },
+        {
+          "roomType": "Triple",
+          "price": 2471
+        },
+        {
+          "roomType": "Quad",
+          "price": 2978
+        }
+      ]
+    },
+    {
+      "range": "12/11/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2064
+        },
+        {
+          "roomType": "Triple",
+          "price": 2571
+        },
+        {
+          "roomType": "Quad",
+          "price": 3078
+        }
+      ]
+    },
+    {
+      "range": "17/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2639
+        },
+        {
+          "roomType": "Triple",
+          "price": 3241
+        },
+        {
+          "roomType": "Quad",
+          "price": 3843
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "hilton-convention-hotel-alharmain",
+  "name": "Hilton Convention Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "06/06/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1515
+        },
+        {
+          "roomType": "Triple",
+          "price": 1938
+        },
+        {
+          "roomType": "Quad",
+          "price": 2361
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1635
+        },
+        {
+          "roomType": "Triple",
+          "price": 2058
+        },
+        {
+          "roomType": "Quad",
+          "price": 2481
+        }
+      ]
+    },
+    {
+      "range": "12/11/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1715
+        },
+        {
+          "roomType": "Triple",
+          "price": 2138
+        },
+        {
+          "roomType": "Quad",
+          "price": 2561
+        }
+      ]
+    },
+    {
+      "range": "17/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2210
+        },
+        {
+          "roomType": "Triple",
+          "price": 2695
+        },
+        {
+          "roomType": "Quad",
+          "price": 3180
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "prestige-ajyad-hotel-alharmain",
+  "name": "Prestige Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 19/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 750
+        },
+        {
+          "roomType": "Quad",
+          "price": 850
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-kinda-hotel-alharmain",
+  "name": "Elaf Kinda Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 880
+        },
+        {
+          "roomType": "Triple",
+          "price": 1040
+        },
+        {
+          "roomType": "Quad",
+          "price": 1200
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 21/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 940
+        },
+        {
+          "roomType": "Triple",
+          "price": 1100
+        },
+        {
+          "roomType": "Quad",
+          "price": 1260
+        }
+      ]
+    },
+    {
+      "range": "21/12/2026 TO 04/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1320
+        },
+        {
+          "roomType": "Triple",
+          "price": 1480
+        },
+        {
+          "roomType": "Quad",
+          "price": 1640
+        }
+      ]
+    },
+    {
+      "range": "04/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 980
+        },
+        {
+          "roomType": "Triple",
+          "price": 1140
+        },
+        {
+          "roomType": "Quad",
+          "price": 1300
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 08/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 980
+        },
+        {
+          "roomType": "Triple",
+          "price": 1140
+        },
+        {
+          "roomType": "Quad",
+          "price": 1300
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "movenpick-makkah-hotel-alharmain",
+  "name": "Movenpick Makkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1140
+        },
+        {
+          "roomType": "Triple",
+          "price": 1340
+        },
+        {
+          "roomType": "Quad",
+          "price": 1540
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 12/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1190
+        },
+        {
+          "roomType": "Triple",
+          "price": 1390
+        },
+        {
+          "roomType": "Quad",
+          "price": 1590
+        }
+      ]
+    },
+    {
+      "range": "12/10/2026 TO 20/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1340
+        },
+        {
+          "roomType": "Triple",
+          "price": 1540
+        },
+        {
+          "roomType": "Quad",
+          "price": 1740
+        }
+      ]
+    },
+    {
+      "range": "20/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 2040
+        },
+        {
+          "roomType": "Triple",
+          "price": 2265
+        },
+        {
+          "roomType": "Quad",
+          "price": 2490
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1340
+        },
+        {
+          "roomType": "Triple",
+          "price": 1565
+        },
+        {
+          "roomType": "Quad",
+          "price": 1790
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "fairmont-makkah-hotel-alharmain",
+  "name": "Fairmont Makkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 08/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1465
+        },
+        {
+          "roomType": "Triple",
+          "price": 1800
+        },
+        {
+          "roomType": "Quad",
+          "price": 2130
+        }
+      ]
+    },
+    {
+      "range": "09/07/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1590
+        },
+        {
+          "roomType": "Triple",
+          "price": 1920
+        },
+        {
+          "roomType": "Quad",
+          "price": 2250
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "pullman-zam-zam-hotel-alharmain",
+  "name": "Pullman Zam Zam Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 08/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1120
+        },
+        {
+          "roomType": "Triple",
+          "price": 1320
+        },
+        {
+          "roomType": "Quad",
+          "price": 1520
+        }
+      ]
+    },
+    {
+      "range": "14/10/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1265
+        },
+        {
+          "roomType": "Triple",
+          "price": 1465
+        },
+        {
+          "roomType": "Quad",
+          "price": 1665
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "ghufran-safwah-hotel-alharmain",
+  "name": "Ghufran Safwah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1220
+        },
+        {
+          "roomType": "Triple",
+          "price": 1570
+        },
+        {
+          "roomType": "Quad",
+          "price": 1920
+        }
+      ]
+    },
+    {
+      "range": "15/10/2026 TO 14/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1460
+        },
+        {
+          "roomType": "Triple",
+          "price": 1810
+        },
+        {
+          "roomType": "Quad",
+          "price": 2160
+        }
+      ]
+    },
+    {
+      "range": "17/12/2026 TO 05/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1920
+        },
+        {
+          "roomType": "Triple",
+          "price": 2270
+        },
+        {
+          "roomType": "Quad",
+          "price": 2620
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "sheraton-makkah-jabal-hotel-alharmain",
+  "name": "Sheraton Makkah Jabal Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 15/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 720
+        },
+        {
+          "roomType": "Triple",
+          "price": 820
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 920
+        }
+      ]
+    },
+    {
+      "range": "15/09/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 770
+        },
+        {
+          "roomType": "Triple",
+          "price": 870
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 970
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 20/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 840
+        },
+        {
+          "roomType": "Triple",
+          "price": 940
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 1040
+        }
+      ]
+    },
+    {
+      "range": "05/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 795
+        },
+        {
+          "roomType": "Triple",
+          "price": 895
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 995
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 01/05/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 695
+        },
+        {
+          "roomType": "Triple",
+          "price": 795
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 895
+        }
+      ]
+    },
+    {
+      "range": "26/05/2027 TO 06/06/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 695
+        },
+        {
+          "roomType": "Triple",
+          "price": 795
+        },
+        {
+          "roomType": "Jr Suite (4pax)",
+          "price": 895
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "marriott-jabal-omar-alharmain",
+  "name": "Marriott Jabal Omar",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "07/06/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 890
+        },
+        {
+          "roomType": "Quad",
+          "price": 980
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 14/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 850
+        },
+        {
+          "roomType": "Triple",
+          "price": 940
+        },
+        {
+          "roomType": "Quad",
+          "price": 1030
+        }
+      ]
+    },
+    {
+      "range": "15/11/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 900
+        },
+        {
+          "roomType": "Triple",
+          "price": 990
+        },
+        {
+          "roomType": "Quad",
+          "price": 1080
+        }
+      ]
+    },
+    {
+      "range": "17/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1100
+        },
+        {
+          "roomType": "Triple",
+          "price": 1190
+        },
+        {
+          "roomType": "Quad",
+          "price": 1280
+        }
+      ]
+    },
+    {
+      "range": "10/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 900
+        },
+        {
+          "roomType": "Triple",
+          "price": 990
+        },
+        {
+          "roomType": "Quad",
+          "price": 1080
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 06/05/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 800
+        },
+        {
+          "roomType": "Triple",
+          "price": 890
+        },
+        {
+          "roomType": "Quad",
+          "price": 980
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "le-meridien-makkah-hotel-alharmain",
+  "name": "Le Meridien Makkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "07/06/2026 TO 21/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 765
+        },
+        {
+          "roomType": "Triple",
+          "price": 915
+        },
+        {
+          "roomType": "Quad",
+          "price": 1065
+        }
+      ]
+    },
+    {
+      "range": "22/08/2026 TO 15/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 840
+        },
+        {
+          "roomType": "Triple",
+          "price": 990
+        },
+        {
+          "roomType": "Quad",
+          "price": 1140
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 05/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1040
+        },
+        {
+          "roomType": "Triple",
+          "price": 1240
+        },
+        {
+          "roomType": "Quad",
+          "price": 1440
+        }
+      ]
+    },
+    {
+      "range": "06/01/2027 TO 06/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 840
+        },
+        {
+          "roomType": "Triple",
+          "price": 990
+        },
+        {
+          "roomType": "Quad",
+          "price": 1140
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "makkah-hotel-alharmain",
+  "name": "Makkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1240
+        },
+        {
+          "roomType": "Triple",
+          "price": 1550
+        },
+        {
+          "roomType": "Quad",
+          "price": 1860
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1340
+        },
+        {
+          "roomType": "Triple",
+          "price": 1650
+        },
+        {
+          "roomType": "Quad",
+          "price": 1960
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1440
+        },
+        {
+          "roomType": "Triple",
+          "price": 1750
+        },
+        {
+          "roomType": "Quad",
+          "price": 2060
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 16/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1240
+        },
+        {
+          "roomType": "Triple",
+          "price": 1550
+        },
+        {
+          "roomType": "Quad",
+          "price": 1860
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "makkah-tower-hotel-alharmain",
+  "name": "Makkah Tower Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1170
+        },
+        {
+          "roomType": "Triple",
+          "price": 1355
+        },
+        {
+          "roomType": "Quad",
+          "price": 1540
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 11/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1270
+        },
+        {
+          "roomType": "Triple",
+          "price": 1455
+        },
+        {
+          "roomType": "Quad",
+          "price": 1640
+        }
+      ]
+    },
+    {
+      "range": "11/11/2026 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1370
+        },
+        {
+          "roomType": "Triple",
+          "price": 1555
+        },
+        {
+          "roomType": "Quad",
+          "price": 1740
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 16/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1170
+        },
+        {
+          "roomType": "Triple",
+          "price": 1355
+        },
+        {
+          "roomType": "Quad",
+          "price": 1540
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "rotana-jabal-omar-hotel-alharmain",
+  "name": "Rotana Jabal Omar Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "01/06/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 920
+        },
+        {
+          "roomType": "Triple",
+          "price": 1145
+        },
+        {
+          "roomType": "Quad",
+          "price": 1370
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "azka-al-safa-hotel-alharmain",
+  "name": "Azka Al Safa Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "20/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 570
+        },
+        {
+          "roomType": "Triple",
+          "price": 620
+        },
+        {
+          "roomType": "Quad",
+          "price": 670
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 750
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 630
+        },
+        {
+          "roomType": "Triple",
+          "price": 715
+        },
+        {
+          "roomType": "Quad",
+          "price": 800
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "olayan-ajyad-hotel-alharmain",
+  "name": "Olayan Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "01/06/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 640
+        },
+        {
+          "roomType": "Triple",
+          "price": 740
+        },
+        {
+          "roomType": "Quad",
+          "price": 840
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "millenium-makkah-al-naseem-alharmain",
+  "name": "Millenium Makkah Al Naseem",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 09/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 290
+        },
+        {
+          "roomType": "Triple",
+          "price": 355
+        },
+        {
+          "roomType": "Quad",
+          "price": 420
+        },
+        {
+          "roomType": "Jr Suite (5pax)",
+          "price": 525
+        }
+      ]
+    },
+    {
+      "range": "10/12/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 315
+        },
+        {
+          "roomType": "Triple",
+          "price": 400
+        },
+        {
+          "roomType": "Quad",
+          "price": 485
+        },
+        {
+          "roomType": "Jr Suite (5pax)",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 06/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 290
+        },
+        {
+          "roomType": "Triple",
+          "price": 355
+        },
+        {
+          "roomType": "Quad",
+          "price": 420
+        },
+        {
+          "roomType": "Jr Suite (5pax)",
+          "price": 525
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "park-inn-by-radisson-hotel-alharmain",
+  "name": "Park Inn by Radisson Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "02/06/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 465
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        }
+      ]
+    },
+    {
+      "range": "01/11/2026 TO 09/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 06/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 380
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 06/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 465
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "infinity-makkah-hotel-alharmain",
+  "name": "Infinity Makkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "01/06/2026 TO 30/06/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 510
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "m-al-dana-makkah-hotel-alharmain",
+  "name": "M Al Dana Makkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "02/06/2026 TO 30/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 270
+        },
+        {
+          "roomType": "Triple",
+          "price": 330
+        },
+        {
+          "roomType": "Quad",
+          "price": 390
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 15/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 300
+        },
+        {
+          "roomType": "Triple",
+          "price": 360
+        },
+        {
+          "roomType": "Quad",
+          "price": 420
+        }
+      ]
+    },
+    {
+      "range": "16/01/2027 TO 06/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 290
+        },
+        {
+          "roomType": "Triple",
+          "price": 350
+        },
+        {
+          "roomType": "Quad",
+          "price": 410
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "grand-al-massa-hotel-alharmain",
+  "name": "Grand Al Massa Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 09/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 445
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 545
+        }
+      ]
+    },
+    {
+      "range": "09/07/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 505
+        },
+        {
+          "roomType": "Triple",
+          "price": 555
+        },
+        {
+          "roomType": "Quad",
+          "price": 605
+        }
+      ]
+    },
+    {
+      "range": "30/07/2026 TO 05/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 565
+        },
+        {
+          "roomType": "Triple",
+          "price": 615
+        },
+        {
+          "roomType": "Quad",
+          "price": 665
+        }
+      ]
+    },
+    {
+      "range": "05/09/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 495
+        },
+        {
+          "roomType": "Triple",
+          "price": 545
+        },
+        {
+          "roomType": "Quad",
+          "price": 595
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "maysan-al-mashaer-hotel-alharmain",
+  "name": "Maysan Al Mashaer Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 25/06/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 525
+        },
+        {
+          "roomType": "Triple",
+          "price": 605
+        },
+        {
+          "roomType": "Quad",
+          "price": 685
+        }
+      ]
+    },
+    {
+      "range": "25/06/2026 TO 09/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 565
+        },
+        {
+          "roomType": "Triple",
+          "price": 645
+        },
+        {
+          "roomType": "Quad",
+          "price": 725
+        }
+      ]
+    },
+    {
+      "range": "09/07/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 580
+        },
+        {
+          "roomType": "Triple",
+          "price": 660
+        },
+        {
+          "roomType": "Quad",
+          "price": 740
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 605
+        },
+        {
+          "roomType": "Triple",
+          "price": 685
+        },
+        {
+          "roomType": "Quad",
+          "price": 765
+        }
+      ]
+    },
+    {
+      "range": "30/07/2026 TO 05/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 730
+        },
+        {
+          "roomType": "Quad",
+          "price": 810
+        }
+      ]
+    },
+    {
+      "range": "05/09/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 595
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 755
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "maysan-al-maqom-hotel-alharmain",
+  "name": "Maysan Al Maqom Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 25/06/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 415
+        },
+        {
+          "roomType": "Triple",
+          "price": 465
+        },
+        {
+          "roomType": "Quad",
+          "price": 515
+        }
+      ]
+    },
+    {
+      "range": "25/06/2026 TO 09/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 455
+        },
+        {
+          "roomType": "Triple",
+          "price": 505
+        },
+        {
+          "roomType": "Quad",
+          "price": 555
+        }
+      ]
+    },
+    {
+      "range": "09/07/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 485
+        },
+        {
+          "roomType": "Triple",
+          "price": 535
+        },
+        {
+          "roomType": "Quad",
+          "price": 585
+        }
+      ]
+    },
+    {
+      "range": "30/07/2026 TO 05/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "05/09/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 465
+        },
+        {
+          "roomType": "Triple",
+          "price": 515
+        },
+        {
+          "roomType": "Quad",
+          "price": 565
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "royal-majestic-hotel-alharmain",
+  "name": "Royal Majestic Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 25/06/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 425
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 525
+        }
+      ]
+    },
+    {
+      "range": "25/06/2026 TO 09/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 495
+        },
+        {
+          "roomType": "Triple",
+          "price": 545
+        },
+        {
+          "roomType": "Quad",
+          "price": 595
+        }
+      ]
+    },
+    {
+      "range": "09/07/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    },
+    {
+      "range": "30/07/2026 TO 05/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 580
+        },
+        {
+          "roomType": "Triple",
+          "price": 630
+        },
+        {
+          "roomType": "Quad",
+          "price": 680
+        }
+      ]
+    },
+    {
+      "range": "05/09/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 530
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "al-shohada-hotel-alharmain",
+  "name": "Al Shohada Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 640
+        },
+        {
+          "roomType": "Quad",
+          "price": 730
+        }
+      ]
+    },
+    {
+      "range": "14/07/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 585
+        },
+        {
+          "roomType": "Triple",
+          "price": 675
+        },
+        {
+          "roomType": "Quad",
+          "price": 765
+        }
+      ]
+    },
+    {
+      "range": "11/09/2026 TO 10/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 710
+        },
+        {
+          "roomType": "Triple",
+          "price": 800
+        },
+        {
+          "roomType": "Quad",
+          "price": 890
+        }
+      ]
+    },
+    {
+      "range": "10/11/2026 TO 09/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 760
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 940
+        }
+      ]
+    },
+    {
+      "range": "09/12/2026 TO 20/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 1310
+        },
+        {
+          "roomType": "Triple",
+          "price": 1400
+        },
+        {
+          "roomType": "Quad",
+          "price": 1490
+        }
+      ]
+    },
+    {
+      "range": "20/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 760
+        },
+        {
+          "roomType": "Triple",
+          "price": 850
+        },
+        {
+          "roomType": "Quad",
+          "price": 940
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-al-khair-hotel-alharmain",
+  "name": "Elaf Al Khair Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 545
+        },
+        {
+          "roomType": "Triple",
+          "price": 595
+        },
+        {
+          "roomType": "Quad",
+          "price": 645
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "marsa-al-jariah-hotel-alharmain",
+  "name": "Marsa Al Jariah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 600
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-ajyad-hotel-alharmain",
+  "name": "Snood Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-al-rayyan-hotel-alharmain",
+  "name": "Elaf Al Rayyan Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 570
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 545
+        },
+        {
+          "roomType": "Triple",
+          "price": 595
+        },
+        {
+          "roomType": "Quad",
+          "price": 645
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-diamond-hotel-alharmain",
+  "name": "Elaf Diamond Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 420
+        },
+        {
+          "roomType": "Triple",
+          "price": 465
+        },
+        {
+          "roomType": "Quad",
+          "price": 510
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 545
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 565
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-golden-hotel-alharmain",
+  "name": "Elaf Golden Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 410
+        },
+        {
+          "roomType": "Triple",
+          "price": 450
+        },
+        {
+          "roomType": "Quad",
+          "price": 490
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 450
+        },
+        {
+          "roomType": "Triple",
+          "price": 490
+        },
+        {
+          "roomType": "Quad",
+          "price": 530
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "waha-diafa-hotel-alharmain",
+  "name": "Waha Diafa Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 280
+        },
+        {
+          "roomType": "Triple",
+          "price": 340
+        },
+        {
+          "roomType": "Quad",
+          "price": 360
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 320
+        },
+        {
+          "roomType": "Triple",
+          "price": 360
+        },
+        {
+          "roomType": "Quad",
+          "price": 400
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "kunuz-ajyad-hotel-alharmain",
+  "name": "Kunuz Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 525
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 575
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 560
+        },
+        {
+          "roomType": "Triple",
+          "price": 605
+        },
+        {
+          "roomType": "Quad",
+          "price": 650
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-al-noor-hotel-alharmain",
+  "name": "Elaf Al Noor Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 01/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 220
+        },
+        {
+          "roomType": "Triple",
+          "price": 255
+        },
+        {
+          "roomType": "Quad",
+          "price": 290
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "le-meridien-tower-hotel-alharmain",
+  "name": "Le Meridien Tower Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "07/06/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 450
+        },
+        {
+          "roomType": "Quad",
+          "price": 530
+        },
+        {
+          "roomType": "Quint",
+          "price": 610
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 19/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 405
+        },
+        {
+          "roomType": "Triple",
+          "price": 485
+        },
+        {
+          "roomType": "Quad",
+          "price": 545
+        },
+        {
+          "roomType": "Quint",
+          "price": 655
+        }
+      ]
+    },
+    {
+      "range": "20/09/2026 TO 26/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 555
+        },
+        {
+          "roomType": "Triple",
+          "price": 645
+        },
+        {
+          "roomType": "Quad",
+          "price": 735
+        },
+        {
+          "roomType": "Quint",
+          "price": 825
+        }
+      ]
+    },
+    {
+      "range": "27/09/2026 TO 05/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 405
+        },
+        {
+          "roomType": "Triple",
+          "price": 485
+        },
+        {
+          "roomType": "Quad",
+          "price": 565
+        },
+        {
+          "roomType": "Quint",
+          "price": 645
+        }
+      ]
+    },
+    {
+      "range": "06/12/2026 TO 08/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 555
+        },
+        {
+          "roomType": "Triple",
+          "price": 645
+        },
+        {
+          "roomType": "Quad",
+          "price": 735
+        },
+        {
+          "roomType": "Quint",
+          "price": 825
+        }
+      ]
+    },
+    {
+      "range": "09/01/2027 TO 07/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 405
+        },
+        {
+          "roomType": "Triple",
+          "price": 485
+        },
+        {
+          "roomType": "Quad",
+          "price": 565
+        },
+        {
+          "roomType": "Quint",
+          "price": 625
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "nada-ajyad-hotel-alharmain",
+  "name": "Nada Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "11/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 410
+        },
+        {
+          "roomType": "Quad",
+          "price": 450
+        }
+      ]
+    },
+    {
+      "range": "30/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 440
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "azka-al-maqam-hotel-alharmain",
+  "name": "Azka Al Maqam Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 5,
+  "seasons": [
+    {
+      "range": "20/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 600
+        },
+        {
+          "roomType": "Triple",
+          "price": 670
+        },
+        {
+          "roomType": "Quad",
+          "price": 740
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 650
+        },
+        {
+          "roomType": "Triple",
+          "price": 740
+        },
+        {
+          "roomType": "Quad",
+          "price": 830
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 680
+        },
+        {
+          "roomType": "Triple",
+          "price": 780
+        },
+        {
+          "roomType": "Quad",
+          "price": 870
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-al-bait-hotel-alharmain",
+  "name": "Elaf Al Bait Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 620
+        },
+        {
+          "roomType": "Triple",
+          "price": 695
+        },
+        {
+          "roomType": "Quad",
+          "price": 770
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 645
+        },
+        {
+          "roomType": "Triple",
+          "price": 745
+        },
+        {
+          "roomType": "Quad",
+          "price": 845
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 670
+        },
+        {
+          "roomType": "Triple",
+          "price": 770
+        },
+        {
+          "roomType": "Quad",
+          "price": 870
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "manazel-ajyad-ex-elaf-ajyad-alharmain",
+  "name": "Manazel Ajyad ex Elaf Ajyad",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 580
+        },
+        {
+          "roomType": "Quad",
+          "price": 640
+        },
+        {
+          "roomType": "Suite (5pax)",
+          "price": 740
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 21/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 560
+        },
+        {
+          "roomType": "Triple",
+          "price": 620
+        },
+        {
+          "roomType": "Quad",
+          "price": 680
+        },
+        {
+          "roomType": "Suite (5pax)",
+          "price": 780
+        }
+      ]
+    },
+    {
+      "range": "21/12/2026 TO 04/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 700
+        },
+        {
+          "roomType": "Triple",
+          "price": 760
+        },
+        {
+          "roomType": "Quad",
+          "price": 820
+        },
+        {
+          "roomType": "Suite (5pax)",
+          "price": 920
+        }
+      ]
+    },
+    {
+      "range": "04/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 590
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 710
+        },
+        {
+          "roomType": "Suite (5pax)",
+          "price": 810
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 08/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 570
+        },
+        {
+          "roomType": "Triple",
+          "price": 650
+        },
+        {
+          "roomType": "Quad",
+          "price": 710
+        },
+        {
+          "roomType": "Suite (5pax)",
+          "price": 810
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-bakkah-hotel-alharmain",
+  "name": "Elaf Bakkah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 340
+        },
+        {
+          "roomType": "Triple",
+          "price": 400
+        },
+        {
+          "roomType": "Quad",
+          "price": 460
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 21/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 380
+        },
+        {
+          "roomType": "Triple",
+          "price": 440
+        },
+        {
+          "roomType": "Quad",
+          "price": 500
+        }
+      ]
+    },
+    {
+      "range": "21/12/2026 TO 04/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "04/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 460
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 08/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 460
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "elaf-qinwan-hotel-alharmain",
+  "name": "Elaf Qinwan Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 300
+        },
+        {
+          "roomType": "Triple",
+          "price": 360
+        },
+        {
+          "roomType": "Quad",
+          "price": 420
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 21/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 340
+        },
+        {
+          "roomType": "Triple",
+          "price": 400
+        },
+        {
+          "roomType": "Quad",
+          "price": 460
+        }
+      ]
+    },
+    {
+      "range": "21/12/2026 TO 04/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 420
+        },
+        {
+          "roomType": "Triple",
+          "price": 480
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    },
+    {
+      "range": "04/01/2027 TO 08/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 360
+        },
+        {
+          "roomType": "Triple",
+          "price": 420
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 08/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 360
+        },
+        {
+          "roomType": "Triple",
+          "price": 420
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "nawarat-al-shams-1-hotel-alharmain",
+  "name": "Nawarat Al Shams 1 Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "nawarat-al-shams-2-hotel-alharmain",
+  "name": "Nawarat Al Shams 2 Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "nawarat-al-shams-3-hotel-alharmain",
+  "name": "Nawarat Al Shams 3 Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "al-ziady-ajyad-hotel-alharmain",
+  "name": "Al Ziady Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 410
+        },
+        {
+          "roomType": "Quad",
+          "price": 450
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 450
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "diyafa-al-jamal-ex-noran-hotel-alharmain",
+  "name": "Diyafa Al Jamal ex Noran Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 410
+        },
+        {
+          "roomType": "Triple",
+          "price": 445
+        },
+        {
+          "roomType": "Quad",
+          "price": 490
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "miqat-ajyad-hotel-alharmain",
+  "name": "Miqat Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/07/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 510
+        },
+        {
+          "roomType": "Triple",
+          "price": 555
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 565
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "sunrise-ajyad-hotel-alharmain",
+  "name": "Sunrise Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 24/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 360
+        },
+        {
+          "roomType": "Triple",
+          "price": 430
+        },
+        {
+          "roomType": "Quad",
+          "price": 500
+        }
+      ]
+    },
+    {
+      "range": "25/07/2026 TO 06/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 380
+        },
+        {
+          "roomType": "Triple",
+          "price": 460
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    },
+    {
+      "range": "09/03/2027 TO 27/04/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 440
+        },
+        {
+          "roomType": "Quad",
+          "price": 510
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "sawaed-al-khair-hotel-alharmain",
+  "name": "Sawaed Al Khair Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 475
+        },
+        {
+          "roomType": "Triple",
+          "price": 520
+        },
+        {
+          "roomType": "Quad",
+          "price": 575
+        }
+      ]
+    },
+    {
+      "range": "30/07/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 495
+        },
+        {
+          "roomType": "Triple",
+          "price": 540
+        },
+        {
+          "roomType": "Quad",
+          "price": 585
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "wahat-ajyad-hotel-alharmain",
+  "name": "Wahat Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 410
+        },
+        {
+          "roomType": "Quad",
+          "price": 450
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 430
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "rawabi-zam-zam-hotel-alharmain",
+  "name": "Rawabi Zam Zam Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 14/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 470
+        },
+        {
+          "roomType": "Quad",
+          "price": 510
+        }
+      ]
+    },
+    {
+      "range": "14/08/2026 TO 01/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "burj-al-fuad-hotel-alharmain",
+  "name": "Burj Al Fuad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 01/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 445
+        },
+        {
+          "roomType": "Triple",
+          "price": 485
+        },
+        {
+          "roomType": "Quad",
+          "price": 525
+        }
+      ]
+    },
+    {
+      "range": "01/07/2026 TO 01/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 460
+        },
+        {
+          "roomType": "Triple",
+          "price": 500
+        },
+        {
+          "roomType": "Quad",
+          "price": 540
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "nada-al-diafa-hotel-alharmain",
+  "name": "Nada Al Diafa Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 510
+        },
+        {
+          "roomType": "Triple",
+          "price": 550
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "winner-inn-ajyad-ex-mather-al-eiman-alharmain",
+  "name": "Winner Inn Ajyad ex Mather Al Eiman",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 380
+        },
+        {
+          "roomType": "Triple",
+          "price": 425
+        },
+        {
+          "roomType": "Quad",
+          "price": 470
+        }
+      ]
+    },
+    {
+      "range": "15/07/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 445
+        },
+        {
+          "roomType": "Quad",
+          "price": 490
+        }
+      ]
+    },
+    {
+      "range": "12/09/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 430
+        },
+        {
+          "roomType": "Triple",
+          "price": 475
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "makarem-al-hijra-hotel-alharmain",
+  "name": "Makarem Al Hijra Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 15/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 310
+        },
+        {
+          "roomType": "Triple",
+          "price": 350
+        },
+        {
+          "roomType": "Quad",
+          "price": 390
+        }
+      ]
+    },
+    {
+      "range": "15/07/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 330
+        },
+        {
+          "roomType": "Triple",
+          "price": 370
+        },
+        {
+          "roomType": "Quad",
+          "price": 410
+        }
+      ]
+    },
+    {
+      "range": "12/09/2026 TO 10/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 350
+        },
+        {
+          "roomType": "Triple",
+          "price": 390
+        },
+        {
+          "roomType": "Quad",
+          "price": 430
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "mira-ajyad-hotel-alharmain",
+  "name": "Mira Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "17/06/2026 TO 31/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 580
+        },
+        {
+          "roomType": "Quad",
+          "price": 640
+        },
+        {
+          "roomType": "Quint",
+          "price": 410
+        }
+      ]
+    },
+    {
+      "range": "01/09/2026 TO 31/10/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 550
+        },
+        {
+          "roomType": "Triple",
+          "price": 610
+        },
+        {
+          "roomType": "Quad",
+          "price": 670
+        },
+        {
+          "roomType": "Quint",
+          "price": 740
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "ghalib-ajyad-hotel-alharmain",
+  "name": "Ghalib Ajyad Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 09/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 400
+        },
+        {
+          "roomType": "Triple",
+          "price": 445
+        },
+        {
+          "roomType": "Quad",
+          "price": 490
+        }
+      ]
+    },
+    {
+      "range": "10/07/2026 TO 05/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 545
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "zuwar-al-bait-tower-a-hotel-alharmain",
+  "name": "Zuwar Al Bait (Tower A) Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 435
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 535
+        },
+        {
+          "roomType": "Quad",
+          "price": 580
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 30/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 510
+        },
+        {
+          "roomType": "Triple",
+          "price": 555
+        },
+        {
+          "roomType": "Quad",
+          "price": 600
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 31/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 540
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "zuwar-al-bait-tower-b-hotel-alharmain",
+  "name": "Zuwar Al Bait (Tower B) Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 435
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 525
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 30/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 500
+        },
+        {
+          "roomType": "Triple",
+          "price": 545
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 31/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 530
+        },
+        {
+          "roomType": "Triple",
+          "price": 575
+        },
+        {
+          "roomType": "Quad",
+          "price": 620
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "zuwar-al-bait-tower-c-hotel-alharmain",
+  "name": "Zuwar Al Bait (Tower C) Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 435
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 470
+        },
+        {
+          "roomType": "Triple",
+          "price": 515
+        },
+        {
+          "roomType": "Quad",
+          "price": 560
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 30/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 480
+        },
+        {
+          "roomType": "Triple",
+          "price": 525
+        },
+        {
+          "roomType": "Quad",
+          "price": 570
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 31/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 520
+        },
+        {
+          "roomType": "Triple",
+          "price": 565
+        },
+        {
+          "roomType": "Quad",
+          "price": 610
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "zuwar-al-bait-tower-d-hotel-alharmain",
+  "name": "Zuwar Al Bait (Tower D) Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 340
+        },
+        {
+          "roomType": "Triple",
+          "price": 385
+        },
+        {
+          "roomType": "Quad",
+          "price": 430
+        }
+      ]
+    },
+    {
+      "range": "01/08/2026 TO 30/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 360
+        },
+        {
+          "roomType": "Triple",
+          "price": 405
+        },
+        {
+          "roomType": "Quad",
+          "price": 450
+        }
+      ]
+    },
+    {
+      "range": "01/10/2026 TO 30/11/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 370
+        },
+        {
+          "roomType": "Triple",
+          "price": 415
+        },
+        {
+          "roomType": "Quad",
+          "price": 460
+        }
+      ]
+    },
+    {
+      "range": "01/12/2026 TO 31/01/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 390
+        },
+        {
+          "roomType": "Triple",
+          "price": 435
+        },
+        {
+          "roomType": "Quad",
+          "price": 480
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "nada-deafah-hotel-alharmain",
+  "name": "Nada Deafah Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 3,
+  "seasons": [
+    {
+      "range": "01/06/2026 TO 31/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 540
+        },
+        {
+          "roomType": "Triple",
+          "price": 585
+        },
+        {
+          "roomType": "Quad",
+          "price": 630
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "ramada-al-fayzeen-hotel-alharmain",
+  "name": "Ramada Al Fayzeen Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "25/06/2026 TO 09/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 410
+        },
+        {
+          "roomType": "Triple",
+          "price": 460
+        },
+        {
+          "roomType": "Quad",
+          "price": 510
+        }
+      ]
+    },
+    {
+      "range": "09/07/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 420
+        },
+        {
+          "roomType": "Triple",
+          "price": 470
+        },
+        {
+          "roomType": "Quad",
+          "price": 520
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 455
+        },
+        {
+          "roomType": "Triple",
+          "price": 505
+        },
+        {
+          "roomType": "Quad",
+          "price": 555
+        }
+      ]
+    },
+    {
+      "range": "30/07/2026 TO 05/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 490
+        },
+        {
+          "roomType": "Triple",
+          "price": 540
+        },
+        {
+          "roomType": "Quad",
+          "price": 590
+        }
+      ]
+    },
+    {
+      "range": "05/09/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 445
+        },
+        {
+          "roomType": "Triple",
+          "price": 495
+        },
+        {
+          "roomType": "Quad",
+          "price": 545
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "badr-al-massa-hotel-alharmain",
+  "name": "Badr Al Massa Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 4,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 320
+        },
+        {
+          "roomType": "Triple",
+          "price": 360
+        },
+        {
+          "roomType": "Quad",
+          "price": 400
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 30/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 325
+        },
+        {
+          "roomType": "Triple",
+          "price": 365
+        },
+        {
+          "roomType": "Quad",
+          "price": 405
+        }
+      ]
+    },
+    {
+      "range": "30/07/2026 TO 05/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 330
+        },
+        {
+          "roomType": "Triple",
+          "price": 370
+        },
+        {
+          "roomType": "Quad",
+          "price": 410
+        }
+      ]
+    },
+    {
+      "range": "05/09/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 325
+        },
+        {
+          "roomType": "Triple",
+          "price": 365
+        },
+        {
+          "roomType": "Quad",
+          "price": 405
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "manazil-al-ain-ex-nassaim-al-jory-alharmain",
+  "name": "Manazil Al Ain ex Nassaim Al Jory",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "15/06/2026 TO 14/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 210
+        },
+        {
+          "roomType": "Triple",
+          "price": 250
+        },
+        {
+          "roomType": "Quad",
+          "price": 300
+        }
+      ]
+    },
+    {
+      "range": "14/09/2026 TO 16/12/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 260
+        },
+        {
+          "roomType": "Triple",
+          "price": 300
+        },
+        {
+          "roomType": "Quad",
+          "price": 350
+        }
+      ]
+    },
+    {
+      "range": "16/12/2026 TO 02/02/2027",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 290
+        },
+        {
+          "roomType": "Triple",
+          "price": 330
+        },
+        {
+          "roomType": "Quad",
+          "price": 380
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "maysan-al-mahbas-hotel-alharmain",
+  "name": "Maysan Al Mahbas Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 235
+        },
+        {
+          "roomType": "Triple",
+          "price": 280
+        },
+        {
+          "roomType": "Quad",
+          "price": 325
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 240
+        },
+        {
+          "roomType": "Triple",
+          "price": 285
+        },
+        {
+          "roomType": "Quad",
+          "price": 330
+        }
+      ]
+    },
+    {
+      "range": "13/08/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 260
+        },
+        {
+          "roomType": "Triple",
+          "price": 305
+        },
+        {
+          "roomType": "Quad",
+          "price": 350
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "maysan-al-multazem-hotel-alharmain",
+  "name": "Maysan Al Multazem Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 215
+        },
+        {
+          "roomType": "Triple",
+          "price": 260
+        },
+        {
+          "roomType": "Quad",
+          "price": 305
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 225
+        },
+        {
+          "roomType": "Triple",
+          "price": 270
+        },
+        {
+          "roomType": "Quad",
+          "price": 305
+        }
+      ]
+    },
+    {
+      "range": "13/08/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 235
+        },
+        {
+          "roomType": "Triple",
+          "price": 280
+        },
+        {
+          "roomType": "Quad",
+          "price": 325
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "al-manara-hotel-alharmain",
+  "name": "Al Manara Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 16/07/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 260
+        },
+        {
+          "roomType": "Triple",
+          "price": 295
+        },
+        {
+          "roomType": "Quad",
+          "price": 330
+        },
+        {
+          "roomType": "Quint",
+          "price": 375
+        }
+      ]
+    },
+    {
+      "range": "16/07/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 310
+        },
+        {
+          "roomType": "Triple",
+          "price": 345
+        },
+        {
+          "roomType": "Quad",
+          "price": 380
+        },
+        {
+          "roomType": "Quint",
+          "price": 425
+        }
+      ]
+    },
+    {
+      "range": "13/08/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 360
+        },
+        {
+          "roomType": "Triple",
+          "price": 395
+        },
+        {
+          "roomType": "Quad",
+          "price": 430
+        },
+        {
+          "roomType": "Quint",
+          "price": 475
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "maysan-safa-al-jarwal-hotel-alharmain",
+  "name": "Maysan Safa Al Jarwal Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "16/06/2026 TO 13/08/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 200
+        },
+        {
+          "roomType": "Triple",
+          "price": 240
+        },
+        {
+          "roomType": "Quad",
+          "price": 280
+        }
+      ]
+    },
+    {
+      "range": "13/08/2026 TO 12/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 210
+        },
+        {
+          "roomType": "Triple",
+          "price": 250
+        },
+        {
+          "roomType": "Quad",
+          "price": 290
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-al-rayyan-hotel-alharmain",
+  "name": "Snood Al Rayyan Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 260
+        },
+        {
+          "roomType": "Triple",
+          "price": 305
+        },
+        {
+          "roomType": "Quad",
+          "price": 350
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "anan-snood-hotel-alharmain",
+  "name": "Anan Snood Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 270
+        },
+        {
+          "roomType": "Triple",
+          "price": 315
+        },
+        {
+          "roomType": "Quad",
+          "price": 360
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-mawten-hotel-alharmain",
+  "name": "Snood Mawten Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 230
+        },
+        {
+          "roomType": "Triple",
+          "price": 275
+        },
+        {
+          "roomType": "Quad",
+          "price": 320
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-al-huda-hotel-alharmain",
+  "name": "Snood Al Huda Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 215
+        },
+        {
+          "roomType": "Triple",
+          "price": 260
+        },
+        {
+          "roomType": "Quad",
+          "price": 305
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-al-marwa-hotel-alharmain",
+  "name": "Snood Al Marwa Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 215
+        },
+        {
+          "roomType": "Triple",
+          "price": 260
+        },
+        {
+          "roomType": "Quad",
+          "price": 305
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-al-azma-hotel-alharmain",
+  "name": "Snood Al Azma Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 205
+        },
+        {
+          "roomType": "Triple",
+          "price": 250
+        },
+        {
+          "roomType": "Quad",
+          "price": 295
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-al-rawda-hotel-alharmain",
+  "name": "Snood Al Rawda Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 210
+        },
+        {
+          "roomType": "Triple",
+          "price": 255
+        },
+        {
+          "roomType": "Quad",
+          "price": 300
+        }
+      ]
+    }
+  ]
+},
+{
+  "id": "snood-al-dana-hotel-alharmain",
+  "name": "Snood Al Dana Hotel",
+  "city": "Makkah",
+  "vendor": "Alharmain Hotels Management",
+  "mealPlan": "FB",
+  "stars": 2,
+  "seasons": [
+    {
+      "range": "30/06/2026 TO 11/09/2026",
+      "prices": [
+        {
+          "roomType": "Double",
+          "price": 200
+        },
+        {
+          "roomType": "Triple",
+          "price": 245
+        },
+        {
+          "roomType": "Quad",
+          "price": 290
+        }
+      ]
+    }
+  ]
+}
 ];
 
 export const defaultHotels: Hotel[] = [

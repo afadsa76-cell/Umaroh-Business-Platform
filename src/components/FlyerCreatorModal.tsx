@@ -658,6 +658,8 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                   padding-bottom: 2.5px !important;
                 }
 
+
+
                 /* Specific box adjustment for the regulatory logos to keep them vertically centered */
                 #flyer-capture-area .bg-white.rounded {
                   height: 32px !important;
@@ -964,9 +966,9 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                               <h1 className="text-[19.5px] font-extrabold text-amber-400 tracking-wide uppercase leading-snug [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)] overflow-hidden line-clamp-2 max-h-[57px]">
                                 {paket.nama}
                               </h1>
-                              <div className="inline-block mt-0.5 bg-black/80 border border-amber-500/30 rounded-full px-4 pt-0.5 pb-1 shadow-md">
+                              <div className="inline-block mt-1 bg-black/80 border border-amber-500/30 rounded-full px-4 py-1 shadow-md text-center">
                                 <span 
-                                  className="text-[12px] font-black uppercase tracking-wider text-white leading-none inline-block -translate-y-[1.5px]"
+                                  className="text-[12px] font-black uppercase tracking-wider text-white leading-normal"
                                   style={{ color: '#FFFFFF', textShadow: '1px 1px 1px rgba(0,0,0,0.6)' }}
                                 >
                                   ✨ {paket.durasiHari || 9} HARI | {formatIndonesianDate(paket.tglBerangkat)}
@@ -996,27 +998,27 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                           >
                             <div className="w-full bg-white/95 shadow-lg rounded-[24px] py-2 px-3 text-slate-800 grid grid-cols-12 gap-2.5 border border-white/50 shrink-0">
                               <div className="col-span-8 bg-slate-900 text-white rounded-[18px] py-2 px-3 flex items-center justify-between border border-slate-800 shadow-inner">
-                                <div className="flex flex-col text-left -translate-y-[1.5px]">
+                                <div className="flex flex-col text-left py-0.5">
                                   <span className="text-[12px] font-black text-gray-400 uppercase tracking-widest">HPP QUAD</span>
-                                  <span className="text-[22px] font-black text-amber-400 mt-0.5 leading-none">
+                                  <span className="text-[22px] font-black text-amber-400 mt-0.5 leading-normal">
                                     Rp {(initialPrice / 1000000).toFixed(1)} <span className="text-[14px]">Jt</span>
                                   </span>
                                 </div>
-                                <div className="w-[1px] h-9 bg-slate-800 -translate-y-[0.5px]"></div>
-                                <div className="flex flex-col text-[13px] font-black text-white leading-tight pr-1 -translate-y-[1.5px]">
+                                <div className="w-[1px] h-9 bg-slate-800"></div>
+                                <div className="flex flex-col text-[13px] font-black text-white leading-normal pr-1 py-0.5">
                                   <div className="flex justify-between gap-1.5">
                                     <span className="text-gray-400 uppercase tracking-wider">TRIPLE:</span>
                                     <span className="text-amber-400">Rp {paket.hargaJualTriple ? (paket.hargaJualTriple / 1000000).toFixed(1) : 'XX,X'} Jt</span>
                                   </div>
-                                  <div className="flex justify-between gap-1.5 mt-1">
+                                  <div className="flex justify-between gap-1.5 mt-0.5">
                                     <span className="text-gray-400 uppercase tracking-wider">DOUBLE:</span>
                                     <span className="text-amber-400">Rp {paket.hargaJualDouble ? (paket.hargaJualDouble / 1000000).toFixed(1) : 'XX,X'} Jt</span>
                                   </div>
                                 </div>
                               </div>
-                              <div className="col-span-4 flex flex-col justify-center items-center text-center -translate-y-[1px]">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5 leading-none">Flight by:</span>
-                                <span className="text-[12.5px] font-black text-slate-800 uppercase tracking-wide leading-tight break-words max-w-full">
+                              <div className="col-span-4 flex flex-col justify-center items-center text-center">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5 leading-normal">Flight by:</span>
+                                <span className="text-[12.5px] font-black text-slate-800 uppercase tracking-wide leading-normal break-words max-w-full">
                                   ✈️ {resolvedMaskapaiName}
                                 </span>
                               </div>
@@ -1093,8 +1095,8 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                           >
                             <div className="w-full bg-amber-950 border border-amber-500/35 rounded-[24px] py-2 px-3 flex items-start justify-between shadow-lg shrink-0">
                               <div className="min-w-0 flex-1 text-left">
-                                <div className="inline-block bg-black text-amber-400 font-extrabold text-[12px] px-3.5 pt-0.5 pb-1 rounded-full border border-amber-500/30 shadow-sm uppercase tracking-widest mb-1 leading-none">
-                                  <span className="inline-block -translate-y-[1.5px]">Termasuk (Include)</span>
+                                <div className="inline-block bg-black text-amber-400 font-extrabold text-[12px] px-3.5 py-1 rounded-full border border-amber-500/30 shadow-sm uppercase tracking-widest mb-1.5 text-center leading-normal">
+                                  Termasuk (Include)
                                 </div>
                                 <ul className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] font-bold text-amber-50/95 leading-normal">
                                   <li className="flex items-center gap-0.5">
@@ -1228,9 +1230,9 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                             <h1 className="text-[19.5px] font-extrabold text-amber-400 tracking-wide uppercase leading-snug [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)] overflow-hidden line-clamp-2 max-h-[57px]">
                               {paket.nama}
                             </h1>
-                            <div className="inline-block mt-0.5 bg-black/80 border border-amber-500/30 rounded-full px-4 pt-0.5 pb-1 shadow-md">
+                            <div className="inline-block mt-1 bg-black/80 border border-amber-500/30 rounded-full px-4 py-1 shadow-md text-center">
                               <span 
-                                className="text-[12px] font-black uppercase tracking-wider text-white leading-none inline-block -translate-y-[1.5px]"
+                                className="text-[12px] font-black uppercase tracking-wider text-white leading-normal"
                                 style={{ color: '#FFFFFF', textShadow: '1px 1px 1px rgba(0,0,0,0.6)' }}
                               >
                                 ✨ {paket.durasiHari || 9} HARI | {formatIndonesianDate(paket.tglBerangkat)}
@@ -1243,21 +1245,21 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                             {/* Price Container */}
                             <div className="col-span-8 bg-slate-900 text-white rounded-[18px] py-2 px-3 flex items-center justify-between border border-slate-800 shadow-inner">
                               {/* Quad */}
-                              <div className="flex flex-col text-left -translate-y-[1.5px]">
+                              <div className="flex flex-col text-left py-0.5">
                                 <span className="text-[12px] font-black text-gray-400 uppercase tracking-widest">HPP QUAD</span>
-                                <span className="text-[22px] font-black text-amber-400 mt-0.5 leading-none">
+                                <span className="text-[22px] font-black text-amber-400 mt-0.5 leading-normal">
                                   Rp {(initialPrice / 1000000).toFixed(1)} <span className="text-[14px]">Jt</span>
                                 </span>
                               </div>
                               {/* Divider */}
-                              <div className="w-[1px] h-9 bg-slate-800 -translate-y-[0.5px]"></div>
+                              <div className="w-[1px] h-9 bg-slate-800"></div>
                               {/* Triple & Double */}
-                              <div className="flex flex-col text-[13px] font-black text-white leading-tight pr-1 -translate-y-[1.5px]">
+                              <div className="flex flex-col text-[13px] font-black text-white leading-normal pr-1 py-0.5">
                                 <div className="flex justify-between gap-1.5">
                                   <span className="text-gray-400 uppercase tracking-wider">TRIPLE:</span>
                                   <span className="text-amber-400">Rp {paket.hargaJualTriple ? (paket.hargaJualTriple / 1000000).toFixed(1) : 'XX,X'} Jt</span>
                                 </div>
-                                <div className="flex justify-between gap-1.5 mt-1">
+                                <div className="flex justify-between gap-1.5 mt-0.5">
                                   <span className="text-gray-400 uppercase tracking-wider">DOUBLE:</span>
                                   <span className="text-amber-400">Rp {paket.hargaJualDouble ? (paket.hargaJualDouble / 1000000).toFixed(1) : 'XX,X'} Jt</span>
                                 </div>
@@ -1265,9 +1267,9 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                             </div>
                             
                             {/* Flight Container */}
-                            <div className="col-span-4 flex flex-col justify-center items-center text-center -translate-y-[1px]">
-                              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5 leading-none">Flight by:</span>
-                              <span className="text-[12.5px] font-black text-slate-800 uppercase tracking-wide leading-tight break-words max-w-full">
+                            <div className="col-span-4 flex flex-col justify-center items-center text-center">
+                              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-0.5 leading-normal">Flight by:</span>
+                              <span className="text-[12.5px] font-black text-slate-800 uppercase tracking-wide leading-normal break-words max-w-full">
                                 ✈️ {resolvedMaskapaiName}
                               </span>
                             </div>
@@ -1310,8 +1312,8 @@ export const FlyerCreatorModal: React.FC<FlyerCreatorModalProps> = ({
                           <div className="bg-amber-950 border border-amber-500/35 rounded-[24px] py-2 px-3 mt-2 flex items-start justify-between shadow-lg shrink-0">
                             <div className="min-w-0 flex-1 text-left">
                               {/* INCLUDE Badge */}
-                              <div className="inline-block bg-black text-amber-400 font-extrabold text-[12px] px-3.5 pt-0.5 pb-1 rounded-full border border-amber-500/30 shadow-sm uppercase tracking-widest mb-1 leading-none">
-                                <span className="inline-block -translate-y-[1.5px]">Termasuk (Include)</span>
+                              <div className="inline-block bg-black text-amber-400 font-extrabold text-[12px] px-3.5 py-1 rounded-full border border-amber-500/30 shadow-sm uppercase tracking-widest mb-1.5 text-center leading-normal">
+                                Termasuk (Include)
                               </div>
                               <ul className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] font-bold text-amber-50/95 leading-normal">
                                 <li className="flex items-center gap-0.5">
