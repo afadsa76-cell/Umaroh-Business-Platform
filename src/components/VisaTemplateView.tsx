@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, RefreshCw, Download, MapPin, DollarSign, Wand2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { captureToDataUrl } from '../utils/exportUtils';
-import { visaData } from '../data/visa';
+import { visaData, VisaData } from '../data/visa';
 import { transportData } from '../data/transport';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '../types';
@@ -10,6 +10,29 @@ import { useKurs } from '../hooks/useKurs';
 
 export const VisaTemplateView: React.FC = () => {
   const { kurs: masterKurs, loading: masterKursLoading } = useKurs();
+  const [localVisaList, setLocalVisaList] = useState<VisaData[]>(() => {
+    const cached = localStorage.getItem('umaroh_db_visa');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Failed to parse cached visa list:', e);
+      }
+    }
+    return visaData;
+  });
+
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<VisaData[]>;
+      if (customEvent.detail) {
+        setLocalVisaList(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+  }, []);
+
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [totalPax, setTotalPax] = useState<number>(45);
@@ -109,7 +132,7 @@ export const VisaTemplateView: React.FC = () => {
   };
 
   const calculateTierRow = (pax: number, vType: string, rName: string) => {
-    const matchingTier = visaData.find(tier => {
+    const matchingTier = localVisaList.find(tier => {
       const range = tier.paxRange.match(/(\d+)-(\d+)/);
       if (range) {
         const min = parseInt(range[1]);
@@ -121,7 +144,7 @@ export const VisaTemplateView: React.FC = () => {
         return pax >= min;
       }
       return false;
-    }) || visaData[0];
+    }) || localVisaList[0];
 
     let dbTransportPrice = 0;
     if (includeTransport) {

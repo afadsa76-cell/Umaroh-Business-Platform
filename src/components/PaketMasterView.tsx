@@ -482,6 +482,39 @@ export const PaketMasterView: React.FC = () => {
     }).format(amount);
   };
 
+  const getCreationTimestamp = (p: PaketMaster) => {
+    const record = p as unknown as Record<string, unknown>;
+    const ts = record.createdAt || record.created_at || record.updatedAt || record.updated_at;
+    if (!ts) {
+      if (p.tglBerangkat) {
+        return new Date(p.tglBerangkat).getTime() - 45 * 24 * 60 * 60 * 1000;
+      }
+      return 0;
+    }
+    try {
+      if (typeof ts === 'object' && ts !== null) {
+        const obj = ts as Record<string, unknown>;
+        if (typeof obj.toDate === 'function') {
+          return (obj.toDate as () => Date)().getTime();
+        } else if (typeof obj.seconds === 'number') {
+          return obj.seconds * 1000;
+        } else if (typeof obj._seconds === 'number') {
+          return obj._seconds * 1000;
+        } else if (ts instanceof Date) {
+          return ts.getTime();
+        }
+      } else if (typeof ts === 'number') {
+        return ts < 9999999999 ? ts * 1000 : ts;
+      } else if (typeof ts === 'string') {
+        const parsed = new Date(ts).getTime();
+        if (!isNaN(parsed)) return parsed;
+      }
+    } catch {
+      // ignore parsing error
+    }
+    return 0;
+  };
+
   const filteredPakets = pakets.filter(p => {
     const matchesSearch = p.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           p.deskripsi.toLowerCase().includes(searchTerm.toLowerCase());
@@ -501,7 +534,7 @@ export const PaketMasterView: React.FC = () => {
       return isExpired || p.status === 'archived';
     }
     return true;
-  });
+  }).sort((a, b) => getCreationTimestamp(b) - getCreationTimestamp(a));
 
   const handleToggleArchive = async (id: string, currentStatus: string) => {
     try {

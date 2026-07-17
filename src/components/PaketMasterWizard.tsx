@@ -128,6 +128,17 @@ const formatDateShort = (dateStr?: string) => {
   return `${d.getDate()}${months[d.getMonth()]}`;
 };
 
+const formatIndonesianDate = (dateStr?: string) => {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
 interface PaketMasterWizardProps {
   initialData?: Partial<WizardFormData> & { id?: string; paketMasterId?: string; namaPaketMitra?: string };
   isMitraContext?: boolean;
@@ -1254,26 +1265,71 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }
   }, [maskapaiList, formData.maskapaiId]);
 
-  // Synchronize Hotel Dates based on tglBerangkat and durations
+  // Synchronize Hotel Dates based on tglBerangkat, durations, urutanKunjungan, and alurPerjalanan
   useEffect(() => {
     if (!formData.tglBerangkat) return;
     try {
       const baseDate = new Date(formData.tglBerangkat);
       if (isNaN(baseDate.getTime())) return;
 
-      const inMadinah = formData.tglBerangkat;
-      const outMadinahDate = new Date(baseDate);
-      outMadinahDate.setDate(
-        outMadinahDate.getDate() + (formData.durasiMadinah || 3),
-      );
-      const outMadinah = outMadinahDate.toISOString().split("T")[0];
+      // 1. Calculate the start offset if it is UMRAH PLUS with WISATA TERLEBIH DAHULU
+      let startOffset = 0;
+      if (formData.kategori === "UMRAH PLUS" && formData.alurPerjalanan === "WISATA TERLEBIH DAHULU") {
+        startOffset = Number(formData.durasiWisata) || 0;
+      }
 
-      const inMakkah = outMadinah;
-      const outMakkahDate = new Date(outMadinahDate);
-      outMakkahDate.setDate(
-        outMakkahDate.getDate() + (formData.durasiMakkah || 4),
-      );
-      const outMakkah = outMakkahDate.toISOString().split("T")[0];
+      const umrahStartDate = new Date(baseDate);
+      umrahStartDate.setDate(umrahStartDate.getDate() + startOffset);
+
+      // 2. Check if Mekkah is visited first
+      // Default to Madinah first, unless urutanKunjungan explicitly says Mekkah first
+      const urutan = (formData.urutanKunjungan || "").toLowerCase();
+      const isMekkahFirst = urutan.includes("mekkah") || urutan.startsWith("mekkah");
+
+      let inMadinah = "";
+      let outMadinah = "";
+      let inMakkah = "";
+      let outMakkah = "";
+
+      if (isMekkahFirst) {
+        // Mekkah first, then Madinah
+        const inMakkahDate = new Date(umrahStartDate);
+        inMakkah = inMakkahDate.toISOString().split("T")[0];
+
+        const outMakkahDate = new Date(inMakkahDate);
+        outMakkahDate.setDate(
+          outMakkahDate.getDate() + (formData.durasiMakkah || 4),
+        );
+        outMakkah = outMakkahDate.toISOString().split("T")[0];
+
+        const inMadinahDate = new Date(outMakkahDate);
+        inMadinah = inMadinahDate.toISOString().split("T")[0];
+
+        const outMadinahDate = new Date(inMadinahDate);
+        outMadinahDate.setDate(
+          outMadinahDate.getDate() + (formData.durasiMadinah || 3),
+        );
+        outMadinah = outMadinahDate.toISOString().split("T")[0];
+      } else {
+        // Madinah first, then Mekkah
+        const inMadinahDate = new Date(umrahStartDate);
+        inMadinah = inMadinahDate.toISOString().split("T")[0];
+
+        const outMadinahDate = new Date(inMadinahDate);
+        outMadinahDate.setDate(
+          outMadinahDate.getDate() + (formData.durasiMadinah || 3),
+        );
+        outMadinah = outMadinahDate.toISOString().split("T")[0];
+
+        const inMakkahDate = new Date(outMadinahDate);
+        inMakkah = inMakkahDate.toISOString().split("T")[0];
+
+        const outMakkahDate = new Date(inMakkahDate);
+        outMakkahDate.setDate(
+          outMakkahDate.getDate() + (formData.durasiMakkah || 4),
+        );
+        outMakkah = outMakkahDate.toISOString().split("T")[0];
+      }
 
       if (
         formData.chkInMadinah !== inMadinah ||
@@ -1292,9 +1348,64 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     } catch {
       // Ignore parsing errors
     }
-  }, [formData.tglBerangkat, formData.durasiMadinah, formData.durasiMakkah]);
+  }, [
+    formData.tglBerangkat,
+    formData.durasiMadinah,
+    formData.durasiMakkah,
+    formData.urutanKunjungan,
+    formData.kategori,
+    formData.alurPerjalanan,
+    formData.durasiWisata,
+  ]);
+
+  // Synchronize Return Date (Tanggal Kepulangan) based on tglBerangkat and durasiHari
+  useEffect(() => {
+    if (!formData.tglBerangkat) return;
+    try {
+      const baseDate = new Date(formData.tglBerangkat);
+      if (isNaN(baseDate.getTime())) return;
+
+      const calculatedReturnDate = new Date(baseDate);
+      calculatedReturnDate.setDate(calculatedReturnDate.getDate() + (formData.durasiHari || 9));
+      const targetReturnStr = calculatedReturnDate.toISOString().split("T")[0];
+
+      if (formData.tglKepulangan !== targetReturnStr) {
+        setFormData((prev) => ({
+          ...prev,
+          tglKepulangan: targetReturnStr,
+        }));
+      }
+    } catch (e) {
+      console.error("Error synchronizing return date:", e);
+    }
+  }, [formData.tglBerangkat, formData.durasiHari]);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [syncRefreshKey, setSyncRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const handleSync = () => {
+      setSyncRefreshKey((prev) => prev + 1);
+    };
+    window.addEventListener("umaroh_db_sync:umaroh_db_visa", handleSync);
+    window.addEventListener("umaroh_db_sync:umaroh_db_handling_saudi", handleSync);
+    window.addEventListener("umaroh_db_sync:umaroh_db_transport", handleSync);
+    window.addEventListener("umaroh_db_sync:umaroh_db_ziarah", handleSync);
+    window.addEventListener("umaroh_db_sync:umaroh_db_handling_domestik", handleSync);
+    window.addEventListener("umaroh_db_sync:umaroh_db_kereta_cepat", handleSync);
+    window.addEventListener("umaroh_db_sync:umaroh_db_mutawif", handleSync);
+
+    return () => {
+      window.removeEventListener("umaroh_db_sync:umaroh_db_visa", handleSync);
+      window.removeEventListener("umaroh_db_sync:umaroh_db_handling_saudi", handleSync);
+      window.removeEventListener("umaroh_db_sync:umaroh_db_transport", handleSync);
+      window.removeEventListener("umaroh_db_sync:umaroh_db_ziarah", handleSync);
+      window.removeEventListener("umaroh_db_sync:umaroh_db_handling_domestik", handleSync);
+      window.removeEventListener("umaroh_db_sync:umaroh_db_kereta_cepat", handleSync);
+      window.removeEventListener("umaroh_db_sync:umaroh_db_mutawif", handleSync);
+    };
+  }, []);
+
   const [hotelSearchTerm, setHotelSearchTerm] = useState("");
   const [hotelFilterBintang, setHotelFilterBintang] = useState("ALL");
   const [hotelFilterJarak, setHotelFilterJarak] = useState("ALL");
@@ -1320,6 +1431,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
   // Dynamic Database Loader for local storage custom data (Solusi B)
   const getLocalData = <T,>(key: string, fallback: T): T => {
+    // Reference syncRefreshKey to ensure the function re-evaluates when sync events trigger
+    if (syncRefreshKey === -1) {
+      console.log("syncRefreshKey", syncRefreshKey);
+    }
     const cached = localStorage.getItem(key);
     if (cached) {
       try {
@@ -4961,48 +5076,60 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
                     Check In
                   </label>
-                  <input
-                    type="date"
-                    value={
-                      hotelStep === "madinah"
-                        ? formData.chkInMadinah
-                        : formData.chkInMakkah
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const dateVal = new Date(val);
-                      if (hotelStep === "madinah") {
-                        if (!isNaN(dateVal.getTime())) {
-                          const outDate = new Date(dateVal);
-                          outDate.setDate(
-                            outDate.getDate() + (formData.durasiMadinah || 3),
-                          );
-                          setFormData({
-                            ...formData,
-                            chkInMadinah: val,
-                            chkOutMadinah: outDate.toISOString().split("T")[0],
-                          });
-                        } else {
-                          setFormData({ ...formData, chkInMadinah: val });
-                        }
-                      } else {
-                        if (!isNaN(dateVal.getTime())) {
-                          const outDate = new Date(dateVal);
-                          outDate.setDate(
-                            outDate.getDate() + (formData.durasiMakkah || 4),
-                          );
-                          setFormData({
-                            ...formData,
-                            chkInMakkah: val,
-                            chkOutMakkah: outDate.toISOString().split("T")[0],
-                          });
-                        } else {
-                          setFormData({ ...formData, chkInMakkah: val });
-                        }
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={
+                        hotelStep === "madinah"
+                          ? formData.chkInMadinah || ""
+                          : formData.chkInMakkah || ""
                       }
-                    }}
-                    className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-emerald-500"
-                  />
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const dateVal = new Date(val);
+                        if (hotelStep === "madinah") {
+                          if (!isNaN(dateVal.getTime())) {
+                            const outDate = new Date(dateVal);
+                            outDate.setDate(
+                              outDate.getDate() + (formData.durasiMadinah || 3),
+                            );
+                            setFormData({
+                              ...formData,
+                              chkInMadinah: val,
+                              chkOutMadinah: outDate.toISOString().split("T")[0],
+                            });
+                          } else {
+                            setFormData({ ...formData, chkInMadinah: val });
+                          }
+                        } else {
+                          if (!isNaN(dateVal.getTime())) {
+                            const outDate = new Date(dateVal);
+                            outDate.setDate(
+                              outDate.getDate() + (formData.durasiMakkah || 4),
+                            );
+                            setFormData({
+                              ...formData,
+                              chkInMakkah: val,
+                              chkOutMakkah: outDate.toISOString().split("T")[0],
+                            });
+                          } else {
+                            setFormData({ ...formData, chkInMakkah: val });
+                          }
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                    />
+                    <div className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm flex items-center justify-between min-h-[38px] focus-within:border-emerald-500">
+                      <span>
+                        {formatIndonesianDate(
+                          hotelStep === "madinah"
+                            ? formData.chkInMadinah
+                            : formData.chkInMakkah
+                        )}
+                      </span>
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex-1">
                   <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
@@ -5145,80 +5272,92 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   <label className="text-[10px] text-gray-400 font-bold mb-1 block uppercase">
                     Check Out
                   </label>
-                  <input
-                    type="date"
-                    min={
-                      hotelStep === "madinah"
-                        ? formData.chkInMadinah
-                        : formData.chkInMakkah
-                    }
-                    max={formData.tglKepulangan || undefined}
-                    value={
-                      hotelStep === "madinah"
-                        ? formData.chkOutMadinah
-                        : formData.chkOutMakkah
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const dateVal = new Date(val);
-                      const maxAllowedCombined = (Number(formData.durasiHari) || 9) - 1;
-
-                      if (hotelStep === "madinah") {
-                        const inDate = new Date(
-                          formData.chkInMadinah || formData.tglBerangkat,
-                        );
-                        if (
-                          !isNaN(dateVal.getTime()) &&
-                          !isNaN(inDate.getTime())
-                        ) {
-                          const rawDiff = Math.ceil(
-                            (dateVal.getTime() - inDate.getTime()) /
-                              (1000 * 3600 * 24),
-                          );
-                          const diff = Math.min(maxAllowedCombined, Math.max(1, rawDiff));
-                          const finalDate = new Date(inDate);
-                          finalDate.setDate(finalDate.getDate() + diff);
-                          const finalDateStr = finalDate.toISOString().split("T")[0];
-
-                          setFormData({
-                            ...formData,
-                            chkOutMadinah: finalDateStr,
-                            durasiMadinah: diff,
-                          });
-                        } else {
-                          setFormData({ ...formData, chkOutMadinah: val });
-                        }
-                      } else {
-                        const inDate = new Date(
-                          formData.chkInMakkah ||
-                            formData.chkOutMadinah ||
-                            formData.tglBerangkat,
-                        );
-                        if (
-                          !isNaN(dateVal.getTime()) &&
-                          !isNaN(inDate.getTime())
-                        ) {
-                          const rawDiff = Math.ceil(
-                            (dateVal.getTime() - inDate.getTime()) /
-                              (1000 * 3600 * 24),
-                          );
-                          const diff = Math.min(maxAllowedCombined, Math.max(1, rawDiff));
-                          const finalDate = new Date(inDate);
-                          finalDate.setDate(finalDate.getDate() + diff);
-                          const finalDateStr = finalDate.toISOString().split("T")[0];
-
-                          setFormData({
-                            ...formData,
-                            chkOutMakkah: finalDateStr,
-                            durasiMakkah: diff,
-                          });
-                        } else {
-                          setFormData({ ...formData, chkOutMakkah: val });
-                        }
+                  <div className="relative">
+                    <input
+                      type="date"
+                      min={
+                        hotelStep === "madinah"
+                          ? formData.chkInMadinah
+                          : formData.chkInMakkah
                       }
-                    }}
-                    className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-emerald-500"
-                  />
+                      max={formData.tglKepulangan || undefined}
+                      value={
+                        hotelStep === "madinah"
+                          ? formData.chkOutMadinah || ""
+                          : formData.chkOutMakkah || ""
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const dateVal = new Date(val);
+                        const maxAllowedCombined = (Number(formData.durasiHari) || 9) - 1;
+
+                        if (hotelStep === "madinah") {
+                          const inDate = new Date(
+                            formData.chkInMadinah || formData.tglBerangkat,
+                          );
+                          if (
+                            !isNaN(dateVal.getTime()) &&
+                            !isNaN(inDate.getTime())
+                          ) {
+                            const rawDiff = Math.ceil(
+                              (dateVal.getTime() - inDate.getTime()) /
+                                (1000 * 3600 * 24),
+                            );
+                            const diff = Math.min(maxAllowedCombined, Math.max(1, rawDiff));
+                            const finalDate = new Date(inDate);
+                            finalDate.setDate(finalDate.getDate() + diff);
+                            const finalDateStr = finalDate.toISOString().split("T")[0];
+
+                            setFormData({
+                              ...formData,
+                              chkOutMadinah: finalDateStr,
+                              durasiMadinah: diff,
+                            });
+                          } else {
+                            setFormData({ ...formData, chkOutMadinah: val });
+                          }
+                        } else {
+                          const inDate = new Date(
+                            formData.chkInMakkah ||
+                              formData.chkOutMadinah ||
+                              formData.tglBerangkat,
+                          );
+                          if (
+                            !isNaN(dateVal.getTime()) &&
+                            !isNaN(inDate.getTime())
+                          ) {
+                            const rawDiff = Math.ceil(
+                              (dateVal.getTime() - inDate.getTime()) /
+                                (1000 * 3600 * 24),
+                            );
+                            const diff = Math.min(maxAllowedCombined, Math.max(1, rawDiff));
+                            const finalDate = new Date(inDate);
+                            finalDate.setDate(finalDate.getDate() + diff);
+                            const finalDateStr = finalDate.toISOString().split("T")[0];
+
+                            setFormData({
+                              ...formData,
+                              chkOutMakkah: finalDateStr,
+                              durasiMakkah: diff,
+                            });
+                          } else {
+                            setFormData({ ...formData, chkOutMakkah: val });
+                          }
+                        }
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                    />
+                    <div className="w-full bg-[#151928] text-gray-300 px-3 py-2 rounded-lg border border-gray-700 text-sm flex items-center justify-between min-h-[38px] focus-within:border-emerald-500">
+                      <span>
+                        {formatIndonesianDate(
+                          hotelStep === "madinah"
+                            ? formData.chkOutMadinah
+                            : formData.chkOutMakkah
+                        )}
+                      </span>
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex-1 flex items-end">
                   <div className="w-full bg-[#0d4a3e] border border-[#166554] text-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[42px]">

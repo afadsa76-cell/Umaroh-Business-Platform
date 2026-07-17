@@ -4,7 +4,7 @@ import { hotels, Hotel } from '../data/hotels';
 import { HANDLING_TIERS, HANDLING_CONSTANTS } from '../data/handlingSaudi';
 import { transportData } from '../data/transport';
 import { equipmentData } from '../data/equipment';
-import { visaData } from '../data/visa';
+import { visaData, VisaData } from '../data/visa';
 import { maskapaiData } from '../data/maskapai';
 import { handlingDomestikData } from '../data/handlingDomestik';
 import { manasikData } from '../data/manasik';
@@ -69,6 +69,29 @@ const getSOHotelPriceApk = (hotel: Hotel | undefined, dateStr: string, roomType:
 };
 
 export const SalesOrderView: React.FC = () => {
+  const [localVisaList, setLocalVisaList] = useState<VisaData[]>(() => {
+    const cached = localStorage.getItem('umaroh_db_visa');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Failed to parse cached visa list:', e);
+      }
+    }
+    return visaData;
+  });
+
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<VisaData[]>;
+      if (customEvent.detail) {
+        setLocalVisaList(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+  }, []);
+
   const [namaPaket, setNamaPaket] = useState('');
   const [namaTravel, setNamaTravel] = useState('');
   const [namaMitra, setNamaMitra] = useState('');
@@ -184,7 +207,7 @@ export const SalesOrderView: React.FC = () => {
   const [selectedHotelMakkah, setSelectedHotelMakkah] = useState(hotels.find(h => h.city === 'Makkah')?.id || '');
   const [selectedHandling, setSelectedHandling] = useState(HANDLING_TIERS[0]?.minPax.toString() || '');
   const [selectedEquipment, setSelectedEquipment] = useState(equipmentData[0]?.id || '');
-  const [selectedVisa, setSelectedVisa] = useState(visaData[0]?.id || '');
+  const [selectedVisa, setSelectedVisa] = useState(localVisaList[0]?.id || '');
   const [selectedTransport, setSelectedTransport] = useState(transportData[0] ? `${transportData[0].id}|0` : '');
   const [selectedMaskapai, setSelectedMaskapai] = useState('');
   const [selectedHandlingDomestik, setSelectedHandlingDomestik] = useState(handlingDomestikData[0]?.id || '');
@@ -594,8 +617,8 @@ export const SalesOrderView: React.FC = () => {
     
     // Auto select Visa based on pax
     const targetVisa = jumlahPax > 34 
-      ? visaData.find(v => v.paxRange.includes('35-55')) || visaData[1] || visaData[0]
-      : visaData.find(v => v.paxRange.includes('1-34')) || visaData[0];
+      ? localVisaList.find(v => v.paxRange.includes('35-55')) || localVisaList[1] || localVisaList[0]
+      : localVisaList.find(v => v.paxRange.includes('1-34')) || localVisaList[0];
     if (targetVisa) {
       setSelectedVisa(targetVisa.id);
     }
@@ -701,9 +724,9 @@ export const SalesOrderView: React.FC = () => {
   const perlengkapan = calculateRow(equipmentHargaApk, equipmentHargaVendor, jamaahBayar, jamaahBeli);
 
   // Visa
-  const visaObj = visaData.find(v => v.id === selectedVisa);
-  const visaHargaVendor = visaObj ? visaObj.vendorPrice : 0;
-  const visaHargaApk = visaObj ? Math.ceil(visaObj.sellingPrice / 1000) * 1000 : 0;
+  const visaObj = localVisaList.find(v => v.id === selectedVisa);
+  const visaHargaVendor = visaObj ? (visaObj.foreignPriceUsd * kursUsd) : 0;
+  const visaHargaApk = visaObj ? Math.ceil((visaHargaVendor * (1 + (visaObj.percentage || 7) / 100)) / 1000) * 1000 : 0;
   const visaRow = calculateRow(visaHargaApk, visaHargaVendor, jamaahBayar, jamaahBeli);
 
   // Transport
@@ -1409,7 +1432,7 @@ export const SalesOrderView: React.FC = () => {
                 <td className="border-r border-gray-300 p-2 font-medium">
                   <select value={selectedVisa} onChange={e => setSelectedVisa(e.target.value)} className="w-full bg-transparent font-medium outline-none">
                     <option value="">Tanpa Visa</option>
-                    {visaData.map(v => (
+                    {localVisaList.map(v => (
                       <option key={v.id} value={v.id}>VISA {v.paxRange}</option>
                     ))}
                   </select>

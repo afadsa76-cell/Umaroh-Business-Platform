@@ -3,7 +3,7 @@ import { Star, MapPin, Calendar, Users, Briefcase, RefreshCw, Download } from 'l
 import { hotels, Hotel } from '../data/hotels';
 import { isDateInRange, parseDateRange } from '../utils/dateUtils';
 import { HANDLING_TIERS } from '../data/handlingSaudi';
-import { visaData } from '../data/visa';
+import { visaData, VisaData } from '../data/visa';
 import { captureToDataUrl } from '../utils/exportUtils';
 import { AIPromptInput } from './AIPromptInput';
 import { Type } from '../types';
@@ -22,6 +22,29 @@ interface QuotationRow {
 
 export const QuotationView: React.FC = () => {
   const { kurs: masterKurs, loading: masterKursLoading } = useKurs();
+  const [localVisaList, setLocalVisaList] = useState<VisaData[]>(() => {
+    const cached = localStorage.getItem('umaroh_db_visa');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Failed to parse cached visa list:', e);
+      }
+    }
+    return visaData;
+  });
+
+  useEffect(() => {
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent<VisaData[]>;
+      if (customEvent.detail) {
+        setLocalVisaList(customEvent.detail);
+      }
+    };
+    window.addEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+    return () => window.removeEventListener('umaroh_db_sync:umaroh_db_visa', handleSync);
+  }, []);
+
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [paxCount, setPaxCount] = useState<number>(35);
   const [includeHandling, setIncludeHandling] = useState<boolean>(false);
@@ -98,9 +121,9 @@ export const QuotationView: React.FC = () => {
       let visaIDR = 0;
       if (newVisa) {
         const visa = newPax > 34 
-          ? visaData.find(v => v.paxRange.includes('35-55')) || visaData[1] || visaData[0]
-          : visaData.find(v => v.paxRange.includes('1-34')) || visaData[0];
-        visaIDR = visa?.sellingPrice || 0;
+          ? localVisaList.find(v => v.paxRange.includes('35-55')) || localVisaList[1] || localVisaList[0]
+          : localVisaList.find(v => v.paxRange.includes('1-34')) || localVisaList[0];
+        visaIDR = visa ? Math.round((visa.foreignPriceUsd * kursUsd) * (1 + (visa.percentage || 7) / 100)) : 0;
       }
 
       data.rows.forEach((r: { madinahHotelId?: string; makkahHotelId?: string }, index: number) => {
@@ -264,9 +287,9 @@ export const QuotationView: React.FC = () => {
   function getVisaPriceIDR(currentPaxCount: number = paxCount, isIncluded: boolean = includeVisa): number {
     if (!isIncluded) return 0;
     const visa = currentPaxCount > 34 
-      ? visaData.find(v => v.paxRange.includes('35-55')) || visaData[1] || visaData[0]
-      : visaData.find(v => v.paxRange.includes('1-34')) || visaData[0];
-    return visa?.sellingPrice || 0;
+      ? localVisaList.find(v => v.paxRange.includes('35-55')) || localVisaList[1] || localVisaList[0]
+      : localVisaList.find(v => v.paxRange.includes('1-34')) || localVisaList[0];
+    return visa ? Math.round((visa.foreignPriceUsd * kursUsd) * (1 + (visa.percentage || 7) / 100)) : 0;
   }
 
   // Get mutawwif price per pax in SAR

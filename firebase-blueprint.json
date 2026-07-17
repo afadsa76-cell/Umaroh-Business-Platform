@@ -592,9 +592,22 @@
         "status": { "type": "string", "enum": ["active", "warning", "completed"] }
       },
       "required": ["id", "step", "title", "role", "roleLabel", "status"]
+    },
+    "SystemSetting": {
+      "title": "SystemSetting",
+      "description": "Konfigurasi sistem global (seperti kurs mata uang)",
+      "type": "object",
+      "properties": {
+        "sarToIdr": { "type": "number" },
+        "usdToIdr": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["sarToIdr", "usdToIdr"]
     }
   },
   "firestore": {
+    "/settings/{settingId}": { "schema": "SystemSetting", "description": "Koleksi konfigurasi dan parameter sistem global" },
     "/notifications/{notificationId}": { "schema": "Notification", "description": "Koleksi notifikasi real-time sistem" },
     "/users/{userId}": { "schema": "UserProfile", "description": "Koleksi data pengguna" },
     "/wallets/{walletId}": { "schema": "Wallet", "description": "Koleksi dompet pengguna" },

@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
+import { db, doc, onSnapshot, setDoc } from '../firebase';
 
 export interface KursData {
   sarToIdr: number;
@@ -30,29 +32,47 @@ const getCachedKurs = (): KursData => {
 
 export const useKurs = () => {
   const [kurs, setKurs] = useState<KursData>(getCachedKurs);
-  const loading = false;
-  const error: string | null = null;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'umaroh_cached_kurs') {
+    // Reference to /settings/kurs document in Firestore
+    const docRef = doc(db, 'settings', 'kurs');
+
+    // Subscribe to real-time changes
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap: any) => {
+        setLoading(false);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as KursData;
+          if (data && typeof data.sarToIdr === 'number' && typeof data.usdToIdr === 'number') {
+            setKurs(data);
+            localStorage.setItem('umaroh_cached_kurs', JSON.stringify(data));
+          }
+        } else {
+          // Document does not exist yet. Let's initialize it with default values.
+          setDoc(docRef, DEFAULT_KURS)
+            .then(() => {
+              setKurs(DEFAULT_KURS);
+              localStorage.setItem('umaroh_cached_kurs', JSON.stringify(DEFAULT_KURS));
+            })
+            .catch((err: any) => {
+              console.error('Failed to initialize default kurs in Firestore:', err);
+            });
+        }
+      },
+      (err: any) => {
+        console.error('Real-time kurs listener error, falling back to cached value:', err);
+        setError(err?.message || 'Gagal berlangganan data kurs real-time.');
+        setLoading(false);
+        // Fallback to cache immediately on failure
         setKurs(getCachedKurs());
       }
-    };
-
-    const handleCustomChange = () => {
-      setKurs(getCachedKurs());
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('umaroh_kurs_updated', handleCustomChange);
-
-    // Sync current value immediately on mount
-    setKurs(getCachedKurs());
+    );
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('umaroh_kurs_updated', handleCustomChange);
+      unsubscribe();
     };
   }, []);
 
@@ -64,17 +84,19 @@ export const useKurs = () => {
         updatedAt: new Date().toISOString(),
         updatedBy: userEmail || 'system'
       };
-      localStorage.setItem('umaroh_cached_kurs', JSON.stringify(payload));
+
+      const docRef = doc(db, 'settings', 'kurs');
+      await setDoc(docRef, payload);
       
-      // Notify other hook instances in the same tab
-      window.dispatchEvent(new Event('umaroh_kurs_updated'));
+      // Also update local cache for robust offline access
+      localStorage.setItem('umaroh_cached_kurs', JSON.stringify(payload));
+      setKurs(payload);
       return true;
     } catch (err) {
-      console.error('Error updating local kurs:', err);
+      console.error('Error updating kurs in Firestore:', err);
       throw err;
     }
   };
 
   return { kurs, loading, error, updateKurs };
 };
-
