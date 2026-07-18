@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell, Check, Info, AlertTriangle, X, ShoppingCart, ShoppingBag, Star, Sun, Moon } from 'lucide-react';
+import { Wallet, Users, Package, Copy, CheckCircle2, LayoutDashboard, Calendar, User, TrendingUp, Shield, Zap, Target, Sparkles, BarChart2, ArrowUpRight, ArrowDownRight, Send, RefreshCw, Download, Camera, LogOut, Plane, FileText, CheckSquare, MapPin, UserCheck, Search, MessageSquare, Bell, Check, Info, AlertTriangle, X, ShoppingCart, ShoppingBag, Star, Sun, Moon, Plus, Phone } from 'lucide-react';
 import { auth, db, doc, onSnapshot, addDoc, collection, query, where, getDocs, handleFirestoreError, OperationType, runTransaction, updateDoc, signOut, serverTimestamp } from '../firebase';
 import { AppNotification } from '../types';
 import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, sendNotification } from '../services/notificationService';
@@ -17,8 +17,10 @@ import { AISmartAnalyticsView } from './AISmartAnalyticsView';
 import { FlightTrackerWidget } from './FlightTrackerWidget';
 import { ELearningMitraView } from './ELearningMitraView';
 import { AdBanner } from './AdBanner';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, BedDouble, Menu } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
+import { ManifestPage } from './manifest/ManifestPage';
+import { RoomingListMitraView } from './RoomingListMitraView';
 
 interface MitraBooking {
   id: string;
@@ -133,10 +135,21 @@ interface TokoProduct {
   desc: string;
 }
 
-type MitraTab = 'overview' | 'feed' | 'elearning' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet' | 'toko';
+interface CrmLead {
+  id: string;
+  name: string;
+  phone: string;
+  package: string;
+  stage: string;
+  note: string;
+  source: string;
+}
+
+type MitraTab = 'overview' | 'feed' | 'elearning' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet' | 'toko' | 'manifest' | 'roomlist' | 'crm' | 'website';
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
@@ -280,6 +293,27 @@ export const DashboardMitra = () => {
   const [orderSuccess, setOrderSuccess] = useState<boolean>(false);
   const [isTokoHistoryOpen, setIsTokoHistoryOpen] = useState<boolean>(false);
   const [tokoSearch, setTokoSearch] = useState<string>('');
+
+  // CRM Lead Pipeline States
+  const [crmLeads, setCrmLeads] = useState<CrmLead[]>([
+    { id: 'lead-1', name: 'H. Ahmad Subarjo', phone: '6281234567890', package: 'Umrah Regular Syawal 9 Hari', stage: 'new', note: 'Tertarik paket Quad Bed untuk 4 orang keluarga.', source: 'Instagram' },
+    { id: 'lead-2', name: 'Ibu Hajjah Fatimah', phone: '6289876543210', package: 'Umrah VIP Ramadhan 12 Hari', stage: 'contacted', note: 'Sudah dihubungi, berminat bayar DP akhir bulan ini.', source: 'Referral' },
+    { id: 'lead-3', name: 'Bpk. Ridwan Hakim', phone: '6285566778899', package: 'Umrah Plus Turki Libur Akhir Tahun', stage: 'follow_up', note: 'Menunggu info jadwal cuti anak sekolah.', source: 'Brosur Masjid' },
+    { id: 'lead-4', name: 'Siti Aminah', phone: '6281122334455', package: 'Umrah Hemat Awal Musim Saudia', stage: 'booking', note: 'Sudah booking DP Rp 5jt/pax. Berkas sedang dikumpulkan.', source: 'Website' }
+  ]);
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [newLeadName, setNewLeadName] = useState('');
+  const [newLeadPhone, setNewLeadPhone] = useState('');
+  const [newLeadPackage, setNewLeadPackage] = useState('');
+  const [newLeadNote, setNewLeadNote] = useState('');
+  const [newLeadSource, setNewLeadSource] = useState('Instagram');
+
+  // Website Builder States
+  const [brandSlug, setBrandSlug] = useState('berkat-umrah');
+  const [heroTitle, setHeroTitle] = useState('Wujudkan Perjalanan Ibadah Umrah yang Khusyu, Aman & Nyaman Bersama Kami');
+  const [whatsappHotline, setWhatsappHotline] = useState('6281234567890');
+  const [themeColor, setThemeColor] = useState('#055734'); // emerald green
+  const [isSavedWebsite, setIsSavedWebsite] = useState(false);
   
   // Real-time collections for dynamic dashboard
   const [bookings, setBookings] = useState<MitraBooking[]>([]);
@@ -1188,6 +1222,655 @@ export const DashboardMitra = () => {
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  const renderCRM = () => {
+    const handleMoveLead = (leadId: string, nextStage: string) => {
+      setCrmLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: nextStage } : l));
+    };
+
+    const handleAddLead = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newLeadName || !newLeadPhone) {
+        alert("Nama dan No Handphone wajib diisi!");
+        return;
+      }
+      const newLead = {
+        id: `lead-${Date.now()}`,
+        name: newLeadName,
+        phone: newLeadPhone.replace(/\D/g, ''),
+        package: newLeadPackage || 'Belum Memilih Paket',
+        note: newLeadNote,
+        stage: 'new',
+        source: newLeadSource
+      };
+      setCrmLeads([...crmLeads, newLead]);
+      setNewLeadName('');
+      setNewLeadPhone('');
+      setNewLeadPackage('');
+      setNewLeadNote('');
+      setShowAddLeadModal(false);
+      alert("Prospek Baru berhasil ditambahkan!");
+    };
+
+    const handleWhatsAppSend = (lead: CrmLead, templateType: string) => {
+      let message: string;
+      if (templateType === 'intro') {
+        message = `Assalamu'alaikum wr. wb. Bapak/Ibu ${lead.name}, perkenalkan kami dari ${currentUserData?.brandName || 'Kemitraan Umaroh'}. Kami menerima informasi bahwa Bapak/Ibu tertarik dengan program "${lead.package}". Apakah ada yang bisa kami bantu mengenai jadwal keberangkatan, rincian hotel, atau pendaftaran dokumen?`;
+      } else if (templateType === 'promo') {
+        message = `Assalamu'alaikum wr. wb. Halo Bapak/Ibu ${lead.name}! Kami memiliki kabar gembira mengenai promo potongan khusus dan cashback untuk pendaftaran program "${lead.package}" minggu ini. Kursi terbatas! Mari konsultasikan rencana ibadah Bapak/Ibu sekarang juga.`;
+      } else {
+        message = `Assalamu'alaikum wr. wb. Bapak/Ibu ${lead.name}, mohon info apakah kami dapat membantu melengkapi berkas pendaftaran Umrah seperti scan KTP, Paspor, dan pasfoto? Kami siap memandu seluruh prosesnya sampai keberangkatan.`;
+      }
+      const encodedMsg = encodeURIComponent(message);
+      window.open(`https://api.whatsapp.com/send?phone=${lead.phone}&text=${encodedMsg}`, '_blank');
+    };
+
+    // Calculate CRM KPI
+    const totalLeadsCount = crmLeads.length;
+    const bookingLeadsCount = crmLeads.filter(l => l.stage === 'booking').length;
+    const conversionRate = totalLeadsCount > 0 ? Math.round((bookingLeadsCount / totalLeadsCount) * 100) : 0;
+    const hotLeadsCount = crmLeads.filter(l => l.stage === 'follow_up').length;
+
+    const stages = [
+      { id: 'new', title: 'Prospek Baru (Leads)', color: 'bg-blue-500/10 text-blue-600 border-blue-200' },
+      { id: 'contacted', title: 'Sudah Dihubungi', color: 'bg-amber-500/10 text-amber-600 border-amber-200' },
+      { id: 'follow_up', title: 'Follow Up Intensif', color: 'bg-purple-500/10 text-purple-600 border-purple-200' },
+      { id: 'booking', title: 'Sudah Booking DP', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
+    ];
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300">
+        {/* CRM Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-150'}`}>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Prospek</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-[#B28200]">{totalLeadsCount}</span>
+              <span className="text-[10px] text-gray-500">Jiwa</span>
+            </div>
+            <p className="text-[10px] text-gray-500 mt-2">Seluruh database prospek</p>
+          </div>
+          <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-150'}`}>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Follow Up Aktif</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-purple-650">{hotLeadsCount}</span>
+              <span className="text-[10px] text-purple-500">Klien</span>
+            </div>
+            <p className="text-[10px] text-gray-500 mt-2">Sedang ditawarkan program</p>
+          </div>
+          <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-150'}`}>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Berhasil Closing</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-emerald-650">{bookingLeadsCount}</span>
+              <span className="text-[10px] text-emerald-500">Booked</span>
+            </div>
+            <p className="text-[10px] text-gray-500 mt-2">Telah melakukan booking/DP</p>
+          </div>
+          <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-150'}`}>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Rasio Konversi</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl font-black text-blue-650">{conversionRate}%</span>
+              <span className="text-[10px] text-blue-500">Success</span>
+            </div>
+            <p className="text-[10px] text-gray-500 mt-2">Leads menjadi jemaah tetap</p>
+          </div>
+        </div>
+
+        {/* Action Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-lg font-black uppercase italic tracking-tight text-gray-950">CRM Pipeline Prospek Jemaah</h2>
+            <p className="text-xs text-gray-500">Kelola calon jamaah Anda dari tahap prospek hingga menjadi jamaah resmi terdaftar</p>
+          </div>
+          <button
+            onClick={() => setShowAddLeadModal(true)}
+            className="px-4 py-2 bg-[#055734] hover:bg-[#044c2d] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Tambah Prospek Baru
+          </button>
+        </div>
+
+        {/* CRM Kanban Board */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 overflow-x-auto pb-4">
+          {stages.map(stage => {
+            const stageLeads = crmLeads.filter(l => l.stage === stage.id);
+            return (
+              <div 
+                key={stage.id} 
+                className={`p-4 rounded-2xl border flex flex-col min-h-[450px] ${
+                  isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-gray-50/50 border-gray-150'
+                }`}
+              >
+                <div className={`p-2 rounded-xl border text-[10px] font-black uppercase tracking-wider text-center ${stage.color} mb-3`}>
+                  {stage.title} ({stageLeads.length})
+                </div>
+                
+                <div className="flex-1 space-y-3">
+                  {stageLeads.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <div className="text-gray-300 text-3xl font-light">∅</div>
+                      <p className="text-[10px] text-gray-400 mt-1">Belum ada data</p>
+                    </div>
+                  ) : (
+                    stageLeads.map(lead => (
+                      <div 
+                        key={lead.id} 
+                        className={`p-4 rounded-xl border shadow-sm transition-all hover:scale-101 ${
+                          isDarkMode ? 'bg-slate-900 border-slate-700 hover:border-amber-500/50' : 'bg-white border-gray-200 hover:border-amber-400/50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className="text-xs font-extrabold text-gray-900">{lead.name}</h4>
+                          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                            lead.source === 'Instagram' ? 'bg-pink-100 text-pink-700' : 
+                            lead.source === 'Referral' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            {lead.source}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-gray-500 flex items-center gap-1 mb-2">
+                          <Phone className="w-2.5 h-2.5 text-gray-400" /> +{lead.phone}
+                        </p>
+                        
+                        <div className={`p-2 rounded-lg text-[9px] font-bold ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-amber-50 text-[#8C6200]'} mb-2`}>
+                          📦 {lead.package}
+                        </div>
+                        
+                        {lead.note && (
+                          <p className="text-[9px] text-gray-500 bg-gray-550/10 p-1.5 rounded border border-gray-100 dark:border-slate-850 mb-3 italic">
+                            "{lead.note}"
+                          </p>
+                        )}
+
+                        <div className="border-t border-gray-100 dark:border-slate-800 pt-3 flex flex-wrap gap-1.5 justify-between items-center">
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleWhatsAppSend(lead, 'intro')}
+                              title="Kirim Sapaan Awal"
+                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors border border-emerald-100 cursor-pointer"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleWhatsAppSend(lead, 'promo')}
+                              title="Kirim Promo"
+                              className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-colors border border-amber-100 cursor-pointer"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleWhatsAppSend(lead, 'doc')}
+                              title="Kirim Checklist Dokumen"
+                              className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors border border-blue-100 cursor-pointer"
+                            >
+                              <FileText className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          <div className="flex gap-1">
+                            {stage.id === 'new' && (
+                              <button
+                                onClick={() => handleMoveLead(lead.id, 'contacted')}
+                                className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-slate-900 text-[9px] font-black uppercase rounded transition-colors cursor-pointer"
+                              >
+                                Hubungi →
+                              </button>
+                            )}
+                            {stage.id === 'contacted' && (
+                              <button
+                                onClick={() => handleMoveLead(lead.id, 'follow_up')}
+                                className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[9px] font-black uppercase rounded transition-colors cursor-pointer"
+                              >
+                                Follow Up →
+                              </button>
+                            )}
+                            {stage.id === 'follow_up' && (
+                              <button
+                                onClick={() => handleMoveLead(lead.id, 'booking')}
+                                className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase rounded transition-colors cursor-pointer"
+                              >
+                                Booking DP →
+                              </button>
+                            )}
+                            {stage.id === 'booking' && (
+                              <span className="flex items-center gap-1 text-[9px] text-emerald-600 font-black uppercase">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Close
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ADD LEAD MODAL */}
+        {showAddLeadModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className={`rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border ${
+              isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100'
+            }`}>
+              <div className="p-6 border-b border-gray-150 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-tight text-gray-900 italic">Tambah Prospek Baru</h3>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Input database calon jamaah potensial</p>
+                </div>
+                <button 
+                  onClick={() => setShowAddLeadModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer text-sm font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+              <form onSubmit={handleAddLead} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Nama Calon Jemaah</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Contoh: H. Bambang Wijaya"
+                    value={newLeadName}
+                    onChange={(e) => setNewLeadName(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">No WhatsApp (Gunakan Kode Negara, e.g. 62812...)</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Contoh: 628123456789"
+                    value={newLeadPhone}
+                    onChange={(e) => setNewLeadPhone(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Program Paket yang Diminati</label>
+                  <input 
+                    type="text" 
+                    placeholder="Contoh: Paket Umrah Ramadhan VIP"
+                    value={newLeadPackage}
+                    onChange={(e) => setNewLeadPackage(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Sumber Prospek (Leads Source)</label>
+                  <select 
+                    value={newLeadSource}
+                    onChange={(e) => setNewLeadSource(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white"
+                  >
+                    <option value="Instagram">Instagram / Medsos</option>
+                    <option value="Referral">Referral / Kerabat</option>
+                    <option value="Brosur Masjid">Brosur / Pengajian Masjid</option>
+                    <option value="Website">Website / Landing Page</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Catatan Konsultasi</label>
+                  <textarea 
+                    placeholder="Tambahkan detail minat, kamar, rombongan..."
+                    value={newLeadNote}
+                    onChange={(e) => setNewLeadNote(e.target.value)}
+                    rows={2}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddLeadModal(false)}
+                    className="w-1/2 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="w-1/2 py-3 bg-[#055734] hover:bg-[#044c2d] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    Simpan Prospek
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderWebsite = () => {
+    const miniWebLink = `https://umaroh.com/agen/${brandSlug}`;
+    
+    const handleSaveWebsiteSettings = (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSavedWebsite(true);
+      setTimeout(() => setIsSavedWebsite(false), 3000);
+      alert("Pengaturan website keagenan Anda berhasil disimpan!");
+    };
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-lg font-black uppercase italic tracking-tight text-gray-950">Website Agen & Personal Brand Customizer</h2>
+            <p className="text-xs text-gray-500">Miliki website pemasaran profesional mandiri yang terhubung dengan paket travel pusat secara otomatis</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Customizer Panel */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className={`p-6 rounded-2xl border ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-150'}`}>
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#B28200] mb-4 flex items-center gap-2">
+                ⚙️ Atur Identitas Digital Anda
+              </h3>
+              
+              <form onSubmit={handleSaveWebsiteSettings} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                    Slug Website Agen (URL Unik)
+                  </label>
+                  <div className="flex rounded-xl overflow-hidden border border-gray-200">
+                    <span className="bg-gray-100 text-gray-500 text-xs px-3 py-2.5 flex items-center border-r border-gray-200">
+                      umaroh.com/agen/
+                    </span>
+                    <input 
+                      type="text" 
+                      required
+                      value={brandSlug}
+                      onChange={(e) => setBrandSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                      className="flex-1 text-xs px-3 py-2.5 bg-white focus:outline-none"
+                      placeholder="berkat-umrah"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                    Judul Banner Utama (Greeting Header)
+                  </label>
+                  <textarea 
+                    rows={2}
+                    required
+                    value={heroTitle}
+                    onChange={(e) => setHeroTitle(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    placeholder="Kalimat penyambut calon jemaah..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                    No Hotline WhatsApp (Untuk Tombol Kontak)
+                  </label>
+                  <input 
+                    type="text" 
+                    required
+                    value={whatsappHotline}
+                    onChange={(e) => setWhatsappHotline(e.target.value.replace(/\D/g, ''))}
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:outline-none"
+                    placeholder="Contoh: 628123456789"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">
+                    Aksen Warna Tema Website
+                  </label>
+                  <div className="grid grid-cols-5 gap-2 pt-1">
+                    {[
+                      { hex: '#055734', name: 'Emerald' },
+                      { hex: '#9E1A1A', name: 'Ruby' },
+                      { hex: '#1C3D5A', name: 'Sapphire' },
+                      { hex: '#B28200', name: 'Gold' },
+                      { hex: '#111827', name: 'Obsidian' }
+                    ].map(col => (
+                      <button
+                        key={col.hex}
+                        type="button"
+                        onClick={() => setThemeColor(col.hex)}
+                        className={`p-2 rounded-xl text-[10px] font-bold text-white border transition-all ${
+                          themeColor === col.hex ? 'ring-2 ring-offset-2 ring-emerald-500 scale-105' : 'opacity-85'
+                        }`}
+                        style={{ backgroundColor: col.hex }}
+                      >
+                        {col.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-[#055734] hover:bg-[#044c2d] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {isSavedWebsite ? "✓ Pengaturan Disimpan" : "Simpan & Publikasikan Website"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* URL Sharing Card */}
+            <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-[#FFFDF0] border-amber-100/50'}`}>
+              <div>
+                <h4 className="text-xs font-black uppercase text-[#B28200] flex items-center gap-2 mb-2">
+                  🔗 Link Website Aktif Anda
+                </h4>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Bagikan tautan berikut di bio Instagram, Facebook, pamflet digital, atau pesan WhatsApp broadcast Anda untuk menjaring jamaah secara langsung.
+                </p>
+                
+                <div className="mt-4 p-3 rounded-xl border border-dashed border-amber-350 bg-white flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono font-bold text-gray-755 truncate">{miniWebLink}</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(miniWebLink);
+                      alert("Tautan website disalin ke clipboard!");
+                    }}
+                    className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-705 rounded-lg transition-colors cursor-pointer shrink-0"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-150/50 flex items-center gap-4">
+                <div className="w-16 h-16 bg-white p-1 rounded-lg border border-gray-200 flex items-center justify-center font-mono text-[8px] font-black text-center text-gray-300">
+                  QR CODE<br/>GENERATED
+                </div>
+                <div>
+                  <h5 className="text-[10px] font-black uppercase text-gray-700">QR Code Promosi Otomatis</h5>
+                  <p className="text-[9px] text-gray-505">Unduh gambar QR code untuk dipasang di brosur offline, poster masjid, atau rollup banner agen Anda.</p>
+                  <button 
+                    onClick={() => alert("Mengunduh QR Code brosur Anda...")}
+                    className="mt-1 text-[9px] text-[#B28200] font-black uppercase hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <Download className="w-2.5 h-2.5" /> Unduh QR Code
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Website Smartphone Mockup Panel */}
+          <div className="lg:col-span-7 flex justify-center">
+            <div className="w-full max-w-sm rounded-[36px] border-8 border-slate-900 shadow-2xl overflow-hidden relative bg-white flex flex-col min-h-[580px] select-none">
+              {/* Speaker & Sensor bar */}
+              <div className="h-6 bg-slate-900 w-full flex items-center justify-center relative">
+                <div className="w-24 h-4 bg-slate-900 rounded-b-xl absolute top-0 z-10 flex items-center justify-center gap-1">
+                  <span className="w-10 h-1 bg-gray-700 rounded-full"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-800 rounded-full"></span>
+                </div>
+                <div className="w-full px-5 flex justify-between items-center text-[9px] text-gray-400 font-bold font-mono">
+                  <span>09:41</span>
+                  <div className="flex items-center gap-1">
+                    <span>5G</span>
+                    <span className="w-4 h-2 bg-gray-500 rounded-sm"></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Website Content Mockup */}
+              <div className="flex-1 overflow-y-auto bg-gray-50">
+                {/* Navbar */}
+                <div className="p-3 bg-white border-b border-gray-100 flex items-center justify-between shadow-sm sticky top-0 z-15">
+                  <div className="flex items-center gap-2">
+                    <img src={logoBase64} alt="Umaroh Logo" className="h-4 w-auto" />
+                    <span className="text-[10px] font-black uppercase tracking-tight text-gray-800">
+                      {currentUserData?.brandName || 'Berkat Umrah Agency'}
+                    </span>
+                  </div>
+                  <button 
+                    className="px-2.5 py-1 text-[8px] font-black uppercase rounded text-white cursor-default"
+                    style={{ backgroundColor: themeColor }}
+                  >
+                    Hubungi Kami
+                  </button>
+                </div>
+
+                {/* Hero section */}
+                <div className="p-6 text-white relative overflow-hidden flex flex-col justify-center items-center text-center" style={{ backgroundColor: themeColor }}>
+                  <div className="absolute inset-0 opacity-15">
+                    <div className="absolute inset-0 bg-gradient-to-br from-black to-transparent"></div>
+                  </div>
+                  <div className="relative z-10 space-y-2">
+                    <span className="text-[8px] font-black uppercase bg-white/20 px-2 py-0.5 rounded-full tracking-widest text-yellow-300">
+                      MITRA RESMI UMAROH ERP
+                    </span>
+                    <h3 className="text-xs font-black tracking-tight leading-tight uppercase">
+                      {heroTitle}
+                    </h3>
+                    <p className="text-[8px] text-gray-100 font-medium">
+                      Pelayanan Profesional, Ibadah Tenang, Fasilitas Nyaman, dan Pembimbing Syar'i Terpercaya.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature highlights */}
+                <div className="p-4 grid grid-cols-3 gap-2 bg-white border-b border-gray-100">
+                  <div className="text-center p-2 rounded-xl bg-gray-50 space-y-1">
+                    <span className="text-[12px]">✈️</span>
+                    <p className="text-[7px] font-extrabold uppercase text-gray-800 leading-none">Pasti Berangkat</p>
+                  </div>
+                  <div className="text-center p-2 rounded-xl bg-gray-50 space-y-1">
+                    <span className="text-[12px]">🕋</span>
+                    <p className="text-[7px] font-extrabold uppercase text-gray-800 leading-none">Hotel Nyaman</p>
+                  </div>
+                  <div className="text-center p-2 rounded-xl bg-gray-50 space-y-1">
+                    <span className="text-[12px]">🕌</span>
+                    <p className="text-[7px] font-extrabold uppercase text-gray-800 leading-none">Syar'i & Sah</p>
+                  </div>
+                </div>
+
+                {/* Packages list */}
+                <div className="p-4 space-y-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-black uppercase text-gray-800">Paket Unggulan Kami</span>
+                    <span className="text-[8px] text-gray-400 font-bold uppercase">Lihat Semua</span>
+                  </div>
+
+                  {/* Program Paket Mockup 1 */}
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+                    <div className="h-24 w-full bg-slate-200 relative overflow-hidden">
+                      <img src="https://images.unsplash.com/photo-1591604021695-0c69b7c05981?q=80&w=400&auto=format&fit=crop" alt="Kaabah" className="w-full h-full object-cover" />
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-amber-500 text-slate-900 text-[7px] font-black uppercase">
+                        Sisa 12 Seat
+                      </div>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      <h4 className="text-[10px] font-black uppercase tracking-tight text-gray-900">
+                        Umrah Regular Syawal 1447H
+                      </h4>
+                      <p className="text-[7px] text-gray-500 leading-none">
+                        📅 Keberangkatan: 15 Oktober 2026 | ✈️ Saudia Airlines
+                      </p>
+                      
+                      <div className="pt-2 border-t border-gray-50 flex justify-between items-center">
+                        <div>
+                          <span className="text-[7px] text-gray-400 font-bold uppercase block leading-none">Mulai Dari</span>
+                          <span className="text-[11px] font-black text-[#B28200]">Rp 28.500.000</span>
+                        </div>
+                        <button 
+                          className="px-2.5 py-1.5 rounded-lg text-[8px] font-black text-white uppercase flex items-center gap-1 cursor-default"
+                          style={{ backgroundColor: themeColor }}
+                        >
+                          Tanya Detail
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Program Paket Mockup 2 */}
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+                    <div className="h-24 w-full bg-slate-200 relative overflow-hidden">
+                      <img src="https://images.unsplash.com/photo-1542856391-010fb87dcfed?q=80&w=400&auto=format&fit=crop" alt="Medina" className="w-full h-full object-cover" />
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-emerald-600 text-white text-[7px] font-black uppercase">
+                        Sisa 8 Seat
+                      </div>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      <h4 className="text-[10px] font-black uppercase tracking-tight text-gray-900">
+                        Umrah Akbar Akhir Tahun 1447H
+                      </h4>
+                      <p className="text-[7px] text-gray-500 leading-none">
+                        📅 Keberangkatan: 24 Desember 2026 | ✈️ Qatar Airways
+                      </p>
+                      
+                      <div className="pt-2 border-t border-gray-50 flex justify-between items-center">
+                        <div>
+                          <span className="text-[7px] text-gray-400 font-bold uppercase block leading-none">Mulai Dari</span>
+                          <span className="text-[11px] font-black text-[#B28200]">Rp 31.900.000</span>
+                        </div>
+                        <button 
+                          className="px-2.5 py-1.5 rounded-lg text-[8px] font-black text-white uppercase flex items-center gap-1 cursor-default"
+                          style={{ backgroundColor: themeColor }}
+                        >
+                          Tanya Detail
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer of agent web */}
+                <div className="p-5 bg-slate-900 text-white text-center space-y-1.5">
+                  <p className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">
+                    Hubungi Agen Resmi Kami
+                  </p>
+                  <p className="text-[9px] font-black uppercase text-yellow-400">
+                    {currentUserData?.brandName || 'Berkat Umrah Agency'}
+                  </p>
+                  <p className="text-[7px] text-gray-550 font-medium">
+                    Powered by Umaroh Enterprise ERP System
+                  </p>
+                </div>
+              </div>
+
+              {/* Floating WA button on Mockup */}
+              <div className="absolute bottom-4 right-4 z-20">
+                <div className="w-10 h-10 bg-emerald-500 rounded-full shadow-lg flex items-center justify-center text-white cursor-default">
+                  <Phone className="w-4 h-4" />
+                </div>
+              </div>
+
+              {/* Home bar element */}
+              <div className="h-5 bg-slate-900 w-full flex items-center justify-center">
+                <span className="w-32 h-1 bg-gray-600 rounded-full"></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -2236,6 +2919,30 @@ export const DashboardMitra = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('manifest')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'manifest' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <FileText className={`w-4 h-4 ${activeTab === 'manifest' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Buat Manifest
+            </button>
+
+            <button
+              onClick={() => setActiveTab('roomlist')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'roomlist' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <BedDouble className={`w-4 h-4 ${activeTab === 'roomlist' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Rooming List
+            </button>
+
+            <button
               onClick={() => setActiveTab('analytics')}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
                 activeTab === 'analytics' 
@@ -2282,7 +2989,7 @@ export const DashboardMitra = () => {
           {/* Category: MARKETING */}
           <div className="space-y-1">
             <span className={`font-black uppercase text-[9px] tracking-wider px-3.5 py-1.5 rounded-lg block font-sans border ${isDarkMode ? 'bg-amber-950/20 text-[#F5B800] border-amber-500/20' : 'bg-[#FFFDF0] text-[#B28200] border-amber-100/30'}`}>
-              📣 3. MARKETING
+              📣 3. MARKETING & SALES GROWTH
             </span>
 
             <button
@@ -2298,6 +3005,30 @@ export const DashboardMitra = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('crm')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'crm' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <Target className={`w-4 h-4 ${activeTab === 'crm' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              CRM Pipeline Prospek
+            </button>
+
+            <button
+              onClick={() => setActiveTab('website')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'website' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <LayoutDashboard className={`w-4 h-4 ${activeTab === 'website' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Website Agen Saya
+            </button>
+
+            <button
               onClick={() => setActiveTab('feed')}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
                 activeTab === 'feed' 
@@ -2305,7 +3036,7 @@ export const DashboardMitra = () => {
                   : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
               }`}
             >
-              <Target className={`w-4 h-4 ${activeTab === 'feed' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              <Zap className={`w-4 h-4 ${activeTab === 'feed' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
               Feed Kolaborasi
             </button>
 
@@ -2369,6 +3100,182 @@ export const DashboardMitra = () => {
 
       {/* Main Container including Responsive layouts */}
       <div className="flex-1 lg:pl-72 flex flex-col min-h-screen">
+        {/* Mobile Sidebar Full Menu Overlay for Partners (Mitra) */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-[60] lg:hidden">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+              onClick={() => setIsMobileMenuOpen(false)} 
+            />
+            {/* Drawer content */}
+            <div className={`absolute left-0 top-0 bottom-0 w-[85%] max-w-sm shadow-2xl flex flex-col animate-in slide-in-from-left duration-250 ${
+              isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'
+            }`}>
+              {/* Header */}
+              <div className={`p-5 border-b flex items-center justify-between ${
+                isDarkMode ? 'border-slate-800 bg-slate-950/40' : 'border-gray-150 bg-gray-50/50'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <div className="bg-[#F5B800] p-1.5 rounded-lg">
+                    <img src={logoBase64} alt="Umaroh Logo" className="h-6 w-auto" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-black text-xs uppercase tracking-wider text-amber-500 block">Mitra Portal</span>
+                    <span className="text-[9px] font-bold text-gray-400 block uppercase">Nawaitul Access</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  className={`p-1.5 rounded-xl transition-all ${
+                    isDarkMode ? 'bg-slate-800 text-slate-400 hover:text-slate-200' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {/* Category 1: Bisnis & Penjualan */}
+                <div className="space-y-1.5">
+                  <span className={`block text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg text-left ${
+                    isDarkMode ? 'bg-slate-800/60 text-slate-400' : 'bg-amber-550/10 text-[#C69200]'
+                  }`}>
+                    💼 Bisnis & Produk
+                  </span>
+                  {[
+                    { id: 'overview', label: 'Beranda', icon: LayoutDashboard },
+                    { id: 'feed', label: 'Feed Kolaborasi', icon: Zap },
+                    { id: 'elearning', label: 'E-Learning', icon: BookOpen },
+                    { id: 'katalog', label: 'Katalog Paket', icon: Calendar },
+                    { id: 'paket', label: 'Produk Saya', icon: Package },
+                    { id: 'validasi', label: 'Validasi Paket', icon: Shield },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as MitraTab);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                          isActive 
+                            ? 'bg-[#F5B800] text-slate-900 shadow-sm font-black' 
+                            : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-650 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-gray-500'}`} />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Category 2: Administrasi Jamaah */}
+                <div className="space-y-1.5">
+                  <span className={`block text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg text-left ${
+                    isDarkMode ? 'bg-slate-800/60 text-slate-400' : 'bg-amber-550/10 text-[#C69200]'
+                  }`}>
+                    👥 Kelola Jamaah
+                  </span>
+                  {[
+                    { id: 'jamaah', label: 'Data Jamaah', icon: Users },
+                    { id: 'jaringan', label: 'Jaringan Mitra', icon: Users },
+                    { id: 'manifest', label: 'Buat Manifest', icon: FileText },
+                    { id: 'roomlist', label: 'Rooming List', icon: BedDouble },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as MitraTab);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                          isActive 
+                            ? 'bg-[#F5B800] text-slate-900 shadow-sm font-black' 
+                            : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-650 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-gray-500'}`} />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Category 3: Keuangan & Fitur Pintar */}
+                <div className="space-y-1.5">
+                  <span className={`block text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg text-left ${
+                    isDarkMode ? 'bg-slate-800/60 text-slate-400' : 'bg-amber-550/10 text-[#C69200]'
+                  }`}>
+                    ⚙️ Fitur Tambahan & Akun
+                  </span>
+                  {[
+                    { id: 'marketing', label: 'AI Marketing', icon: Sparkles },
+                    { id: 'crm', label: 'CRM Pipeline Prospek', icon: Target },
+                    { id: 'website', label: 'Website Agen Saya', icon: LayoutDashboard },
+                    { id: 'analytics', label: 'Smart Analytics', icon: BarChart2 },
+                    { id: 'wallet', label: 'U-Wallet / Dompet', icon: Wallet },
+                    { id: 'toko', label: 'Toko Perlengkapan', icon: ShoppingCart },
+                    { id: 'profile', label: 'Profil Saya', icon: User },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as MitraTab);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                          isActive 
+                            ? 'bg-[#F5B800] text-slate-900 shadow-sm font-black' 
+                            : isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-650 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-gray-500'}`} />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer / Logout */}
+              <div className={`p-4 border-t ${
+                isDarkMode ? 'border-slate-800 bg-slate-950/40' : 'border-gray-150 bg-gray-50/50'
+              }`}>
+                <button
+                  onClick={async () => {
+                    if (confirm('Apakah Anda yakin ingin keluar dari akun Mitra?')) {
+                      try {
+                        await signOut(auth);
+                      } catch (err) {
+                        console.error('Error signing out:', err);
+                      }
+                    }
+                  }}
+                  className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-150 ${
+                    isDarkMode 
+                      ? 'bg-red-950/30 text-red-400 border border-red-900/30 hover:bg-red-900/20' 
+                      : 'bg-red-50 text-red-700 border border-red-150 hover:bg-red-100'
+                  }`}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Keluar Akun
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Mobile Bottom Navigation */}
         <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 px-2 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] border-t transition-colors ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-gray-200 text-slate-900'}`}>
           <div className="flex justify-around items-center h-16">
@@ -2387,13 +3294,6 @@ export const DashboardMitra = () => {
               <span className="text-[10px] font-bold">Feed</span>
             </button>
             <button
-              onClick={() => setActiveTab('elearning')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'elearning' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
-            >
-              <BookOpen className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Belajar</span>
-            </button>
-            <button
               onClick={() => setActiveTab('katalog')}
               className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'katalog' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
@@ -2408,32 +3308,11 @@ export const DashboardMitra = () => {
               <span className="text-[10px] font-bold">Produk</span>
             </button>
             <button
-              onClick={() => setActiveTab('validasi')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'validasi' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
+              onClick={() => setIsMobileMenuOpen(true)}
+              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${isMobileMenuOpen ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
             >
-              <Shield className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Validasi</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('jamaah')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'jamaah' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
-            >
-              <Users className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Jamaah</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('jaringan')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'jaringan' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
-            >
-              <Users className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Jaringan</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'profile' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
-            >
-              <User className="w-5 h-5" />
-              <span className="text-[10px] font-bold">Profil</span>
+              <Menu className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Lainnya</span>
             </button>
           </div>
         </div>
@@ -2444,6 +3323,17 @@ export const DashboardMitra = () => {
           <div className={`rounded-2xl border p-4 flex flex-row items-center justify-between gap-4 mb-6 shadow-sm transition-all duration-200 ${
             isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-slate-950/20' : 'bg-white border-gray-100 text-slate-900 shadow-sm'
           }`}>
+            {/* Hamburger Menu Trigger for Mobile/Tablet */}
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className={`lg:hidden p-2 rounded-xl border flex items-center justify-center transition-all ${
+                isDarkMode 
+                  ? 'bg-slate-800 border-slate-700 hover:bg-slate-750 text-slate-100' 
+                  : 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-slate-700'
+              }`}
+            >
+              <Menu className="w-4.5 h-4.5" />
+            </button>
             {/* Search Input Container */}
             <div className="relative flex-1 max-w-md z-40">
               <input 
@@ -2825,7 +3715,11 @@ export const DashboardMitra = () => {
           {activeTab === 'validasi' && <ValidasiPaketMitraView />}
           {activeTab === 'jamaah' && <JamaahMitraView />}
           {activeTab === 'jaringan' && <JaringanMitraView />}
+          {activeTab === 'manifest' && <ManifestPage />}
+          {activeTab === 'roomlist' && <RoomingListMitraView isDarkMode={isDarkMode} />}
           {activeTab === 'marketing' && <AIMarketingView />}
+          {activeTab === 'crm' && renderCRM()}
+          {activeTab === 'website' && renderWebsite()}
           {activeTab === 'analytics' && <AISmartAnalyticsView />}
           {activeTab === 'profile' && <ProfileView isDesktop={true} />}
           {activeTab === 'wallet' && renderWallet()}

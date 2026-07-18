@@ -3,7 +3,7 @@ import {
   Search, Star, LayoutDashboard, Package, History, User,
   ShoppingCart, Tag, Compass, Sparkles, BookOpen,
   MessageCircle, CheckCircle, Info, Minus, Plus, Check,
-  BadgePercent, Send, X, Bell, AlertTriangle, Printer, Upload, FileText
+  BadgePercent, Send, X, Bell, AlertTriangle, Printer, Upload, FileText, Menu, LogOut
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { auth, db, collection, addDoc, onSnapshot, query, where, serverTimestamp, handleFirestoreError, OperationType, doc, limit, updateDoc } from '../firebase';
@@ -14,6 +14,7 @@ import { AppNotification, JamaahSession, BookingRecord } from '../types';
 import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
 import { PortalHomeTab, PortalInfoTab, PortalKeuanganTab, PortalLainnyaTab } from './PortalSubTabs';
 import { logoBase64 } from '../utils/logoBase64';
+import { syncBookingToTracker } from '../utils/firebaseSync';
 
 type JamaahTab = 'overview' | 'pendaftaran_mandiri' | 'katalog' | 'riwayat' | 'profile';
 
@@ -61,6 +62,7 @@ interface DashboardJamaahProps {
 
 export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSession, onLogout }) => {
   const [activeTab, setActiveTab] = useState<JamaahTab>(jamaahCodeSession ? 'pendaftaran_mandiri' : 'overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [bookingData, setBookingData] = useState<BookingRecord | null>((jamaahCodeSession as BookingRecord) || null);
   const [pilgrimBookings, setPilgrimBookings] = useState<BookingRecord[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(!jamaahCodeSession);
@@ -589,12 +591,20 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
     }
     setSavingManifest(true);
     try {
-      await updateDoc(doc(db, 'bookings', id), {
+      const updatedFields = {
         ...manifestForm,
         namaJamaah: manifestForm.nama_paspor || bookingData.namaJamaah,
         nama: manifestForm.nama_paspor || bookingData.namaJamaah,
         updatedAt: new Date().toISOString()
-      });
+      };
+      await updateDoc(doc(db, 'bookings', id), updatedFields);
+      
+      const fullUpdatedBooking = {
+        ...(bookingData || {}),
+        ...updatedFields
+      };
+      await syncBookingToTracker(id, fullUpdatedBooking);
+
       alert("Sukses menyimpan data manifest!");
     } catch (err) {
       console.error("Gagal menyimpan manifest:", err);
@@ -634,11 +644,20 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
       const partnerField = isFileField ? field : ('file' + field.substring(3).charAt(0).toUpperCase() + field.substring(4));
       const docField = isFileField ? ('doc' + field.substring(4).charAt(0).toUpperCase() + field.substring(5)) : field;
 
-      await updateDoc(doc(db, 'bookings', targetDocId), {
+      const updatedFields = {
         [partnerField]: base64,
         [docField]: base64,
         updatedAt: (new Date()).toISOString()
-      });
+      };
+
+      await updateDoc(doc(db, 'bookings', targetDocId), updatedFields);
+
+      const fullUpdatedBooking = {
+        ...(bookingData || {}),
+        ...updatedFields
+      };
+      await syncBookingToTracker(targetDocId, fullUpdatedBooking);
+
       alert('Dokumen berhasil diunggah ke cloud database!');
     } catch (err) {
       console.error(err);
@@ -2299,6 +2318,134 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
 
       {/* Right-side Main Content Pane */}
       <div className="flex-1 lg:pl-72 flex flex-col min-h-screen w-full">
+        {/* Mobile Sidebar Full Menu Overlay for Pilgrims (Jamaah) */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-[60] lg:hidden">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+              onClick={() => setIsMobileMenuOpen(false)} 
+            />
+            {/* Drawer content */}
+            <div className="absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white text-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-left duration-250">
+              {/* Header */}
+              <div className="p-5 border-b border-gray-150 bg-gray-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="bg-[#F5B800] p-1.5 rounded-lg">
+                    <img src={logoBase64} alt="Umaroh Logo" className="h-6 w-auto" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-black text-xs uppercase tracking-wider text-emerald-800 block">Portal Jamaah</span>
+                    <span className="text-[9px] font-bold text-gray-400 block uppercase">Nawaitul Access</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  className="p-1.5 rounded-xl bg-gray-100 text-gray-500 hover:text-gray-700 transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {/* Category 1: Portal Utama */}
+                <div className="space-y-1.5">
+                  <span className="block text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-left">
+                    🕋 1. PORTAL UTAMA
+                  </span>
+                  
+                  {bookingData && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('pendaftaran_mandiri');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                        activeTab === 'pendaftaran_mandiri' 
+                          ? 'bg-[#F5B800] text-slate-900 shadow-sm font-black' 
+                          : 'text-slate-655 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-sm">🕌</span>
+                      Portal Mandiri
+                    </button>
+                  )}
+
+                  {[
+                    { id: 'overview', label: 'Rekomendasi', icon: LayoutDashboard },
+                    { id: 'katalog', label: 'Katalog Paket', icon: Package },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as JamaahTab);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                          isActive 
+                            ? 'bg-[#F5B800] text-slate-900 shadow-sm font-black' 
+                            : 'text-slate-655 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-gray-500'}`} />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Category 2: Transaksi & Akun */}
+                <div className="space-y-1.5">
+                  <span className="block text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-left">
+                    📋 2. TRANSAKSI & AKUN
+                  </span>
+                  {[
+                    { id: 'riwayat', label: 'Pesanan & Belanjaan', icon: History },
+                    { id: 'profile', label: 'ProfilKu', icon: User },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as JamaahTab);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                          isActive 
+                            ? 'bg-[#F5B800] text-slate-900 shadow-sm font-black' 
+                            : 'text-slate-655 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-gray-500'}`} />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer / Logout */}
+              <div className="p-4 border-t border-gray-150 bg-gray-50/50">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (onLogout) onLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-150 bg-red-50 text-red-700 border border-red-150 hover:bg-red-100 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Keluar Akun (Logout)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Master Admin Switcher Banner */}
         {isMasterAdmin && pilgrimBookings.length > 0 && (
@@ -2338,8 +2485,15 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-4">
           
           {/* Logo Brand Brand */}
-          <div className="flex items-center justify-between w-full md:w-auto">
+          <div className="flex items-center justify-between w-full md:w-auto gap-3">
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden p-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                title="Buka Menu"
+              >
+                <Menu className="w-5 h-5 text-white" />
+              </button>
               <span className="text-[11px] bg-amber-500 text-slate-950 font-black px-2 py-1 rounded">MARKET</span>
             </div>
 
@@ -2927,16 +3081,6 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-around items-center h-16">
-          {bookingData && (
-            <button
-              onClick={() => setActiveTab('pendaftaran_mandiri')}
-              className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${activeTab === 'pendaftaran_mandiri' ? 'text-[#C69200] font-black' : 'text-gray-400'}`}
-            >
-              <span className="text-base">🕌</span>
-              <span className="text-[10px] font-bold">Portal Mandiri</span>
-            </button>
-          )}
-
           <button
             onClick={() => {
               setActiveTab('overview');
@@ -2948,7 +3092,6 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
             <span className="text-[10px] font-bold">Rekomendasi</span>
           </button>
 
-          
           <button
             onClick={() => {
               setActiveTab('katalog');
@@ -2975,6 +3118,14 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
           >
             <User className="w-5 h-5" />
             <span className="text-[10px] font-bold">Profil Ku</span>
+          </button>
+
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="flex flex-col items-center justify-center gap-1 w-full h-full text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[10px] font-bold">Lainnya</span>
           </button>
         </div>
       </div>
