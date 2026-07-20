@@ -1,10 +1,20 @@
 import React from 'react';
 import { Search, CheckCircle2, Calendar, Plane, Clock, Star, Share2, Trash2, Edit2, ChevronRight, Building2, Users, Minus, Plus, ArrowRight, ArrowLeft, X, Upload } from 'lucide-react';
 import { db, auth, collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc, handleFirestoreError, OperationType } from '../firebase';
+import { sendNotification } from '../services/notificationService';
 import { syncBookingToTracker } from '../utils/firebaseSync';
 import { PaketMaster, Maskapai, Hotel } from '../types';
 import { PaketDetailView } from './PaketDetailView';
 import { INDONESIA_EMBARKASI, KATEGORI_PROGRAM } from '../constants';
+
+interface TicketTracker {
+  id: string;
+  paketMasterId?: string;
+  statusTiket?: string;
+  checklist?: {
+    statusTiket: 'Pending' | 'Booked' | 'Issued';
+  };
+}
 
 interface PaketMitra {
   id: string;
@@ -79,6 +89,7 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
   const [viewingDetail, setViewingDetail] = React.useState<PaketMaster | null>(null);
   const [hotels, setHotels] = React.useState<Hotel[]>([]);
   const [maskapai, setMaskapai] = React.useState<Maskapai[]>([]);
+  const [trackers, setTrackers] = React.useState<TicketTracker[]>([]);
   
   const [selectedRoomType, setSelectedRoomType] = React.useState<'quad' | 'triple' | 'double'>('quad');
   const [paxCount, setPaxCount] = React.useState<number>(1);
@@ -222,14 +233,40 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
       handleFirestoreError(error, OperationType.LIST, 'maskapai');
     });
 
+    const unsubTrackers = onSnapshot(collection(db, 'tracker_paket'), (snapshot) => {
+      setTrackers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'tracker_paket');
+    });
+
     return () => {
       unsubUsers();
       unsubMaster();
       unsubMitra();
       unsubHotels();
       unsubMaskapai();
+      unsubTrackers();
     };
   }, []);
+
+  const getTicketBadgeStatus = (pkgId: string, initialStatus?: string) => {
+    const tracker = trackers.find(t => t.paketMasterId === pkgId || t.id === pkgId);
+    const checklistStatus = tracker?.checklist?.statusTiket || tracker?.statusTiket;
+
+    if (checklistStatus === 'Booked' || checklistStatus === 'Issued') {
+      return 'CONFORM';
+    }
+    
+    const status = (initialStatus || '').toUpperCase();
+    if (status.includes('OPEN') || status.includes('PENDING')) {
+      return 'OPEN';
+    }
+    if (status.includes('BOOKED') || status.includes('CONFIRM')) {
+      return 'BOOKED';
+    }
+    
+    return 'OPEN'; // default fallback
+  };
 
   const renderTermsModal = () => {
     if (!showTermsModal) return null;
@@ -1707,6 +1744,35 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
                             ...bookingData,
                             createdAt: new Date().toISOString()
                           });
+
+                          // Real-time notifications
+                          await sendNotification({
+                            title: 'Booking Umroh Baru',
+                            message: `Pendaftaran baru atas nama ${bookingData.namaJamaah} untuk ${bookingData.paketLabel} telah diajukan.`,
+                            type: 'warning',
+                            targetRole: 'admin'
+                          });
+
+                          if (bookingData.mitraId) {
+                            await sendNotification({
+                              title: 'Pendaftaran Jamaah Sukses',
+                              message: `Jamaah ${bookingData.namaJamaah} berhasil Anda daftarkan ke ${bookingData.paketLabel}.`,
+                              type: 'success',
+                              targetId: bookingData.mitraId,
+                              targetRole: 'mitra'
+                            });
+                          }
+
+                          if (bookingData.jamaahId) {
+                            await sendNotification({
+                              title: 'Pemesanan Paket Berhasil',
+                              message: `Alhamdulillah! Pemesanan paket ${bookingData.paketLabel} atas nama ${bookingData.namaJamaah} telah kami terima dan sedang diverifikasi.`,
+                              type: 'success',
+                              targetId: bookingData.jamaahId,
+                              targetRole: 'jamaah'
+                            });
+                          }
+
                           setBookingSuccess(true);
                           setTimeout(() => {
                             setBookingSuccess(false);
@@ -2010,12 +2076,6 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
 
           const maskapaiRef = maskapai.find(m => m.id === paket.maskapaiId);
           const maskapaiName = maskapaiRef ? maskapaiRef.name : (paket.maskapaiId || 'SAUDI');
-          const isOpenTrip = 
-            paket.statusTiket === 'OPEN TRIP' || 
-            masterRef?.statusTiket === 'OPEN TRIP' || 
-            maskapaiRef?.statusTiket === 'OPEN TRIP' ||
-            maskapaiName.toLowerCase().includes('open') || 
-            (maskapaiRef?.ruteLabel || '').toLowerCase().includes('open');
 
           return (
             <div 
@@ -2098,15 +2158,28 @@ export const KatalogPaketView = ({ initialSearch = '', onViewMitra }: KatalogPak
                   </div>
                 </div>
                 <div className="flex-shrink-0">
-                  {isOpenTrip ? (
-                    <span className="text-[8px] px-1.5 py-0.5 rounded-md font-black bg-amber-50 text-amber-700 border border-amber-200 tracking-wide uppercase">
-                      OPEN TRIP
-                    </span>
-                  ) : (
-                    <span className="text-[8px] px-1.5 py-0.5 rounded-md font-black bg-emerald-50 text-emerald-700 border border-emerald-200 tracking-wide uppercase">
-                      CONFIRMATION
-                    </span>
-                  )}
+                  {(() => {
+                    const ticketStatus = getTicketBadgeStatus(paket.id, masterRef?.statusTiket || paket.statusTiket);
+                    if (ticketStatus === 'CONFORM') {
+                      return (
+                        <span className="text-[8px] px-1.5 py-0.5 rounded-md font-black bg-emerald-500 text-white border border-emerald-600 tracking-wide uppercase shadow-sm">
+                          TIKET CONFORM
+                        </span>
+                      );
+                    } else if (ticketStatus === 'BOOKED') {
+                      return (
+                        <span className="text-[8px] px-1.5 py-0.5 rounded-md font-black bg-indigo-50 text-indigo-700 border border-indigo-200 tracking-wide uppercase">
+                          TIKET BOOKED
+                        </span>
+                      );
+                    } else {
+                      return (
+                        <span className="text-[8px] px-1.5 py-0.5 rounded-md font-black bg-amber-50 text-amber-700 border border-amber-200 tracking-wide uppercase">
+                          TIKET OPEN
+                        </span>
+                      );
+                    }
+                  })()}
                 </div>
               </div>
 

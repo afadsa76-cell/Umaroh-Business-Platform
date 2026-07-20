@@ -428,7 +428,7 @@ Tuliskan pertanyaan Sahabat di sini, dan mari kita rencanakan perjalanan ibadah 
 
       res.json({ result: response.text });
     } catch (error) {
-      console.warn('Gemini Marketing Assistant Error, falling back to local copywriting:', error);
+      console.log('[AI Assistant Info] Marketing assistant using local fallback copywriter:', error instanceof Error ? error.message : error);
       const fallbackText = generateLocalMarketingFallback(
         packageName,
         targetChannel,
@@ -492,7 +492,7 @@ Tuliskan pertanyaan Sahabat di sini, dan mari kita rencanakan perjalanan ibadah 
 
       res.json(JSON.parse(response.text || '{}'));
     } catch (error) {
-      console.warn('Gemini Smart Analytics Error, falling back to local analytics generation:', error);
+      console.log('[AI Assistant Info] Smart analytics engine using local offline engine fallback:', error instanceof Error ? error.message : error);
       const fallbackReport = generateLocalAnalyticsFallback(bookingsData, packagesData);
       res.json(fallbackReport);
     }
@@ -543,7 +543,7 @@ Tuliskan pertanyaan Sahabat di sini, dan mari kita rencanakan perjalanan ibadah 
 
       res.json({ reply: response.text });
     } catch (error) {
-      console.warn('Gemini Jamaah Chat Error, falling back to local chat guidance:', error);
+      console.log('[AI Assistant Info] Jamaah chat using local responder fallback:', error instanceof Error ? error.message : error);
       const fallbackReply = generateLocalChatFallback(message);
       res.json({ reply: fallbackReply, isFallback: true });
     }
@@ -608,7 +608,7 @@ Tuliskan pertanyaan Sahabat di sini, dan mari kita rencanakan perjalanan ibadah 
 
       res.json({ text: response.text || '', response });
     } catch (error) {
-      console.warn('Gemini Universal Proxy Error, falling back to local response:', error);
+      console.log('[AI Assistant Info] Universal proxy using local general fallback:', error instanceof Error ? error.message : error);
       const fallbackText = generateLocalGeneralFallback(contents);
       res.json({ text: fallbackText, isFallback: true, error: (error as Error).message });
     }

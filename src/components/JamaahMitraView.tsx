@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, collection, query, where, onSnapshot, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType } from '../firebase';
+import { sendNotification } from '../services/notificationService';
 import { syncBookingToTracker, deleteBookingFromTracker } from '../utils/firebaseSync';
 import { 
   Search, User, CheckCircle2, Clock, 
@@ -54,6 +55,7 @@ interface Jamaah {
   docVaccine?: boolean;
   docFoto?: boolean;
   mitraId: string;
+  jamaahId?: string;
   createdAt?: unknown;
 
   // New Manifest Fields
@@ -713,6 +715,34 @@ export const JamaahMitraView: React.FC = () => {
         description: `Setoran pembayaran ke paket "${selectedJamaah.paketNama}"`,
         createdAt: new Date().toISOString()
       });
+
+      // Real-time notifications
+      await sendNotification({
+        title: 'Pembayaran Deposit Baru (Mitra)',
+        message: `Mitra mendaftarkan setoran pembayaran sebesar Rp ${addedPay.toLocaleString('id-ID')} atas nama ${selectedJamaah.namaJamaah} untuk paket "${selectedJamaah.paketNama}".`,
+        type: 'success',
+        targetRole: 'admin'
+      });
+
+      if (selectedJamaah.mitraId) {
+        await sendNotification({
+          title: 'Input Setoran Berhasil',
+          message: `Berhasil mencatat setoran Rp ${addedPay.toLocaleString('id-ID')} untuk jamaah Anda (${selectedJamaah.namaJamaah}).`,
+          type: 'success',
+          targetId: selectedJamaah.mitraId,
+          targetRole: 'mitra'
+        });
+      }
+
+      if (selectedJamaah.jamaahId) {
+        await sendNotification({
+          title: 'Setoran Pembayaran Diterima',
+          message: `Setoran pembayaran Anda sebesar Rp ${addedPay.toLocaleString('id-ID')} telah didaftarkan oleh Mitra Agen dan dikonfirmasi sistem.`,
+          type: 'success',
+          targetId: selectedJamaah.jamaahId,
+          targetRole: 'jamaah'
+        });
+      }
 
       setIsPaymentOpen(false);
       setSelectedJamaah(null);

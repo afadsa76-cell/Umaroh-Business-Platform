@@ -28,6 +28,59 @@ export const ValidasiPaketMitraView = () => {
   const [viewMode, setViewMode] = useState<'Mitra' | 'Ops'>('Mitra');
   const [allTrackers, setAllTrackers] = useState<PaketTracker[]>([]);
 
+  // Activated Filter States
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+
+  const handleDownloadDetail = (request: ValidationRequest) => {
+    const maskapai = maskapaiList.find(m => m.id === request.maskapaiId);
+    const hotelMakkah = hotelsList.find(h => h.id === request.hotelMakkahId);
+    const hotelMadinah = hotelsList.find(h => h.id === request.hotelMadinahId);
+    
+    const text = `==================================================
+DETAIL PENGAJUAN VALIDASI PAKET UMAROH
+==================================================
+ID REQ         : ${request.requestId}
+Nama Paket     : ${request.nama}
+Status Validasi: ${(request.validationStatus || 'Pending').toUpperCase()}
+Tanggal        : ${request.validationDate || '15 Mei 2024'}
+Tipe Publikasi : ${(request.tipePublikasi || 'PRIVATE').toUpperCase()}
+
+SPESIFIKASI PROGRAM:
+--------------------------------------------------
+Maskapai       : ${maskapai?.name || 'SAUDI'}
+Target Jamaah  : ${request.targetJamaah || 45} PAX
+Hotel Makkah   : ${hotelMakkah?.nama || 'PULLMAN ZAMZAM'}
+Hotel Madinah  : ${hotelMadinah?.nama || 'DALLAH TAIBAH'}
+Harga Jual Quad: Rp ${(request.hargaJualQuad || 0).toLocaleString('id-ID')}
+Profit Mitra   : Rp ${(request.marginBersih || 0).toLocaleString('id-ID')}
+
+STATUS OPERASIONAL & PERLENGKAPAN:
+--------------------------------------------------
+Tiket Pesawat  : ${request.checklist?.statusTiket || 'PENDING'}
+Hotel Makkah   : ${request.checklist?.statusHotelMakkah || 'PENDING'}
+Hotel Madinah  : ${request.checklist?.statusHotelMadinah || 'PENDING'}
+Visa           : ${request.checklist?.statusVisa || 'PENDING'}
+Transport Bus  : ${request.checklist?.statusBus || 'PENDING'}
+Koper Terbagi  : ${request.checklist?.koperDibagikan || 0} / ${request.targetJamaah || 45}
+Manasik        : ${request.checklist?.statusManasik || 'PENDING'}
+Siskopatuh     : ${request.checklist?.statusSiskopatuh || 'PENDING'}
+
+Catatan Admin  : "${request.validationComment || 'Sedang verifikasi.'}"
+
+==================================================
+Umaroh Business Platform - Real-time Sync
+==================================================`;
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Detail_Validasi_${request.requestId || 'PAKET'}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     // Fetch trackers for real-time sync with admin updates
     const trackersPath = 'tracker_paket';
@@ -267,10 +320,21 @@ Mohon informasinya, terima kasih.`;
     );
   };
 
-  const filteredRequests = requests.filter(r => 
-    r.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    r.requestId?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRequests = requests.filter(r => {
+    const matchesSearch = 
+      r.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      r.requestId?.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (statusFilter !== 'ALL') {
+      const statusStr = (r.validationStatus || r.status || 'Pending').toUpperCase();
+      if (statusFilter === 'APPROVED' && statusStr !== 'APPROVED' && statusStr !== 'DISETUJUI') return false;
+      if (statusFilter === 'REJECTED' && statusStr !== 'REJECTED' && statusStr !== 'DITOLAK') return false;
+      if (statusFilter === 'PENDING' && statusStr !== 'PENDING' && statusStr !== 'SEDANG DICEK' && statusStr !== 'PENDING_VALIDATION') return false;
+    }
+
+    return true;
+  });
 
   const getStatusBadge = (status: string, isLight = true) => {
     const upper = status?.toUpperCase();
@@ -331,7 +395,11 @@ Mohon informasinya, terima kasih.`;
                    <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase italic">DETAIL PENGAJUAN</h3>
                 </div>
              </div>
-             <button className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-100 transition-all shadow-inner">
+             <button 
+                onClick={() => handleDownloadDetail(selectedRequest)}
+                className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-100 hover:scale-105 active:scale-95 duration-200 transition-all shadow-inner"
+                title="Unduh detail pengajuan"
+             >
                 <Download className="w-5 h-5" />
              </button>
           </div>
@@ -617,10 +685,60 @@ Mohon informasinya, terima kasih.`;
             className="w-full bg-white border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all shadow-sm"
           />
         </div>
-        <button className="w-14 h-14 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-500 transition-all shadow-sm">
+        <button 
+          onClick={() => setShowFilterPanel(!showFilterPanel)}
+          className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all shadow-sm ${
+            showFilterPanel 
+              ? 'bg-blue-600 border-blue-600 text-white shadow-blue-100' 
+              : 'bg-white border-gray-100 text-gray-400 hover:text-blue-500 hover:border-blue-500'
+          }`}
+        >
           <Filter className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Expandable Filter Panel */}
+      {showFilterPanel && (
+        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-md space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">FILTER STATUS VALIDASI</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'ALL', label: 'SEMUA PENGAJUAN' },
+              { id: 'PENDING', label: 'SEDANG DICEK' },
+              { id: 'APPROVED', label: 'DISETUJUI' },
+              { id: 'REJECTED', label: 'DITOLAK' },
+            ].map((item) => {
+              const isSelected = statusFilter === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setStatusFilter(item.id as 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED')}
+                  className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${
+                    isSelected 
+                      ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm shadow-blue-500/10' 
+                      : 'bg-white border-gray-100 text-gray-500 hover:bg-gray-50 hover:border-gray-200'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex items-center justify-between border-t border-gray-50 pt-3">
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+              Menampilkan {filteredRequests.length} dari {requests.length} pengajuan.
+            </p>
+            {statusFilter !== 'ALL' && (
+              <button 
+                onClick={() => setStatusFilter('ALL')}
+                className="text-[9px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider transition-colors"
+              >
+                HAPUS FILTER
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Requests List */}
       <div className="space-y-6">

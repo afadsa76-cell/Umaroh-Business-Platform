@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import { db, collection, addDoc, updateDoc, doc, onSnapshot, query, where, setDoc, deleteDoc } from '../firebase';
+import { sendNotification } from '../services/notificationService';
 import { 
   CreditCard, ChevronRight, FileSpreadsheet, Video, 
   Award, Heart, Package, ShoppingCart, 
@@ -1811,6 +1812,34 @@ export const PortalKeuanganTab: React.FC<{
       };
 
       await addDoc(collection(db, 'transactions'), transPayload);
+
+      // Real-time notifications
+      await sendNotification({
+        title: 'Pembayaran Deposit Baru (Portal)',
+        message: `Setoran pembayaran sebesar Rp ${addedAmount.toLocaleString('id-ID')} atas nama ${transPayload.namaJamaah} via Portal telah diverifikasi otomatis.`,
+        type: 'success',
+        targetRole: 'admin'
+      });
+
+      if (bookingData.mitraId) {
+        await sendNotification({
+          title: 'Pembayaran Jamaah Masuk',
+          message: `Jamaah Anda (${transPayload.namaJamaah}) membayar deposit sebesar Rp ${addedAmount.toLocaleString('id-ID')} untuk paket "${bookingData.paketLabel || bookingData.jenisPaket || 'Umroh'}".`,
+          type: 'success',
+          targetId: bookingData.mitraId,
+          targetRole: 'mitra'
+        });
+      }
+
+      if (bookingData.jamaahId) {
+        await sendNotification({
+          title: 'Pembayaran Deposit Berhasil',
+          message: `Alhamdulillah! Setoran pembayaran Anda sebesar Rp ${addedAmount.toLocaleString('id-ID')} telah berhasil diverifikasi oleh sistem.`,
+          type: 'success',
+          targetId: bookingData.jamaahId,
+          targetRole: 'jamaah'
+        });
+      }
 
       // 2. Update booking in database
       const bookingRef = doc(db, 'bookings', bookingData.id);

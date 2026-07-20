@@ -18,9 +18,14 @@ import {
   FileText, 
   X, 
   User, 
-  Activity
+  Activity,
+  ShoppingCart,
+  TrendingUp,
+  DollarSign,
+  Clock
 } from 'lucide-react';
-import { db, collection, onSnapshot, doc, setDoc, deleteDoc, handleFirestoreError, OperationType } from '../../firebase';
+import { db, collection, onSnapshot, doc, setDoc, deleteDoc, handleFirestoreError, OperationType, updateDoc } from '../../firebase';
+import { sendNotification } from '../../services/notificationService';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -138,12 +143,32 @@ interface AuditLog {
   detail: string;
 }
 
+interface ShopOrder {
+  id: string;
+  mitraId?: string;
+  mitraBrand?: string;
+  jamaahId?: string;
+  jamaahName?: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  totalCost: number;
+  paymentMethod?: string;
+  shippingVendor?: string;
+  shippingAddress?: string;
+  status: string;
+  noResi?: string;
+  createdAt?: { seconds: number; nanoseconds: number } | null | string;
+  orderType?: 'resmi' | 'custom';
+  customBrandName?: string;
+}
+
 export const PerlengkapanView: React.FC = () => {
   // Current user mock roles mimicking structure
   const currentUserRole = 'SUPER ADMIN';
   
   // Inner Submenu Navigation
-  type MenuTab = 'dashboard' | 'master' | 'packing' | 'pengiriman' | 'tracking' | 'penerimaan' | 'stok' | 'retur' | 'distribusi' | 'laporan' | 'audit';
+  type MenuTab = 'dashboard' | 'master' | 'packing' | 'pengiriman' | 'tracking' | 'penerimaan' | 'stok' | 'retur' | 'distribusi' | 'laporan' | 'audit' | 'pesanan_toko';
   const [activeSubTab, setActiveSubTab] = useState<MenuTab>('dashboard');
   
   // Dynamic State synchronized with Firebase or LocalStorage fallback
@@ -153,6 +178,10 @@ export const PerlengkapanView: React.FC = () => {
   const [penerimaanList, setPenerimaanList] = useState<PenerimaanBarang[]>([]);
   const [komplainList, setKomplainList] = useState<KomplainRetur[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
+  const [shopResiInputs, setShopResiInputs] = useState<Record<string, string>>({});
+  const [shopStatusFilter, setShopStatusFilter] = useState<string>('Semua');
+  const [isUpdatingShopOrder, setIsUpdatingShopOrder] = useState<string | null>(null);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -359,6 +388,22 @@ export const PerlengkapanView: React.FC = () => {
           snap.forEach(docSnap => arr.push({ id: docSnap.id, ...docSnap.data() } as MasterBarang));
           setMasterBarang(arr);
           localStorage.setItem('perlengkapan_master', JSON.stringify(arr));
+        } else {
+          // Auto-seed to Firestore if completely empty
+          const seedItems: MasterBarang[] = [
+            { id: 'b-001', kode_barang: 'KPR-ME-01', nama_barang: 'Koper Besar Premium 24"', kategori_barang: 'Koper Besar', ukuran: 'L', warna: 'Maron', satuan: 'Pcs', stok: 120, stok_minimum: 15, harga_modal: 250000, harga_jual: 350000, lokasi_gudang: 'Rak A-1', status_barang: 'Aktif', thumbnail: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=300' },
+            { id: 'b-002', kode_barang: 'SRG-BT-02', nama_barang: 'Seragam Batik Umaroh', kategori_barang: 'Batik', ukuran: 'XL', warna: 'Ungu Gold', satuan: 'Pcs', stok: 80, stok_minimum: 10, harga_modal: 80000, harga_jual: 120000, lokasi_gudang: 'Rak B-3', status_barang: 'Aktif', thumbnail: 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=300&auto=format&fit=crop' },
+            { id: 'b-003', kode_barang: 'IHR-PR-03', nama_barang: 'Kain Ihram Tenun Al-Haram', kategori_barang: 'Kain Ihram', ukuran: 'Free Size', warna: 'Putih', satuan: 'Set', stok: 8, stok_minimum: 15, harga_modal: 90000, harga_jual: 140000, lokasi_gudang: 'Rak C-2', status_barang: 'Aktif', thumbnail: 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=300&auto=format&fit=crop' },
+            { id: 'b-004', kode_barang: 'TSS-MN-04', nama_barang: 'Tas Sandal Serut Fleksibel', kategori_barang: 'Tas Sandal', ukuran: 'Standar', warna: 'Hitam', satuan: 'Pcs', stok: 350, stok_minimum: 50, harga_modal: 150000, harga_jual: 250000, lokasi_gudang: 'Rak A-9', status_barang: 'Aktif', thumbnail: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=300' },
+            { id: 'b-005', kode_barang: 'MKN-JM-05', nama_barang: 'Mukena Katun Bordir Umaroh', kategori_barang: 'Mukena', ukuran: 'All Size', warna: 'Putih Hijau', satuan: 'Set', stok: 60, stok_minimum: 12, harga_modal: 140000, harga_jual: 200000, lokasi_gudang: 'Rak D-1', status_barang: 'Aktif', thumbnail: 'https://images.unsplash.com/photo-1535252151047-35ad8970ac9e?q=80&w=300&auto=format&fit=crop' }
+          ];
+          seedItems.forEach(async (item) => {
+            try {
+              await setDoc(doc(db, 'perlengkapan_master', item.id), item);
+            } catch (err) {
+              console.warn("Auto-seed error for item:", item.id, err);
+            }
+          });
         }
       }, (err) => {
         console.warn("Firestore sync error: 'perlengkapan_master'", err);
@@ -387,10 +432,27 @@ export const PerlengkapanView: React.FC = () => {
         handleFirestoreError(err, OperationType.GET, 'perlengkapan_pengiriman');
       });
 
+      const unsubShopOrders = onSnapshot(collection(db, 'shop_orders'), (snap) => {
+        const arr: ShopOrder[] = [];
+        snap.forEach(docSnap => {
+          arr.push({ id: docSnap.id, ...docSnap.data() } as ShopOrder);
+        });
+        // Sort orders by newest first
+        arr.sort((a, b) => {
+          const t1 = (a.createdAt && typeof a.createdAt === 'object' && 'seconds' in a.createdAt) ? (a.createdAt as { seconds: number }).seconds : 0;
+          const t2 = (b.createdAt && typeof b.createdAt === 'object' && 'seconds' in b.createdAt) ? (b.createdAt as { seconds: number }).seconds : 0;
+          return t2 - t1;
+        });
+        setShopOrders(arr);
+      }, (err) => {
+        console.warn("Firestore sync error: 'shop_orders'", err);
+      });
+
       return () => {
         unsubMaster();
         unsubPacking();
         unsubShip();
+        unsubShopOrders();
       };
     } catch (e) {
       console.warn("Firestore sync optional fallback: ", e);
@@ -699,6 +761,91 @@ export const PerlengkapanView: React.FC = () => {
     logActivity('COMPLAINT ACTION', `Penyesuaian tiket komplain ${complaintId} menjadi ${status}`);
   };
 
+  // Handle Shop Order Status & Waybill Updates (Belanja Perlengkapan)
+  const handleUpdateShopOrder = async (orderId: string, newStatus: string, incomingResi?: string) => {
+    setIsUpdatingShopOrder(orderId);
+    try {
+      const order = shopOrders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const resi = incomingResi !== undefined ? incomingResi : (shopResiInputs[orderId] || order.noResi || '');
+      const orderDocRef = doc(db, 'shop_orders', orderId);
+      
+      const updatePayload: Record<string, unknown> = {
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      };
+      if (resi) {
+        updatePayload.noResi = resi;
+      }
+
+      await updateDoc(orderDocRef, updatePayload);
+
+      // Log activity
+      logActivity('UPDATE PESANAN TOKO', `Mengubah status pesanan ID ${orderId} (${order.productName}) menjadi: ${newStatus}`);
+
+      // Auto-stock subtraction when status transitions to 'Dikirim' or 'Selesai' (if not already done)
+      const shouldSubtractStock = (newStatus === 'Dikirim' || newStatus === 'Selesai') && 
+                                  (order.status !== 'Dikirim' && order.status !== 'Selesai');
+      
+      if (shouldSubtractStock) {
+        const product = masterBarang.find(b => b.nama_barang.toLowerCase().trim() === order.productName.toLowerCase().trim());
+        if (product) {
+          const updatedStock = Math.max(0, product.stok - order.quantity);
+          const status_barang = updatedStock <= 0 ? 'Habis' : product.status_barang;
+          
+          await updateDoc(doc(db, 'perlengkapan_master', product.id), {
+            stok: updatedStock,
+            status_barang
+          });
+          
+          logActivity('AUTO DISPATCH STOCK TOKO', `Mengurangi stok otomatis untuk ${product.nama_barang} sebanyak ${order.quantity} pcs karena pesanan dikirim`);
+        }
+      }
+
+      // Send real notification
+      if (order.mitraId) {
+        await sendNotification({
+          targetId: order.mitraId,
+          targetRole: 'mitra',
+          title: `Pesanan Perlengkapan: ${newStatus}`,
+          message: `Pesanan Anda (${order.quantity}x ${order.productName}) kini berstatus ${newStatus}.${resi ? ' Resi: ' + resi : ''}`,
+          type: 'info'
+        });
+      }
+
+      alert('Berhasil memperbarui data pesanan!');
+    } catch (err) {
+      console.error("Failed to update shop order:", err);
+      alert('Gagal memperbarui pesanan: ' + err);
+    } finally {
+      setIsUpdatingShopOrder(null);
+    }
+  };
+
+  const handleExportShopOrdersExcel = () => {
+    const listToExport = shopOrders.map(o => ({
+      'ID PESANAN': o.id,
+      'MITRA': o.mitraBrand || 'N/A',
+      'JAMAAH': o.jamaahName || 'N/A',
+      'NAMA PRODUK': o.productName,
+      'HARGA SATUAN': o.productPrice,
+      'JUMLAH': o.quantity,
+      'TOTAL BIAYA': o.totalCost,
+      'METODE BAYAR': o.paymentMethod || 'Transfer',
+      'EKSPEDISI': o.shippingVendor || 'N/A',
+      'ALAMAT KIRIM': o.shippingAddress || 'N/A',
+      'STATUS': o.status,
+      'RESI': o.noResi || 'Belum diinput'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(listToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Pesanan Perlengkapan");
+    XLSX.writeFile(wb, "ERP_Laporan_Pesanan_Perlengkapan.xlsx");
+    logActivity('EXPORT EXCEL TOKO', 'Mengekspor laporan pesanan perlengkapan ke file Excel');
+  };
+
   // 5. EXPORT SYSTEM (PDF & Excel simulation matching guidelines)
   const handleExportExcel = () => {
     // Transform master barang data
@@ -828,6 +975,7 @@ export const PerlengkapanView: React.FC = () => {
           <div className="p-2 space-y-1">
             {[
               { id: 'dashboard', label: 'Dashboard Perlengkapan', icon: BarChart2, color: 'text-teal-600' },
+              { id: 'pesanan_toko', label: 'Pesanan & Belanja Toko', icon: ShoppingCart, color: 'text-indigo-600' },
               { id: 'master', label: 'Master Perlengkapan', icon: Package, color: 'text-blue-600' },
               { id: 'packing', label: 'Packing List & Detail', icon: ClipboardList, color: 'text-violet-600' },
               { id: 'pengiriman', label: 'Ekspedisi Pengiriman', icon: Truck, color: 'text-amber-600' },
@@ -941,7 +1089,320 @@ export const PerlengkapanView: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: MASTER PERLENGKAPAN */}
+          {/* TAB TOKO: PESANAN & BELANJA TOKO MITRA/JAMAAH */}
+          {activeSubTab === 'pesanan_toko' && (() => {
+            const filteredShopOrders = shopOrders.filter(o => {
+              const matchesSearch = 
+                (o.mitraBrand || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (o.jamaahName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (o.productName || '').toLowerCase().includes(searchQuery.toLowerCase());
+              
+              const matchesStatus = shopStatusFilter === 'Semua' ? true : o.status === shopStatusFilter;
+              return matchesSearch && matchesStatus;
+            });
+
+            const totalOmzet = filteredShopOrders.reduce((sum, o) => sum + (o.totalCost || 0), 0);
+            const totalModal = filteredShopOrders.reduce((sum, o) => {
+              const matchedProd = masterBarang.find(b => b.nama_barang.toLowerCase().trim() === o.productName.toLowerCase().trim());
+              const cogs = matchedProd ? matchedProd.harga_modal : (o.productPrice * 0.7);
+              return sum + (cogs * o.quantity);
+            }, 0);
+            const totalKeuntungan = totalOmzet - totalModal;
+            const avgMargin = totalOmzet > 0 ? (totalKeuntungan / totalOmzet) * 100 : 0;
+
+            return (
+              <div className="space-y-6 text-left">
+                {/* Stats Summary Panel */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Omzet Toko</span>
+                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <p className="text-xl font-black text-slate-900 mt-1">
+                      Rp {totalOmzet.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold">Dari filter pencarian aktif</p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estimasi Modal</span>
+                      <DollarSign className="w-4 h-4 text-indigo-500" />
+                    </div>
+                    <p className="text-xl font-black text-slate-900 mt-1">
+                      Rp {totalModal.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold">Berdasarkan Harga Modal COGS</p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl border border-teal-100 shadow-xs bg-teal-50/10">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-black text-teal-700 uppercase tracking-widest">Keuntungan Bersih</span>
+                      <div className="px-1.5 py-0.5 bg-teal-100 rounded-full text-teal-800 font-black text-[9px]">
+                        {avgMargin.toFixed(1)}%
+                      </div>
+                    </div>
+                    <p className="text-xl font-black text-teal-600 mt-1">
+                      Rp {totalKeuntungan.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-[10px] text-teal-600/70 mt-0.5 font-bold">Margin laba kotor toko berjalan</p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Pesanan</span>
+                      <Clock className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <p className="text-xl font-black text-slate-900 mt-1">
+                      {filteredShopOrders.length} Pesanan
+                    </p>
+                    <p className="text-[10px] text-amber-600 font-bold">
+                      {filteredShopOrders.filter(o => o.status === 'Diproses Seller').length} Menunggu Dikirim
+                    </p>
+                  </div>
+                </div>
+
+                {/* Filter & Search Bar */}
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
+                  <div className="relative flex-1 w-full">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                      <Search className="w-4 h-4 text-slate-400" />
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Cari nama Mitra, Jamaah, atau Nama Barang..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="pl-9 p-2.5 w-full bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-teal-500 focus:outline-hidden text-xs"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-slate-400 uppercase tracking-wider text-[10px]">Status:</span>
+                      <select
+                        value={shopStatusFilter}
+                        onChange={e => setShopStatusFilter(e.target.value)}
+                        className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-hidden cursor-pointer"
+                      >
+                        <option value="Semua">Semua Status ({shopOrders.length})</option>
+                        <option value="Diproses Seller">Diproses Seller ({shopOrders.filter(o => o.status === 'Diproses Seller').length})</option>
+                        <option value="Dikirim">Dikirim ({shopOrders.filter(o => o.status === 'Dikirim').length})</option>
+                        <option value="Selesai">Selesai ({shopOrders.filter(o => o.status === 'Selesai').length})</option>
+                        <option value="Dibatalkan">Dibatalkan ({shopOrders.filter(o => o.status === 'Dibatalkan').length})</option>
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={handleExportShopOrdersExcel}
+                      className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold p-2.5 px-4 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer text-xs shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Unduh Excel</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Main Orders Table */}
+                <div className="bg-white border border-slate-150 rounded-2xl overflow-hidden shadow-xs">
+                  {filteredShopOrders.length === 0 ? (
+                    <div className="p-12 text-center text-slate-400">
+                      <ShoppingCart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="font-bold text-sm">Tidak Ada Pesanan Belanja ditemukan</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Coba sesuaikan kata kunci pencarian atau ganti filter status Anda.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                            <th className="p-4">Pembeli & Waktu</th>
+                            <th className="p-4">Barang Belanjaan</th>
+                            <th className="p-4">Keuangan & Profit</th>
+                            <th className="p-4">Pengiriman & Resi</th>
+                            <th className="p-4">Status & Kelola</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredShopOrders.map((order) => {
+                            // Find product for COGS calculation
+                            const matchedProd = masterBarang.find(b => b.nama_barang.toLowerCase().trim() === order.productName.toLowerCase().trim());
+                            const cogs = matchedProd ? matchedProd.harga_modal : (order.productPrice * 0.7);
+                            const profit = order.totalCost - (cogs * order.quantity);
+                            const margin = order.totalCost > 0 ? (profit / order.totalCost) * 100 : 0;
+
+                            const orderDate = (order.createdAt && typeof order.createdAt === 'object' && 'seconds' in order.createdAt)
+                              ? new Date((order.createdAt as { seconds: number }).seconds * 1000).toLocaleString('id-ID')
+                              : 'Baru saja';
+
+                            return (
+                              <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                                {/* Buyer & Timing */}
+                                <td className="p-4 align-top space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full font-black text-[9px] uppercase tracking-wide shrink-0">
+                                      {order.mitraBrand || 'Mitra Agen'}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] font-bold text-slate-800">
+                                    Untuk: <span className="text-slate-900 font-extrabold">{order.jamaahName || 'Stok Mitra'}</span>
+                                  </div>
+                                  {order.jamaahId && order.jamaahId !== 'mitra' && (
+                                    <p className="text-[9px] text-slate-400 font-medium font-mono">Jamaah ID: {order.jamaahId}</p>
+                                  )}
+                                  <p className="text-[9px] text-slate-400 font-bold flex items-center gap-1">
+                                    <Clock className="w-3 h-3 text-slate-400" />
+                                    {orderDate}
+                                  </p>
+                                </td>
+
+                                {/* Product details */}
+                                <td className="p-4 align-top space-y-1">
+                                  <div className="text-[11px] font-extrabold text-slate-900 line-clamp-2">
+                                    {order.productName}
+                                  </div>
+                                  
+                                  {order.orderType === 'custom' ? (
+                                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-100 rounded text-[9px] font-black uppercase tracking-wider">
+                                      ✨ Custom Brand: {order.customBrandName || 'Tanpa Nama'}
+                                    </div>
+                                  ) : (
+                                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-250 rounded text-[9px] font-bold uppercase tracking-wider">
+                                      📦 Official Umaroh
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold mt-1">
+                                    <span>Harga: Rp {order.productPrice.toLocaleString('id-ID')}</span>
+                                    <span>•</span>
+                                    <span className="text-slate-800 font-black">Qty: {order.quantity} Pcs</span>
+                                  </div>
+                                  {matchedProd && (
+                                    <p className="text-[9px] text-teal-600 font-semibold bg-teal-50 px-1.5 py-0.5 rounded-md inline-block">
+                                      Stok Gudang: {matchedProd.stok} Pcs
+                                    </p>
+                                  )}
+                                </td>
+
+                                {/* Financials & Profit */}
+                                <td className="p-4 align-top space-y-1.5">
+                                  <div>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">TOTAL OMZET</span>
+                                    <span className="text-xs font-black text-slate-900">
+                                      Rp {order.totalCost.toLocaleString('id-ID')}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">LABA KOTOR</span>
+                                      <span className="text-[9px] bg-teal-100 text-teal-800 font-extrabold px-1 rounded-sm">{margin.toFixed(0)}%</span>
+                                    </div>
+                                    <span className="text-xs font-black text-teal-600">
+                                      +Rp {profit.toLocaleString('id-ID')}
+                                    </span>
+                                  </div>
+                                  <p className="text-[9px] text-slate-450 font-mono">Metode: {order.paymentMethod || 'Transfer'}</p>
+                                </td>
+
+                                {/* Shipping Information & Resi Updater */}
+                                <td className="p-4 align-top space-y-2 max-w-xs">
+                                  <div className="text-[10px] text-slate-600 font-medium">
+                                    <span className="font-extrabold text-slate-900 block mb-0.5">
+                                      Ekspedisi: {order.shippingVendor || 'Standard Cargo'}
+                                    </span>
+                                    <p className="line-clamp-2 text-[10px] text-slate-500 leading-relaxed font-semibold bg-slate-50 p-1.5 rounded-lg border border-slate-100" title={order.shippingAddress}>
+                                      {order.shippingAddress || 'Ambil di Kantor Pusat'}
+                                    </p>
+                                  </div>
+
+                                  {/* Resi Controller */}
+                                  <div>
+                                    {order.status === 'Diproses Seller' ? (
+                                      <div className="flex gap-1.5 items-center mt-1">
+                                        <input
+                                          type="text"
+                                          placeholder="Masukkan No. Resi..."
+                                          value={shopResiInputs[order.id] || ''}
+                                          onChange={(e) => setShopResiInputs(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                          className="p-1.5 px-2 bg-white border border-slate-300 rounded-lg text-[10px] font-medium focus:outline-hidden focus:ring-1 focus:ring-teal-500 flex-1 min-w-0"
+                                        />
+                                        <button
+                                          onClick={() => {
+                                            const r = shopResiInputs[order.id];
+                                            if (!r || !r.trim()) {
+                                              alert('Masukkan nomor resi terlebih dahulu sebelum mengirim!');
+                                              return;
+                                            }
+                                            handleUpdateShopOrder(order.id, 'Dikirim', r);
+                                          }}
+                                          disabled={isUpdatingShopOrder === order.id}
+                                          className="p-1.5 bg-teal-600 hover:bg-teal-700 text-white font-black text-[10px] rounded-lg transition-all shadow-xs"
+                                        >
+                                          {isUpdatingShopOrder === order.id ? 'Loading...' : 'Kirim'}
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="mt-1 flex flex-col gap-1">
+                                        <div className="flex items-center gap-1 bg-slate-100 p-1.5 px-2.5 rounded-lg border border-slate-200">
+                                          <Truck className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                                          <span className="text-[10px] font-mono font-black text-slate-700">
+                                            {order.noResi || 'Tanpa Resi'}
+                                          </span>
+                                        </div>
+                                        {order.status === 'Dikirim' && (
+                                          <button
+                                            onClick={() => handleUpdateShopOrder(order.id, 'Selesai')}
+                                            disabled={isUpdatingShopOrder === order.id}
+                                            className="w-full mt-1 p-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[9px] rounded-md transition-all text-center uppercase tracking-wider shadow-xs cursor-pointer"
+                                          >
+                                            Selesaikan Pesanan
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* Status & Quick update dropdown */}
+                                <td className="p-4 align-top space-y-2">
+                                  <div>
+                                    <span className={`px-2.5 py-1 text-[9px] font-black rounded-full uppercase tracking-wider block text-center border ${
+                                      order.status === 'Diproses Seller' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                      order.status === 'Dikirim' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                      order.status === 'Selesai' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                      'bg-rose-50 text-rose-700 border-rose-200'
+                                    }`}>
+                                      {order.status}
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Ubah Status:</span>
+                                    <select
+                                      value={order.status}
+                                      onChange={(e) => handleUpdateShopOrder(order.id, e.target.value)}
+                                      disabled={isUpdatingShopOrder === order.id}
+                                      className="p-1.5 bg-white border border-slate-250 rounded-lg text-[10px] font-bold text-slate-700 focus:outline-hidden w-full cursor-pointer"
+                                    >
+                                      <option value="Diproses Seller">Diproses Seller</option>
+                                      <option value="Dikirim">Dikirim / Expedited</option>
+                                      <option value="Selesai">Selesai / Diterima</option>
+                                      <option value="Dibatalkan">Dibatalkan / Refund</option>
+                                    </select>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
           {activeSubTab === 'master' && (
             <div className="bg-white border border-slate-100 shadow-xs rounded-2xl overflow-hidden text-left">
               <div className="p-4 border-b border-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">

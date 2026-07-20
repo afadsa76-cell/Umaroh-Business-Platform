@@ -299,6 +299,8 @@ export interface BookingRecord {
   docFoto?: string;
   tglKeberangkatan?: string;
   tgl_keberangkatan?: string;
+  jenisPaket?: string;
+  jamaahId?: string;
 
   // Additional payment / package fields
   paketNama?: string;

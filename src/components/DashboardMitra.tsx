@@ -121,6 +121,8 @@ interface MitraShopOrder {
   status: string;
   createdAt?: { seconds: number; nanoseconds: number } | string | null;
   noResi?: string;
+  orderType?: 'resmi' | 'custom';
+  customBrandName?: string;
 }
 
 interface TokoProduct {
@@ -245,7 +247,7 @@ export const DashboardMitra = () => {
       weight: "0.2 kg",
       rating: 4.7,
       sold: 520,
-      stock: 80,
+      stock: 500,
       image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=300&auto=format&fit=crop",
       desc: "Sabuk kain Ihram tanpa jahitan dengan sistem klip pengunci super kuat dilengkapi saku ritsleting aman tahan air untuk menaruh handphone, dompet kecil, dan paspor."
     },
@@ -256,7 +258,7 @@ export const DashboardMitra = () => {
       weight: "0.15 kg",
       rating: 4.9,
       sold: 812,
-      stock: 120,
+      stock: 600,
       image: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=300&auto=format&fit=crop",
       desc: "Sandal masjid anti slip dari karet ultra ringan lengkap dengan pouch jaring agar sandal tidak hilang dan siap digantungkan di punggung tas saat sedang melakukan thawaf."
     },
@@ -267,7 +269,7 @@ export const DashboardMitra = () => {
       weight: "0.1 kg",
       rating: 4.9,
       sold: 1040,
-      stock: 300,
+      stock: 800,
       image: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?q=80&w=300&auto=format&fit=crop",
       desc: "Buku doa saku eksklusif cetakan jernih materi thariqah lengkap doa-doa mutholaah Miqat, Thawaf, Putaran Sa'i lengkap teks arab, transliterasi latin dan arti bahasa indonesia."
     },
@@ -288,6 +290,8 @@ export const DashboardMitra = () => {
   const [shippingAddress, setShippingAddress] = useState<string>('');
   const [shippingVendor, setShippingVendor] = useState<string>('J&T Express');
   const [paymentMethod, setPaymentMethod] = useState<string>('Transfer Bank BSI');
+  const [orderType, setOrderType] = useState<'resmi' | 'custom'>('resmi');
+  const [customBrandName, setCustomBrandName] = useState<string>('');
   const [orderForJamaahId, setOrderForJamaahId] = useState<string>('mitra'); // 'mitra' or booking ID
   const [isSubmittingOrder, setIsSubmittingOrder] = useState<boolean>(false);
   const [orderSuccess, setOrderSuccess] = useState<boolean>(false);
@@ -663,6 +667,23 @@ export const DashboardMitra = () => {
         });
       });
 
+      // Real-time notifications
+      await sendNotification({
+        title: 'Transfer Saldo Berhasil',
+        message: `Berhasil mentransfer saldo sebesar Rp ${transferAmount.toLocaleString('id-ID')} kepada ${recipientUser.namaLengkap || recipientUser.name || 'Mitra'}.`,
+        type: 'success',
+        targetId: userId!,
+        targetRole: 'mitra'
+      });
+
+      await sendNotification({
+        title: 'Saldo Masuk',
+        message: `Anda menerima transfer saldo sebesar Rp ${transferAmount.toLocaleString('id-ID')} dari ${currentUserData?.namaLengkap || currentUserData?.name || 'Mitra'}.`,
+        type: 'success',
+        targetId: recipientUser.id,
+        targetRole: 'mitra'
+      });
+
       alert('Transfer saldo berhasil dilakukan.');
       setShowTransferModal(false);
       setRecipientEmail('');
@@ -687,6 +708,21 @@ export const DashboardMitra = () => {
     const handleCheckoutMitraOrder = async () => {
       if (!selectedProduct || !userId) return;
       
+      const minQty = orderType === 'custom' ? 50 : 1;
+      if (buyQty < minQty) {
+        if (orderType === 'custom') {
+          alert(`Minimal order untuk perlengkapan Custom Brand ${selectedProduct.name} adalah 50 pcs.`);
+        } else {
+          alert(`Minimal order untuk perlengkapan Resmi Umaroh adalah 1 pcs.`);
+        }
+        return;
+      }
+
+      if (orderType === 'custom' && !customBrandName.trim()) {
+        alert("Mohon masukkan nama brand custom Anda.");
+        return;
+      }
+
       if (!shippingAddress.trim()) {
         alert("Mohon masukkan alamat lengkap pengiriman.");
         return;
@@ -694,8 +730,38 @@ export const DashboardMitra = () => {
 
       setIsSubmittingOrder(true);
       try {
+        // Parse weight in kg (e.g. "0.2 kg" -> 0.2)
+        const parseWeight = (wStr: string): number => {
+          const parsed = parseFloat(wStr.replace(/[^0-9.]/g, ''));
+          return isNaN(parsed) ? 1 : parsed;
+        };
+        const weightEach = parseWeight(selectedProduct.weight);
+        const totalWeight = weightEach * buyQty;
+        const roundedWeight = Math.max(1, Math.ceil(totalWeight));
+        
+        // Rates per kg per courier
+        const getCourierRate = (vendor: string): number => {
+          switch (vendor) {
+            case 'J&T Express (Regular)':
+            case 'J&T Express':
+              return 12000;
+            case 'JNE Reguler':
+              return 15000;
+            case 'Sicepat Cargo':
+              return 8000;
+            case 'J&T Cargo':
+              return 6000;
+            case 'Umaroh Delivery Service':
+              return 5000;
+            default:
+              return 10000;
+          }
+        };
+
+        const ratePerKg = getCourierRate(shippingVendor);
+        const shippingFee = roundedWeight * ratePerKg;
         const totalProductCost = selectedProduct.price * buyQty;
-        const totalCost = totalProductCost + 20000; // Flat Rp 20,000 shipping
+        const totalCost = totalProductCost + shippingFee;
         
         let targetJamaahName = "Stok Kemitraan (Mandiri)";
         let targetJamaahIdRef = null;
@@ -716,12 +782,16 @@ export const DashboardMitra = () => {
           productName: selectedProduct.name,
           productPrice: selectedProduct.price,
           quantity: buyQty,
+          totalWeight: totalWeight,
+          shippingFee: shippingFee,
           totalCost: totalCost,
           paymentMethod: paymentMethod,
           shippingVendor: shippingVendor,
           shippingAddress: shippingAddress.trim(),
           status: 'Diproses Seller',
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          orderType: orderType,
+          customBrandName: orderType === 'custom' ? customBrandName.trim() : ''
         };
 
         await addDoc(collection(db, 'shop_orders'), payload);
@@ -814,6 +884,8 @@ export const DashboardMitra = () => {
                         if (ihram) {
                           setSelectedProduct(ihram);
                           setBuyQty(1);
+                          setOrderType('resmi');
+                          setCustomBrandName('');
                         }
                       }}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all uppercase tracking-wider"
@@ -848,6 +920,8 @@ export const DashboardMitra = () => {
                   onClick={() => {
                     setSelectedProduct(p);
                     setBuyQty(1);
+                    setOrderType('resmi');
+                    setCustomBrandName('');
                   }}
                   className="bg-white rounded-2xl overflow-hidden border border-gray-150/60 shadow-sm hover:shadow-lg hover:border-emerald-200 transition-all duration-300 cursor-pointer flex flex-col justify-between group"
                 >
@@ -1111,26 +1185,89 @@ export const DashboardMitra = () => {
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span className="text-xs font-extrabold text-gray-700">Jumlah Pesanan (Qty)</span>
-                        <div className="flex items-center gap-2.5">
-                          <button 
+                      {/* OPSI JENIS PESANAN: Resmi vs Custom */}
+                      <div className="space-y-2 text-left bg-slate-50/50 p-3 rounded-2xl border border-gray-150">
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500">Pilih Jenis Pesanan</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
                             type="button"
-                            onClick={() => setBuyQty(Math.max(1, buyQty - 1))}
-                            className="w-7 h-7 bg-white rounded-lg border border-gray-250 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-50 active:scale-90 transition-all font-mono"
+                            onClick={() => {
+                              setOrderType('resmi');
+                              setBuyQty(Math.max(1, buyQty));
+                            }}
+                            className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                              orderType === 'resmi'
+                                ? 'border-emerald-600 bg-emerald-50/40 ring-1 ring-emerald-600'
+                                : 'border-gray-200 bg-white hover:bg-gray-50'
+                            }`}
                           >
-                            -
+                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Official Umaroh</span>
+                            <span className="text-[9px] text-gray-500 mt-1 leading-tight">Grosir Resmi (Min. 1 Pcs)</span>
                           </button>
-                          <span className="text-xs font-black min-w-4 text-center">{buyQty}</span>
-                          <button 
+
+                          <button
                             type="button"
-                            onClick={() => setBuyQty(Math.min(selectedProduct.stock, buyQty + 1))}
-                            className="w-7 h-7 bg-white rounded-lg border border-gray-250 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-50 active:scale-90 transition-all font-mono"
+                            onClick={() => {
+                              setOrderType('custom');
+                              setBuyQty(Math.max(50, buyQty));
+                            }}
+                            className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                              orderType === 'custom'
+                                ? 'border-purple-600 bg-purple-50/40 ring-1 ring-purple-600'
+                                : 'border-gray-200 bg-white hover:bg-gray-50'
+                            }`}
                           >
-                            +
+                            <span className="text-[10px] font-black text-purple-950 uppercase tracking-wider">Custom Brand</span>
+                            <span className="text-[9px] text-gray-500 mt-1 leading-tight">Gunakan Logo Sendiri (Min. 50 Pcs)</span>
                           </button>
                         </div>
+
+                        {orderType === 'custom' && (
+                          <div className="mt-2.5 pt-2 border-t border-dashed border-purple-100">
+                            <label className="block text-[9px] font-black uppercase tracking-wider text-purple-700 mb-1">Nama Brand Anda sendiri (Kustom Logo)</label>
+                            <input
+                              type="text"
+                              value={customBrandName}
+                              onChange={(e) => setCustomBrandName(e.target.value)}
+                              placeholder="Masukkan nama brand travel/agen Anda..."
+                              className="w-full bg-white border border-purple-200 rounded-xl py-2 px-3 text-xs text-purple-950 placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-500 transition-all font-semibold"
+                            />
+                          </div>
+                        )}
                       </div>
+
+                      {(() => {
+                        const minQty = orderType === 'custom' ? 50 : 1;
+                        return (
+                          <div className="space-y-2 text-left">
+                            {orderType === 'custom' && (
+                              <div className="p-2.5 bg-purple-50 border border-purple-100 text-purple-800 text-[10px] font-black uppercase tracking-wider rounded-xl text-center">
+                                📢 Pembelian Custom Brand mewajibkan minimal order 50 Pcs untuk cetak logo & packing khusus brand Anda sendiri.
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                              <span className="text-xs font-extrabold text-gray-700">Jumlah Pesanan (Qty)</span>
+                              <div className="flex items-center gap-2.5">
+                                <button 
+                                  type="button"
+                                  onClick={() => setBuyQty(Math.max(minQty, buyQty - 1))}
+                                  className="w-7 h-7 bg-white rounded-lg border border-gray-250 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-50 active:scale-90 transition-all font-mono"
+                                >
+                                  -
+                                </button>
+                                <span className="text-xs font-black min-w-4 text-center">{buyQty}</span>
+                                <button 
+                                  type="button"
+                                  onClick={() => setBuyQty(orderType === 'custom' ? buyQty + 1 : Math.min(selectedProduct.stock, buyQty + 1))}
+                                  className="w-7 h-7 bg-white rounded-lg border border-gray-250 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-50 active:scale-90 transition-all font-mono"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <div>
                         <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500 mb-1">Alamat Penerima Lengkap & No. HP</label>
@@ -1152,6 +1289,7 @@ export const DashboardMitra = () => {
                             className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-100"
                           >
                             <option value="J&T Express">J&T Express (Regular)</option>
+                            <option value="J&T Cargo">J&T Cargo (Cargo Massal)</option>
                             <option value="JNE Reguler">JNE Reguler</option>
                             <option value="Sicepat Cargo">Sicepat Cargo</option>
                             <option value="Umaroh Delivery Service">Umaroh Delivery Service</option>
@@ -1170,23 +1308,120 @@ export const DashboardMitra = () => {
                             <option value="Transfer Bank BCA">Transfer Bank BCA</option>
                             <option value="Potong Saldo Komisi">Potong Saldo Komisi</option>
                           </select>
+
+                          {/* Detail Rekening Bank PT Nawaitul Umrah Haji */}
+                          {paymentMethod.startsWith('Transfer Bank') && (
+                            <div className="mt-2 p-2.5 bg-emerald-50/40 border border-emerald-100 rounded-xl text-left">
+                              <span className="block text-[8px] font-black text-slate-400 tracking-wider uppercase mb-1">Rekening Pembayaran Resmi:</span>
+                              {paymentMethod === 'Transfer Bank BSI' && (
+                                <div className="flex items-center justify-between gap-2">
+                                  <div>
+                                    <span className="block text-[9px] font-extrabold text-slate-800 leading-tight">BANK SYARIAH INDONESIA (BSI)</span>
+                                    <span className="block text-[11px] font-black text-emerald-600 tracking-wider font-mono mt-0.5">5577775003</span>
+                                    <span className="block text-[8px] font-bold text-slate-505 mt-0.5">a.n. PT. Nawaitul Umrah Haji</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText('5577775003');
+                                      alert('Nomor rekening BSI berhasil disalin!');
+                                    }}
+                                    className="text-[8px] font-black text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded border border-emerald-100 transition-all uppercase cursor-pointer whitespace-nowrap active:scale-95"
+                                  >
+                                    Salin
+                                  </button>
+                                </div>
+                              )}
+                              {paymentMethod === 'Transfer Bank BCA' && (
+                                <div className="flex items-center justify-between gap-2">
+                                  <div>
+                                    <span className="block text-[9px] font-extrabold text-slate-800 leading-tight">BANK CENTRAL ASIA (BCA)</span>
+                                    <span className="block text-[11px] font-black text-blue-600 tracking-wider font-mono mt-0.5">7380989918</span>
+                                    <span className="block text-[8px] font-bold text-slate-505 mt-0.5">a.n. PT. Nawaitul Umroh Haji</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText('7380989918');
+                                      alert('Nomor rekening BCA berhasil disalin!');
+                                    }}
+                                    className="text-[8px] font-black text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded border border-blue-100 transition-all uppercase cursor-pointer whitespace-nowrap active:scale-95"
+                                  >
+                                    Salin
+                                  </button>
+                                </div>
+                              )}
+                              {paymentMethod === 'Transfer Bank Mandiri' && (
+                                <div className="flex items-center justify-between gap-2">
+                                  <div>
+                                    <span className="block text-[9px] font-extrabold text-slate-800 leading-tight">BANK MANDIRI (REK / VA)</span>
+                                    <span className="block text-[11px] font-black text-amber-600 tracking-wider font-mono mt-0.5">Hubungi Admin Kasir</span>
+                                    <span className="block text-[8px] font-bold text-slate-505 mt-0.5">a.n. PT. Nawaitul Umrah Haji</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-xs text-amber-900 space-y-1.5">
-                        <div className="flex justify-between">
-                          <span>Subtotal Produk:</span>
-                          <span className="font-bold">Rp {(selectedProduct.price * buyQty).toLocaleString('id-ID')}</span>
-                        </div>
-                        <div className="flex justify-between text-[11px] text-amber-800">
-                          <span>Ongkos Kirim Flat Jarak Jauh:</span>
-                          <span>Rp 20.000</span>
-                        </div>
-                        <div className="flex justify-between pt-1.5 border-t border-amber-250 font-black text-amber-950 text-sm">
-                          <span>Total Pembayaran:</span>
-                          <span>Rp {(selectedProduct.price * buyQty + 20000).toLocaleString('id-ID')}</span>
-                        </div>
-                      </div>
+                      {(() => {
+                        const parseWeight = (wStr: string): number => {
+                          const parsed = parseFloat(wStr.replace(/[^0-9.]/g, ''));
+                          return isNaN(parsed) ? 1 : parsed;
+                        };
+                        const weightEach = parseWeight(selectedProduct.weight);
+                        const totalWeight = weightEach * buyQty;
+                        const roundedWeight = Math.max(1, Math.ceil(totalWeight));
+                        
+                        const getCourierRate = (vendor: string): number => {
+                          switch (vendor) {
+                            case 'J&T Express (Regular)':
+                            case 'J&T Express':
+                              return 12000;
+                            case 'JNE Reguler':
+                              return 15000;
+                            case 'Sicepat Cargo':
+                              return 8000;
+                            case 'J&T Cargo':
+                              return 6000;
+                            case 'Umaroh Delivery Service':
+                              return 5000;
+                            default:
+                              return 10000;
+                          }
+                        };
+
+                        const ratePerKg = getCourierRate(shippingVendor);
+                        const shippingFee = roundedWeight * ratePerKg;
+                        const subtotalProduct = selectedProduct.price * buyQty;
+                        const totalPayment = subtotalProduct + shippingFee;
+
+                        return (
+                          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-xs text-amber-900 space-y-1.5 text-left">
+                            <div className="flex justify-between">
+                              <span>Subtotal Produk:</span>
+                              <span className="font-extrabold text-slate-900">Rp {subtotalProduct.toLocaleString('id-ID')}</span>
+                            </div>
+                            <div className="flex justify-between text-[11px] text-amber-800">
+                              <span>Total Berat:</span>
+                              <span className="font-bold">{totalWeight.toFixed(2)} kg ({roundedWeight} kg Pembulatan)</span>
+                            </div>
+                            <div className="flex justify-between text-[11px] text-amber-800">
+                              <span>Kurir / Tarif per Kg:</span>
+                              <span className="font-bold">{shippingVendor} (Rp {ratePerKg.toLocaleString('id-ID')}/kg)</span>
+                            </div>
+                            <div className="flex justify-between text-[11px] text-amber-800">
+                              <span>Ongkos Kirim Real:</span>
+                              <span className="font-bold">Rp {shippingFee.toLocaleString('id-ID')}</span>
+                            </div>
+                            <div className="flex justify-between pt-1.5 border-t border-amber-250 font-black text-amber-950 text-sm">
+                              <span>Total Pembayaran:</span>
+                              <span className="text-emerald-700">Rp {totalPayment.toLocaleString('id-ID')}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </>
                 )}

@@ -9,7 +9,7 @@ import { PaketTracker, JamaahTracker } from './tracker/types';
 import { openWhatsApp } from '../utils/whatsapp';
 import { syncBookingToTracker } from '../utils/firebaseSync';
 import { ShopOrder, AppNotification } from '../types';
-import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../services/notificationService';
+import { listenToUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, sendNotification } from '../services/notificationService';
 import { MitraLiveMap } from './dashboard/MitraLiveMap';
 import { Capacitor } from '@capacitor/core';
 import html2pdf from 'html2pdf.js';
@@ -44,6 +44,8 @@ interface CurrentUserInvoiceData {
 interface PilgrimBooking {
   id: string;
   jamaahId?: string;
+  mitraId?: string;
+  namaJamaah?: string;
   jenisPaket?: string;
   paketLabel?: string;
   totalHarga?: number;
@@ -388,6 +390,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         payload.noResi = customResi;
       }
       await updateDoc(doc(db, 'shop_orders', orderId), payload);
+
+      const targetOrder = shopOrders.find(o => o.id === orderId);
+      if (targetOrder) {
+        if (targetOrder.mitraId) {
+          await sendNotification({
+            title: 'Status Pesanan Diperbarui',
+            message: `Pesanan "${targetOrder.productName}" untuk ${targetOrder.jamaahName || 'Jamaah'} statusnya diubah menjadi: ${newStatus}${customResi ? ` (No. Resi: ${customResi})` : ''}.`,
+            type: 'info',
+            targetId: targetOrder.mitraId,
+            targetRole: 'mitra'
+          });
+        }
+        if (targetOrder.jamaahId) {
+          await sendNotification({
+            title: 'Status Pesanan Diperbarui',
+            message: `Pesanan merchandise/perlengkapan Anda "${targetOrder.productName}" statusnya diubah menjadi: ${newStatus}${customResi ? ` (No. Resi: ${customResi})` : ''}.`,
+            type: 'info',
+            targetId: targetOrder.jamaahId,
+            targetRole: 'jamaah'
+          });
+        }
+      }
+
       alert(`Status pesanan berhasil diperbarui ke: ${newStatus}`);
     } catch (err) {
       console.error("Gagal update status pesanan belanja:", err);
@@ -407,6 +432,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           ...targetBooking,
           statusPembayaran: 'lunas'
         });
+
+        // Real-time notifications
+        if (targetBooking.mitraId) {
+          await sendNotification({
+            title: 'Pembayaran Jamaah Lunas',
+            message: `Pembayaran jamaah Anda (${targetBooking.namaJamaah || 'Jamaah'}) untuk paket "${targetBooking.paketLabel || 'Umroh'}" telah dikonfirmasi LUNAS oleh admin.`,
+            type: 'success',
+            targetId: targetBooking.mitraId,
+            targetRole: 'mitra'
+          });
+        }
+        if (targetBooking.jamaahId) {
+          await sendNotification({
+            title: 'Pembayaran Dikonfirmasi Lunas',
+            message: `Alhamdulillah! Pembayaran pendaftaran umroh Anda untuk paket "${targetBooking.paketLabel || 'Umroh'}" telah dikonfirmasi LUNAS. Terima kasih.`,
+            type: 'success',
+            targetId: targetBooking.jamaahId,
+            targetRole: 'jamaah'
+          });
+        }
       }
       alert("Pembayaran pendaftaran umroh berhasil dikonfirmasi LUNAS!");
     } catch (err) {
