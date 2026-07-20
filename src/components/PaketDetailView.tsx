@@ -209,10 +209,12 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
   const ujrohPartnerVal = paket.ujrohPartner || Math.round(markup * 0.3);
   const estimasiProfit = (paket.marginBersih || markup) * (paket.kuota || paket.targetJamaah || 45);
 
+  const isMadinahFirst = (paket.urutanKunjungan || "").toLowerCase().includes("madinah");
+
   const itinerary = [
     { day: 1, activity: 'KEBERANGKATAN ' + (paket.kotaKeberangkatan || 'CGK') },
-    { day: 2, activity: 'TIBA DI ' + (paket.urutanKunjungan === 'Madinah' ? 'MADINAH' : 'MAKKAH') },
-    { day: 5, activity: 'MENUJU ' + (paket.urutanKunjungan === 'Madinah' ? 'MAKKAH' : 'MADINAH') },
+    { day: 2, activity: 'TIBA DI ' + (isMadinahFirst ? 'MADINAH' : 'MAKKAH') },
+    { day: 5, activity: 'MENUJU ' + (isMadinahFirst ? 'MAKKAH' : 'MADINAH') },
     { day: paket.durasiHari || 9, activity: 'KEPULANGAN' }
   ];
 

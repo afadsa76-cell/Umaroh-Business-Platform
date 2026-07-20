@@ -8,6 +8,9 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     base: './',
+    json: {
+      stringify: true,
+    },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
@@ -17,6 +20,18 @@ export default defineConfig(({mode}) => {
         'react': path.resolve(__dirname, 'node_modules/react'),
         'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
+    },
+    build: {
+      target: 'esnext',
+      sourcemap: false,
+      minify: false,
+      cssMinify: false,
+      reportCompressedSize: false,
+      rollupOptions: {
+        cache: false,
+        maxParallelFileOps: 1,
+        treeshake: false,
+      }
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

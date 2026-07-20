@@ -43,6 +43,7 @@ import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType, col
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { JamaahSession } from './types';
 import { startUmarohDbSync } from './utils/umarohDbSync';
+import { loadHotelsAsync } from './data/hotels';
 
 const categoryItems: Record<string, string[]> = {
   mitra_dev: ['validasi-mitra', 'user-database'],
@@ -56,6 +57,8 @@ const categoryItems: Record<string, string[]> = {
 function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [hotelsUpdateTick, setHotelsUpdateTick] = useState(0);
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [subRole, setSubRole] = useState<string | null>(null);
   const [vendorName, setVendorName] = useState<string | null>(null);
@@ -79,6 +82,14 @@ function App() {
     window.addEventListener('offline', handleOffline);
     window.addEventListener('firestore-offline-detected', handleFirestoreOffline);
     window.addEventListener('firestore-quota-exceeded', handleFirestoreOffline);
+
+    const handleHotelsUpdated = () => {
+      setHotelsUpdateTick(prev => prev + 1);
+    };
+    window.addEventListener('hotels-updated', handleHotelsUpdated);
+
+    // Asynchronously load and cache full hotel datasets from public JSON assets
+    loadHotelsAsync();
 
     // Start Umaroh master database real-time cloud sync
     const unsubscribeSync = startUmarohDbSync();
@@ -331,6 +342,7 @@ function App() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('firestore-offline-detected', handleFirestoreOffline);
       window.removeEventListener('firestore-quota-exceeded', handleFirestoreOffline);
+      window.removeEventListener('hotels-updated', handleHotelsUpdated);
       if (unsubscribeSync) unsubscribeSync();
     };
   }, []);

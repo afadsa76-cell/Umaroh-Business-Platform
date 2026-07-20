@@ -1284,7 +1284,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       // 2. Check if Mekkah is visited first
       // Default to Madinah first, unless urutanKunjungan explicitly says Mekkah first
       const urutan = (formData.urutanKunjungan || "").toLowerCase();
-      const isMekkahFirst = urutan.includes("mekkah") || urutan.startsWith("mekkah");
+      const isMekkahFirst = urutan.startsWith("mekkah") || urutan.startsWith("makkah");
 
       let inMadinah = "";
       let outMadinah = "";
@@ -1933,14 +1933,21 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         } as Maskapai));
         setMaskapaiList(data);
 
-        // Auto-sync missing initial data items in background (only for users with write permission)
-        const existingIds = new Set(data.map(item => item.id));
-        const missingItems = maskapaiData.filter(item => !existingIds.has(item.id));
-        if (missingItems.length > 0) {
-          console.log(`Auto-syncing ${missingItems.length} missing maskapai records from Wizard...`);
+        // Auto-sync missing or modified initial data items in background (only for users with write permission)
+        const existingMap: Record<string, Maskapai> = {};
+        data.forEach(item => {
+          existingMap[item.id] = item;
+        });
+        const itemsToSync = maskapaiData.filter(item => {
+          const existing = existingMap[item.id];
+          if (!existing) return true;
+          return existing.hargaBeli !== item.hargaBeli || existing.hargaJual !== item.hargaJual;
+        });
+        if (itemsToSync.length > 0) {
+          console.log(`Auto-syncing ${itemsToSync.length} missing or updated maskapai records from Wizard...`);
           const chunkSize = 400;
-          for (let i = 0; i < missingItems.length; i += chunkSize) {
-            const chunk = missingItems.slice(i, i + chunkSize);
+          for (let i = 0; i < itemsToSync.length; i += chunkSize) {
+            const chunk = itemsToSync.slice(i, i + chunkSize);
             try {
               const batch = writeBatch(db);
               chunk.forEach((item) => {
@@ -2096,6 +2103,19 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const currentStepsList = getSteps(formData.kategori);
   const currentStepName =
     currentStepsList[currentStep - 1] || currentStepsList[0];
+
+  // Automatically adjust default hotel step city depending on the departure visitation sequence (urutanKunjungan)
+  useEffect(() => {
+    if (currentStepName === "HOTEL" || currentStepName === "HOTEL UMRAH") {
+      const urutan = (formData.urutanKunjungan || "").toLowerCase();
+      const isMekkahFirst = urutan.startsWith("mekkah") || urutan.startsWith("makkah");
+      if (isMekkahFirst) {
+        setHotelStep("makkah");
+      } else {
+        setHotelStep("madinah");
+      }
+    }
+  }, [currentStepName, formData.urutanKunjungan]);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -2257,15 +2277,30 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
   const handleNext = async () => {
     if (currentStepName === "HOTEL" || currentStepName === "HOTEL UMRAH") {
-      if (!formData.hotelMadinahId) {
-        alert("Hotel Madinah wajib dipilih!");
-        setHotelStep("madinah");
-        return;
-      }
-      if (!formData.hotelMakkahId) {
-        alert("Hotel Makkah wajib dipilih!");
-        setHotelStep("makkah");
-        return;
+      const urutan = (formData.urutanKunjungan || "").toLowerCase();
+      const isMekkahFirst = urutan.startsWith("mekkah") || urutan.startsWith("makkah");
+      if (isMekkahFirst) {
+        if (!formData.hotelMakkahId) {
+          alert("Hotel Makkah wajib dipilih!");
+          setHotelStep("makkah");
+          return;
+        }
+        if (!formData.hotelMadinahId) {
+          alert("Hotel Madinah wajib dipilih!");
+          setHotelStep("madinah");
+          return;
+        }
+      } else {
+        if (!formData.hotelMadinahId) {
+          alert("Hotel Madinah wajib dipilih!");
+          setHotelStep("madinah");
+          return;
+        }
+        if (!formData.hotelMakkahId) {
+          alert("Hotel Makkah wajib dipilih!");
+          setHotelStep("makkah");
+          return;
+        }
       }
     }
 
@@ -4490,7 +4525,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     </div>
 
                     {isEditingItinerary ? (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <textarea
                           placeholder="JEDJED HK20 9D PNR:XXX2L5&#10;28Des SV827 CGKJED 0040 0610&#10;04Jan SV816 JEDCGK 1830 0815+1"
                           value={formData.flightItinerary || ""}
@@ -4501,15 +4536,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             });
                           }}
                           rows={3}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-xs text-gray-800 font-mono transition-all bg-white leading-relaxed resize-none h-[120px]"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-xs text-gray-800 font-mono transition-all bg-white leading-relaxed resize-none h-[95px]"
                         />
                         <div className="flex justify-end">
                           <button
                             type="button"
                             onClick={() => setIsEditingItinerary(false)}
-                            className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-700 transition-all uppercase tracking-wider flex items-center gap-1"
+                            className="bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold hover:bg-emerald-700 transition-all uppercase tracking-wider flex items-center gap-1"
                           >
-                            <Check className="w-3 h-3" /> Selesai Mengedit
+                            <Check className="w-2.5 h-2.5" /> Selesai Mengedit
                           </button>
                         </div>
                       </div>
@@ -4520,96 +4555,96 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         const pnrCode = pnrMatch ? pnrMatch[1] : "AUTO-GEN";
                         
                         return parsedFlights.length > 0 ? (
-                          <div className="relative bg-[#0d1222] border border-[#1e294b] p-6 rounded-3xl shadow-xl overflow-hidden space-y-5 text-gray-100">
+                          <div className="relative bg-[#0d1222] border border-[#1e294b] p-3 rounded-2xl shadow-lg overflow-hidden space-y-2.5 text-gray-100">
                             {/* Decorative Cutout Circles for Boarding Pass Style */}
-                            <div className="absolute top-[45%] -left-3.5 w-7 h-7 bg-white rounded-full border border-gray-200 z-10"></div>
-                            <div className="absolute top-[45%] -right-3.5 w-7 h-7 bg-white rounded-full border border-gray-200 z-10"></div>
+                            <div className="absolute top-[45%] -left-2.5 w-5 h-5 bg-white rounded-full border border-gray-200 z-10"></div>
+                            <div className="absolute top-[45%] -right-2.5 w-5 h-5 bg-white rounded-full border border-gray-200 z-10"></div>
                             
                             {/* Ticket Header */}
-                            <div className="flex justify-between items-center pb-4 border-b border-[#1e294b] border-dashed">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
-                                  <Plane className="w-4 h-4" />
+                            <div className="flex justify-between items-center pb-1.5 border-b border-[#1e294b] border-dashed">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                                  <Plane className="w-3 h-3" />
                                 </div>
                                 <div>
-                                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider border border-emerald-500/20">
+                                  <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider border border-emerald-500/20">
                                     BOARDING PASS
                                   </span>
-                                  <span className="text-[10px] text-gray-400 font-bold ml-2 uppercase">
+                                  <span className="text-[8px] text-gray-400 font-bold ml-1.5 uppercase">
                                     {formData.tipePenerbangan || "DIRECT"}
                                   </span>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="text-[9px] text-gray-400 font-bold uppercase block tracking-wider">RESERVASI (PNR)</span>
-                                <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">{pnrCode}</span>
+                                <span className="text-[7px] text-gray-400 font-bold uppercase block tracking-wider leading-none mb-0.5">RESERVASI (PNR)</span>
+                                <span className="text-[9px] font-mono font-black text-emerald-400 bg-emerald-500/5 px-1 py-0.5 rounded border border-emerald-500/10">{pnrCode}</span>
                               </div>
                             </div>
-
+ 
                             {/* Flight Segments */}
-                            <div className="space-y-5">
+                            <div className="space-y-2.5">
                               {parsedFlights.map((flight, idx) => (
                                 <React.Fragment key={idx}>
                                   {idx > 0 && (
-                                    <div className="border-t border-dashed border-[#1e294b] my-4 pt-4"></div>
+                                    <div className="border-t border-dashed border-[#1e294b] my-2 pt-2"></div>
                                   )}
                                   <div className="grid grid-cols-3 items-center">
                                     {/* Origin Airport */}
-                                    <div className="space-y-1">
-                                      <span className="text-[9px] font-bold text-gray-400 block uppercase tracking-wider">DEPARTURE</span>
-                                      <span className="text-2xl font-black text-white tracking-tight font-mono">{flight.origin}</span>
-                                      <span className="text-[10px] font-bold text-emerald-400 block">{flight.date}</span>
+                                    <div className="space-y-0.5">
+                                      <span className="text-[7px] font-bold text-gray-400 block uppercase tracking-wider">DEPARTURE</span>
+                                      <span className="text-base font-black text-white tracking-tight font-mono">{flight.origin}</span>
+                                      <span className="text-[8px] font-bold text-emerald-400 block">{flight.date}</span>
                                     </div>
-
+ 
                                     {/* Flight Path / Plane */}
-                                    <div className="flex flex-col items-center px-2">
-                                      <span className="text-[9px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-full mb-1 border border-emerald-500/15">
+                                    <div className="flex flex-col items-center px-1">
+                                      <span className="text-[7px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded-full mb-0.5 border border-emerald-500/15">
                                         {flight.flightNo}
                                       </span>
-                                      <div className="w-full relative flex items-center justify-center my-1.5">
+                                      <div className="w-full relative flex items-center justify-center my-0.5">
                                         <div className="w-full border-t-2 border-dashed border-[#1e294b] absolute"></div>
-                                        <Plane className="w-4 h-4 text-emerald-400 bg-[#0d1222] relative z-10 px-0.5 rotate-90" />
+                                        <Plane className="w-3 h-3 text-emerald-400 bg-[#0d1222] relative z-10 px-0.5 rotate-90" />
                                       </div>
-                                      <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">
+                                      <span className="text-[6px] text-gray-400 font-bold uppercase tracking-wider leading-none">
                                         Flight Duration
                                       </span>
                                     </div>
-
+ 
                                     {/* Destination Airport */}
-                                    <div className="space-y-1 text-right">
-                                      <span className="text-[9px] font-bold text-gray-400 block uppercase tracking-wider">ARRIVAL</span>
-                                      <span className="text-2xl font-black text-white tracking-tight font-mono">{flight.destination}</span>
-                                      <span className="text-[10px] font-bold text-gray-300 block">TIBA: {flight.arrTime}</span>
+                                    <div className="space-y-0.5 text-right">
+                                      <span className="text-[7px] font-bold text-gray-400 block uppercase tracking-wider">ARRIVAL</span>
+                                      <span className="text-base font-black text-white tracking-tight font-mono">{flight.destination}</span>
+                                      <span className="text-[8px] font-bold text-gray-300 block">TIBA: {flight.arrTime}</span>
                                     </div>
                                   </div>
                                   
                                   {/* Sub-card with Details */}
-                                  <div className="flex justify-between items-center bg-[#151b32] p-3 rounded-2xl border border-[#1e294b]/60 text-xs text-gray-300">
-                                    <div className="flex items-center gap-2 font-bold">
-                                      <Calendar className="w-4 h-4 text-emerald-400" />
+                                  <div className="flex justify-between items-center bg-[#151b32] p-1.5 px-2 rounded-xl border border-[#1e294b]/60 text-[10px] text-gray-300">
+                                    <div className="flex items-center gap-1 font-bold">
+                                      <Calendar className="w-3 h-3 text-emerald-400" />
                                       <span>Jadwal Keberangkatan:</span>
                                       <strong className="text-white font-extrabold">{flight.date}</strong>
                                     </div>
-                                    <div className="font-mono text-xs font-black text-emerald-400 bg-emerald-500/5 px-2.5 py-0.5 rounded border border-emerald-500/10">
+                                    <div className="font-mono text-[9px] font-black text-emerald-400 bg-emerald-500/5 px-1.5 py-0.5 rounded border border-emerald-500/10">
                                       WAKTU: {flight.depTime}
                                     </div>
                                   </div>
                                 </React.Fragment>
                               ))}
                             </div>
-
+ 
                             {/* Footer Link / Toggle to edit raw text */}
-                            <div className="pt-2 flex justify-between items-center border-t border-[#1e294b]/40">
-                              <span className="text-[10px] text-gray-400 font-bold flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <div className="pt-1.5 flex justify-between items-center border-t border-[#1e294b]/40">
+                              <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                 E-Ticket sinkron dengan manifest utama
                               </span>
                               <button
                                 type="button"
                                 onClick={() => setIsEditingItinerary(true)}
-                                className="text-[10px] font-black text-emerald-400 hover:text-emerald-300 flex items-center gap-1 uppercase tracking-widest bg-emerald-500/5 hover:bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/10 transition-all"
+                                className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 flex items-center gap-1 uppercase tracking-widest bg-emerald-500/5 hover:bg-emerald-500/10 px-2 py-1 rounded-xl border border-emerald-500/10 transition-all"
                               >
-                                <Edit3 className="w-3.5 h-3.5" /> Edit Text Manual
+                                <Edit3 className="w-3 h-3" /> Edit Text Manual
                               </button>
                             </div>
                           </div>
@@ -5027,33 +5062,62 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         {(currentStepName === "HOTEL" || currentStepName === "HOTEL UMRAH") && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {/* Header sub-step */}
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-5 bg-amber-500 rounded-full"></div>
-                <h3 className="font-bold text-gray-700 uppercase tracking-wide text-xs sm:text-sm">
-                  Pilih Hotel DI{" "}
-                  {hotelStep === "madinah"
-                    ? "Madinah (Langkah 3.1)"
-                    : "Makkah (Langkah 3.2)"}
-                </h3>
-              </div>
-              <div className="flex bg-gray-100 rounded-full p-1 gap-1">
-                <button
-                  onClick={() => setHotelStep("madinah")}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${hotelStep === "madinah" ? "bg-emerald-100 text-emerald-700" : "text-gray-500 hover:text-gray-700"}`}
-                >
-                  {hotelStep === "madinah" && <span className="mr-1">3.1</span>}
-                  MADINAH
-                </button>
-                <button
-                  onClick={() => setHotelStep("makkah")}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${hotelStep === "makkah" ? "bg-emerald-100 text-emerald-700" : "text-gray-500 hover:text-gray-700"}`}
-                >
-                  {hotelStep === "makkah" && <span className="mr-1">3.2</span>}
-                  MAKKAH
-                </button>
-              </div>
-            </div>
+            {(() => {
+              const urutan = (formData.urutanKunjungan || "").toLowerCase();
+              const isMekkahFirst = urutan.startsWith("mekkah") || urutan.startsWith("makkah");
+              
+              const currentStepLabel = isMekkahFirst
+                ? (hotelStep === "makkah" ? "Makkah (Langkah 3.1)" : "Madinah (Langkah 3.2)")
+                : (hotelStep === "madinah" ? "Madinah (Langkah 3.1)" : "Makkah (Langkah 3.2)");
+
+              return (
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-amber-500 rounded-full"></div>
+                    <h3 className="font-bold text-gray-700 uppercase tracking-wide text-xs sm:text-sm">
+                      Pilih Hotel DI {currentStepLabel}
+                    </h3>
+                  </div>
+                  <div className="flex bg-gray-100 rounded-full p-1 gap-1">
+                    {isMekkahFirst ? (
+                      <>
+                        <button
+                          onClick={() => setHotelStep("makkah")}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${hotelStep === "makkah" ? "bg-emerald-100 text-emerald-700" : "text-gray-500 hover:text-gray-700"}`}
+                        >
+                          {hotelStep === "makkah" && <span className="mr-1">3.1</span>}
+                          MAKKAH
+                        </button>
+                        <button
+                          onClick={() => setHotelStep("madinah")}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${hotelStep === "madinah" ? "bg-emerald-100 text-emerald-700" : "text-gray-500 hover:text-gray-700"}`}
+                        >
+                          {hotelStep === "madinah" && <span className="mr-1">3.2</span>}
+                          MADINAH
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setHotelStep("madinah")}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${hotelStep === "madinah" ? "bg-emerald-100 text-emerald-700" : "text-gray-500 hover:text-gray-700"}`}
+                        >
+                          {hotelStep === "madinah" && <span className="mr-1">3.1</span>}
+                          MADINAH
+                        </button>
+                        <button
+                          onClick={() => setHotelStep("makkah")}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${hotelStep === "makkah" ? "bg-emerald-100 text-emerald-700" : "text-gray-500 hover:text-gray-700"}`}
+                        >
+                          {hotelStep === "makkah" && <span className="mr-1">3.2</span>}
+                          MAKKAH
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Dark Blue Date Box */}
             <div className="bg-[#1e2336] rounded-xl p-4 mb-6">
