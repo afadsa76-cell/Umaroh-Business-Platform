@@ -122,7 +122,11 @@ function App() {
       if (user) {
         setIsLoggedIn(true);
         setUserEmail(user.email);
-        const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+        const isMA = user.email ? (
+          user.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+          user.email.toLowerCase() === 'afadsa76@gmail.com' ||
+          user.email.toLowerCase() === 'admin@umaroh.com'
+        ) : false;
         
         if (isMA) {
           // Asynchronously ensure Master Admin profile is fully written in the Firestore 'users' collection
@@ -449,7 +453,11 @@ function App() {
     };
   }, [isLoggedIn]);
 
-  const isMasterAdmin = userEmail ? (userEmail.toLowerCase() === 'operationalumaroh@gmail.com' || userEmail.toLowerCase() === 'afadsa76@gmail.com') : false;
+  const isMasterAdmin = userEmail ? (
+    userEmail.toLowerCase() === 'operationalumaroh@gmail.com' || 
+    userEmail.toLowerCase() === 'afadsa76@gmail.com' ||
+    userEmail.toLowerCase() === 'admin@umaroh.com'
+  ) : false;
 
   const [jamaahCodeSession, setJamaahCodeSession] = useState<JamaahSession | null>(null);
 

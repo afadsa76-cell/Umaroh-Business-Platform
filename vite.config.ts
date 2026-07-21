@@ -13,6 +13,9 @@ export default defineConfig(({mode}) => {
     },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.DATABASE_MODE': JSON.stringify(env.DATABASE_MODE || env.VITE_DATABASE_MODE || ''),
+      'process.env.ACTIVE_DATABASE': JSON.stringify(env.ACTIVE_DATABASE || env.VITE_ACTIVE_DATABASE || ''),
+      'process.env.FIRESTORE_DATABASE_ID': JSON.stringify(env.FIRESTORE_DATABASE_ID || env.VITE_FIRESTORE_DATABASE_ID || ''),
     },
     resolve: {
       alias: {

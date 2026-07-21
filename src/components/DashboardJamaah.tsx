@@ -122,7 +122,8 @@ export const DashboardJamaah: React.FC<DashboardJamaahProps> = ({ jamaahCodeSess
   const userId = auth.currentUser?.uid;
   const isMasterAdmin = auth.currentUser?.email ? (
     auth.currentUser.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
-    auth.currentUser.email.toLowerCase() === 'afadsa76@gmail.com'
+    auth.currentUser.email.toLowerCase() === 'afadsa76@gmail.com' ||
+    auth.currentUser.email.toLowerCase() === 'admin@umaroh.com'
   ) : false;
 
   // Real-time Notifications Listener for Jamaah

@@ -459,8 +459,11 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
         stars: starsToSave,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error("Error saving hotel metadata inline:", error);
+      alert(`Gagal menyimpan foto/jarak hotel: ${errorMsg}`);
+      throw error;
     }
   };
 

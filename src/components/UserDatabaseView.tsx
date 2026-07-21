@@ -69,7 +69,7 @@ interface AuthUser {
 
 export const UserDatabaseView: React.FC = () => {
   const currentUserEmail = auth.currentUser?.email || '';
-  const isMasterAdmin = currentUserEmail === 'operationalumaroh@gmail.com' || currentUserEmail === 'afadsa76@gmail.com';
+  const isMasterAdmin = currentUserEmail === 'operationalumaroh@gmail.com' || currentUserEmail === 'afadsa76@gmail.com' || currentUserEmail === 'admin@umaroh.com';
 
   const [users, setUsers] = useState<UserData[]>([]);
   const [preUsers, setPreUsers] = useState<PreUserData[]>([]);

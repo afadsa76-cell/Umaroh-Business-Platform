@@ -98,8 +98,10 @@ export const HotelCard: React.FC<HotelCardProps> = ({
         const converted = convertGoogleDriveUrl(editPhotoUrl);
         await onSaveMeta(converted, editDistance);
         setIsEditingInline(false);
-      } catch (err) {
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
         console.error("Gagal menyimpan metadata inline:", err);
+        alert(`Gagal menyimpan foto & jarak: ${errorMsg}`);
       } finally {
         setIsSavingInline(false);
       }

@@ -182,7 +182,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         const isOffline = errorMsg.includes('offline') || errorMsg.includes('Could not reach Cloud Firestore backend');
-        const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+        const isMA = user.email ? (
+          user.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+          user.email.toLowerCase() === 'afadsa76@gmail.com' ||
+          user.email.toLowerCase() === 'admin@umaroh.com'
+        ) : false;
         if (isMA) {
           console.warn("Firestore error bypassed for Master Admin:", errorMsg);
         } else if (isOffline) {
@@ -193,7 +197,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       }
 
       let userDataObj = null;
-      const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+      const isMA = user.email ? (
+        user.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+        user.email.toLowerCase() === 'afadsa76@gmail.com' ||
+        user.email.toLowerCase() === 'admin@umaroh.com'
+      ) : false;
       if (userDocSnap && userDocSnap.exists()) {
         userDataObj = userDocSnap.data();
         if (isMA) {
@@ -407,7 +415,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } else {
         // If user just signed up or document missing, lead to registration
         // But first check if they are a hardcoded admin
-        const isHardcodedAdmin = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+        const isHardcodedAdmin = user.email ? (
+          user.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+          user.email.toLowerCase() === 'afadsa76@gmail.com' ||
+          user.email.toLowerCase() === 'admin@umaroh.com'
+        ) : false;
         if (isHardcodedAdmin) {
           onLogin('admin');
         } else {
@@ -517,7 +529,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         const isOffline = errorMsg.includes('offline') || errorMsg.includes('Could not reach Cloud Firestore backend');
-        const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+        const isMA = user.email ? (
+          user.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+          user.email.toLowerCase() === 'afadsa76@gmail.com' ||
+          user.email.toLowerCase() === 'admin@umaroh.com'
+        ) : false;
         if (isMA) {
           console.warn("Firestore error bypassed for Master Admin:", errorMsg);
         } else if (isOffline) {
@@ -528,7 +544,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onGoToRegister })
       }
 
       let userDataObj = null;
-      const isMA = user.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+      const isMA = user.email ? (
+        user.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+        user.email.toLowerCase() === 'afadsa76@gmail.com' ||
+        user.email.toLowerCase() === 'admin@umaroh.com'
+      ) : false;
       if (userDocSnap && userDocSnap.exists()) {
         userDataObj = userDocSnap.data();
         if (isMA) {

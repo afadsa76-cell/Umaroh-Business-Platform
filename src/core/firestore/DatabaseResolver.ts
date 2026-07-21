@@ -16,19 +16,23 @@ export class DatabaseResolver {
    * Resolves the appropriate Firestore database ID dynamically without hardcoding.
    */
   public static resolveDatabaseId(): string {
-    const env = typeof process !== 'undefined' ? process.env : {};
-    
-    // Explicit env overrides for database ID
-    if (env.ACTIVE_DATABASE) {
-      console.log(`[DatabaseResolver] Resolved explicitly via ACTIVE_DATABASE env: ${env.ACTIVE_DATABASE}`);
-      return env.ACTIVE_DATABASE;
-    }
-    if (env.FIRESTORE_DATABASE_ID) {
-      console.log(`[DatabaseResolver] Resolved explicitly via FIRESTORE_DATABASE_ID env: ${env.FIRESTORE_DATABASE_ID}`);
-      return env.FIRESTORE_DATABASE_ID;
+    const nodeEnv = (typeof process !== 'undefined' && process && process.env) ? (process.env as any) : {};
+    const viteEnv = (typeof import.meta !== 'undefined' && import.meta && import.meta.env) ? (import.meta.env as any) : {};
+
+    // Explicit env overrides for database ID (checking both standard and Vite-prefixed keys)
+    const activeDatabase = nodeEnv.ACTIVE_DATABASE || viteEnv.VITE_ACTIVE_DATABASE || nodeEnv.VITE_ACTIVE_DATABASE;
+    if (activeDatabase) {
+      console.log(`[DatabaseResolver] Resolved explicitly via ACTIVE_DATABASE env: ${activeDatabase}`);
+      return activeDatabase;
     }
 
-    const mode: DatabaseMode = (env.DATABASE_MODE as DatabaseMode) || 'development';
+    const firestoreDbId = nodeEnv.FIRESTORE_DATABASE_ID || viteEnv.VITE_FIRESTORE_DATABASE_ID || nodeEnv.VITE_FIRESTORE_DATABASE_ID;
+    if (firestoreDbId) {
+      console.log(`[DatabaseResolver] Resolved explicitly via FIRESTORE_DATABASE_ID env: ${firestoreDbId}`);
+      return firestoreDbId;
+    }
+
+    const mode: DatabaseMode = (nodeEnv.DATABASE_MODE || viteEnv.VITE_DATABASE_MODE || nodeEnv.VITE_DATABASE_MODE || 'development') as DatabaseMode;
     console.log(`[DatabaseResolver] Current DATABASE_MODE resolved: ${mode}`);
 
     // Default to the config file's database ID if nothing else is specified or if we are in development/default
@@ -53,9 +57,11 @@ export class DatabaseResolver {
    * Returns current resolver configuration metadata for audit purposes
    */
   public static getResolverMetadata() {
-    const env = typeof process !== 'undefined' ? process.env : {};
+    const nodeEnv = (typeof process !== 'undefined' && process && process.env) ? (process.env as any) : {};
+    const viteEnv = (typeof import.meta !== 'undefined' && import.meta && import.meta.env) ? (import.meta.env as any) : {};
+    const mode = nodeEnv.DATABASE_MODE || viteEnv.VITE_DATABASE_MODE || nodeEnv.VITE_DATABASE_MODE || 'development';
     return {
-      databaseMode: env.DATABASE_MODE || 'development',
+      databaseMode: mode,
       resolvedDbId: this.resolveDatabaseId(),
       projectId: firebaseConfig.projectId,
       appId: firebaseConfig.appId,

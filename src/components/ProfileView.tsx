@@ -262,7 +262,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       (docSnap) => {
         if (docSnap.exists()) {
           const uData = docSnap.data();
-          const isMA = user?.email ? (user.email.toLowerCase() === 'operationalumaroh@gmail.com' || user.email.toLowerCase() === 'afadsa76@gmail.com') : false;
+          const isMA = user?.email ? (
+            user.email.toLowerCase() === 'operationalumaroh@gmail.com' || 
+            user.email.toLowerCase() === 'afadsa76@gmail.com' ||
+            user.email.toLowerCase() === 'admin@umaroh.com'
+          ) : false;
           
           if (forceRole) {
             setRole(forceRole);
