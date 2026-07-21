@@ -37,6 +37,7 @@ import { BlueprintFlowView } from './components/BlueprintFlowView';
 import { normalizeEmail } from './utils/email';
 import { HotelView } from './components/HotelView';
 import { DashboardVendor } from './components/DashboardVendor';
+import { TaskManagementView } from './components/TaskManagementView';
 import { logoBase64 } from './utils/logoBase64';
 import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
 import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType, collection, where, query, getDocs } from './firebase';
@@ -571,6 +572,8 @@ function App() {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardView onNavigate={handleTabChange} />;
+      case 'tasks':
+        return <TaskManagementView currentRole={userRole} currentSubRole={subRole} />;
       case 'owner-kpi':
         return <OwnerKpiDashboard />;
       case 'validasi-mitra':

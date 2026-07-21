@@ -10,7 +10,7 @@ import { generateMarketingCopy } from '../services/aiService';
 import { db, collection, onSnapshot, query, where, doc } from '../firebase';
 import { JamaahTracker } from './tracker/types';
 import { hotels as staticHotels } from '../data/hotels';
-import { getNormalizedHotelNameKey } from './database/HotelMediaView';
+import { getNormalizedHotelNameKey, convertGoogleDriveUrl } from './database/HotelMediaView';
 import { FlyerCreatorModal } from './FlyerCreatorModal';
 
 interface PaketDetailViewProps {
@@ -379,7 +379,7 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
                 <div className="flex items-start gap-3.5 p-3.5 bg-gray-50 rounded-2xl group hover:bg-slate-100/70 transition-colors">
                   <div className="w-16 h-16 rounded-xl border-4 border-white overflow-hidden shadow-md shrink-0">
                     <img 
-                      src={makkahMetaObj?.photoUrl || getHotelPhoto(paket.hotelMakkahId)} 
+                      src={convertGoogleDriveUrl(makkahMetaObj?.photoUrl || getHotelPhoto(paket.hotelMakkahId))} 
                       alt="Hotel Makkah" 
                       className="w-full h-full object-cover" 
                     />
@@ -409,7 +409,7 @@ export const PaketDetailView: React.FC<PaketDetailViewProps> = ({
                 <div className="flex items-start gap-3.5 p-3.5 bg-gray-50 rounded-2xl group hover:bg-slate-100/70 transition-colors">
                   <div className="w-16 h-16 rounded-xl border-4 border-white overflow-hidden shadow-md shrink-0">
                     <img 
-                      src={madinahMetaObj?.photoUrl || getHotelPhoto(paket.hotelMadinahId)} 
+                      src={convertGoogleDriveUrl(madinahMetaObj?.photoUrl || getHotelPhoto(paket.hotelMadinahId))} 
                       alt="Hotel Madinah" 
                       className="w-full h-full object-cover" 
                     />

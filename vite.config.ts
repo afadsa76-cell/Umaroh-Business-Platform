@@ -30,7 +30,7 @@ export default defineConfig(({mode}) => {
       rollupOptions: {
         cache: false,
         maxParallelFileOps: 1,
-        treeshake: false,
+        treeshake: true,
       }
     },
     server: {

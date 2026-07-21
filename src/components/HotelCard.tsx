@@ -1,6 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { Hotel } from '../data/hotels';
-import { Calendar, Utensils, Building, Star, MapPin, Pencil } from 'lucide-react';
+import { Calendar, Utensils, Building, Star, MapPin, Pencil, Upload } from 'lucide-react';
+import { convertGoogleDriveUrl } from './database/HotelMediaView';
+
+const resizeAndCropImageToBase64 = (base64String: string, callback: (resized: string) => void) => {
+  const img = new window.Image();
+  img.onload = () => {
+    const targetWidth = 1280;
+    const targetHeight = 800;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      callback(base64String);
+      return;
+    }
+
+    const imgRatio = img.width / img.height;
+    const targetRatio = targetWidth / targetHeight;
+    
+    let sx = 0;
+    let sy = 0;
+    let sWidth = img.width;
+    let sHeight = img.height;
+    
+    if (imgRatio > targetRatio) {
+      sWidth = img.height * targetRatio;
+      sx = (img.width - sWidth) / 2;
+    } else if (imgRatio < targetRatio) {
+      sHeight = img.width / targetRatio;
+      sy = (img.height - sHeight) / 2;
+    }
+    
+    ctx.clearRect(0, 0, targetWidth, targetHeight);
+    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+    
+    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+    callback(compressedBase64);
+  };
+  img.onerror = () => {
+    callback(base64String);
+  };
+  img.src = base64String;
+};
 
 interface HotelCardProps {
   hotel: Hotel;
@@ -35,9 +80,11 @@ export const HotelCard: React.FC<HotelCardProps> = ({
   const [editPhotoUrl, setEditPhotoUrl] = useState(photoUrl || '');
   const [editDistance, setEditDistance] = useState(distance || '');
   const [isSavingInline, setIsSavingInline] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     setEditPhotoUrl(photoUrl || '');
+    setImageError(false);
   }, [photoUrl]);
 
   useEffect(() => {
@@ -48,7 +95,8 @@ export const HotelCard: React.FC<HotelCardProps> = ({
     if (onSaveMeta) {
       setIsSavingInline(true);
       try {
-        await onSaveMeta(editPhotoUrl, editDistance);
+        const converted = convertGoogleDriveUrl(editPhotoUrl);
+        await onSaveMeta(converted, editDistance);
         setIsEditingInline(false);
       } catch (err) {
         console.error("Gagal menyimpan metadata inline:", err);
@@ -56,6 +104,26 @@ export const HotelCard: React.FC<HotelCardProps> = ({
         setIsSavingInline(false);
       }
     }
+  };
+
+  const handleLocalUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64String = event.target?.result as string;
+      resizeAndCropImageToBase64(base64String, (resizedBase64) => {
+        setEditPhotoUrl(resizedBase64);
+      });
+    };
+
+    reader.onerror = () => {
+      alert("Gagal membaca file gambar. Pastikan file yang Anda unggah adalah gambar yang valid.");
+      e.target.value = '';
+    };
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -91,24 +159,53 @@ export const HotelCard: React.FC<HotelCardProps> = ({
       )}
 
       {isEditingInline ? (
-        <div className="h-48 bg-gray-50 border-b border-gray-100 p-4 flex flex-col justify-between">
+        <div className="min-h-[14rem] bg-gray-50 border-b border-gray-100 p-4 flex flex-col justify-between space-y-2">
           <div className="space-y-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1">
               <Pencil className="w-3 h-3" /> Edit Foto & Jarak
             </h4>
             
-            {/* Input Foto URL */}
+            {/* Input Foto URL & Upload */}
             <div>
               <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">
-                Foto URL (Gambar Hotel)
+                Foto Gambar Hotel
               </label>
-              <input
-                type="text"
-                value={editPhotoUrl}
-                onChange={(e) => setEditPhotoUrl(e.target.value)}
-                placeholder="https://example.com/hotel.jpg"
-                className="w-full text-xs px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editPhotoUrl.startsWith('data:image/') ? '[Gambar Terunggah Langsung]' : editPhotoUrl}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val !== '[Gambar Terunggah Langsung]') {
+                      setEditPhotoUrl(convertGoogleDriveUrl(val));
+                    }
+                  }}
+                  placeholder="https://example.com/hotel.jpg atau Unggah"
+                  className="flex-grow text-xs px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 bg-white"
+                />
+                <label className="cursor-pointer shrink-0 inline-flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 text-xs font-semibold px-2.5 py-1 rounded shadow-xs transition-colors">
+                  <Upload className="w-3 h-3" />
+                  Unggah
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLocalUpload}
+                  />
+                </label>
+              </div>
+              {editPhotoUrl && editPhotoUrl.startsWith('data:image/') && (
+                <div className="flex items-center justify-between mt-1 bg-amber-100/50 px-2 py-1 rounded text-[10px] text-amber-700 font-medium border border-amber-200/50">
+                  <span>✓ Berhasil diunggah langsung</span>
+                  <button 
+                    type="button" 
+                    onClick={() => setEditPhotoUrl('')}
+                    className="text-red-500 hover:text-red-700 underline font-bold"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Input Jarak */}
@@ -121,7 +218,7 @@ export const HotelCard: React.FC<HotelCardProps> = ({
                 value={editDistance}
                 onChange={(e) => setEditDistance(e.target.value)}
                 placeholder="misal: 150m ke pelataran"
-                className="w-full text-xs px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                className="w-full text-xs px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 bg-white"
               />
             </div>
           </div>
@@ -143,13 +240,14 @@ export const HotelCard: React.FC<HotelCardProps> = ({
             </button>
           </div>
         </div>
-      ) : photoUrl ? (
+      ) : convertGoogleDriveUrl(photoUrl) && !imageError ? (
         <div className="relative h-48 bg-gray-100 overflow-hidden group">
           <img 
-            src={photoUrl} 
+            src={convertGoogleDriveUrl(photoUrl)} 
             alt={hotel.name} 
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImageError(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent flex flex-col justify-end p-4 pt-10">
             <div className="flex justify-between items-start gap-2">

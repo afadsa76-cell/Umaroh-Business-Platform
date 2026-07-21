@@ -21,12 +21,13 @@ import {
   Crown,
   LogOut,
   Landmark,
-  Package
+  Package,
+  CheckSquare
 } from 'lucide-react';
 import { Role } from './LoginView';
 import { logoBase64 } from '../utils/logoBase64';
 
-export type TabType = 'dashboard' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative' | 'blueprint-flow' | 'paket-master';
+export type TabType = 'dashboard' | 'tasks' | 'owner-kpi' | 'validasi-mitra' | 'user-database' | 'database' | 'templates' | 'sales-order' | 'flights' | 'tracker' | 'manifest' | 'revenue' | 'tl-portal' | 'inventory' | 'perlengkapan' | 'finance' | 'mitra-tracker' | 'profile' | 'tracker-vendor' | 'ad-management' | 'vendor-maskapai' | 'vendor-hotel' | 'finance-cumulative' | 'blueprint-flow' | 'paket-master';
 export type CategoryType = 'mitra_dev' | 'operasional' | 'finance' | 'marketing' | 'tour_leader' | 'petugas_bandara';
 
 interface NavbarProps {
@@ -42,6 +43,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
 
   const allNavItems: { id: TabType; label: string; icon: React.ElementType }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'tasks', label: 'Tugas & Pengingat Divisi', icon: CheckSquare },
     { id: 'owner-kpi', label: 'Dashboard KPI Owner', icon: Crown },
     { id: 'validasi-mitra', label: 'Validasi Mitra', icon: Users },
     { id: 'user-database', label: 'Database User', icon: Users },
@@ -139,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
   const isBaggageStaff = subRole === 'tour_leader' || subRole === 'petugas_bandara';
   const allowedTabIds = isBaggageStaff
     ? [...visibleCategories.flatMap(c => c.allowedItems)]
-    : ['dashboard', ...visibleCategories.flatMap(c => c.allowedItems)];
+    : ['dashboard', 'tasks', ...visibleCategories.flatMap(c => c.allowedItems)];
   const activeNavItems = navItems.filter(item => allowedTabIds.includes(item.id));
 
   return (
@@ -188,7 +190,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
 
         {/* Sidebar Items Sorted by Category */}
         <div className="flex-grow p-4 overflow-y-auto space-y-4 no-scrollbar">
-          {/* Standalone Dashboard menu item, always visible at the very top */}
+          {/* Standalone Dashboard and Tasks menu items, always visible at the very top */}
           {!isBaggageStaff && (
             <div className="space-y-1">
               <button
@@ -203,6 +205,19 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, userRole
               >
                 <LayoutDashboard className={`w-4 h-4 shrink-0 ${activeTab === 'dashboard' ? 'text-gray-950' : 'text-indigo-600'}`} />
                 <span className="truncate text-left leading-tight py-0.5 uppercase tracking-wide">Dashboard</span>
+              </button>
+              <button
+                onClick={() => handleTabClick('tasks')}
+                className={`
+                  w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-black transition-all duration-200 cursor-pointer justify-start
+                  ${activeTab === 'tasks'
+                    ? 'bg-indigo-600 text-gray-950 shadow-md' 
+                    : 'bg-indigo-50/55 hover:bg-indigo-50 text-indigo-950 border border-indigo-100/50 shadow-sm'
+                  }
+                `}
+              >
+                <CheckSquare className={`w-4 h-4 shrink-0 ${activeTab === 'tasks' ? 'text-gray-950' : 'text-indigo-600'}`} />
+                <span className="truncate text-left leading-tight py-0.5 uppercase tracking-wide">Tugas & Pengingat</span>
               </button>
             </div>
           )}

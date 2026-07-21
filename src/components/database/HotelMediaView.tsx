@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, collection, onSnapshot, doc, setDoc, handleFirestoreError, OperationType } from '../../firebase';
 import { hotels as staticHotelsList } from '../../data/hotels';
-import { Image, MapPin, Search, Edit3, X, Save, Upload, Sparkles, Loader2 } from 'lucide-react';
+import { MapPin, Search, Edit3, X, Save, Upload, Sparkles, Loader2, Building2 } from 'lucide-react';
 import { safeJsonParse } from '../../utils/firebaseSync';
 
 export const getFallbackDistance = (id: string, name?: string): string => {
@@ -21,6 +21,45 @@ export const getFallbackDistance = (id: string, name?: string): string => {
   if (norm.includes("meridien") || norm.includes("miredien")) return "250m ke Pelataran";
   if (norm.includes("pullman") || norm.includes("zamzam")) return "50m ke Pelataran";
   return "";
+};
+
+export const convertGoogleDriveUrl = (text: string): string => {
+  if (!text) return '';
+  
+  const separators = ['\n', ';', ','];
+  let activeSeparator = '';
+  for (const sep of separators) {
+    if (text.includes(sep)) {
+      activeSeparator = sep;
+      break;
+    }
+  }
+  
+  const convertSingle = (url: string): string => {
+    const trimmed = url.trim();
+    if (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com')) {
+      let fileId = '';
+      const fileDMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (fileDMatch && fileDMatch[1]) {
+        fileId = fileDMatch[1];
+      } else {
+        const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (idMatch && idMatch[1]) {
+          fileId = idMatch[1];
+        }
+      }
+      if (fileId) {
+        return `https://lh3.googleusercontent.com/u/0/d/${fileId}`;
+      }
+    }
+    return trimmed;
+  };
+
+  if (activeSeparator) {
+    return text.split(activeSeparator).map(convertSingle).join(activeSeparator);
+  }
+  
+  return convertSingle(text);
 };
 
 export const getNormalizedHotelNameKey = (name?: string): string => {
@@ -138,6 +177,7 @@ export const HotelMediaView: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<{current: number, total: number} | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     // Basic static hotels
@@ -226,13 +266,15 @@ export const HotelMediaView: React.FC = () => {
   const handleSave = async (hotel: HotelItem) => {
     setIsSaving(true);
     try {
-      const safeId = `${hotel.name}-${hotel.city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      const docRef = doc(db, 'hotel_metadata', safeId);
+      const existing = getMediaForHotel(hotel.id, hotel.name, hotel.city);
+      const docId = existing?.id || `${hotel.name}-${hotel.city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const docRef = doc(db, 'hotel_metadata', docId);
+      const convertedUrl = convertGoogleDriveUrl(editData.photoUrl);
       await setDoc(docRef, {
         hotelId: hotel.id,
         hotelName: hotel.name,
         city: hotel.city,
-        photoUrl: editData.photoUrl,
+        photoUrl: convertedUrl,
         distance: editData.distance,
         stars: editData.stars || 5,
         updatedAt: new Date().toISOString()
@@ -247,66 +289,71 @@ export const HotelMediaView: React.FC = () => {
     }
   };
 
+  const resizeAndCropImageToBase64 = (base64String: string, callback: (resized: string) => void) => {
+    const img = new window.Image();
+    img.onload = () => {
+      // Standard recommended size for hotel cards in the step-by-step package creator (16:10 aspect ratio)
+      const targetWidth = 1280;
+      const targetHeight = 800;
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        callback(base64String); // Fallback to original on failure
+        return;
+      }
+
+      const imgRatio = img.width / img.height;
+      const targetRatio = targetWidth / targetHeight;
+      
+      let sx = 0;
+      let sy = 0;
+      let sWidth = img.width;
+      let sHeight = img.height;
+      
+      if (imgRatio > targetRatio) {
+        // Source is wider, crop left/right sides
+        sWidth = img.height * targetRatio;
+        sx = (img.width - sWidth) / 2;
+      } else if (imgRatio < targetRatio) {
+        // Source is taller, crop top/bottom
+        sHeight = img.width / targetRatio;
+        sy = (img.height - sHeight) / 2;
+      }
+      
+      ctx.clearRect(0, 0, targetWidth, targetHeight);
+      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+      
+      // Save as JPEG with 0.8 quality to keep Firestore document size small and load speeds lightning fast!
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      callback(compressedBase64);
+    };
+    img.onerror = () => {
+      callback(base64String);
+    };
+    img.src = base64String;
+  };
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Gagal mengunggah gambar!\n\nUkuran file maksimal adalah 2MB.");
-      e.target.value = '';
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64String = event.target?.result as string;
-      
-      const img = new window.Image();
-      img.onload = () => {
-        const width = img.width;
-        const height = img.height;
-        const aspectRatio = width / height;
-        
-        // Target ratio is 16:10 = 1.6
-        const targetRatio = 1.6;
-        const tolerance = 0.05; // allow ±0.05 tolerance
-        
-        if (Math.abs(aspectRatio - targetRatio) > tolerance) {
-          alert(
-            `Gagal mengunggah gambar!\n\n` +
-            `Ukuran/Dimensi gambar tidak sesuai dengan standar kartu hotel (Rasio 16:10).\n` +
-            `Dimensi gambar Anda: ${width}x${height} px (Rasio: ${aspectRatio.toFixed(2)})\n\n` +
-            `Silakan gunakan gambar dengan aspek rasio 16:10. Rekomendasi resolusi:\n` +
-            `- 1280 x 800 piksel (Sangat direkomendasikan)\n` +
-            `- 800 x 500 piksel\n` +
-            `- 1920 x 1200 piksel`
-          );
-          e.target.value = '';
-          return;
-        }
-
-        if (width < 640 || height < 400) {
-          alert(
-            `Gagal mengunggah gambar!\n\n` +
-            `Resolusi gambar terlalu rendah.\n` +
-            `Dimensi gambar Anda: ${width}x${height} px\n\n` +
-            `Silakan gunakan gambar berkualitas lebih tinggi dengan resolusi minimal 800x500 piksel.`
-          );
-          e.target.value = '';
-          return;
-        }
-
-        // Pass validation
-        setEditData(prev => ({ ...prev, photoUrl: base64String }));
-      };
-
-      img.onerror = () => {
-        alert("Gagal membaca file gambar. Pastikan file yang Anda unggah adalah gambar yang valid.");
-        e.target.value = '';
-      };
-
-      img.src = base64String;
+      resizeAndCropImageToBase64(base64String, (resizedBase64) => {
+        setEditData(prev => ({ ...prev, photoUrl: resizedBase64 }));
+      });
     };
+
+    reader.onerror = () => {
+      alert("Gagal membaca file gambar. Pastikan file yang Anda unggah adalah gambar yang valid.");
+      e.target.value = '';
+    };
+
     reader.readAsDataURL(file);
   };
 
@@ -417,8 +464,17 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
       if (resData && resData.text) {
         const parsed = safeJsonParse(resData.text);
         const resolvedStars = typeof parsed.stars === 'number' ? parsed.stars : (parseInt(parsed.stars) || editData.stars || hotel.stars || 5);
+        
+        // If current photoUrl is a custom Google Drive link or base64 data, do NOT overwrite it!
+        const isCustomPhoto = editData.photoUrl && (
+          editData.photoUrl.includes('lh3.googleusercontent.com') ||
+          editData.photoUrl.includes('drive.google.com') ||
+          editData.photoUrl.includes('docs.google.com') ||
+          editData.photoUrl.startsWith('data:image/')
+        );
+
         setEditData({
-          photoUrl: parsed.photoUrl || editData.photoUrl,
+          photoUrl: isCustomPhoto ? editData.photoUrl : (parsed.photoUrl || editData.photoUrl),
           distance: parsed.distance || editData.distance,
           stars: resolvedStars
         });
@@ -473,26 +529,34 @@ Carikan juga informasi peringkat bintang (1-5) yang resmi untuk hotel ini.
 Kembalikan data dalam format JSON.
 Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sumber terpercaya seperti Wikimedia Commons, Agoda, Booking.com, atau image hosting publik tanpa perlindungan hotlink. Jika kamu tidak menemukan gambar yang pasti, kembalikan URL kosong "". Gunakan tool googleSearch.`;
 
-        const resData = await fetchWithRetryAndFallback(prompt, true);
-        if (resData && resData.text) {
-          const parsed = safeJsonParse(resData.text);
-          const safeId = `${hotel.name}-${hotel.city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
-          const docRef = doc(db, 'hotel_metadata', safeId);
-          
-          const existingMedia = getMediaForHotel(hotel.id, hotel.name, hotel.city);
-          const resolvedStars = typeof parsed.stars === 'number' ? parsed.stars : (parseInt(parsed.stars) || existingMedia?.stars || hotel.stars || 5);
-          
-          try {
-            await setDoc(docRef, {
-              hotelId: hotel.id,
-              hotelName: hotel.name,
-              city: hotel.city,
-              photoUrl: parsed.photoUrl || existingMedia?.photoUrl || '',
-              distance: parsed.distance || existingMedia?.distance || '',
-              stars: resolvedStars,
-              updatedAt: new Date().toISOString()
-            }, { merge: true });
-          } catch (err) {
+          const resData = await fetchWithRetryAndFallback(prompt, true);
+          if (resData && resData.text) {
+            const parsed = safeJsonParse(resData.text);
+            const existingMedia = getMediaForHotel(hotel.id, hotel.name, hotel.city);
+            const docId = existingMedia?.id || `${hotel.name}-${hotel.city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            const docRef = doc(db, 'hotel_metadata', docId);
+            
+            const resolvedStars = typeof parsed.stars === 'number' ? parsed.stars : (parseInt(parsed.stars) || existingMedia?.stars || hotel.stars || 5);
+            
+            // If existing photoUrl is a custom Google Drive link or base64 data, do NOT overwrite it!
+            const isCustomPhoto = existingMedia?.photoUrl && (
+              existingMedia.photoUrl.includes('lh3.googleusercontent.com') ||
+              existingMedia.photoUrl.includes('drive.google.com') ||
+              existingMedia.photoUrl.includes('docs.google.com') ||
+              existingMedia.photoUrl.startsWith('data:image/')
+            );
+
+           try {
+             await setDoc(docRef, {
+               hotelId: hotel.id,
+               hotelName: hotel.name,
+               city: hotel.city,
+               photoUrl: isCustomPhoto ? existingMedia.photoUrl : (parsed.photoUrl || existingMedia?.photoUrl || ''),
+               distance: parsed.distance || existingMedia?.distance || '',
+               stars: resolvedStars,
+               updatedAt: new Date().toISOString()
+             }, { merge: true });
+           } catch (err) {
             handleFirestoreError(err, OperationType.WRITE, 'hotel_metadata');
           }
         }
@@ -634,7 +698,10 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                                         source: CameraSource.Prompt
                                       });
                                       if (image.base64String) {
-                                        setEditData(prev => ({ ...prev, photoUrl: `data:image/jpeg;base64,${image.base64String}` }));
+                                        const fullBase64 = `data:image/jpeg;base64,${image.base64String}`;
+                                        resizeAndCropImageToBase64(fullBase64, (resizedBase64) => {
+                                          setEditData(prev => ({ ...prev, photoUrl: resizedBase64 }));
+                                        });
                                       }
                                     } catch (err) {
                                       console.error("Camera fail", err);
@@ -652,26 +719,27 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
                              type="text" 
                              placeholder="Atau paste URL gambar..." 
                              value={editData.photoUrl}
-                             onChange={(e) => setEditData({...editData, photoUrl: e.target.value})}
+                             onChange={(e) => setEditData({...editData, photoUrl: convertGoogleDriveUrl(e.target.value)})}
                              className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs"
                            />
                         </div>
                       ) : (
-                        media?.photoUrl ? (
+                        media?.photoUrl && !brokenImages[hotel.id] ? (
                           <img 
                             src={media.photoUrl} 
                             alt={hotel.name} 
                             referrerPolicy="no-referrer"
                             className="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.onerror = null; // Prevent infinite loop
-                              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(hotel.name)}&background=f3f4f6&color=9ca3af&font-size=0.33`;
+                            onError={() => {
+                              setBrokenImages(prev => ({ ...prev, [hotel.id]: true }));
                             }}
                           />
                         ) : (
-                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 border border-dashed border-gray-300">
-                             <Image className="w-6 h-6" />
+                          <div className="w-16 h-16 bg-gray-50 rounded-lg flex flex-col items-center justify-center text-gray-400 border border-gray-200 shadow-xs p-1 text-center select-none overflow-hidden">
+                             <Building2 className="w-5 h-5 text-gray-400 mb-1" />
+                             <span className="text-[8px] leading-tight font-medium text-gray-500 truncate w-full px-0.5">
+                               {hotel.name}
+                             </span>
                           </div>
                         )
                       )}

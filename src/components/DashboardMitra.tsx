@@ -21,6 +21,7 @@ import { BookOpen, BedDouble, Menu } from 'lucide-react';
 import { logoBase64 } from '../utils/logoBase64';
 import { ManifestPage } from './manifest/ManifestPage';
 import { RoomingListMitraView } from './RoomingListMitraView';
+import { TaskManagementView } from './TaskManagementView';
 
 interface MitraBooking {
   id: string;
@@ -147,7 +148,7 @@ interface CrmLead {
   source: string;
 }
 
-type MitraTab = 'overview' | 'feed' | 'elearning' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet' | 'toko' | 'manifest' | 'roomlist' | 'crm' | 'website';
+type MitraTab = 'overview' | 'tasks' | 'feed' | 'elearning' | 'katalog' | 'paket' | 'validasi' | 'jamaah' | 'jaringan' | 'profile' | 'marketing' | 'analytics' | 'wallet' | 'toko' | 'manifest' | 'roomlist' | 'crm' | 'website';
 
 export const DashboardMitra = () => {
   const [activeTab, setActiveTab] = useState<MitraTab>('overview');
@@ -3094,6 +3095,18 @@ export const DashboardMitra = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('tasks')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
+                activeTab === 'tasks' 
+                  ? 'bg-[#F5B800] text-slate-900 shadow-md ring-1 ring-amber-400 font-extrabold scale-102' 
+                  : isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-amber-400' : 'text-slate-650 hover:bg-[#FFFDF0] hover:text-[#B28200]'
+              }`}
+            >
+              <CheckSquare className={`w-4 h-4 ${activeTab === 'tasks' ? 'text-slate-900' : isDarkMode ? 'text-slate-400' : 'text-gray-500'}`} />
+              Tugas & Pengingat
+            </button>
+
+            <button
               onClick={() => setActiveTab('katalog')}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-205 cursor-pointer ${
                 activeTab === 'katalog' 
@@ -3943,6 +3956,13 @@ export const DashboardMitra = () => {
           </div>
 
           {activeTab === 'overview' && renderOverview()}
+          {activeTab === 'tasks' && (
+            <TaskManagementView 
+              isMitraMode={true} 
+              mitraId={auth.currentUser?.uid || ''} 
+              mitraBrandName={currentUserData?.brandName || currentUserData?.namaLengkap || currentUserData?.name || ''} 
+            />
+          )}
           {activeTab === 'feed' && <FeedKolaborasiView onNavigateToCatalog={() => setActiveTab('katalog')} />}
           {activeTab === 'elearning' && <ELearningMitraView />}
           {activeTab === 'katalog' && <KatalogPaketView />}

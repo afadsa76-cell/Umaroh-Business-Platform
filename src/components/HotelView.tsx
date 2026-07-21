@@ -443,11 +443,11 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
 
   const handleSaveHotelMeta = async (hotelId: string, hotelName: string, city: string, photoUrl: string, distance: string) => {
     try {
-      const safeId = `${hotelName}-${city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      const docRef = doc(db, 'hotel_metadata', safeId);
+      // Find existing meta to get its actual Firestore document ID (if exists)
+      const existingMeta = getMetaForHotelInternal(hotelId, hotelName, city);
+      const docId = existingMeta?.id || `${hotelName}-${city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const docRef = doc(db, 'hotel_metadata', docId);
       
-      // Try to find if we already have the stars count
-      const existingMeta = hotelMetas.find(m => m.hotelId === hotelId || (m.hotelName?.toLowerCase() === hotelName.toLowerCase() && m.city?.toLowerCase() === city.toLowerCase()));
       const starsToSave = existingMeta?.stars || 5;
 
       await setDoc(docRef, {

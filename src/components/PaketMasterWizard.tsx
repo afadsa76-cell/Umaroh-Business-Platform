@@ -76,7 +76,7 @@ import { sanitizeForHtml2Canvas, captureToDataUrl } from "../utils/exportUtils";
 import { Capacitor } from '@capacitor/core';
 import html2pdf from 'html2pdf.js';
 import { INDONESIA_EMBARKASI, KATEGORI_PROGRAM } from '../constants';
-import { getNormalizedHotelNameKey } from "./database/HotelMediaView";
+import { getNormalizedHotelNameKey, convertGoogleDriveUrl } from "./database/HotelMediaView";
 
 import {
   Maskapai,
@@ -237,7 +237,7 @@ const getHotelImages = (photoUrl: string | undefined, hotelId: string, hotelNama
     : photoUrl.split(',');
 
   const urls = rawUrls
-    .map((url) => url.trim())
+    .map((url) => convertGoogleDriveUrl(url.trim()))
     .filter((url) => url.startsWith("http") || url.startsWith("data:image"));
 
   if (urls.length === 0) {
@@ -2983,26 +2983,48 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           ? "DURASI PROGRAM UMRAH PLUS WISATA *"
                           : "DURASI PROGRAM *"}
                       </label>
-                      <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase">
-                        {formData.durasiHari} HARI
-                      </span>
+                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-xl p-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = Math.max(9, (formData.durasiHari || 9) - 1);
+                            setFormData({ ...formData, durasiHari: val });
+                          }}
+                          className="w-5 h-5 rounded-lg bg-white shadow-xs border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors cursor-pointer text-xs font-bold"
+                        >
+                          -
+                        </button>
+                        <span className="px-2 text-blue-700 text-[10px] font-black uppercase">
+                          {formData.durasiHari || 9} HARI
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = Math.min(30, (formData.durasiHari || 9) + 1);
+                            setFormData({ ...formData, durasiHari: val });
+                          }}
+                          className="w-5 h-5 rounded-lg bg-white shadow-xs border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors cursor-pointer text-xs font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                     <div className="pt-2 pb-1 relative group">
                       <input
                         type="range"
-                        min="1"
+                        min="9"
                         max="30"
-                        value={formData.durasiHari}
+                        value={formData.durasiHari || 9}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            durasiHari: parseInt(e.target.value),
+                            durasiHari: Math.max(9, parseInt(e.target.value)),
                           })
                         }
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                       />
                       <div className="flex justify-between text-[9px] font-bold text-gray-300 mt-2">
-                        <span>1 Hari</span>
+                        <span>9 Hari</span>
                         <span>30 Hari</span>
                       </div>
                     </div>
@@ -3249,7 +3271,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       <label className="block text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
                         TARGET JAMAAH *
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = Math.max(2, (formData.targetJamaah || 35) - 1);
+                            setFormData({ ...formData, targetJamaah: val });
+                          }}
+                          className="w-6 h-6 rounded-lg bg-white shadow-xs border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors cursor-pointer text-xs font-bold"
+                        >
+                          -
+                        </button>
                         <input
                           type="number"
                           min="2"
@@ -3264,7 +3296,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           }}
                           className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
                         />
-                        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = Math.min(90, (formData.targetJamaah || 35) + 1);
+                            setFormData({ ...formData, targetJamaah: val });
+                          }}
+                          className="w-6 h-6 rounded-lg bg-white shadow-xs border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors cursor-pointer text-xs font-bold"
+                        >
+                          +
+                        </button>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase ml-1">
                           PAX
                         </span>
                       </div>
@@ -4146,7 +4188,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         onClick={() =>
                           setFormData({
                             ...formData,
-                            wisataMargin: Math.max(0, currentMargin - 500000),
+                            wisataMargin: Math.max(0, currentMargin - 100000),
                           })
                         }
                         className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center text-gray-500 hover:text-blue-600 transition-colors cursor-pointer z-10"
@@ -4167,7 +4209,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                         onClick={() =>
                           setFormData({
                             ...formData,
-                            wisataMargin: Math.min(10000000, currentMargin + 500000),
+                            wisataMargin: Math.min(10000000, currentMargin + 100000),
                           })
                         }
                         className="w-12 h-12 rounded-full bg-blue-600 shadow-lg shadow-blue-500/40 flex items-center justify-center text-white hover:bg-blue-700 transition-colors cursor-pointer z-10"
@@ -4180,7 +4222,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     <div className="w-full max-w-md mb-8 px-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                          GESER MARGIN (KELIPATAN 500RB)
+                          GESER MARGIN (KELIPATAN 100RB)
                         </span>
                         <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase">
                           Rp {(currentMargin / 1000000).toFixed(1)} JT
@@ -4191,7 +4233,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           type="range"
                           min="0"
                           max="10000000"
-                          step="500000"
+                          step="100000"
                           value={currentMargin}
                           onChange={(e) =>
                             setFormData({
@@ -6458,7 +6500,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                     ...formData,
                                     [isMitraContext ? "markup" : "marginBersih"]: formData.kategori === "TIKET ONLY"
                                       ? Math.max(100000, currentMarkup - 100000)
-                                      : Math.max(0, currentMarkup - 500000),
+                                      : Math.max(0, currentMarkup - 100000),
                                   })
                                 }
                                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-colors bg-white shadow-sm shrink-0"
@@ -6495,7 +6537,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                     ...formData,
                                     [isMitraContext ? "markup" : "marginBersih"]: formData.kategori === "TIKET ONLY"
                                       ? Math.min(1000000, currentMarkup + 100000)
-                                      : Math.min(10000000, currentMarkup + 500000),
+                                      : Math.min(10000000, currentMarkup + 100000),
                                   })
                                 }
                                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition-colors shrink-0"
@@ -6508,9 +6550,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             <div className="w-full max-w-md mx-auto mb-6 px-1 sm:px-2">
                               <div className="flex justify-between items-center mb-2">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                                  {formData.kategori === "TIKET ONLY"
-                                    ? "GESER MARGIN (KELIPATAN 100RB)"
-                                    : "GESER MARGIN (KELIPATAN 500RB)"}
+                                  GESER MARGIN (KELIPATAN 100RB)
                                 </span>
                                 <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-[9px] font-black uppercase">
                                   {formData.kategori === "TIKET ONLY"
@@ -6523,7 +6563,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   type="range"
                                   min={formData.kategori === "TIKET ONLY" ? "100000" : "0"}
                                   max={formData.kategori === "TIKET ONLY" ? "1000000" : "10000000"}
-                                  step={formData.kategori === "TIKET ONLY" ? "100000" : "500000"}
+                                  step="100000"
                                   value={currentMarkup || 0}
                                   onChange={(e) =>
                                     setFormData({
