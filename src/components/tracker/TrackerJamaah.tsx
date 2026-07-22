@@ -91,6 +91,9 @@ export const TrackerJamaah: React.FC = () => {
 
       const resData = await response.json();
       const rawText = resData.text || '';
+      if (resData.isFallback) {
+        throw new Error(rawText);
+      }
       const result = safeJsonParse(rawText);
       
       const updateData: Partial<JamaahTracker> = {};
@@ -495,6 +498,9 @@ export const TrackerJamaah: React.FC = () => {
 
                               const resData = await response.json();
                               const rawText = resData.text || '';
+                              if (resData.isFallback) {
+                                throw new Error(rawText);
+                              }
                               const result = safeJsonParse(rawText);
 
                               setFormData(prev => {

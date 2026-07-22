@@ -56,6 +56,7 @@ import {
   auth,
   writeBatch,
 } from "../firebase";
+import { sendNotification } from "../services/notificationService";
 import { generateWALink, openWhatsApp } from "../utils/whatsapp";
 import { hotels } from "../data/hotels";
 import { equipmentData } from "../data/equipment";
@@ -2258,6 +2259,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           updatedAt: serverTimestamp(),
         });
         setCreatedDocId(docRef.id);
+
+        // Send real-time notification to Admin Dashboard
+        await sendNotification({
+          title: "Draft Paket Master Baru",
+          message: `Draft Paket Master "${formData.nama || 'Paket Umroh'}" baru saja dibuat.`,
+          type: "info",
+          targetRole: "admin",
+          senderId: auth.currentUser?.uid || "system",
+        });
       } else {
         await updateDoc(doc(db, "paket_master", createdDocId || initialData!.id), {
           ...dataToSave,
@@ -2445,6 +2455,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
             });
             savedId = docRef.id;
             setCreatedDocId(docRef.id);
+
+            // Send notification for Mitra-created Paket Master requiring validation
+            await sendNotification({
+              title: "Pengajuan Paket Master Baru (Mitra)",
+              message: `Mitra membuat pengajuan Paket Master baru "${formData.nama || 'Paket Umroh'}" (${formData.kategori || 'Umrah'}). Membutuhkan validasi admin.`,
+              type: "warning",
+              targetRole: "admin",
+              senderId: auth.currentUser?.uid || "system",
+            });
           } catch (e) {
             handleFirestoreError(e, OperationType.CREATE, 'paket_master');
             throw e;
@@ -2482,6 +2501,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           });
           savedId = docRef.id;
           setCreatedDocId(docRef.id);
+
+          // Send real-time notification to Admin Dashboard
+          await sendNotification({
+            title: "Paket Master Baru Dibuat",
+            message: `Paket Master baru "${formData.nama || 'Paket Umroh'}" (${formData.kategori || 'Umrah'}) berhasil dibuat oleh Admin dan tersimpan di database.`,
+            type: "success",
+            targetRole: "admin",
+            senderId: auth.currentUser?.uid || "system",
+          });
         } catch (e) {
           handleFirestoreError(e, OperationType.CREATE, 'paket_master');
           throw e;

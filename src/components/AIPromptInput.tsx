@@ -109,6 +109,9 @@ export const AIPromptInput: React.FC<AIPromptInputProps> = ({
       const text = resData.text;
       
       if (text) {
+        if (resData.isFallback) {
+          throw new Error(text);
+        }
         const parsedData = safeJsonParse(text);
         onDataParsed(parsedData);
         setPrompt(''); // Clear prompt on success

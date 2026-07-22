@@ -616,6 +616,9 @@ export const ManifestPage: React.FC = () => {
 
           const resData = await response.json();
           const rawText = resData.text || '';
+          if (resData.isFallback) {
+            throw new Error(rawText);
+          }
           const parsed = safeJsonParse(rawText);
           resolve(parsed);
         } catch (e) {

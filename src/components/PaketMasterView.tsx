@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity, Archive, FileText } from 'lucide-react';
-import { db, collection, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, handleFirestoreError, OperationType } from '../firebase';
+import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity, Archive, FileText, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { db, collection, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, handleFirestoreError, OperationType, auth } from '../firebase';
+import { sendNotification } from '../services/notificationService';
 import { Maskapai } from '../data/maskapai';
 import { Hotel, Layanan } from '../types';
 
@@ -17,6 +18,7 @@ interface UserRecord {
   brandName?: string;
   jenisMitra?: string;
   kota?: string;
+  email?: string;
 }
 
 interface PaketMaster {
@@ -43,6 +45,15 @@ export const PaketMasterView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'active' | 'archived_expired'>('all');
+  const [filterMitra, setFilterMitra] = useState<string>('ALL');
+  const [filterTglBuat, setFilterTglBuat] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, filterMitra, filterTglBuat, filterStatus]);
   
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -367,6 +378,15 @@ export const PaketMasterView: React.FC = () => {
         updatedAt: serverTimestamp()
       });
 
+      // Send real-time notification
+      await sendNotification({
+        title: 'Paket Master Dipublikasikan',
+        message: `Paket Master "${paket.nama}" telah disetujui & dipublikasikan ke Katalog Paket.`,
+        type: 'success',
+        targetRole: 'admin',
+        senderId: auth.currentUser?.uid || 'system',
+      });
+
       // 2. Ensure tracker_paket exists
       const trackerQuery = query(collection(db, 'tracker_paket'), where('paketMasterId', '==', paket.id));
       const trackerSnap = await getDocs(trackerQuery);
@@ -515,10 +535,68 @@ export const PaketMasterView: React.FC = () => {
     return 0;
   };
 
+  const getPaketCreationDateString = (p: PaketMaster) => {
+    const record = p as unknown as Record<string, unknown>;
+    const ts = record.createdAt || record.created_at || record.updatedAt || record.updated_at;
+    if (!ts) {
+      if (p.tglBerangkat) return p.tglBerangkat;
+      return '';
+    }
+    try {
+      let d: Date | null = null;
+      if (typeof ts === 'object' && ts !== null) {
+        const obj = ts as Record<string, unknown>;
+        if (typeof obj.toDate === 'function') {
+          d = (obj.toDate as () => Date)();
+        } else if (typeof obj.seconds === 'number') {
+          d = new Date(obj.seconds * 1000);
+        } else if (typeof obj._seconds === 'number') {
+          d = new Date(obj._seconds * 1000);
+        } else if (ts instanceof Date) {
+          d = ts;
+        }
+      } else if (typeof ts === 'number') {
+        d = ts < 9999999999 ? new Date(ts * 1000) : new Date(ts);
+      } else if (typeof ts === 'string') {
+        d = new Date(ts);
+      }
+      if (!d || isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
   const filteredPakets = pakets.filter(p => {
     const matchesSearch = p.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          p.deskripsi.toLowerCase().includes(searchTerm.toLowerCase());
+                          p.deskripsi.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (p.requestId && p.requestId.toLowerCase().includes(searchTerm.toLowerCase()));
     if (!matchesSearch) return false;
+
+    // Filter Mitra
+    if (filterMitra === 'PUSAT') {
+      if (p.mitraId) return false;
+    } else if (filterMitra !== 'ALL') {
+      if (p.mitraId !== filterMitra) return false;
+    }
+
+    // Filter Tanggal Buat
+    if (filterTglBuat) {
+      const dateStr = getPaketCreationDateString(p);
+      if (dateStr !== filterTglBuat) return false;
+    }
+
+    // Filter Status Validasi / Draft / Pending
+    const statusVal = (p.status || '') as string;
+    if (filterStatus === 'published') {
+      if (statusVal !== 'published' && statusVal !== 'validated' && statusVal !== 'approved') return false;
+    } else if (filterStatus === 'pending_validation') {
+      if (statusVal !== 'pending_validation' && statusVal !== 'pending') return false;
+    } else if (filterStatus === 'draft') {
+      if (statusVal !== 'draft') return false;
+    } else if (filterStatus === 'archived') {
+      if (statusVal !== 'archived') return false;
+    }
 
     const todayStr = new Date().toISOString().split('T')[0];
     const isArchived = p.status === 'archived';
@@ -535,6 +613,12 @@ export const PaketMasterView: React.FC = () => {
     }
     return true;
   }).sort((a, b) => getCreationTimestamp(b) - getCreationTimestamp(a));
+
+  const totalItems = filteredPakets.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+  const validCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const startIndex = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedPakets = filteredPakets.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleToggleArchive = async (id: string, currentStatus: string) => {
     try {
@@ -707,49 +791,129 @@ export const PaketMasterView: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="relative max-w-sm w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Cari paket master..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white font-bold"
-            />
+        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col gap-3">
+          {/* Main Search & Execution Tab Bar */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="relative max-w-sm w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Cari paket master..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white font-bold text-xs"
+              />
+            </div>
+
+            <div className="flex gap-1 p-1 bg-gray-200/50 border border-gray-200 rounded-xl self-start md:self-auto">
+              <button
+                onClick={() => setFilterType('all')}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                  filterType === 'all' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Semua Program
+              </button>
+              <button
+                onClick={() => setFilterType('active')}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                  filterType === 'active' 
+                    ? 'bg-white text-emerald-700 shadow-sm' 
+                    : 'text-gray-500 hover:text-emerald-700'
+                }`}
+              >
+                Aktif Pelaksanaan
+              </button>
+              <button
+                onClick={() => setFilterType('archived_expired')}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                  filterType === 'archived_expired' 
+                    ? 'bg-white text-rose-700 shadow-sm' 
+                    : 'text-gray-500 hover:text-rose-700'
+                }`}
+              >
+                Arsip & Lewat
+              </button>
+            </div>
           </div>
 
-          <div className="flex gap-1 p-1 bg-gray-150 rounded-xl bg-gray-200/50 border border-gray-200 self-start md:self-auto">
-            <button
-              onClick={() => setFilterType('all')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                filterType === 'all' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Semua
-            </button>
-            <button
-              onClick={() => setFilterType('active')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                filterType === 'active' 
-                  ? 'bg-white text-emerald-700 shadow-sm' 
-                  : 'text-gray-500 hover:text-emerald-700'
-              }`}
-            >
-              Aktif Pelaksanaan
-            </button>
-            <button
-              onClick={() => setFilterType('archived_expired')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                filterType === 'archived_expired' 
-                  ? 'bg-white text-rose-750 shadow-sm' 
-                  : 'text-gray-500 hover:text-rose-750'
-              }`}
-            >
-              Arsip & Lewat
-            </button>
+          {/* Sub Bar: Detailed Filters (Mitra, Tanggal Buat, Status Validasi) */}
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-200/60">
+            {/* Filter Mitra */}
+            <div className="flex items-center gap-1.5 bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 shadow-sm">
+              <span className="text-[10px] font-black uppercase text-gray-400">Mitra:</span>
+              <select
+                value={filterMitra}
+                onChange={(e) => setFilterMitra(e.target.value)}
+                className="text-xs font-extrabold text-gray-800 bg-transparent outline-none cursor-pointer"
+              >
+                <option value="ALL">Semua Mitra / Brand</option>
+                <option value="PUSAT">⭐ Umaroh Pusat</option>
+                {users
+                  .filter(u => u.brandName || u.role === 'mitra' || u.role === 'agen' || pakets.some(p => p.mitraId === u.id))
+                  .map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.brandName ? `${u.brandName} (${u.namaLengkap || u.name})` : (u.namaLengkap || u.name || u.email)}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+
+            {/* Filter Tanggal Buat */}
+            <div className="flex items-center gap-1.5 bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 shadow-sm">
+              <span className="text-[10px] font-black uppercase text-gray-400">Tgl Buat:</span>
+              <input
+                type="date"
+                value={filterTglBuat}
+                onChange={(e) => setFilterTglBuat(e.target.value)}
+                className="text-xs font-extrabold text-gray-800 bg-transparent outline-none cursor-pointer"
+              />
+              {filterTglBuat && (
+                <button
+                  onClick={() => setFilterTglBuat('')}
+                  className="text-gray-400 hover:text-rose-500 transition-colors p-0.5 cursor-pointer"
+                  title="Hapus Filter Tanggal"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Status Validasi */}
+            <div className="flex items-center gap-1.5 bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 shadow-sm">
+              <span className="text-[10px] font-black uppercase text-gray-400">Status Validasi:</span>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="text-xs font-extrabold text-gray-800 bg-transparent outline-none cursor-pointer"
+              >
+                <option value="ALL">Semua Status</option>
+                <option value="published">✅ Validasi / Published</option>
+                <option value="pending_validation">⏳ Pending Validasi</option>
+                <option value="draft">📝 Draft</option>
+                <option value="archived">📦 Diarsipkan</option>
+              </select>
+            </div>
+
+            {/* Reset Filters button */}
+            {(searchTerm || filterType !== 'all' || filterMitra !== 'ALL' || filterTglBuat !== '' || filterStatus !== 'ALL') && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterType('all');
+                  setFilterMitra('ALL');
+                  setFilterTglBuat('');
+                  setFilterStatus('ALL');
+                }}
+                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset Filter
+              </button>
+            )}
           </div>
         </div>
 
@@ -769,7 +933,7 @@ export const PaketMasterView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 italic font-medium">
-              {filteredPakets.map(paket => {
+              {paginatedPakets.map(paket => {
                 const todayStr = new Date().toISOString().split('T')[0];
                 const isArchived = paket.status === 'archived';
                 const maskapaiRef = maskapaiList.find(m => m.id === paket.maskapaiId);
@@ -928,7 +1092,7 @@ export const PaketMasterView: React.FC = () => {
                 );
               })}
 
-              {filteredPakets.length === 0 && !loading && !isAdding && (
+              {paginatedPakets.length === 0 && !loading && !isAdding && (
                 <tr>
                   <td colSpan={8} className="p-8 text-center text-gray-500 font-bold uppercase tracking-wider text-xs">
                     Belum ada data Paket Master untuk kriteria filter ini.
@@ -938,6 +1102,65 @@ export const PaketMasterView: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {filteredPakets.length > 0 && (
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-gray-600">
+            <div>
+              Menampilkan <span className="font-extrabold text-gray-900">{startIndex + 1}</span> - <span className="font-extrabold text-gray-900">{Math.min(startIndex + ITEMS_PER_PAGE, totalItems)}</span> dari <span className="font-extrabold text-gray-900">{totalItems}</span> Paket Master
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={validCurrentPage === 1}
+                  className="p-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-white text-gray-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  title="Halaman Sebelumnya"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => page === 1 || page === totalPages || Math.abs(page - validCurrentPage) <= 1)
+                  .reduce<(number | string)[]>((acc, page, idx, arr) => {
+                    if (idx > 0 && typeof arr[idx - 1] === 'number' && page - (arr[idx - 1] as number) > 1) {
+                      acc.push('...');
+                    }
+                    acc.push(page);
+                    return acc;
+                  }, [])
+                  .map((item, idx) => {
+                    if (typeof item === 'string') {
+                      return <span key={`dots-${idx}`} className="px-1 text-gray-400">...</span>;
+                    }
+                    return (
+                      <button
+                        key={item}
+                        onClick={() => setCurrentPage(item)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-colors cursor-pointer ${
+                          validCurrentPage === item
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={validCurrentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-white text-gray-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  title="Halaman Selanjutnya"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sales Order Profitability Validation Modal */}

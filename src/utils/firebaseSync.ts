@@ -20,7 +20,15 @@ export function safeJsonParse(rawText: string): any {
                  .trim();
   }
   
-  return JSON.parse(clean);
+  try {
+    return JSON.parse(clean);
+  } catch (err) {
+    console.warn("JSON parsing failed, returning raw text or custom error:", err);
+    if (rawText.includes('Asisten AI') || rawText.includes('koneksi API') || rawText.includes('kredit kuota')) {
+      throw new Error(rawText, { cause: err });
+    }
+    throw new Error(rawText || "Gagal mengurai respons JSON dari AI.", { cause: err });
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

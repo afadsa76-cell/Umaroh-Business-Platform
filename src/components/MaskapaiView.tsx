@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download, PlusSquare, FileText, Check } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download, PlusSquare, FileText, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Maskapai, maskapaiData as initialData } from '../data/maskapai';
 import * as XLSX from 'xlsx';
 import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, query, where } from '../firebase';
@@ -203,6 +203,14 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const [filterMinSeats, setFilterMinSeats] = useState<number>(10);
   const [filterVendor, setFilterVendor] = useState<string>('All');
   const [isCleaning, setIsCleaning] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterKeberangkatan, filterMinSeats, filterVendor]);
 
   // Bulk parsing state variables
   const [isBulkOpen, setIsBulkOpen] = useState(false);
@@ -585,6 +593,13 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     return true;
   });
 
+  // Pagination calculation
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+  const validCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const startIndex = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   // Selection Helpers
   const allFilteredIds = filteredData.map(item => item.id);
   const isAllSelected = filteredData.length > 0 && allFilteredIds.every(id => selectedIds.includes(id));
@@ -912,7 +927,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((item) => {
+                  {paginatedData.map((item) => {
                     const staleInfo = getUpdateStatusText(item);
                     return (
                       <tr 
@@ -1038,7 +1053,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   })}
                 </tbody>
               </table>
-              {filteredData.length === 0 && (
+              {paginatedData.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   Tidak ada data maskapai yang ditemukan.
                 </div>
@@ -1069,7 +1084,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
             </div>
 
             <div className="xl:hidden divide-y divide-gray-100">
-              {filteredData.map((item) => {
+              {paginatedData.map((item) => {
                 const staleInfo = getUpdateStatusText(item);
                 return (
                   <div 
@@ -1205,12 +1220,71 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   </div>
                 );
               })}
-              {filteredData.length === 0 && (
+              {paginatedData.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   Tidak ada data maskapai yang ditemukan.
                 </div>
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {filteredData.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-gray-600">
+                <div>
+                  Menampilkan <span className="font-extrabold text-gray-900">{startIndex + 1}</span> - <span className="font-extrabold text-gray-900">{Math.min(startIndex + ITEMS_PER_PAGE, totalItems)}</span> dari <span className="font-extrabold text-gray-900">{totalItems}</span> Rute Maskapai
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={validCurrentPage === 1}
+                      className="p-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-white text-gray-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      title="Halaman Sebelumnya"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => page === 1 || page === totalPages || Math.abs(page - validCurrentPage) <= 1)
+                      .reduce<(number | string)[]>((acc, page, idx, arr) => {
+                        if (idx > 0 && typeof arr[idx - 1] === 'number' && page - (arr[idx - 1] as number) > 1) {
+                          acc.push('...');
+                        }
+                        acc.push(page);
+                        return acc;
+                      }, [])
+                      .map((item, idx) => {
+                        if (typeof item === 'string') {
+                          return <span key={`dots-${idx}`} className="px-1 text-gray-400">...</span>;
+                        }
+                        return (
+                          <button
+                            key={item}
+                            onClick={() => setCurrentPage(item)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-colors cursor-pointer ${
+                              validCurrentPage === item
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        );
+                      })}
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={validCurrentPage === totalPages}
+                      className="p-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-white text-gray-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      title="Halaman Selanjutnya"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

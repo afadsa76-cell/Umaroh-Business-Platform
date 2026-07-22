@@ -159,6 +159,10 @@ Ensure the output is valid JSON and only contains the array of hotels. Do not in
         throw new Error('Empty response from AI');
       }
 
+      if (resData.isFallback) {
+        throw new Error(textResponse);
+      }
+
       const extractedHotels: Hotel[] = safeJsonParse(textResponse);
       
       if (!Array.isArray(extractedHotels) || extractedHotels.length === 0) {

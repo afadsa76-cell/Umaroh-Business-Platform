@@ -9,18 +9,29 @@ interface Booking {
   statusPembayaran: string;
   statusKeberangkatan: string;
   totalHarga: number;
+  jumlahBayar?: number;
+  namaJamaah?: string;
+  noHp?: string;
+  tglKeberangkatan?: string;
+  tgl_keberangkatan?: string;
+  createdAt?: unknown;
 }
 
 interface PaketInfo {
   id: string;
   nama: string;
   tanggalBerangkat?: string;
+  durasi?: string;
+  maskapai?: string;
+  hotelMakkah?: string;
+  hotelMadinah?: string;
 }
 
 export const RiwayatPemesananView: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [paketInfo, setPaketInfo] = useState<Record<string, PaketInfo>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const userId = auth.currentUser?.uid;
 
@@ -154,7 +165,10 @@ export const RiwayatPemesananView: React.FC = () => {
                     <p className="text-2xl font-black text-amber-600">{formatCurrency(booking.totalHarga)}</p>
                   </div>
                   <div className="mt-4 md:mt-0">
-                    <button className="text-emerald-600 font-bold text-sm hover:text-emerald-700 flex items-center gap-1 md:justify-end w-full">
+                    <button 
+                      onClick={() => setSelectedBooking(booking)}
+                      className="text-emerald-600 font-bold text-sm hover:text-emerald-700 flex items-center gap-1 md:justify-end w-full cursor-pointer"
+                    >
                       Lihat Detail <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -164,6 +178,81 @@ export const RiwayatPemesananView: React.FC = () => {
           );
         })}
       </div>
+
+      {/* DETAIL BOOKING MODAL */}
+      {selectedBooking && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full relative shadow-2xl p-6 overflow-y-auto max-h-[90vh] font-sans">
+            <button
+              onClick={() => setSelectedBooking(null)}
+              className="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm z-10 transition cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                <span className="text-2xl">🕋</span>
+                <div>
+                  <h3 className="text-sm font-black text-emerald-950 uppercase tracking-wider">
+                    Detail Transaksi Pemesanan
+                  </h3>
+                  <p className="text-[10px] text-gray-400 font-mono font-bold">
+                    ID: {selectedBooking.id}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-150 p-4 rounded-2xl space-y-2">
+                <p className="text-xs font-bold text-gray-500 uppercase">Nama Paket Program</p>
+                <p className="text-base font-extrabold text-emerald-900">
+                  {paketInfo[selectedBooking.paketId]?.nama || 'Paket Umroh Reguler'}
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${getStatusColor(selectedBooking.statusPembayaran)}`}>
+                    Status: {getStatusText(selectedBooking.statusPembayaran)}
+                  </span>
+                  <span className="text-xs text-gray-500">• Keberangkatan: {getStatusText(selectedBooking.statusKeberangkatan)}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs font-medium text-gray-700">
+                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase block">Nama Jamaah</span>
+                  <strong className="text-gray-900">{selectedBooking.namaJamaah || auth.currentUser?.displayName || 'Jamaah Umaroh'}</strong>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase block">Tanggal Keberangkatan</span>
+                  <strong className="text-gray-900">{selectedBooking.tglKeberangkatan || selectedBooking.tgl_keberangkatan || 'Sesuai Jadwal'}</strong>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase block">Total Harga Paket</span>
+                  <strong className="text-emerald-700 font-mono font-extrabold">{formatCurrency(selectedBooking.totalHarga || 0)}</strong>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase block">Jumlah Terbayar</span>
+                  <strong className="text-amber-600 font-mono font-extrabold">{formatCurrency(selectedBooking.jumlahBayar || 0)}</strong>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl text-xs space-y-1.5 text-gray-600">
+                <p className="font-bold text-gray-800 text-[11px] uppercase tracking-wider mb-1">ℹ️ Catatan Sistem Umaroh Synergy</p>
+                <p>• Seluruh kwitansi dan pembayaran disinkronkan secara otomatis ke tim keuangan cabang & admin pusat.</p>
+                <p>• Bila ada perubahan paspor atau tanggal lahir, harap perbarui di tab <strong>Travel Dok</strong> pada portal jamaah mandiri.</p>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  onClick={() => setSelectedBooking(null)}
+                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+                >
+                  Tutup Detail
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

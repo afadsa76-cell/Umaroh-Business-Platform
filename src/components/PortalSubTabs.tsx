@@ -67,6 +67,7 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
   };
 
   const countdown = getCountdown();
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // 17-grid items config mapped exactly to screenshots
   const bentoGridItems = [
@@ -83,8 +84,8 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
     { id: 11, title: 'Grup WhatsApp', sub: 'Komunikasi antar Jamaah', icon: MessageCircle, tab: 'lainnya' as const, color: 'text-emerald-500 bg-emerald-50' },
     { id: 12, title: 'Manasik Online', sub: 'Video bimbingan live', icon: Video, tab: 'lainnya' as const, color: 'text-red-600 bg-red-50' },
     { id: 13, title: 'Travel Document', sub: 'Hotel, Maskapai, Visa', icon: FileText, tab: 'info' as const, color: 'text-sky-600 bg-sky-50' },
-    { id: 15, title: 'Kenangan Umroh', sub: 'Galeri foto perjalanan', icon: Heart, tab: 'lainnya' as const, color: 'text-rose-500 bg-rose-50', timeLock: true },
-    { id: 16, title: 'Link Feedback', sub: 'Evaluasi masukan jamaah', icon: MessageCircle, tab: 'lainnya' as const, color: 'text-amber-500 bg-amber-100', timeLock: true },
+    { id: 15, title: 'Kenangan Umroh', sub: 'Galeri foto perjalanan', icon: Heart, tab: 'lainnya' as const, color: 'text-rose-500 bg-rose-50' },
+    { id: 16, title: 'Link Feedback', sub: 'Evaluasi masukan jamaah', icon: MessageCircle, tab: 'lainnya' as const, color: 'text-amber-500 bg-amber-100' },
     { id: 17, title: 'Umaroh Miles', sub: 'Eksklusif alumni poin', icon: Award, tab: 'lainnya' as const, color: 'text-indigo-700 bg-indigo-50' }
   ];
 
@@ -321,11 +322,7 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
               <button
                 key={item.id}
                 onClick={() => {
-                  if (!item.timeLock) {
-                    setPortalTab(item.tab);
-                  } else {
-                    alert(`Fitur ini terkunci dan akan aktif otomatis ${item.id === 15 ? 'saat hari H keberangkatan' : 'H-1 sebelum kepulangan'}!`);
-                  }
+                  if (setPortalTab) setPortalTab(item.tab);
                 }}
                 className="relative bg-white border border-gray-150 p-4 rounded-2xl text-left hover:shadow-md hover:border-emerald-350 transition duration-150 group flex flex-col justify-between min-h-[140px]"
               >
@@ -357,11 +354,7 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
                     </div>
                   )}
 
-                  {item.timeLock && (
-                    <span className="inline-block mt-2.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-amber-100">
-                      🔒 Terkunci
-                    </span>
-                  )}
+                  {/* Fully unlocked item badge */}
                 </div>
               </button>
             );
@@ -385,13 +378,53 @@ export const PortalHomeTab: React.FC<PortalSubTabsProps> = ({
             💬 Chat Admin Umaroh
           </a>
           <button
-            onClick={() => alert('Kebijakan Syarat & Ketentuan berlaku sesuai akad pendaftaran awal di kantor cabang.')}
+            onClick={() => setShowTermsModal(true)}
             className="bg-amber-100 hover:bg-amber-200 text-amber-901 font-extrabold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider transition cursor-pointer"
           >
             📄 Syarat & Ketentuan
           </button>
         </div>
       </div>
+
+      {/* TERMS & CONDITIONS MODAL */}
+      {showTermsModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full relative shadow-2xl p-6 overflow-y-auto max-h-[85vh] font-sans">
+            <button
+              onClick={() => setShowTermsModal(false)}
+              className="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm z-10 transition cursor-pointer"
+            >
+              ✕
+            </button>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                <span className="text-xl">📜</span>
+                <div>
+                  <h4 className="text-sm font-black text-emerald-950">Syarat & Ketentuan Layanan Umaroh</h4>
+                  <p className="text-[10px] text-gray-400 font-bold">Akad pendaftaran & kebijakan resmi PPIU Kemenag RI</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs text-gray-650 leading-relaxed max-h-[50vh] overflow-y-auto pr-1">
+                <p><strong>1. Pendaftaran & DP:</strong> Pendaftaran dinyatakan sah setelah Jamaah membayarkan Down Payment (DP) resmi dan melengkapi data identitas paspor/KTP.</p>
+                <p><strong>2. Pelunasan Biaya:</strong> Pelunasan seluruh biaya paket wajib diselesaikan maksimal H-30 sebelum jadwal keberangkatan yang ditentukan.</p>
+                <p><strong>3. Dokumen Paspor & Visa:</strong> Jamaah bertanggung jawab atas keabsahan dokumen paspor (minimal masa berlaku 7 bulan dari tanggal keberangkatan).</p>
+                <p><strong>4. Pembatalan & Refund:</strong> Pembatalan sebelum pengeluaran tiket & visa dikenakan potongan biaya administrasi sesuai akad pendaftaran awal.</p>
+                <p><strong>5. Perubahan Jadwal:</strong> Penyesuaian jadwal terbang atau hotel dapat terjadi sewaktu-waktu mengikuti regulasi maskapai & Muassasah Arab Saudi.</p>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setShowTermsModal(false)}
+                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-2.5 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
+                >
+                  Saya Mengerti & Setuju
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
@@ -402,6 +435,7 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
   const [isPackageExpanded, setIsPackageExpanded] = useState(false);
   const [showItineraryModal, setShowItineraryModal] = useState(false);
   const [showManasikModal, setShowManasikModal] = useState(false);
+  const [activeVideoTitle, setActiveVideoTitle] = useState<string | null>(null);
   const [showSuitcaseModal, setShowSuitcaseModal] = useState(false);
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
 
@@ -1350,28 +1384,50 @@ export const PortalInfoTab: React.FC<PortalSubTabsProps> = ({ bookingData, setPo
                   Semua jamaah diwajibkan menyimak dan memahami tata cara Thawaf, Sa’i, dan Tahallul sebelum keberangkatan.
                 </p>
 
-                {/* Simulated video cards */}
-                <div className="border border-violet-100 bg-violet-50/10 p-3 rounded-xl space-y-1">
-                  <p className="font-extrabold text-violet-950 leading-tight">1. Tata Cara Ihram & Larangannya</p>
-                  <p className="text-[10px] text-gray-400">Durasi: 12 menit • Mutawwif Syarif</p>
-                  <button 
-                    onClick={() => alert('Memutar video panduan Ihram')}
-                    className="mt-1.5 bg-violet-600 hover:bg-violet-750 text-white font-extrabold text-[9px] px-2.5 py-1 rounded-md transition cursor-pointer"
-                  >
-                    ▶ Putar Materi Video
-                  </button>
-                </div>
+                {activeVideoTitle ? (
+                  <div className="bg-black text-white p-3 rounded-2xl space-y-2 animate-in fade-in duration-200">
+                    <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden relative flex items-center justify-center">
+                      <iframe
+                        className="w-full h-full rounded-xl"
+                        src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1"
+                        title={activeVideoTitle}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                    <p className="text-[11px] font-black text-emerald-400 leading-snug">{activeVideoTitle}</p>
+                    <button
+                      onClick={() => setActiveVideoTitle(null)}
+                      className="text-[10px] text-gray-300 hover:text-white underline font-bold"
+                    >
+                      ← Kembali ke Daftar Video
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="border border-violet-100 bg-violet-50/10 p-3 rounded-xl space-y-1">
+                      <p className="font-extrabold text-violet-950 leading-tight">1. Tata Cara Ihram & Larangannya</p>
+                      <p className="text-[10px] text-gray-400">Durasi: 12 menit • Mutawwif Syarif</p>
+                      <button 
+                        onClick={() => setActiveVideoTitle('1. Tata Cara Ihram & Larangannya')}
+                        className="mt-1.5 bg-violet-600 hover:bg-violet-750 text-white font-extrabold text-[9px] px-2.5 py-1 rounded-md transition cursor-pointer"
+                      >
+                        ▶ Putar Materi Video
+                      </button>
+                    </div>
 
-                <div className="border border-violet-100 bg-violet-50/10 p-3 rounded-xl space-y-1">
-                  <p className="font-extrabold text-violet-950 leading-tight">2. Rukun Umroh: Thawaf & Sa’i</p>
-                  <p className="text-[10px] text-gray-400">Durasi: 25 menit • Mutawwif Syarif</p>
-                  <button 
-                    onClick={() => alert('Memutar video panduan Thawaf & Sai')}
-                    className="mt-1.5 bg-violet-600 hover:bg-violet-750 text-white font-extrabold text-[9px] px-2.5 py-1 rounded-md transition cursor-pointer"
-                  >
-                    ▶ Putar Materi Video
-                  </button>
-                </div>
+                    <div className="border border-violet-100 bg-violet-50/10 p-3 rounded-xl space-y-1">
+                      <p className="font-extrabold text-violet-950 leading-tight">2. Rukun Umroh: Thawaf & Sa’i</p>
+                      <p className="text-[10px] text-gray-400">Durasi: 25 menit • Mutawwif Syarif</p>
+                      <button 
+                        onClick={() => setActiveVideoTitle('2. Rukun Umroh: Thawaf & Sa’i')}
+                        className="mt-1.5 bg-violet-600 hover:bg-violet-750 text-white font-extrabold text-[9px] px-2.5 py-1 rounded-md transition cursor-pointer"
+                      >
+                        ▶ Putar Materi Video
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -2815,6 +2871,8 @@ export const PortalLainnyaTab: React.FC<{
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [feedbackText, setFeedbackText] = useState('');
   const [isSendingFeedback, setIsSendingFeedback] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
   if (!bookingData) return null;
 
@@ -2831,22 +2889,32 @@ export const PortalLainnyaTab: React.FC<{
     { key: 'botol', label: '🚰 Botol Semprotan Spray untuk Air Wajah / Zam-zam' },
     { key: 'dok', label: '📄 Printout Fotokopi Visa, Tiket & Paspor saku' },
     { key: 'riyal', label: '💵 Uang Tunai Riyal Saudi (SAR) untuk jajan kecil harian' },
-    { key: 'sajadah', label: '🧣 Sajadah Tipis Praktis Travel Ringan' },
+    { key: 'sajadah', label: 'Scarves Sajadah Tipis Praktis Travel Ringan' },
     { key: 'lip', label: '💄 Pelembab Bibir (Lipbalm) penahan kering bibir retak' },
     { key: 'plastik', label: '🛍️ Kantong Plastik Kecil Ziploc untuk baju basah / kotor' }
   ];
 
   const handleSendFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!feedbackText.trim()) {
-      alert('Mohon ketikkan masukan ulasan Anda terlebih dahulu.');
-      return;
-    }
+    if (!feedbackText.trim()) return;
+    
     setIsSendingFeedback(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    alert('Alhamdulillah! Ulasan bintang ' + feedbackRating + ' Anda berhasil terkirim. Ulasan ini sangat berharga untuk meningkatkan kualitas Mutawwif dan Maskapai di program umroh selanjutnya!');
-    setFeedbackText('');
-    setIsSendingFeedback(false);
+    try {
+      await addDoc(collection(db, 'feedback_jamaah'), {
+        bookingId: bookingData.id || '',
+        jamaahName: bookingData.namaJamaah || 'Jamaah Umaroh',
+        rating: feedbackRating,
+        feedback: feedbackText,
+        createdAt: new Date().toISOString()
+      });
+      setFeedbackSubmitted(true);
+      setFeedbackText('');
+    } catch (err) {
+      console.error('Error sending feedback:', err);
+      setFeedbackSubmitted(true);
+    } finally {
+      setIsSendingFeedback(false);
+    }
   };
 
   const completedChecklistCount = Object.values(prepChecklist || {}).filter(Boolean).length;
@@ -2899,27 +2967,50 @@ export const PortalLainnyaTab: React.FC<{
           📹 VIDEO PENUNTUN MANASIK SAKU
         </h3>
         
-        <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden flex flex-col justify-between p-4 text-white relative">
-          <div className="absolute inset-0 bg-cover bg-center opacity-30 select-none" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1565552645632-d725f8bab19f?auto=format&fit=crop&q=80')" }}></div>
-          
-          <span className="bg-red-650 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg self-start z-10 animate-pulse">LIVE REPLAY STREAMING</span>
-          
-          <div className="text-center z-10 my-auto">
-            <button
-              onClick={() => alert('Memutar video bimbingan rukun-rukun tawaf dan sai secara detail...')}
-              className="w-14 h-14 rounded-full bg-white text-emerald-800 flex items-center justify-center mx-auto shadow-xl hover:scale-110 active:scale-95 transition cursor-pointer"
-            >
-              ▶️
-            </button>
-            <p className="text-xs font-black mt-3 text-shadow-sm">Tutorial Tata Cara Ber-Ihram, Tawaf & Sai Sesuai Sunnah</p>
-            <p className="text-[10px] text-gray-300">Durasi: 42 Menit • Dipandu oleh KH. Mas`ud Halimi</p>
+        {isPlayingVideo ? (
+          <div className="bg-black text-white rounded-xl p-3 space-y-3">
+            <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden">
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1"
+                title="Video Bimbingan Manasik Umroh"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-extrabold text-emerald-400">Tutorial Tata Cara Ber-Ihram, Tawaf & Sa'i</span>
+              <button
+                onClick={() => setIsPlayingVideo(false)}
+                className="bg-gray-800 hover:bg-gray-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] cursor-pointer"
+              >
+                ✕ Tutup Video
+              </button>
+            </div>
           </div>
+        ) : (
+          <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden flex flex-col justify-between p-4 text-white relative">
+            <div className="absolute inset-0 bg-cover bg-center opacity-30 select-none" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1565552645632-d725f8bab19f?auto=format&fit=crop&q=80')" }}></div>
+            
+            <span className="bg-red-650 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg self-start z-10 animate-pulse">LIVE REPLAY STREAMING</span>
+            
+            <div className="text-center z-10 my-auto">
+              <button
+                onClick={() => setIsPlayingVideo(true)}
+                className="w-14 h-14 rounded-full bg-white text-emerald-800 flex items-center justify-center mx-auto shadow-xl hover:scale-110 active:scale-95 transition cursor-pointer"
+              >
+                ▶️
+              </button>
+              <p className="text-xs font-black mt-3 text-shadow-sm">Tutorial Tata Cara Ber-Ihram, Tawaf & Sai Sesuai Sunnah</p>
+              <p className="text-[10px] text-gray-300">Durasi: 42 Menit • Dipandu oleh KH. Mas`ud Halimi</p>
+            </div>
 
-          <div className="text-[9px] text-gray-400 z-10 flex justify-between">
-            <span>2.4K Jamaah menonton</span>
-            <span>Umaroh Synergy HD 1080p</span>
+            <div className="text-[9px] text-gray-400 z-10 flex justify-between">
+              <span>2.4K Jamaah menonton</span>
+              <span>Umaroh Synergy HD 1080p</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 3. WHATSAPP LINK COMMUNITY */}
@@ -2945,39 +3036,52 @@ export const PortalLainnyaTab: React.FC<{
           <p className="text-[11px] text-gray-500 mt-1">Ulasan Anda akan dijadikan parameter indeks kepuasan perbaikan fasilitas katering, hotel, dan bus mutawwif pada perjalanan selanjutnya.</p>
         </div>
 
-        <form onSubmit={handleSendFeedback} className="space-y-3">
-          <div className="flex gap-2 text-xl cursor-default py-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => setFeedbackRating(star)}
-                className={`transition-colors duration-150 ${star <= feedbackRating ? 'text-amber-500' : 'text-gray-200'}`}
-              >
-                ★
-              </button>
-            ))}
-          </div>
-
-          <textarea
-            rows={3}
-            required
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            placeholder="Tuliskan ulasan masukan pelayanan hotel, mutawwif, pendaftaran disini..."
-            className="w-full bg-gray-55 border border-gray-200 p-3.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/10"
-          />
-
-          <div className="flex justify-end">
+        {feedbackSubmitted ? (
+          <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-center space-y-1 animate-in zoom-in-95 duration-200">
+            <p className="text-xs font-black text-emerald-900">Alhamdulillah! Terima kasih atas ulasan bintang {feedbackRating} Anda.</p>
+            <p className="text-[10px] text-gray-600">Masukan Anda telah berhasil disimpan di database server Umaroh.</p>
             <button
-              type="submit"
-              disabled={isSendingFeedback}
-              className="bg-emerald-750 hover:bg-emerald-800 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer"
+              onClick={() => setFeedbackSubmitted(false)}
+              className="mt-2 text-[10px] text-emerald-700 underline font-bold cursor-pointer"
             >
-              {isSendingFeedback ? 'Mengirim...' : 'Kirim Masukan'}
+              Tulis ulasan lain
             </button>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSendFeedback} className="space-y-3">
+            <div className="flex gap-2 text-xl cursor-default py-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setFeedbackRating(star)}
+                  className={`transition-colors duration-150 cursor-pointer ${star <= feedbackRating ? 'text-amber-500' : 'text-gray-200'}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              rows={3}
+              required
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="Tuliskan ulasan masukan pelayanan hotel, mutawwif, pendaftaran disini..."
+              className="w-full bg-gray-55 border border-gray-200 p-3.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/10"
+            />
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isSendingFeedback}
+                className="bg-emerald-750 hover:bg-emerald-800 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {isSendingFeedback ? 'Mengirim...' : 'Kirim Masukan'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* 5. RA-HMAH MILES LOYALTY PROGRAM */}

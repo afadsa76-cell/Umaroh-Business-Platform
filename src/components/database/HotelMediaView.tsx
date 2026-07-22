@@ -362,7 +362,7 @@ export const HotelMediaView: React.FC = () => {
     useSearch = true, 
     maxRetries = 2, 
     delayMs = 4000
-  ): Promise<{ text?: string; response?: unknown }> => {
+  ): Promise<{ text?: string; response?: unknown; isFallback?: boolean }> => {
     let retries = 0;
     while (true) {
       try {
@@ -462,6 +462,9 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
 
       const resData = await fetchWithRetryAndFallback(prompt, true);
       if (resData && resData.text) {
+        if (resData.isFallback) {
+          throw new Error(resData.text);
+        }
         const parsed = safeJsonParse(resData.text);
         const resolvedStars = typeof parsed.stars === 'number' ? parsed.stars : (parseInt(parsed.stars) || editData.stars || hotel.stars || 5);
         
@@ -531,6 +534,9 @@ Pastikan URL gambar (photoUrl) valid, dapat diakses publik, dan berasal dari sum
 
           const resData = await fetchWithRetryAndFallback(prompt, true);
           if (resData && resData.text) {
+            if (resData.isFallback) {
+              throw new Error(resData.text);
+            }
             const parsed = safeJsonParse(resData.text);
             const existingMedia = getMediaForHotel(hotel.id, hotel.name, hotel.city);
             const docId = existingMedia?.id || `${hotel.name}-${hotel.city}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
