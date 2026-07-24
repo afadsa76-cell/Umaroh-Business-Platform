@@ -453,9 +453,43 @@ export enum OperationType {
   WRITE = 'write',
 }
 
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const categorized = translateError(error);
-  console.error(`[Firestore Error] Operation: ${operationType}, Path: ${path}`, categorized);
+  const currentUser = auth.currentUser;
+  const errInfo: FirestoreErrorInfo = {
+    error: categorized.message,
+    operationType,
+    path,
+    authInfo: {
+      userId: currentUser?.uid || null,
+      email: currentUser?.email || null,
+      emailVerified: currentUser?.emailVerified || false,
+      isAnonymous: currentUser?.isAnonymous || false,
+      tenantId: currentUser?.tenantId || null,
+      providerInfo: currentUser?.providerData?.map(p => ({
+        providerId: p.providerId,
+        email: p.email
+      })) || []
+    }
+  };
+  console.error('[Firestore Error]:', JSON.stringify(errInfo));
   throw categorized;
 }
 

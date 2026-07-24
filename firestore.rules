@@ -451,9 +451,14 @@ service cloud.firestore {
       allow write: if isSignedIn() && isValidId(notificationId);
     }
     
-    match /tasks_reminder/{id} {
+    match /tasks_reminder/{taskId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(taskId);
+    }
+    
+    match /audit_logs/{logId} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidId(logId);
     }
     
 

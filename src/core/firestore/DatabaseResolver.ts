@@ -11,13 +11,30 @@ import firebaseConfig from '../../../firebase-applet-config.json';
 
 export type DatabaseMode = 'development' | 'staging' | 'production';
 
+function getViteEnv(): Record<string, any> {
+  try {
+    const meta = Function('return typeof import.meta !== "undefined" ? import.meta : null')();
+    return meta?.env || {};
+  } catch {
+    return {};
+  }
+}
+
 export class DatabaseResolver {
   /**
    * Resolves the appropriate Firestore database ID dynamically without hardcoding.
    */
   public static resolveDatabaseId(): string {
     const nodeEnv = (typeof process !== 'undefined' && process && process.env) ? (process.env as any) : {};
-    const viteEnv = (typeof import.meta !== 'undefined' && import.meta && import.meta.env) ? (import.meta.env as any) : {};
+    const viteEnv = getViteEnv();
+
+    if (typeof window !== 'undefined') {
+      const localOverride = localStorage.getItem('override_firestore_db_id');
+      if (localOverride) {
+        console.log(`[DatabaseResolver] Resolved via localStorage override: ${localOverride}`);
+        return localOverride;
+      }
+    }
 
     // Explicit env overrides for database ID (checking both standard and Vite-prefixed keys)
     const activeDatabase = nodeEnv.ACTIVE_DATABASE || viteEnv.VITE_ACTIVE_DATABASE || nodeEnv.VITE_ACTIVE_DATABASE;
@@ -58,7 +75,7 @@ export class DatabaseResolver {
    */
   public static getResolverMetadata() {
     const nodeEnv = (typeof process !== 'undefined' && process && process.env) ? (process.env as any) : {};
-    const viteEnv = (typeof import.meta !== 'undefined' && import.meta && import.meta.env) ? (import.meta.env as any) : {};
+    const viteEnv = getViteEnv();
     const mode = nodeEnv.DATABASE_MODE || viteEnv.VITE_DATABASE_MODE || nodeEnv.VITE_DATABASE_MODE || 'development';
     return {
       databaseMode: mode,

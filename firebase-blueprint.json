@@ -593,6 +593,28 @@
       },
       "required": ["id", "step", "title", "role", "roleLabel", "status"]
     },
+    "TaskReminder": {
+      "title": "TaskReminder",
+      "description": "Tugas dan pengingat operasional internal & mitra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "assignedToType": { "type": "string", "enum": ["division", "mitra", "all_mitras"] },
+        "assignedTo": { "type": "string" },
+        "assignedToName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in_progress", "completed", "overdue"] },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "dueDate": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "notes": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "completedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "assignedToType", "assignedTo", "status", "priority", "dueDate"]
+    },
     "SystemSetting": {
       "title": "SystemSetting",
       "description": "Konfigurasi sistem global (seperti kurs mata uang)",
@@ -643,6 +665,7 @@
     "/ad_campaigns/{id}": { "schema": "AdCampaign", "description": "Koleksi kampanye iklan promo internal & mitra" },
     "/ad_performance_logs/{id}": { "schema": "AdPerformanceLog", "description": "Koleksi log telemetri kinerja iklan (impressions & clicks)" },
     "/tracker_bagasi/{baggageId}": { "schema": "BaggageTracker", "description": "Koleksi item bagasi rombongan berbasis barcode" },
-    "/system_blueprint_nodes/{nodeId}": { "schema": "BlueprintNode", "description": "Koleksi node bagan arsitektur sistem ERP Umaroh" }
+    "/system_blueprint_nodes/{nodeId}": { "schema": "BlueprintNode", "description": "Koleksi node bagan arsitektur sistem ERP Umaroh" },
+    "/tasks_reminder/{taskId}": { "schema": "TaskReminder", "description": "Koleksi tugas dan pengingat operasional/mitra" }
   }
 }

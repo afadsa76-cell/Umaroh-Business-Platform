@@ -146,7 +146,13 @@ function App() {
               .then(() => console.info("[Umaroh Auth] Sync: Master Admin document aligned in Firestore 'users' collection."))
               .catch((e) => console.warn("[Umaroh Auth] Sync: Failed to write Master Admin profile to Firestore:", e));
             }
-          }).catch((e) => console.warn("[Umaroh Auth] Sync: Failed to fetch Master Admin document status:", e));
+          }).catch((e) => {
+            if (e?.message?.includes('Offline')) {
+              console.info("[Umaroh Auth] Sync: Master Admin document status read skipped (offline).");
+            } else {
+              console.warn("[Umaroh Auth] Sync: Failed to fetch Master Admin document status:", e);
+            }
+          });
         }
         
         // Fetch user role from Firestore
@@ -261,7 +267,12 @@ function App() {
               }
             }
           } catch (fetchErr) {
-            console.warn("Failed fetching user role from network, trying cache:", fetchErr);
+            const errObj = fetchErr as { message?: string };
+            if (errObj?.message?.includes('Offline')) {
+              console.info("[Umaroh Auth] Offline mode detected, seamlessly using cached profile & role.");
+            } else {
+              console.warn("Failed fetching user role from network, trying cache:", fetchErr);
+            }
             const cachedDataStr = localStorage.getItem(`umaroh_cached_user_${user.uid}`);
             if (cachedDataStr) {
               data = JSON.parse(cachedDataStr);

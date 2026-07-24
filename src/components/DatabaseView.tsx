@@ -16,16 +16,18 @@ import { PaketWisataView } from './PaketWisataView';
 import { HotelMediaView } from './database/HotelMediaView';
 import { SupabaseBridgeView } from './database/SupabaseBridgeView';
 import { GoogleDriveSyncView } from './database/GoogleDriveSyncView';
+import { FirebaseSparkView } from './database/FirebaseSparkView';
 import { MasterKursView } from './MasterKursView';
 import { MigrationStatusView } from './database/MigrationStatusView';
-import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Handshake, MapPin, Image as ImageIcon, Layers, CloudUpload, Coins, Shield } from 'lucide-react';
+import { Building2, Plane, Bus, Briefcase, FileText, Users, PlaneTakeoff, BookOpen, Map, Train, Handshake, MapPin, Image as ImageIcon, Layers, CloudUpload, Coins, Shield, Flame } from 'lucide-react';
 
-type DatabaseTab = 'migrationControl' | 'kemitraan' | 'googleDriveSync' | 'masterKurs' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'manasik' | 'ziarah' | 'mutawif' | 'handlingDomestik' | 'keretaCepat' | 'supabaseBridge';
+type DatabaseTab = 'firebaseSpark' | 'migrationControl' | 'kemitraan' | 'googleDriveSync' | 'masterKurs' | 'hotel' | 'hotelMedia' | 'maskapai' | 'bandara' | 'paketWisata' | 'handling' | 'transport' | 'equipment' | 'visa' | 'manasik' | 'ziarah' | 'mutawif' | 'handlingDomestik' | 'keretaCepat' | 'supabaseBridge';
 
 export const DatabaseView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<DatabaseTab>('migrationControl');
+  const [activeTab, setActiveTab] = useState<DatabaseTab>('firebaseSpark');
 
   const tabs: { id: DatabaseTab; label: string; icon: React.ElementType }[] = [
+    { id: 'firebaseSpark', label: 'Firebase Spark (Gratis)', icon: Flame },
     { id: 'migrationControl', label: 'Prod Migration Control', icon: Shield },
     { id: 'googleDriveSync', label: 'Google Drive Auto-Backup', icon: CloudUpload },
     { id: 'supabaseBridge', label: 'Migration Bridge (Supabase)', icon: Layers },
@@ -50,6 +52,7 @@ export const DatabaseView: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'firebaseSpark': return <FirebaseSparkView />;
       case 'migrationControl': return <MigrationStatusView />;
       case 'googleDriveSync': return <GoogleDriveSyncView />;
       case 'supabaseBridge': return <SupabaseBridgeView />;

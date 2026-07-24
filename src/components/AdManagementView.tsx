@@ -3,10 +3,11 @@ import { db, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from '.
 import { 
   Megaphone, Plus, Trash2, Edit, Save, Eye, Sparkles, 
   Settings, DollarSign, TrendingUp, BarChart4, AlertTriangle, 
-  Terminal, Play, RefreshCcw, ShieldCheck
+  Terminal, Play, RefreshCcw, ShieldCheck, Tv
 } from 'lucide-react';
 import { AdCampaignData, AdBanner } from './AdBanner';
 import { motion, AnimatePresence } from 'motion/react';
+import { getYouTubeEmbedUrl } from '../utils/youtube';
 
 interface AdPerformanceLogStructure {
   id: string;
@@ -28,6 +29,13 @@ export const AdManagementView: React.FC = () => {
     adSenseSlotFooter: '5566778899',
     adSenseSlotDashboard: '2468135790',
     autoInjectionEnabled: true,
+    // Landing Page YouTube Video Settings
+    landingVideoEnabled: true,
+    landingVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    landingVideoTitle: 'SAATNYA KAMU YANG JADI OWNERNYA!',
+    landingVideoUrlRight: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    landingVideoTitleRight: 'BIMBINGAN MANASIK & PROFIL UMAROH SYNERGY',
+    landingVideoPosition: 'both', // 'left' | 'right' | 'both' | 'bottom'
   });
 
   const [savingConfig, setSavingConfig] = useState(false);
@@ -681,13 +689,190 @@ export const AdManagementView: React.FC = () => {
 
               </div>
 
+              {/* YOUTUBE LANDING VIDEO SETTINGS SECTION */}
+              <div className="bg-gradient-to-br from-red-50/50 via-amber-50/30 to-white border border-red-100 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-red-100/80 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-2 bg-red-600 text-white rounded-xl shadow-sm">
+                      <Tv className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">Penayangan Video & Media Portal Login (YouTube, GDrive, GPhotos, MP4)</h4>
+                      <p className="text-[11px] text-slate-500 font-medium">Atur embed video promo/bimbingan dari YouTube, Google Drive, Google Photos, atau file MP4 di portal login</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full border ${config.landingVideoEnabled ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                      {config.landingVideoEnabled ? '🟢 MEDIA AKTIF' : '⚪ NONAKTIF'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-black text-slate-700 uppercase mb-1">Sakelar Tampilan Video / Media</label>
+                      <select
+                        value={config.landingVideoEnabled ? 'true' : 'false'}
+                        onChange={e => setConfig({ ...config, landingVideoEnabled: e.target.value === 'true' })}
+                        className="w-full text-xs font-bold p-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                      >
+                        <option value="true">✅ Tampilkan Media di Halaman Portal Login (ON)</option>
+                        <option value="false">🚫 Sembunyikan Media (OFF)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-700 uppercase mb-1">Posisi Tampil di Halaman Login</label>
+                      <select
+                        value={config.landingVideoPosition || 'both'}
+                        onChange={e => setConfig({ ...config, landingVideoPosition: e.target.value as 'left' | 'right' | 'both' | 'bottom' })}
+                        className="w-full text-xs font-bold p-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                      >
+                        <option value="both">↔️ Dual Side (Dua Media: Kiri & Kanan Portal)</option>
+                        <option value="left">⬅️ Sisi Kiri Portal Login Saja</option>
+                        <option value="right">➡️ Sisi Kanan Portal Login Saja</option>
+                        <option value="bottom">⬇️ Sisi Bawah Form Login</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Video 1 (Sisi Kiri / Utama) */}
+                  <div className="p-4 bg-white border border-red-100 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between text-xs font-black text-red-700">
+                      <span>📹 VIDEO / MEDIA 1 (SISI KIRI PORTAL / UTAMA)</span>
+                      <span className="text-[10px] text-gray-400 font-normal">YouTube / GDrive / GPhotos / MP4</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">URL / Link Media Kiri</label>
+                        <input
+                          type="text"
+                          placeholder="Link YouTube, GDrive, GPhotos, atau MP4"
+                          value={config.landingVideoUrl || ''}
+                          onChange={e => setConfig({ ...config, landingVideoUrl: e.target.value })}
+                          className="w-full text-xs font-mono p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">Dukung link <code>YouTube</code>, <code>drive.google.com</code>, <code>photos.app.goo.gl</code>, atau URL <code>.mp4</code></p>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">Judul / Caption Video Kiri</label>
+                        <input
+                          type="text"
+                          placeholder="Judul Video Kiri"
+                          value={config.landingVideoTitle || ''}
+                          onChange={e => setConfig({ ...config, landingVideoTitle: e.target.value })}
+                          className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Video 2 (Sisi Kanan / Sekunder - Untuk Mode Dual Side) */}
+                  {(config.landingVideoPosition === 'both' || config.landingVideoPosition === 'right' || config.landingVideoPosition === 'bottom') && (
+                    <div className="p-4 bg-white border border-blue-100 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between text-xs font-black text-blue-700">
+                        <span>📹 VIDEO / MEDIA 2 (SISI KANAN PORTAL / SEKUNDER)</span>
+                        <span className="text-[10px] text-gray-400 font-normal">YouTube / GDrive / GPhotos / MP4</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">URL / Link Media Kanan</label>
+                          <input
+                            type="text"
+                            placeholder="Link YouTube, GDrive, GPhotos, atau MP4"
+                            value={config.landingVideoUrlRight || ''}
+                            onChange={e => setConfig({ ...config, landingVideoUrlRight: e.target.value })}
+                            className="w-full text-xs font-mono p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-[10px] text-slate-400 mt-1">Dukung link <code>YouTube</code>, <code>drive.google.com</code>, <code>photos.app.goo.gl</code>, atau URL <code>.mp4</code></p>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">Judul / Caption Video Kanan</label>
+                          <input
+                            type="text"
+                            placeholder="Judul Video Kanan"
+                            value={config.landingVideoTitleRight || ''}
+                            onChange={e => setConfig({ ...config, landingVideoTitleRight: e.target.value })}
+                            className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Live Mini Previews Grid */}
+                  <div className="bg-slate-900 rounded-2xl p-4 text-white space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-amber-400">
+                      <span>Pratinjau Live Media (Mini)</span>
+                      <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-md">YOUTUBE • GDRIVE • GPHOTOS</span>
+                    </div>
+
+                    <div className={`grid grid-cols-1 ${config.landingVideoPosition === 'both' ? 'sm:grid-cols-2' : ''} gap-3`}>
+                      {/* Left Preview */}
+                      {(config.landingVideoPosition === 'both' || config.landingVideoPosition === 'left' || config.landingVideoPosition === 'bottom') && (
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold text-red-400 uppercase">Media Kiri</div>
+                          {config.landingVideoEnabled && config.landingVideoUrl ? (
+                            <div className="aspect-video bg-black rounded-xl overflow-hidden relative shadow-lg">
+                              <iframe
+                                className="w-full h-full rounded-xl pointer-events-auto"
+                                src={getYouTubeEmbedUrl(config.landingVideoUrl)}
+                                title={config.landingVideoTitle || 'Media Kiri'}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                              ></iframe>
+                            </div>
+                          ) : (
+                            <div className="aspect-video bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 text-xs">Media Nonaktif</div>
+                          )}
+                          <p className="text-[10px] font-bold text-slate-300 truncate">{config.landingVideoTitle || 'Caption Kiri'}</p>
+                        </div>
+                      )}
+
+                      {/* Right Preview */}
+                      {(config.landingVideoPosition === 'both' || config.landingVideoPosition === 'right' || config.landingVideoPosition === 'bottom') && (
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold text-blue-400 uppercase">Media Kanan</div>
+                          {config.landingVideoEnabled && (config.landingVideoUrlRight || config.landingVideoUrl) ? (
+                            <div className="aspect-video bg-black rounded-xl overflow-hidden relative shadow-lg">
+                              <iframe
+                                className="w-full h-full rounded-xl pointer-events-auto"
+                                src={getYouTubeEmbedUrl(config.landingVideoUrlRight || config.landingVideoUrl)}
+                                title={config.landingVideoTitleRight || 'Media Kanan'}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                              ></iframe>
+                            </div>
+                          ) : (
+                            <div className="aspect-video bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 text-xs">Media Kanan Belum Diset</div>
+                          )}
+                          <p className="text-[10px] font-bold text-slate-300 truncate">{config.landingVideoTitleRight || 'Caption Kanan'}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Explanation Notice */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 space-y-1 leading-relaxed">
+                    <p className="font-bold text-slate-800">💡 Panduan Link Video & Media Multi-Platform:</p>
+                    <ul className="list-disc pl-4 space-y-1 text-[10.5px]">
+                      <li><strong>YouTube:</strong> Gunakan link biasa (<code>youtube.com/watch?v=...</code>) atau link share (<code>youtu.be/...</code>).</li>
+                      <li><strong>Google Drive:</strong> Gunakan link berbagi Drive (<code>drive.google.com/file/d/.../view</code>). Pastikan akses file diubah ke <em>"Siapa saja yang memiliki link" (Anyone with the link)</em>.</li>
+                      <li><strong>Google Photos:</strong> Gunakan link share foto/video Google Photos (<code>photos.app.goo.gl/...</code>).</li>
+                      <li><strong>Direct MP4:</strong> Gunakan link langsung yang berakhiran <code>.mp4</code> atau <code>.webm</code>.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
               {/* Tips & Recommendations banner */}
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-xs text-amber-900 leading-relaxed">
                 <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
                 <div>
-                  <h5 className="font-bold mb-0.5">Aturan Penempatan AdSense Web</h5>
+                  <h5 className="font-bold mb-0.5">Aturan Penempatan AdSense & Video Web</h5>
                   <p>
-                    Saat menggunakan ID penayang langsung, pastikan Anda telah menyetujui domain pengiriman di dashboard Google Konsol Anda agar iklan berhasil keluar. Untuk pengujian di lokal, unit simulasi dirancang aman agar tidak terhitung "invalid click activity" oleh bot Google.
+                    Saat menggunakan ID penayang langsung, pastikan Anda telah menyetujui domain pengiriman di dashboard Google Konsol Anda agar iklan berhasil keluar. Video YouTube yang diaktifkan akan langsung tersinkronkan secara real-time ke halaman Login Portal tanpa perlu reload!
                   </p>
                 </div>
               </div>
@@ -700,7 +885,7 @@ export const AdManagementView: React.FC = () => {
                   className="flex items-center gap-1.5 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-md cursor-pointer transition-all focus:outline-none"
                 >
                   {savingConfig ? <RefreshCcw className="w-4 h-4 text-white animate-spin" /> : <Save className="w-4 h-4 text-white" />}
-                  Simpan Konfigurasi Iklan
+                  Simpan Konfigurasi Marketing & Video
                 </button>
               </div>
 
