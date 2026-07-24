@@ -125,9 +125,13 @@ export const ValidasiMitraView: React.FC<ValidasiMitraViewProps> = ({ isFinanceM
   }, []);
 
   const filteredList = pendaftaranList.filter(p => {
-    const matchesSearch = p.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.brandName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          p.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const s = (searchTerm || '').toLowerCase();
+    const nama = (p.nama || (p as any).namaLengkap || (p as any).namaPenanggungJawab || '').toLowerCase();
+    const brand = (p.brandName || (p as any).namaBrand || '').toLowerCase();
+    const email = (p.email || '').toLowerCase();
+    const phone = (p.phone || (p as any).telepon || '').toLowerCase();
+
+    const matchesSearch = nama.includes(s) || brand.includes(s) || email.includes(s) || phone.includes(s);
     const matchesStatus = filterStatus === 'ALL' || p.status === filterStatus;
     return matchesSearch && matchesStatus;
   });

@@ -450,15 +450,33 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isSignedIn() && isValidId(notificationId);
     }
-    
-    match /tasks_reminder/{taskId} {
-      allow read: if true;
-      allow write: if isSignedIn() && isValidId(taskId);
+
+    match /tasks_reminder/{id} {
+      allow read, write: if true;
     }
-    
-    match /audit_logs/{logId} {
-      allow read: if true;
-      allow write: if isSignedIn() && isValidId(logId);
+
+    match /tasks/{id} {
+      allow read, write: if true;
+    }
+
+    match /system_config/{id} {
+      allow read, write: if true;
+    }
+
+    match /system_settings/{id} {
+      allow read, write: if true;
+    }
+
+    match /wallets/{id} {
+      allow read, write: if true;
+    }
+
+    match /audit_logs/{id} {
+      allow read, write: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if true;
     }
     
 
