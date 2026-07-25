@@ -9,7 +9,7 @@ import {
   clearSupabaseCredentials, 
   testSupabaseConnection 
 } from '../../supabase';
-import { Database, CheckCircle, XCircle, Code, Copy, AlertTriangle, RefreshCw, Layers, Key, Link as LinkIcon, Trash2, Check, HelpCircle } from 'lucide-react';
+import { Database, CheckCircle, Code, Copy, AlertTriangle, RefreshCw, Layers, Key, Link as LinkIcon, Trash2, Check } from 'lucide-react';
 
 export const SupabaseBridgeView: React.FC = () => {
   const [configured, setConfigured] = useState(isSupabaseConfigured());
@@ -266,7 +266,7 @@ CREATE POLICY "Public full access to paket_master" ON public.paket_master FOR AL
             });
             addLog(`Ditemukan ${docsToSync.length} dokumen di Firestore [${item.firestore}].`);
           }
-        } catch (fsErr) {
+        } catch {
           addLog(`⚠️ Firestore terkunci/quota habis [${item.firestore}]. Menggunakan fallback Local Storage Cache...`);
         }
 
@@ -295,7 +295,7 @@ CREATE POLICY "Public full access to paket_master" ON public.paket_master FOR AL
                     data: row
                   }));
                 }
-              } catch (e) {
+              } catch {
                 // ignore
               }
             }

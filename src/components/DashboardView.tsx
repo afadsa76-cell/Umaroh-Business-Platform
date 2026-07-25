@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, TrendingUp, Users, Package, ArrowRight, MessageCircle, Clock, Plane, Calendar, Printer, FileText, X, Award, ChevronRight, Shield, Landmark, Sparkles, Building, Bell, Info, AlertTriangle, Check, Download } from 'lucide-react';
-import { TabType } from './Navbar';
+import { TabType } from './common/Navbar';
 import { format, differenceInDays, parseISO, startOfDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { db, collection, onSnapshot, handleFirestoreError, OperationType, doc, updateDoc, auth, query, where } from '../firebase';

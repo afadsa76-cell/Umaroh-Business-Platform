@@ -3,7 +3,7 @@ import { Wallet, Users, ArrowUpRight, ArrowDownRight, Cloud, Printer, X, FileTex
 import { db, collection, onSnapshot, query, where, doc, updateDoc, runTransaction, auth } from '../../firebase';
 import { syncBookingToTracker } from '../../utils/firebaseSync';
 import { AccurateIntegrationView } from './AccurateIntegrationView';
-import { ValidasiMitraView } from '../ValidasiMitraView';
+import { ValidasiMitraView } from '../mitra/ValidasiMitraView';
 import { Capacitor } from '@capacitor/core';
 import html2pdf from 'html2pdf.js';
 import { runWithOklchFix, downloadFile } from '../../utils/fileUtils';

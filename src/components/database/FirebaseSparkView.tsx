@@ -6,18 +6,13 @@ import {
   clearCustomFirebaseConfig, 
   FirebaseAppConfig 
 } from '../../core/firestore/FirestoreRuntime';
-import { db, collection, getDocs, limit, query, addDoc, doc, setDoc } from '../../firebase';
+import { db, collection, getDocs, limit, query, doc, setDoc } from '../../firebase';
 import { 
   Flame, 
   CheckCircle, 
-  Key, 
-  Link as LinkIcon, 
   Trash2, 
   Check, 
   RefreshCw, 
-  AlertTriangle, 
-  Layers, 
-  Copy, 
   ExternalLink,
   ShieldCheck,
   Zap
@@ -26,7 +21,6 @@ import {
 export const FirebaseSparkView: React.FC = () => {
   const [config, setConfig] = useState<FirebaseAppConfig>(getActiveFirebaseConfig());
   const [isCustom, setIsCustom] = useState(isCustomFirebaseConfigured());
-  const [copied, setCopied] = useState('');
   
   // Form state
   const [projectId, setProjectId] = useState(config.projectId || '');
@@ -98,11 +92,12 @@ export const FirebaseSparkView: React.FC = () => {
         success: true,
         message: `Koneksi ke Firestore (Project: ${config.projectId}) BERHASIL! Ditemukan ${snap.size} dokumen sampel.`
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const eMsg = err instanceof Error ? err.message : String(err);
       setTestStatus({
         loading: false,
         success: false,
-        message: `Gagal tersambung ke Firestore: ${err.message || String(err)}`
+        message: `Gagal tersambung ke Firestore: ${eMsg}`
       });
     }
   };
@@ -116,7 +111,7 @@ export const FirebaseSparkView: React.FC = () => {
     setMigrationLogs([]);
     addLog('Memulai inisialisasi dan pembuatan 17 Collection Firestore...');
 
-    const initialDataMap: Record<string, any[]> = {
+    const initialDataMap: Record<string, Record<string, unknown>[]> = {
       users: [
         {
           id: 'zM28E5ttlHS9zLIEMhYBYAPaAQ32',
@@ -298,7 +293,7 @@ export const FirebaseSparkView: React.FC = () => {
       for (const [colName, docs] of Object.entries(initialDataMap)) {
         addLog(`Menghubungkan ke collection [${colName}]...`);
         for (const item of docs) {
-          const docId = item.id || `doc-${Date.now()}`;
+          const docId = String(item.id || item.uid || `doc-${Date.now()}`);
           await setDoc(doc(db, colName, docId), {
             ...item,
             _syncedAt: new Date().toISOString()
@@ -309,8 +304,9 @@ export const FirebaseSparkView: React.FC = () => {
       }
       addLog(`🎉 BERHASIL SANGAT SEMPURNA! Total ${totalCreated} dokumen dibuat di 17 Collection Firestore.`);
       addLog(`Database Target ID: ${config.firestoreDatabaseId || 'ai-studio-7b9baede-5431-4818-8e1a-6da0a21316f9'}`);
-    } catch (err: any) {
-      addLog(`❌ Terjadi kendala pembuatan collection: ${err.message || String(err)}`);
+    } catch (err: unknown) {
+      const eMsg = err instanceof Error ? err.message : String(err);
+      addLog(`❌ Terjadi kendala pembuatan collection: ${eMsg}`);
     } finally {
       setIsMigrating(false);
     }
@@ -346,7 +342,7 @@ export const FirebaseSparkView: React.FC = () => {
               }
               addLog(`✅ Berhasil menulis ${docsCount} dokumen ke [${colName}].`);
             }
-          } catch (e) {
+          } catch {
             addLog(`⚠️ Gagal memproses cache lokal [${colName}].`);
           }
         } else {
@@ -354,8 +350,9 @@ export const FirebaseSparkView: React.FC = () => {
         }
       }
       addLog('🎉 Selesai! Seluruh data lokal telah tersinkron ke Firebase Firestore Anda.');
-    } catch (err: any) {
-      addLog(`❌ Terjadi kesalahan: ${err.message}`);
+    } catch (err: unknown) {
+      const eMsg = err instanceof Error ? err.message : String(err);
+      addLog(`❌ Terjadi kesalahan: ${eMsg}`);
     } finally {
       setIsMigrating(false);
     }
