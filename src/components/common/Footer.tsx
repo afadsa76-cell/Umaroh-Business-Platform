@@ -55,10 +55,6 @@ export const Footer: React.FC<FooterProps> = ({ minimalOnMobile = false }) => {
                 <p className="font-bold text-black">Alamat Kantor (Bogor):</p>
                 <p>Jl. Tangkuban Prahu No.7, RT.01/RW.03, Babakan, Kec.Bogor Tengah, Kota Bogor, Jawa Barat 16128</p>
               </div>
-              <div>
-                <p className="font-bold text-black">Alamat Kantor (Makassar):</p>
-                <p>Jl. Andi Djemma, Metropolitan Residence Blok B3, Kel.Banta-Bantaeng, Kec.Rappocini, Kota Makassar, Sulawesi Selatan 90223</p>
-              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { hotels, Hotel, newRowaHotels, newAlharmainHotels, defaultHotels } from '../../data/hotels';
+import { hotels, Hotel, newRowaHotels, newAlharmainHotels, newDiarAlManasikHotels, newMaysanIntGroupHotels, newEmaarAlDiyafaHotels, defaultHotels, allLocalHotels } from '../../data/hotels';
 import { HotelCard } from './HotelCard';
 import { FilterBar } from '../common/FilterBar';
 import { HotelDetailModal } from './HotelDetailModal';
@@ -20,11 +20,10 @@ const MASTER_PERIODS = [
   { name: 'LONG SEASON 2026', start: '01 Jun 2026', end: '15 Dec 2026', hijri: '15 Dzulhijjah 1447 – 5 Jumadil Akhir 1448' },
 ];
 
-const newMaysanHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Maysan Int. Group');
-const newEmaarHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Emaar Al Diyafa');
+const newMaysanHotels: Hotel[] = newMaysanIntGroupHotels;
+const newEmaarHotels: Hotel[] = newEmaarAlDiyafaHotels;
 const newKonozHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Konoz');
 const newAreejTabahHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Areej Tabah');
-const newDiarAlManasikHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Diar Al Manasik');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 const oldMaysanHotelsUnused: any[] = [
   {
@@ -532,25 +531,25 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     if (cached) {
       try {
         const parsed = JSON.parse(cached) as Hotel[];
-        // Replace existing Maysan, ROWA, Alharmain, Emaar, Konoz, and Areej Tabah hotels in stored parsed data with updated ones from defaultHotels
+        // Replace existing vendor hotels in stored parsed data with updated ones from allLocalHotels
         const parsedUpdated = parsed.map(ph => {
-          const matchingDefault = defaultHotels.find(dh => dh.id === ph.id);
-          if (matchingDefault && (
-            matchingDefault.vendor === 'Maysan Int. Group' || 
-            matchingDefault.vendor === 'ROWA' || 
-            matchingDefault.vendor === 'Alharmain Hotels Management' || 
-            matchingDefault.vendor === 'Emaar Al Diyafa' ||
-            matchingDefault.vendor === 'Konoz' ||
-            matchingDefault.vendor === 'Areej Tabah' ||
-            matchingDefault.vendor === 'Diar Al Manasik'
+          const matchingLocal = allLocalHotels.find(dh => dh.id === ph.id);
+          if (matchingLocal && (
+            matchingLocal.vendor === 'Maysan Int. Group' || 
+            matchingLocal.vendor === 'ROWA' || 
+            matchingLocal.vendor === 'Alharmain Hotels Management' || 
+            matchingLocal.vendor === 'Emaar Al Diyafa' ||
+            matchingLocal.vendor === 'Konoz' ||
+            matchingLocal.vendor === 'Areej Tabah' ||
+            matchingLocal.vendor === 'Diar Al Manasik'
           )) {
-            return matchingDefault;
+            return matchingLocal;
           }
           return ph;
         });
-        // Merge missing hotels from defaultHotels
+        // Merge missing hotels from allLocalHotels
         const parsedIds = new Set(parsedUpdated.map(h => h.id));
-        const missingHotels = defaultHotels.filter(h => !parsedIds.has(h.id));
+        const missingHotels = allLocalHotels.filter(h => !parsedIds.has(h.id));
         if (missingHotels.length > 0) {
           const merged = [...parsedUpdated, ...missingHotels];
           try {

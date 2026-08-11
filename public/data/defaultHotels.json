@@ -1493,1136 +1493,6 @@
     ]
   },
   {
-    "id": "maysan-al-mashaer",
-    "name": "Maysan Al Mashaer",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 25/06/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 455
-          },
-          {
-            "roomType": "Triple",
-            "price": 535
-          },
-          {
-            "roomType": "Quad",
-            "price": 615
-          }
-        ]
-      },
-      {
-        "range": "25/06/2026 TO 09/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 495
-          },
-          {
-            "roomType": "Triple",
-            "price": 575
-          },
-          {
-            "roomType": "Quad",
-            "price": 655
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 590
-          },
-          {
-            "roomType": "Quad",
-            "price": 670
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 535
-          },
-          {
-            "roomType": "Triple",
-            "price": 615
-          },
-          {
-            "roomType": "Quad",
-            "price": 695
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 580
-          },
-          {
-            "roomType": "Triple",
-            "price": 660
-          },
-          {
-            "roomType": "Quad",
-            "price": 740
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 525
-          },
-          {
-            "roomType": "Triple",
-            "price": 605
-          },
-          {
-            "roomType": "Quad",
-            "price": 685
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-maqam",
-    "name": "Maysan Al Maqam",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 25/06/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 345
-          },
-          {
-            "roomType": "Triple",
-            "price": 395
-          },
-          {
-            "roomType": "Quad",
-            "price": 445
-          }
-        ]
-      },
-      {
-        "range": "25/06/2026 TO 09/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 385
-          },
-          {
-            "roomType": "Triple",
-            "price": 435
-          },
-          {
-            "roomType": "Quad",
-            "price": 485
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 400
-          },
-          {
-            "roomType": "Triple",
-            "price": 450
-          },
-          {
-            "roomType": "Quad",
-            "price": 500
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 415
-          },
-          {
-            "roomType": "Triple",
-            "price": 465
-          },
-          {
-            "roomType": "Quad",
-            "price": 515
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 450
-          },
-          {
-            "roomType": "Triple",
-            "price": 500
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 395
-          },
-          {
-            "roomType": "Triple",
-            "price": 445
-          },
-          {
-            "roomType": "Quad",
-            "price": 495
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "royal-majestic",
-    "name": "Royal Majestic",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 25/06/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 355
-          },
-          {
-            "roomType": "Triple",
-            "price": 405
-          },
-          {
-            "roomType": "Quad",
-            "price": 455
-          }
-        ]
-      },
-      {
-        "range": "25/06/2026 TO 09/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 425
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 525
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 450
-          },
-          {
-            "roomType": "Triple",
-            "price": 500
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 480
-          },
-          {
-            "roomType": "Triple",
-            "price": 530
-          },
-          {
-            "roomType": "Quad",
-            "price": 580
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 560
-          },
-          {
-            "roomType": "Quad",
-            "price": 610
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 410
-          },
-          {
-            "roomType": "Triple",
-            "price": 460
-          },
-          {
-            "roomType": "Quad",
-            "price": 510
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-al-massah",
-    "name": "Grand AL Massah",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "25/06/2026 TO 09/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 375
-          },
-          {
-            "roomType": "Triple",
-            "price": 425
-          },
-          {
-            "roomType": "Quad",
-            "price": 475
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 400
-          },
-          {
-            "roomType": "Triple",
-            "price": 450
-          },
-          {
-            "roomType": "Quad",
-            "price": 500
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 435
-          },
-          {
-            "roomType": "Triple",
-            "price": 485
-          },
-          {
-            "roomType": "Quad",
-            "price": 535
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 495
-          },
-          {
-            "roomType": "Triple",
-            "price": 545
-          },
-          {
-            "roomType": "Quad",
-            "price": 595
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 425
-          },
-          {
-            "roomType": "Triple",
-            "price": 475
-          },
-          {
-            "roomType": "Quad",
-            "price": 525
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-ajyad",
-    "name": "Snood Ajyad",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "25/06/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 365
-          },
-          {
-            "roomType": "Triple",
-            "price": 410
-          },
-          {
-            "roomType": "Quad",
-            "price": 455
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 390
-          },
-          {
-            "roomType": "Triple",
-            "price": 435
-          },
-          {
-            "roomType": "Quad",
-            "price": 480
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 440
-          },
-          {
-            "roomType": "Triple",
-            "price": 485
-          },
-          {
-            "roomType": "Quad",
-            "price": 530
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 390
-          },
-          {
-            "roomType": "Triple",
-            "price": 435
-          },
-          {
-            "roomType": "Quad",
-            "price": 480
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "ramada-al-fayzen",
-    "name": "Ramada AL Fayzen",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "25/06/2026 TO 09/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 340
-          },
-          {
-            "roomType": "Triple",
-            "price": 390
-          },
-          {
-            "roomType": "Quad",
-            "price": 440
-          }
-        ]
-      },
-      {
-        "range": "09/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 350
-          },
-          {
-            "roomType": "Triple",
-            "price": 400
-          },
-          {
-            "roomType": "Quad",
-            "price": 450
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 385
-          },
-          {
-            "roomType": "Triple",
-            "price": 435
-          },
-          {
-            "roomType": "Quad",
-            "price": 485
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 420
-          },
-          {
-            "roomType": "Triple",
-            "price": 470
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 375
-          },
-          {
-            "roomType": "Triple",
-            "price": 425
-          },
-          {
-            "roomType": "Quad",
-            "price": 475
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "al-manara",
-    "name": "AL Manara",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 190
-          },
-          {
-            "roomType": "Triple",
-            "price": 225
-          },
-          {
-            "roomType": "Quad",
-            "price": 260
-          },
-          {
-            "roomType": "Quint",
-            "price": 305
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 240
-          },
-          {
-            "roomType": "Triple",
-            "price": 275
-          },
-          {
-            "roomType": "Quad",
-            "price": 310
-          },
-          {
-            "roomType": "Quint",
-            "price": 355
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 290
-          },
-          {
-            "roomType": "Triple",
-            "price": 325
-          },
-          {
-            "roomType": "Quad",
-            "price": 360
-          },
-          {
-            "roomType": "Quint",
-            "price": 405
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "badr-al-massah",
-    "name": "Badr AL Massah",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 250
-          },
-          {
-            "roomType": "Triple",
-            "price": 290
-          },
-          {
-            "roomType": "Quad",
-            "price": 330
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 255
-          },
-          {
-            "roomType": "Triple",
-            "price": 295
-          },
-          {
-            "roomType": "Quad",
-            "price": 335
-          }
-        ]
-      },
-      {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 260
-          },
-          {
-            "roomType": "Triple",
-            "price": 300
-          },
-          {
-            "roomType": "Quad",
-            "price": 340
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 255
-          },
-          {
-            "roomType": "Triple",
-            "price": 295
-          },
-          {
-            "roomType": "Quad",
-            "price": 335
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-mahabas",
-    "name": "Maysan AL Mahabas",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 165
-          },
-          {
-            "roomType": "Triple",
-            "price": 210
-          },
-          {
-            "roomType": "Quad",
-            "price": 255
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 170
-          },
-          {
-            "roomType": "Triple",
-            "price": 215
-          },
-          {
-            "roomType": "Quad",
-            "price": 260
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 190
-          },
-          {
-            "roomType": "Triple",
-            "price": 235
-          },
-          {
-            "roomType": "Quad",
-            "price": 280
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-multazem",
-    "name": "Maysan AL Multazem",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 145
-          },
-          {
-            "roomType": "Triple",
-            "price": 190
-          },
-          {
-            "roomType": "Quad",
-            "price": 235
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 155
-          },
-          {
-            "roomType": "Triple",
-            "price": 200
-          },
-          {
-            "roomType": "Quad",
-            "price": 245
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 165
-          },
-          {
-            "roomType": "Triple",
-            "price": 210
-          },
-          {
-            "roomType": "Quad",
-            "price": 255
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-al-safa-jarwal",
-    "name": "Maysan Al Safa Jarwal",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 140
-          },
-          {
-            "roomType": "Triple",
-            "price": 180
-          },
-          {
-            "roomType": "Quad",
-            "price": 220
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 130
-          },
-          {
-            "roomType": "Triple",
-            "price": 170
-          },
-          {
-            "roomType": "Quad",
-            "price": 210
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "hyatt-regency-maysan-makkah",
-    "name": "Hyatt Regency",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 01/07/2026",
-        "prices": [
-          {
-            "roomType": "Double (Weekdays)",
-            "price": 1060
-          },
-          {
-            "roomType": "Double (Weekend)",
-            "price": 1150
-          },
-          {
-            "roomType": "Triple (Weekdays)",
-            "price": 1335
-          },
-          {
-            "roomType": "Triple (Weekend)",
-            "price": 1425
-          },
-          {
-            "roomType": "Quad (Weekdays)",
-            "price": 1610
-          },
-          {
-            "roomType": "Quad (Weekend)",
-            "price": 1700
-          }
-        ]
-      },
-      {
-        "range": "01/07/2026 TO 16/07/2026",
-        "prices": [
-          {
-            "roomType": "Double (Weekdays)",
-            "price": 1160
-          },
-          {
-            "roomType": "Double (Weekend)",
-            "price": 1290
-          },
-          {
-            "roomType": "Triple (Weekdays)",
-            "price": 1435
-          },
-          {
-            "roomType": "Triple (Weekend)",
-            "price": 1565
-          },
-          {
-            "roomType": "Quad (Weekdays)",
-            "price": 1710
-          },
-          {
-            "roomType": "Quad (Weekend)",
-            "price": 1840
-          }
-        ]
-      },
-      {
-        "range": "16/07/2026 TO 30/09/2026",
-        "prices": [
-          {
-            "roomType": "Double (Weekdays)",
-            "price": 1190
-          },
-          {
-            "roomType": "Double (Weekend)",
-            "price": 1400
-          },
-          {
-            "roomType": "Triple (Weekdays)",
-            "price": 1465
-          },
-          {
-            "roomType": "Triple (Weekend)",
-            "price": 1675
-          },
-          {
-            "roomType": "Quad (Weekdays)",
-            "price": 1740
-          },
-          {
-            "roomType": "Quad (Weekend)",
-            "price": 1950
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "anjum-maysan-makkah",
-    "name": "Anjum",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 01/09/2026",
-        "prices": [
-          {
-            "roomType": "Double (Weekdays)",
-            "price": 595
-          },
-          {
-            "roomType": "Double (Weekend)",
-            "price": 645
-          },
-          {
-            "roomType": "Triple (Weekdays)",
-            "price": 715
-          },
-          {
-            "roomType": "Triple (Weekend)",
-            "price": 765
-          },
-          {
-            "roomType": "Quad (Weekdays)",
-            "price": 835
-          },
-          {
-            "roomType": "Quad (Weekend)",
-            "price": 885
-          }
-        ]
-      },
-      {
-        "range": "01/09/2026 TO 19/09/2026",
-        "prices": [
-          {
-            "roomType": "Double (Weekdays)",
-            "price": 625
-          },
-          {
-            "roomType": "Double (Weekend)",
-            "price": 675
-          },
-          {
-            "roomType": "Triple (Weekdays)",
-            "price": 745
-          },
-          {
-            "roomType": "Triple (Weekend)",
-            "price": 795
-          },
-          {
-            "roomType": "Quad (Weekdays)",
-            "price": 865
-          },
-          {
-            "roomType": "Quad (Weekend)",
-            "price": 915
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-al-rayan-maysan-makkah",
-    "name": "Snood Al Rayan",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 200
-          },
-          {
-            "roomType": "Triple",
-            "price": 245
-          },
-          {
-            "roomType": "Quad",
-            "price": 290
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 220
-          },
-          {
-            "roomType": "Triple",
-            "price": 265
-          },
-          {
-            "roomType": "Quad",
-            "price": 310
-          }
-        ]
-      }
-    ]
-  },
-  {
     "id": "bosphorus-1",
     "name": "Bosphorus Hotel 1",
     "city": "Madinah",
@@ -28988,678 +27858,6 @@
     ]
   },
   {
-    "id": "al-harithia-madinah",
-    "name": "The Venue Al Harithia",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "23/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 750
-          },
-          {
-            "roomType": "Triple",
-            "price": 900
-          },
-          {
-            "roomType": "Quad",
-            "price": 1050
-          },
-          {
-            "roomType": "Junior suite (2 Pax)",
-            "price": 900
-          },
-          {
-            "roomType": "Executive Suite (2 Rooms 4 Pax)",
-            "price": 1550
-          },
-          {
-            "roomType": "Royal Suite (2 Rooms 4 Pax)",
-            "price": 2150
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 800
-          },
-          {
-            "roomType": "Triple",
-            "price": 950
-          },
-          {
-            "roomType": "Quad",
-            "price": 1100
-          },
-          {
-            "roomType": "Junior suite (2 Pax)",
-            "price": 950
-          },
-          {
-            "roomType": "Executive Suite (2 Rooms 4 Pax)",
-            "price": 1600
-          },
-          {
-            "roomType": "Royal Suite (2 Rooms 4 Pax)",
-            "price": 2200
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-plaza-badr-almaqam-madinah",
-    "name": "Grand Plaza Badr Almaqam",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "26/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 520
-          },
-          {
-            "roomType": "Triple",
-            "price": 600
-          },
-          {
-            "roomType": "Quad",
-            "price": 680
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 550
-          },
-          {
-            "roomType": "Triple",
-            "price": 630
-          },
-          {
-            "roomType": "Quad",
-            "price": 710
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "shaza-regency-plaza-madinah",
-    "name": "Shaza Regency Plaza",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "27/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 580
-          },
-          {
-            "roomType": "Quad",
-            "price": 660
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 530
-          },
-          {
-            "roomType": "Triple",
-            "price": 610
-          },
-          {
-            "roomType": "Quad",
-            "price": 690
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "grand-plaza-almadina-madinah",
-    "name": "Grand Plaza Almadina",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "26/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 480
-          },
-          {
-            "roomType": "Triple",
-            "price": 550
-          },
-          {
-            "roomType": "Quad",
-            "price": 620
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 500
-          },
-          {
-            "roomType": "Triple",
-            "price": 570
-          },
-          {
-            "roomType": "Quad",
-            "price": 640
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-rehab-elmysk-madinah",
-    "name": "Maysan Rehab Elmysk",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 490
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 455
-          },
-          {
-            "roomType": "Triple",
-            "price": 515
-          },
-          {
-            "roomType": "Quad",
-            "price": 575
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-rotana-elmysk-madinah",
-    "name": "Maysan Rotana Elmysk",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "15/07/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 490
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 455
-          },
-          {
-            "roomType": "Triple",
-            "price": 515
-          },
-          {
-            "roomType": "Quad",
-            "price": 575
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "arkan-almanar-madinah",
-    "name": "Arkan Almanar",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "30/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 430
-          },
-          {
-            "roomType": "Triple",
-            "price": 490
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 455
-          },
-          {
-            "roomType": "Triple",
-            "price": 515
-          },
-          {
-            "roomType": "Quad",
-            "price": 575
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "maysan-altaqwa-madinah",
-    "name": "Maysan Altaqwa",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 4,
-    "seasons": [
-      {
-        "range": "23/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 360
-          },
-          {
-            "roomType": "Triple",
-            "price": 410
-          },
-          {
-            "roomType": "Quad",
-            "price": 460
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 390
-          },
-          {
-            "roomType": "Triple",
-            "price": 440
-          },
-          {
-            "roomType": "Quad",
-            "price": 490
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "plaza-inn-ohud-madinah",
-    "name": "Plaza Inn Ohud",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "26/06/2026 TO 20/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 335
-          },
-          {
-            "roomType": "Triple",
-            "price": 385
-          },
-          {
-            "roomType": "Quad",
-            "price": 435
-          }
-        ]
-      },
-      {
-        "range": "20/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 355
-          },
-          {
-            "roomType": "Triple",
-            "price": 405
-          },
-          {
-            "roomType": "Quad",
-            "price": 455
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "dar-al-taqwa-maysan-madinah",
-    "name": "Dar Al Taqwa",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "BB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "05/06/2026 TO 30/08/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 945
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 1010
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekdays)",
-            "price": 1075
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekend)",
-            "price": 1135
-          },
-          {
-            "roomType": "Business Suite (Weekdays)",
-            "price": 1640
-          },
-          {
-            "roomType": "Business Suite (Weekend)",
-            "price": 1765
-          },
-          {
-            "roomType": "Business Junior Suite (Weekdays)",
-            "price": 1890
-          },
-          {
-            "roomType": "Business Junior Suite (Weekend)",
-            "price": 2015
-          }
-        ]
-      },
-      {
-        "range": "30/08/2026 TO 23/09/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 1390
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 1450
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekdays)",
-            "price": 1515
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekend)",
-            "price": 1575
-          },
-          {
-            "roomType": "Business Suite (Weekdays)",
-            "price": 1955
-          },
-          {
-            "roomType": "Business Suite (Weekend)",
-            "price": 2080
-          },
-          {
-            "roomType": "Business Junior Suite (Weekdays)",
-            "price": 2205
-          },
-          {
-            "roomType": "Business Junior Suite (Weekend)",
-            "price": 2330
-          }
-        ]
-      },
-      {
-        "range": "23/09/2026 TO 27/09/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 1515
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 1700
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekdays)",
-            "price": 1700
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekend)",
-            "price": 1890
-          },
-          {
-            "roomType": "Business Suite (Weekdays)",
-            "price": 2520
-          },
-          {
-            "roomType": "Business Suite (Weekend)",
-            "price": 2740
-          },
-          {
-            "roomType": "Business Junior Suite (Weekdays)",
-            "price": 2835
-          },
-          {
-            "roomType": "Business Junior Suite (Weekend)",
-            "price": 3055
-          }
-        ]
-      },
-      {
-        "range": "27/09/2026 TO 22/10/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 1390
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 1450
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekdays)",
-            "price": 1515
-          },
-          {
-            "roomType": "Standard Double (Haram View - Weekend)",
-            "price": 1575
-          },
-          {
-            "roomType": "Business Suite (Weekdays)",
-            "price": 1955
-          },
-          {
-            "roomType": "Business Suite (Weekend)",
-            "price": 2080
-          },
-          {
-            "roomType": "Business Junior Suite (Weekdays)",
-            "price": 2205
-          },
-          {
-            "roomType": "Business Junior Suite (Weekend)",
-            "price": 2330
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "dar-al-iman-intercontinental-maysan-madinah",
-    "name": "Dar Al Iman Intercontinental",
-    "city": "Madinah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "BB",
-    "stars": 5,
-    "seasons": [
-      {
-        "range": "11/06/2026 TO 01/08/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 860
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 910
-          },
-          {
-            "roomType": "Double (Haram View - Weekdays)",
-            "price": 1035
-          },
-          {
-            "roomType": "Double (Haram View - Weekend)",
-            "price": 1080
-          }
-        ]
-      },
-      {
-        "range": "01/08/2026 TO 01/09/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 1050
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 1165
-          },
-          {
-            "roomType": "Double (Haram View - Weekdays)",
-            "price": 1225
-          },
-          {
-            "roomType": "Double (Haram View - Weekend)",
-            "price": 1340
-          }
-        ]
-      },
-      {
-        "range": "01/09/2026 TO 01/10/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 1155
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 1355
-          },
-          {
-            "roomType": "Double (Haram View - Weekdays)",
-            "price": 1330
-          },
-          {
-            "roomType": "Double (Haram View - Weekend)",
-            "price": 1530
-          }
-        ]
-      },
-      {
-        "range": "01/10/2026 TO 31/10/2026",
-        "prices": [
-          {
-            "roomType": "Double (City View - Weekdays)",
-            "price": 1175
-          },
-          {
-            "roomType": "Double (City View - Weekend)",
-            "price": 1360
-          },
-          {
-            "roomType": "Double (Haram View - Weekdays)",
-            "price": 1410
-          },
-          {
-            "roomType": "Double (Haram View - Weekend)",
-            "price": 1600
-          }
-        ]
-      }
-    ]
-  },
-  {
     "id": "pullman-zamzam-areej-tabah",
     "name": "Pullman Zamzam Hotel",
     "city": "Makkah",
@@ -30861,6 +29059,3592 @@
           {
             "roomType": "Quad",
             "price": 1020
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-mashaer",
+    "name": "Maysan Al Mashaer",
+    "city": "Makkah",
+    "stars": 4,
+    "distance": "800m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 660
+          },
+          {
+            "roomType": "Quad",
+            "price": 740
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 605
+          },
+          {
+            "roomType": "Quad",
+            "price": 685
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 25/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 630
+          },
+          {
+            "roomType": "Quad",
+            "price": 710
+          }
+        ]
+      },
+      {
+        "range": "25/09/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 660
+          },
+          {
+            "roomType": "Quad",
+            "price": 740
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 12/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 680
+          },
+          {
+            "roomType": "Triple",
+            "price": 760
+          },
+          {
+            "roomType": "Quad",
+            "price": 840
+          }
+        ]
+      },
+      {
+        "range": "12/10/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 710
+          },
+          {
+            "roomType": "Triple",
+            "price": 790
+          },
+          {
+            "roomType": "Quad",
+            "price": 870
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-maqam",
+    "name": "Maysan Al Maqam",
+    "city": "Makkah",
+    "stars": 4,
+    "distance": "800m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 395
+          },
+          {
+            "roomType": "Triple",
+            "price": 445
+          },
+          {
+            "roomType": "Quad",
+            "price": 495
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 25/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 505
+          },
+          {
+            "roomType": "Quad",
+            "price": 555
+          }
+        ]
+      },
+      {
+        "range": "25/09/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 520
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 540
+          },
+          {
+            "roomType": "Triple",
+            "price": 590
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "royal-majestic",
+    "name": "Royal Majestic",
+    "city": "Makkah",
+    "stars": 4,
+    "distance": "400m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 560
+          },
+          {
+            "roomType": "Quad",
+            "price": 610
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 460
+          },
+          {
+            "roomType": "Quad",
+            "price": 510
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 06/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 510
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "06/10/2026 TO 03/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
+      },
+      {
+        "range": "03/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 650
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-al-massah",
+    "name": "Grand AL Massah",
+    "city": "Makkah",
+    "stars": 4,
+    "distance": "800m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 495
+          },
+          {
+            "roomType": "Triple",
+            "price": 545
+          },
+          {
+            "roomType": "Quad",
+            "price": 595
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 425
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 525
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 495
+          },
+          {
+            "roomType": "Triple",
+            "price": 545
+          },
+          {
+            "roomType": "Quad",
+            "price": 595
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 05/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 575
+          },
+          {
+            "roomType": "Triple",
+            "price": 625
+          },
+          {
+            "roomType": "Quad",
+            "price": 675
+          }
+        ]
+      },
+      {
+        "range": "05/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 595
+          },
+          {
+            "roomType": "Triple",
+            "price": 645
+          },
+          {
+            "roomType": "Quad",
+            "price": 695
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-ajyad",
+    "name": "Snood Ajyad",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "600m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "Malysia Food Ex 15 SR",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 440
+          },
+          {
+            "roomType": "Triple",
+            "price": 485
+          },
+          {
+            "roomType": "Quad",
+            "price": 530
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 465
+          },
+          {
+            "roomType": "Triple",
+            "price": 510
+          },
+          {
+            "roomType": "Quad",
+            "price": 555
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 540
+          },
+          {
+            "roomType": "Triple",
+            "price": 585
+          },
+          {
+            "roomType": "Quad",
+            "price": 630
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 570
+          },
+          {
+            "roomType": "Triple",
+            "price": 615
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ramada-al-fayzen",
+    "name": "Ramada AL Fayzen",
+    "city": "Makkah",
+    "stars": 4,
+    "distance": "800m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 420
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 375
+          },
+          {
+            "roomType": "Triple",
+            "price": 425
+          },
+          {
+            "roomType": "Quad",
+            "price": 475
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 440
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 05/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "05/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-manara",
+    "name": "AL Manara",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1200m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 275
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 290
+          },
+          {
+            "roomType": "Triple",
+            "price": 325
+          },
+          {
+            "roomType": "Quad",
+            "price": 360
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 12/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 250
+          },
+          {
+            "roomType": "Triple",
+            "price": 285
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
+        ]
+      },
+      {
+        "range": "12/10/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 270
+          },
+          {
+            "roomType": "Triple",
+            "price": 305
+          },
+          {
+            "roomType": "Quad",
+            "price": 340
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 310
+          },
+          {
+            "roomType": "Triple",
+            "price": 345
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "badr-al-massah",
+    "name": "Badr AL Massah",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "800m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 260
+          },
+          {
+            "roomType": "Triple",
+            "price": 300
+          },
+          {
+            "roomType": "Quad",
+            "price": 340
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 11/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 255
+          },
+          {
+            "roomType": "Triple",
+            "price": 295
+          },
+          {
+            "roomType": "Quad",
+            "price": 335
+          }
+        ]
+      },
+      {
+        "range": "11/09/2026 TO 09/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 330
+          },
+          {
+            "roomType": "Triple",
+            "price": 370
+          },
+          {
+            "roomType": "Quad",
+            "price": 410
+          }
+        ]
+      },
+      {
+        "range": "09/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 420
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-mahabas",
+    "name": "Maysan AL Mahabas",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1500m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 170
+          },
+          {
+            "roomType": "Triple",
+            "price": 215
+          },
+          {
+            "roomType": "Quad",
+            "price": 260
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 235
+          },
+          {
+            "roomType": "Quad",
+            "price": 280
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 12/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 180
+          },
+          {
+            "roomType": "Triple",
+            "price": 225
+          },
+          {
+            "roomType": "Quad",
+            "price": 270
+          }
+        ]
+      },
+      {
+        "range": "12/10/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 235
+          },
+          {
+            "roomType": "Quad",
+            "price": 280
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 210
+          },
+          {
+            "roomType": "Triple",
+            "price": 255
+          },
+          {
+            "roomType": "Quad",
+            "price": 300
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 230
+          },
+          {
+            "roomType": "Triple",
+            "price": 275
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-multazem",
+    "name": "Maysan AL Multazem",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1500m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 155
+          },
+          {
+            "roomType": "Triple",
+            "price": 200
+          },
+          {
+            "roomType": "Quad",
+            "price": 245
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 165
+          },
+          {
+            "roomType": "Triple",
+            "price": 210
+          },
+          {
+            "roomType": "Quad",
+            "price": 255
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 12/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 175
+          },
+          {
+            "roomType": "Triple",
+            "price": 220
+          },
+          {
+            "roomType": "Quad",
+            "price": 265
+          }
+        ]
+      },
+      {
+        "range": "12/10/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 235
+          },
+          {
+            "roomType": "Quad",
+            "price": 280
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 200
+          },
+          {
+            "roomType": "Triple",
+            "price": 245
+          },
+          {
+            "roomType": "Quad",
+            "price": 290
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 285
+          },
+          {
+            "roomType": "Quad",
+            "price": 330
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-safa-jarwal",
+    "name": "Maysan Al Safa Jarwal",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1200m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 130
+          },
+          {
+            "roomType": "Triple",
+            "price": 170
+          },
+          {
+            "roomType": "Quad",
+            "price": 210
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 140
+          },
+          {
+            "roomType": "Triple",
+            "price": 180
+          },
+          {
+            "roomType": "Quad",
+            "price": 220
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 145
+          },
+          {
+            "roomType": "Triple",
+            "price": 185
+          },
+          {
+            "roomType": "Quad",
+            "price": 225
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 150
+          },
+          {
+            "roomType": "Triple",
+            "price": 190
+          },
+          {
+            "roomType": "Quad",
+            "price": 230
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 160
+          },
+          {
+            "roomType": "Triple",
+            "price": 200
+          },
+          {
+            "roomType": "Quad",
+            "price": 240
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hyatt-regency-maysan-makkah",
+    "name": "Hyatt Regency",
+    "city": "Makkah",
+    "stars": 5,
+    "distance": "100m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Asian",
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/07/2026",
+        "prices": [
+          {
+            "roomType": "Double (Weekdays)",
+            "price": 1060
+          },
+          {
+            "roomType": "Double (Weekend)",
+            "price": 1150
+          },
+          {
+            "roomType": "Triple (Weekdays)",
+            "price": 1335
+          },
+          {
+            "roomType": "Triple (Weekend)",
+            "price": 1425
+          },
+          {
+            "roomType": "Quad (Weekdays)",
+            "price": 1610
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1700
+          }
+        ]
+      },
+      {
+        "range": "01/07/2026 TO 16/07/2026",
+        "prices": [
+          {
+            "roomType": "Double (Weekdays)",
+            "price": 1160
+          },
+          {
+            "roomType": "Double (Weekend)",
+            "price": 1290
+          },
+          {
+            "roomType": "Triple (Weekdays)",
+            "price": 1435
+          },
+          {
+            "roomType": "Triple (Weekend)",
+            "price": 1565
+          },
+          {
+            "roomType": "Quad (Weekdays)",
+            "price": 1710
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1840
+          }
+        ]
+      },
+      {
+        "range": "16/07/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (Weekdays)",
+            "price": 1190
+          },
+          {
+            "roomType": "Double (Weekend)",
+            "price": 1400
+          },
+          {
+            "roomType": "Triple (Weekdays)",
+            "price": 1465
+          },
+          {
+            "roomType": "Triple (Weekend)",
+            "price": 1675
+          },
+          {
+            "roomType": "Quad (Weekdays)",
+            "price": 1740
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1950
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "anjum-maysan-makkah",
+    "name": "Anjum",
+    "city": "Makkah",
+    "stars": 5,
+    "distance": "150m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Asian",
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (Weekdays)",
+            "price": 595
+          },
+          {
+            "roomType": "Double (Weekend)",
+            "price": 645
+          },
+          {
+            "roomType": "Triple (Weekdays)",
+            "price": 715
+          },
+          {
+            "roomType": "Triple (Weekend)",
+            "price": 765
+          },
+          {
+            "roomType": "Quad (Weekdays)",
+            "price": 835
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 885
+          }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 19/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (Weekdays)",
+            "price": 625
+          },
+          {
+            "roomType": "Double (Weekend)",
+            "price": 675
+          },
+          {
+            "roomType": "Triple (Weekdays)",
+            "price": 745
+          },
+          {
+            "roomType": "Triple (Weekend)",
+            "price": 795
+          },
+          {
+            "roomType": "Quad (Weekdays)",
+            "price": 865
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 915
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-al-rayan-maysan-makkah",
+    "name": "Snood Al Rayan",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1000m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 13/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 200
+          },
+          {
+            "roomType": "Triple",
+            "price": 245
+          },
+          {
+            "roomType": "Quad",
+            "price": 290
+          }
+        ]
+      },
+      {
+        "range": "13/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
+            "roomType": "Triple",
+            "price": 265
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 210
+          },
+          {
+            "roomType": "Triple",
+            "price": 255
+          },
+          {
+            "roomType": "Quad",
+            "price": 300
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 03/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
+            "roomType": "Triple",
+            "price": 265
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
+          }
+        ]
+      },
+      {
+        "range": "03/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 230
+          },
+          {
+            "roomType": "Triple",
+            "price": 275
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-harithia-madinah",
+    "name": "The Venue Al Harithia",
+    "city": "Madinah",
+    "stars": 5,
+    "distance": "100m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "21/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 900
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 900
+          },
+          {
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1100
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 1550
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 2150
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 950
+          },
+          {
+            "roomType": "Quad",
+            "price": 1100
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 950
+          },
+          {
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1150
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 1600
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 2200
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 950
+          },
+          {
+            "roomType": "Triple",
+            "price": 1100
+          },
+          {
+            "roomType": "Quad",
+            "price": 1250
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 1125
+          },
+          {
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1325
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 2075
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 3320
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1180
+          },
+          {
+            "roomType": "Triple",
+            "price": 1330
+          },
+          {
+            "roomType": "Quad",
+            "price": 1480
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 1415
+          },
+          {
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1615
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 2600
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 4240
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1290
+          },
+          {
+            "roomType": "Triple",
+            "price": 1440
+          },
+          {
+            "roomType": "Quad",
+            "price": 1590
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 1550
+          },
+          {
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1750
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 2840
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 4680
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1635
+          },
+          {
+            "roomType": "Triple",
+            "price": 1785
+          },
+          {
+            "roomType": "Quad",
+            "price": 1935
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 1985
+          },
+          {
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 2185
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 3620
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 6060
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1180
+          },
+          {
+            "roomType": "Triple",
+            "price": 1330
+          },
+          {
+            "roomType": "Quad",
+            "price": 1480
+          },
+          {
+            "roomType": "Junior suite (2 Pax)",
+            "price": 1415
+          },
+          {
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1615
+          },
+          {
+            "roomType": "Executive Suite (2 Rooms 4 Pax)",
+            "price": 2600
+          },
+          {
+            "roomType": "Royal Suite (2 Rooms 4 Pax)",
+            "price": 4240
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-badr-almaqam-madinah",
+    "name": "Grand Plaza Badr Almaqam",
+    "city": "Madinah",
+    "stars": 4,
+    "distance": "150m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "21/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 680
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 630
+          },
+          {
+            "roomType": "Quad",
+            "price": 710
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 805
+          },
+          {
+            "roomType": "Quad",
+            "price": 885
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 855
+          },
+          {
+            "roomType": "Triple",
+            "price": 935
+          },
+          {
+            "roomType": "Quad",
+            "price": 1015
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 930
+          },
+          {
+            "roomType": "Triple",
+            "price": 1010
+          },
+          {
+            "roomType": "Quad",
+            "price": 1090
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1220
+          },
+          {
+            "roomType": "Triple",
+            "price": 1300
+          },
+          {
+            "roomType": "Quad",
+            "price": 1380
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 855
+          },
+          {
+            "roomType": "Triple",
+            "price": 935
+          },
+          {
+            "roomType": "Quad",
+            "price": 1015
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shaza-regency-plaza-madinah",
+    "name": "Shaza Regency Plaza",
+    "city": "Madinah",
+    "stars": 5,
+    "distance": "200m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "21/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 580
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 530
+          },
+          {
+            "roomType": "Triple",
+            "price": 610
+          },
+          {
+            "roomType": "Quad",
+            "price": 690
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 710
+          },
+          {
+            "roomType": "Triple",
+            "price": 790
+          },
+          {
+            "roomType": "Quad",
+            "price": 870
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 855
+          },
+          {
+            "roomType": "Triple",
+            "price": 935
+          },
+          {
+            "roomType": "Quad",
+            "price": 1015
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 930
+          },
+          {
+            "roomType": "Triple",
+            "price": 1010
+          },
+          {
+            "roomType": "Quad",
+            "price": 1090
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1220
+          },
+          {
+            "roomType": "Triple",
+            "price": 1300
+          },
+          {
+            "roomType": "Quad",
+            "price": 1380
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 855
+          },
+          {
+            "roomType": "Triple",
+            "price": 935
+          },
+          {
+            "roomType": "Quad",
+            "price": 1015
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-almadina-madinah",
+    "name": "Grand Plaza Almadina",
+    "city": "Madinah",
+    "stars": 4,
+    "distance": "250m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 625
+          },
+          {
+            "roomType": "Triple",
+            "price": 695
+          },
+          {
+            "roomType": "Quad",
+            "price": 765
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 820
+          },
+          {
+            "roomType": "Quad",
+            "price": 890
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 810
+          },
+          {
+            "roomType": "Triple",
+            "price": 880
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1065
+          },
+          {
+            "roomType": "Triple",
+            "price": 1165
+          },
+          {
+            "roomType": "Quad",
+            "price": 1265
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 820
+          },
+          {
+            "roomType": "Quad",
+            "price": 890
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-rehab-elmysk-madinah",
+    "name": "Maysan Rehab Elmysk",
+    "city": "Madinah",
+    "stars": 4,
+    "distance": "300m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 560
+          },
+          {
+            "roomType": "Triple",
+            "price": 620
+          },
+          {
+            "roomType": "Quad",
+            "price": 680
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 665
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 785
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 690
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 810
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 860
+          },
+          {
+            "roomType": "Triple",
+            "price": 920
+          },
+          {
+            "roomType": "Quad",
+            "price": 980
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 665
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 785
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-rotana-elmysk-madinah",
+    "name": "Maysan Rotana Elmysk",
+    "city": "Madinah",
+    "stars": 4,
+    "distance": "300m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 560
+          },
+          {
+            "roomType": "Triple",
+            "price": 620
+          },
+          {
+            "roomType": "Quad",
+            "price": 680
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 665
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 785
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 690
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 810
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 860
+          },
+          {
+            "roomType": "Triple",
+            "price": 920
+          },
+          {
+            "roomType": "Quad",
+            "price": 980
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 665
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 785
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "arkan-almanar-madinah",
+    "name": "Arkan Almanar",
+    "city": "Madinah",
+    "stars": 4,
+    "distance": "350m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 455
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 575
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 560
+          },
+          {
+            "roomType": "Triple",
+            "price": 620
+          },
+          {
+            "roomType": "Quad",
+            "price": 680
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 665
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 785
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 690
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 810
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 860
+          },
+          {
+            "roomType": "Triple",
+            "price": 920
+          },
+          {
+            "roomType": "Quad",
+            "price": 980
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 665
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 785
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-altaqwa-madinah",
+    "name": "Maysan Altaqwa",
+    "city": "Madinah",
+    "stars": 4,
+    "distance": "400m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "23/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 360
+          },
+          {
+            "roomType": "Triple",
+            "price": 410
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 440
+          },
+          {
+            "roomType": "Quad",
+            "price": 490
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 530
+          },
+          {
+            "roomType": "Quad",
+            "price": 580
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 610
+          },
+          {
+            "roomType": "Triple",
+            "price": 660
+          },
+          {
+            "roomType": "Quad",
+            "price": 710
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 635
+          },
+          {
+            "roomType": "Triple",
+            "price": 685
+          },
+          {
+            "roomType": "Quad",
+            "price": 735
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 735
+          },
+          {
+            "roomType": "Triple",
+            "price": 785
+          },
+          {
+            "roomType": "Quad",
+            "price": 835
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 610
+          },
+          {
+            "roomType": "Triple",
+            "price": 660
+          },
+          {
+            "roomType": "Quad",
+            "price": 710
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "plaza-inn-ohud-madinah",
+    "name": "Plaza Inn Ohud",
+    "city": "Madinah",
+    "stars": 3,
+    "distance": "450m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "26/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 335
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 435
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 355
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 455
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 465
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 565
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 560
+          },
+          {
+            "roomType": "Triple",
+            "price": 610
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 615
+          },
+          {
+            "roomType": "Triple",
+            "price": 665
+          },
+          {
+            "roomType": "Quad",
+            "price": 715
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 775
+          },
+          {
+            "roomType": "Quad",
+            "price": 825
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 560
+          },
+          {
+            "roomType": "Triple",
+            "price": 610
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-taqwa-maysan-madinah",
+    "name": "Dar Al Taqwa",
+    "city": "Madinah",
+    "stars": 5,
+    "distance": "50m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "BB",
+    "remarks": "Breakfast Included. Lunch or Dinner 255 SAR. Extra Bed 380 SAR.",
+    "seasons": [
+      {
+        "range": "05/06/2026 TO 30/08/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 945
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1010
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1075
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1135
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1640
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 1765
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 1890
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2015
+          }
+        ]
+      },
+      {
+        "range": "30/08/2026 TO 23/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1390
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1450
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1515
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1575
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2080
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2205
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2330
+          }
+        ]
+      },
+      {
+        "range": "23/09/2026 TO 27/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1515
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1700
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1700
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1890
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 2520
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2740
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2835
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 3055
+          }
+        ]
+      },
+      {
+        "range": "27/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1390
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1450
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1515
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1575
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2080
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2205
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2330
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 20/11/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1395
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1460
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1520
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1585
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1965
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2095
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2220
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2345
+          }
+        ]
+      },
+      {
+        "range": "20/11/2026 TO 29/11/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1520
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 2535
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2760
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2855
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 3075
+          }
+        ]
+      },
+      {
+        "range": "29/11/2026 TO 16/12/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1395
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1460
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1520
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1585
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 1965
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2095
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2220
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 2345
+          }
+        ]
+      },
+      {
+        "range": "16/12/2026 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1520
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekdays)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard Double (Haram View - Weekend)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite (Weekdays)",
+            "price": 2535
+          },
+          {
+            "roomType": "Business Suite (Weekend)",
+            "price": 2760
+          },
+          {
+            "roomType": "Business Junior Suite (Weekdays)",
+            "price": 2855
+          },
+          {
+            "roomType": "Business Junior Suite (Weekend)",
+            "price": 3075
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "triple-one-hotel-madinah",
+    "name": "Triple One Hotel",
+    "city": "Madinah",
+    "stars": 3,
+    "distance": "500m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 360
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 450
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 455
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 475
+          },
+          {
+            "roomType": "Triple",
+            "price": 520
+          },
+          {
+            "roomType": "Quad",
+            "price": 565
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 510
+          },
+          {
+            "roomType": "Triple",
+            "price": 555
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 555
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 645
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "qasr-al-ansar-golden-tulip-madinah",
+    "name": "Qasr Al Ansar Golden Tulip",
+    "city": "Madinah",
+    "stars": 3,
+    "distance": "500m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "F.B Fareast",
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 340
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 425
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      },
+      {
+        "range": "14/08/2026 TO 12/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 440
+          },
+          {
+            "roomType": "Triple",
+            "price": 485
+          },
+          {
+            "roomType": "Quad",
+            "price": 530
+          }
+        ]
+      },
+      {
+        "range": "12/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 515
+          },
+          {
+            "roomType": "Triple",
+            "price": 560
+          },
+          {
+            "roomType": "Quad",
+            "price": 605
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-iman-intercontinental-maysan-madinah",
+    "name": "Dar Al Iman Intercontinental",
+    "city": "Madinah",
+    "stars": 5,
+    "distance": "50m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "BB",
+    "remarks": "Breakfast Included.",
+    "seasons": [
+      {
+        "range": "11/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 860
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 910
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1035
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1080
+          }
+        ]
+      },
+      {
+        "range": "01/08/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1050
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1165
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1225
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1340
+          }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1155
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1355
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1330
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1530
+          }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 31/10/2026",
+        "prices": [
+          {
+            "roomType": "Double (City View - Weekdays)",
+            "price": 1175
+          },
+          {
+            "roomType": "Double (City View - Weekend)",
+            "price": 1360
+          },
+          {
+            "roomType": "Double (Haram View - Weekdays)",
+            "price": 1410
+          },
+          {
+            "roomType": "Double (Haram View - Weekend)",
+            "price": 1600
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "manarat-ghaza-maysan-makkah",
+    "name": "Manarat Ghaza",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "600m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "RO",
+    "remarks": "RO",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 13/09/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 190
+          }
+        ]
+      },
+      {
+        "range": "13/09/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 220
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 03/11/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 230
+          }
+        ]
+      },
+      {
+        "range": "03/11/2026 TO 11/12/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 250
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-mazallat-makkah",
+    "name": "Maysan Al Mazallat",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1200m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "13/08/2026 TO 12/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 160
+          },
+          {
+            "roomType": "Triple",
+            "price": 205
+          },
+          {
+            "roomType": "Quad",
+            "price": 250
+          }
+        ]
+      },
+      {
+        "range": "12/10/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 180
+          },
+          {
+            "roomType": "Triple",
+            "price": 225
+          },
+          {
+            "roomType": "Quad",
+            "price": 270
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 200
+          },
+          {
+            "roomType": "Triple",
+            "price": 245
+          },
+          {
+            "roomType": "Quad",
+            "price": 290
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
+            "roomType": "Triple",
+            "price": 265
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-multaqa-makkah",
+    "name": "Maysan Al Multaqa",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1500m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "RO",
+    "remarks": "RO",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 11/11/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 65
+          }
+        ]
+      },
+      {
+        "range": "11/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 70
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 80
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dhiafat-al-rajaa-maysan-makkah",
+    "name": "Dhiafat Al Rajaa",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "800m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 425
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "palestine-maysan-makkah",
+    "name": "Palestine Hotel",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "800m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "remarks": "FB Fareast",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 455
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rehab-al-taqwa-maysan-makkah",
+    "name": "Rehab Al Taqwa",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1000m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "RO",
+    "remarks": "RO",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 24/08/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 270
+          }
+        ]
+      },
+      {
+        "range": "24/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 300
+          }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 340
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 370
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 350
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hijra-al-massi-maysan-makkah",
+    "name": "Hijra AL Massi",
+    "city": "Makkah",
+    "stars": 3,
+    "distance": "1000m",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "RO",
+    "remarks": "RO",
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 250
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 280
+          }
+        ]
+      },
+      {
+        "range": "30/09/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 300
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 320
           }
         ]
       }

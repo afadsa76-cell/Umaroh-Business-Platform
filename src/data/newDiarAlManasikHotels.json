@@ -1,0 +1,3091 @@
+[
+  {
+    "id": "safwa-tower-3-diar",
+    "name": "Safwa Tower 3",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 880
+          },
+          {
+            "roomType": "Triple",
+            "price": 1080
+          },
+          {
+            "roomType": "Quad",
+            "price": 1280
+          }
+        ]
+      },
+      {
+        "range": "31/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 925
+          },
+          {
+            "roomType": "Triple",
+            "price": 1125
+          },
+          {
+            "roomType": "Quad",
+            "price": 1325
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1200
+          },
+          {
+            "roomType": "Quad",
+            "price": 1400
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1300
+          },
+          {
+            "roomType": "Quad",
+            "price": 1500
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1500
+          },
+          {
+            "roomType": "Triple",
+            "price": 1725
+          },
+          {
+            "roomType": "Quad",
+            "price": 1950
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 10/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1700
+          },
+          {
+            "roomType": "Triple",
+            "price": 1925
+          },
+          {
+            "roomType": "Quad",
+            "price": 2150
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "le-meridien-towers-diar",
+    "name": "Le Meridien Towers",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 355
+          },
+          {
+            "roomType": "Quad",
+            "price": 410
+          }
+        ]
+      },
+      {
+        "range": "31/08/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 315
+          },
+          {
+            "roomType": "Triple",
+            "price": 380
+          },
+          {
+            "roomType": "Quad",
+            "price": 445
+          }
+        ]
+      },
+      {
+        "range": "20/10/2026 TO 20/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 340
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-marwa-rotana-diar",
+    "name": "Al Marwa Rotana",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 09/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1125
+          },
+          {
+            "roomType": "Triple",
+            "price": 1395
+          },
+          {
+            "roomType": "Quad",
+            "price": 1665
+          }
+        ]
+      },
+      {
+        "range": "09/07/2026 TO 19/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1200
+          },
+          {
+            "roomType": "Triple",
+            "price": 1470
+          },
+          {
+            "roomType": "Quad",
+            "price": 1740
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "movenpick-hajar-diar",
+    "name": "Movenpick Hajar",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1050
+          },
+          {
+            "roomType": "Triple",
+            "price": 1270
+          },
+          {
+            "roomType": "Quad",
+            "price": 1490
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 07/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1320
+          },
+          {
+            "roomType": "Quad",
+            "price": 1540
+          }
+        ]
+      },
+      {
+        "range": "07/10/2026 TO 16/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1225
+          },
+          {
+            "roomType": "Triple",
+            "price": 1445
+          },
+          {
+            "roomType": "Quad",
+            "price": 1665
+          }
+        ]
+      },
+      {
+        "range": "16/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1675
+          },
+          {
+            "roomType": "Triple",
+            "price": 1900
+          },
+          {
+            "roomType": "Quad",
+            "price": 2125
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pullman-zam-zam-diar",
+    "name": "Pullman Zam Zam",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1050
+          },
+          {
+            "roomType": "Triple",
+            "price": 1275
+          },
+          {
+            "roomType": "Quad",
+            "price": 1500
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 07/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1150
+          },
+          {
+            "roomType": "Triple",
+            "price": 1375
+          },
+          {
+            "roomType": "Quad",
+            "price": 1600
+          }
+        ]
+      },
+      {
+        "range": "07/10/2026 TO 16/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1225
+          },
+          {
+            "roomType": "Triple",
+            "price": 1450
+          },
+          {
+            "roomType": "Quad",
+            "price": 1675
+          }
+        ]
+      },
+      {
+        "range": "16/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1675
+          },
+          {
+            "roomType": "Triple",
+            "price": 1900
+          },
+          {
+            "roomType": "Quad",
+            "price": 2125
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "makkah-towers-hotel-diar",
+    "name": "Makkah Towers (Hotel Rooms)",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 975
+          },
+          {
+            "roomType": "Triple",
+            "price": 1105
+          },
+          {
+            "roomType": "Quad",
+            "price": 1235
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "makkah-towers-owner-diar",
+    "name": "Makkah Towers (Owners Rooms)",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 15/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 830
+          },
+          {
+            "roomType": "Triple",
+            "price": 910
+          },
+          {
+            "roomType": "Quad",
+            "price": 990
+          }
+        ]
+      },
+      {
+        "range": "15/07/2026 TO 14/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 880
+          },
+          {
+            "roomType": "Triple",
+            "price": 960
+          },
+          {
+            "roomType": "Quad",
+            "price": 1040
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-mashaer-diar",
+    "name": "Maysan Al Mashaer",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 05/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 575
+          },
+          {
+            "roomType": "Triple",
+            "price": 655
+          },
+          {
+            "roomType": "Quad",
+            "price": 735
+          }
+        ]
+      },
+      {
+        "range": "05/09/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 680
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 680
+          },
+          {
+            "roomType": "Quad",
+            "price": 760
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 675
+          },
+          {
+            "roomType": "Triple",
+            "price": 755
+          },
+          {
+            "roomType": "Quad",
+            "price": 835
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 780
+          },
+          {
+            "roomType": "Quad",
+            "price": 860
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 850
+          },
+          {
+            "roomType": "Triple",
+            "price": 930
+          },
+          {
+            "roomType": "Quad",
+            "price": 1010
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 950
+          },
+          {
+            "roomType": "Triple",
+            "price": 1030
+          },
+          {
+            "roomType": "Quad",
+            "price": 1110
+          }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 780
+          },
+          {
+            "roomType": "Quad",
+            "price": 860
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "prestige-al-mashaer-diar",
+    "name": "Prestige Al Mashaer",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 19/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 700
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
+          }
+        ]
+      },
+      {
+        "range": "20/07/2026 TO 20/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 650
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "azka-al-safa-diar",
+    "name": "Azka Al Safa",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 580
+          },
+          {
+            "roomType": "Triple",
+            "price": 665
+          },
+          {
+            "roomType": "Quad",
+            "price": 750
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 630
+          },
+          {
+            "roomType": "Triple",
+            "price": 730
+          },
+          {
+            "roomType": "Quad",
+            "price": 830
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "azka-al-maqam-diar",
+    "name": "Azka Al Maqam",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 08/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 620
+          },
+          {
+            "roomType": "Triple",
+            "price": 720
+          },
+          {
+            "roomType": "Quad",
+            "price": 820
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 690
+          },
+          {
+            "roomType": "Triple",
+            "price": 790
+          },
+          {
+            "roomType": "Quad",
+            "price": 890
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-al-massa-diar",
+    "name": "Grand Al Massa",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 440
+          },
+          {
+            "roomType": "Triple",
+            "price": 490
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 510
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 625
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 650
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 800
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ramada-al-faezeen-diar",
+    "name": "Ramada Al Faezeen",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 450
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-ajyad-diar",
+    "name": "Snood Ajyad",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 425
+          },
+          {
+            "roomType": "Triple",
+            "price": 470
+          },
+          {
+            "roomType": "Quad",
+            "price": 515
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 495
+          },
+          {
+            "roomType": "Quad",
+            "price": 540
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 545
+          },
+          {
+            "roomType": "Quad",
+            "price": 590
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 530
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 645
+          },
+          {
+            "roomType": "Quad",
+            "price": 690
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 745
+          },
+          {
+            "roomType": "Quad",
+            "price": 790
+          }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 595
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-al-maqam-diar",
+    "name": "Maysan Al Maqam",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 01/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 480
+          },
+          {
+            "roomType": "Quad",
+            "price": 530
+          }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 450
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 625
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 650
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
+          }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 650
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sawaed-al-khair-diar",
+    "name": "Sawaed Al Khair",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "16/06/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 455
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zowar-al-bait-diar",
+    "name": "Zowar Al Bait",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "25/07/2026 TO 30/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 340
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maather-al-eiman-diar",
+    "name": "Maather Al Eiman",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 19/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 310
+          },
+          {
+            "roomType": "Triple",
+            "price": 355
+          },
+          {
+            "roomType": "Quad",
+            "price": 400
+          }
+        ]
+      },
+      {
+        "range": "19/09/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 340
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "20/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 425
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 530
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 620
+          }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "four-point-by-sheraton-diar",
+    "name": "Four Point By Sheraton",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 150
+          },
+          {
+            "roomType": "Triple",
+            "price": 190
+          },
+          {
+            "roomType": "Quad",
+            "price": 230
+          }
+        ]
+      },
+      {
+        "range": "31/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 230
+          },
+          {
+            "roomType": "Quad",
+            "price": 270
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 210
+          },
+          {
+            "roomType": "Triple",
+            "price": 250
+          },
+          {
+            "roomType": "Quad",
+            "price": 290
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 230
+          },
+          {
+            "roomType": "Triple",
+            "price": 270
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 260
+          },
+          {
+            "roomType": "Triple",
+            "price": 300
+          },
+          {
+            "roomType": "Quad",
+            "price": 340
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 340
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 280
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rayhant-al-mashaer-diar",
+    "name": "Rayhant Al Mashaer",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 160
+          },
+          {
+            "roomType": "Triple",
+            "price": 200
+          },
+          {
+            "roomType": "Quad",
+            "price": 240
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 190
+          },
+          {
+            "roomType": "Triple",
+            "price": 230
+          },
+          {
+            "roomType": "Quad",
+            "price": 270
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 230
+          },
+          {
+            "roomType": "Triple",
+            "price": 270
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 260
+          },
+          {
+            "roomType": "Triple",
+            "price": 300
+          },
+          {
+            "roomType": "Quad",
+            "price": 340
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 340
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 280
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fajar-badea-4-diar",
+    "name": "Fajar Badea 4",
+    "city": "Makkah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 19/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 210
+          },
+          {
+            "roomType": "Triple",
+            "price": 250
+          },
+          {
+            "roomType": "Quad",
+            "price": 290
+          }
+        ]
+      },
+      {
+        "range": "19/09/2026 TO 20/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
+            "roomType": "Triple",
+            "price": 260
+          },
+          {
+            "roomType": "Quad",
+            "price": 300
+          }
+        ]
+      },
+      {
+        "range": "20/11/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 280
+          },
+          {
+            "roomType": "Quad",
+            "price": 320
+          }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 300
+          },
+          {
+            "roomType": "Triple",
+            "price": 340
+          },
+          {
+            "roomType": "Quad",
+            "price": 380
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 05/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 330
+          },
+          {
+            "roomType": "Triple",
+            "price": 370
+          },
+          {
+            "roomType": "Quad",
+            "price": 410
+          }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 260
+          },
+          {
+            "roomType": "Triple",
+            "price": 300
+          },
+          {
+            "roomType": "Quad",
+            "price": 340
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-harithia-diar",
+    "name": "Al Harithia",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 900
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-eiman-al-haram-diar",
+    "name": "Dar Al Eiman Al Haram",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 850
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 850
+          },
+          {
+            "roomType": "Triple",
+            "price": 1000
+          },
+          {
+            "roomType": "Quad",
+            "price": 1150
+          }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 01/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 950
+          },
+          {
+            "roomType": "Triple",
+            "price": 1100
+          },
+          {
+            "roomType": "Quad",
+            "price": 1250
+          }
+        ]
+      },
+      {
+        "range": "01/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1100
+          },
+          {
+            "roomType": "Triple",
+            "price": 1250
+          },
+          {
+            "roomType": "Quad",
+            "price": 1400
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 19/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1300
+          },
+          {
+            "roomType": "Triple",
+            "price": 1450
+          },
+          {
+            "roomType": "Quad",
+            "price": 1600
+          }
+        ]
+      },
+      {
+        "range": "19/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 2000
+          },
+          {
+            "roomType": "Triple",
+            "price": 2200
+          },
+          {
+            "roomType": "Quad",
+            "price": 2400
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "millennium-al-aqeeq-diar",
+    "name": "Millennium Al Aqeeq",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 850
+          },
+          {
+            "roomType": "Quad",
+            "price": 975
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 925
+          },
+          {
+            "roomType": "Quad",
+            "price": 1050
+          }
+        ]
+      },
+      {
+        "range": "20/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1125
+          },
+          {
+            "roomType": "Quad",
+            "price": 1250
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shaza-regency-diar",
+    "name": "Shaza Regency",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 580
+          },
+          {
+            "roomType": "Quad",
+            "price": 660
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taiba-front-diar",
+    "name": "Taiba Front",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 875
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruve-diar",
+    "name": "Ruve",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 850
+          },
+          {
+            "roomType": "Quad",
+            "price": 975
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-plaza-al-madinah-diar",
+    "name": "Grand Plaza Al Madinah",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 545
+          },
+          {
+            "roomType": "Quad",
+            "price": 610
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 620
+          },
+          {
+            "roomType": "Triple",
+            "price": 690
+          },
+          {
+            "roomType": "Quad",
+            "price": 760
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 740
+          },
+          {
+            "roomType": "Triple",
+            "price": 810
+          },
+          {
+            "roomType": "Quad",
+            "price": 880
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 800
+          },
+          {
+            "roomType": "Triple",
+            "price": 870
+          },
+          {
+            "roomType": "Quad",
+            "price": 940
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1070
+          },
+          {
+            "roomType": "Quad",
+            "price": 1140
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 740
+          },
+          {
+            "roomType": "Triple",
+            "price": 810
+          },
+          {
+            "roomType": "Quad",
+            "price": 880
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "winner-inn-alkhair-diar",
+    "name": "Winner Inn Alkhair",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 520
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 650
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 775
+          },
+          {
+            "roomType": "Triple",
+            "price": 825
+          },
+          {
+            "roomType": "Quad",
+            "price": 875
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 975
+          },
+          {
+            "roomType": "Triple",
+            "price": 1025
+          },
+          {
+            "roomType": "Quad",
+            "price": 1075
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 775
+          },
+          {
+            "roomType": "Quad",
+            "price": 825
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-ansar-golden-tulip-diar",
+    "name": "Al Ansar Golden Tulip",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 515
+          },
+          {
+            "roomType": "Quad",
+            "price": 560
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 520
+          },
+          {
+            "roomType": "Triple",
+            "price": 565
+          },
+          {
+            "roomType": "Quad",
+            "price": 610
+          }
+        ]
+      },
+      {
+        "range": "16/09/2026 TO 21/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 540
+          },
+          {
+            "roomType": "Triple",
+            "price": 585
+          },
+          {
+            "roomType": "Quad",
+            "price": 630
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "deyar-al-eiman-diar",
+    "name": "Deyar Al Eiman",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 470
+          },
+          {
+            "roomType": "Triple",
+            "price": 520
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 04/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 575
+          },
+          {
+            "roomType": "Quad",
+            "price": 625
+          }
+        ]
+      },
+      {
+        "range": "04/10/2026 TO 01/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 650
+          }
+        ]
+      },
+      {
+        "range": "01/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 600
+          },
+          {
+            "roomType": "Triple",
+            "price": 650
+          },
+          {
+            "roomType": "Quad",
+            "price": 700
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 19/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 800
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      },
+      {
+        "range": "19/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1000
+          },
+          {
+            "roomType": "Triple",
+            "price": 1050
+          },
+          {
+            "roomType": "Quad",
+            "price": 1100
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 725
+          },
+          {
+            "roomType": "Triple",
+            "price": 775
+          },
+          {
+            "roomType": "Quad",
+            "price": 825
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "odest-diar",
+    "name": "Odest",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 440
+          },
+          {
+            "roomType": "Triple",
+            "price": 485
+          },
+          {
+            "roomType": "Quad",
+            "price": 530
+          }
+        ]
+      },
+      {
+        "range": "20/09/2026 TO 22/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 480
+          },
+          {
+            "roomType": "Triple",
+            "price": 525
+          },
+          {
+            "roomType": "Quad",
+            "price": 570
+          }
+        ]
+      },
+      {
+        "range": "22/10/2026 TO 19/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 595
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      },
+      {
+        "range": "19/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 650
+          },
+          {
+            "roomType": "Triple",
+            "price": 695
+          },
+          {
+            "roomType": "Quad",
+            "price": 740
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 24/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 745
+          },
+          {
+            "roomType": "Quad",
+            "price": 790
+          }
+        ]
+      },
+      {
+        "range": "24/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 900
+          },
+          {
+            "roomType": "Triple",
+            "price": 945
+          },
+          {
+            "roomType": "Quad",
+            "price": 990
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 07/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 675
+          },
+          {
+            "roomType": "Triple",
+            "price": 720
+          },
+          {
+            "roomType": "Quad",
+            "price": 765
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rua-international-diar",
+    "name": "Rua International",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "06/07/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 430
+          },
+          {
+            "roomType": "Triple",
+            "price": 475
+          },
+          {
+            "roomType": "Quad",
+            "price": 520
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "triple-one-diar",
+    "name": "Triple One",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "06/07/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 455
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "durrat-al-eiman-diar",
+    "name": "Durrat Al Eiman",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 400
+          },
+          {
+            "roomType": "Triple",
+            "price": 450
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 450
+          },
+          {
+            "roomType": "Triple",
+            "price": 500
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 01/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 500
+          },
+          {
+            "roomType": "Triple",
+            "price": 550
+          },
+          {
+            "roomType": "Quad",
+            "price": 600
+          }
+        ]
+      },
+      {
+        "range": "01/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 600
+          },
+          {
+            "roomType": "Quad",
+            "price": 650
+          }
+        ]
+      },
+      {
+        "range": "10/12/2026 TO 19/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
+          }
+        ]
+      },
+      {
+        "range": "19/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 900
+          },
+          {
+            "roomType": "Triple",
+            "price": 950
+          },
+          {
+            "roomType": "Quad",
+            "price": 1000
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 800
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dar-al-naeem-diar",
+    "name": "Dar Al Naeem",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "taiba-hills-diar",
+    "name": "Taiba Hills",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 360
+          },
+          {
+            "roomType": "Triple",
+            "price": 405
+          },
+          {
+            "roomType": "Quad",
+            "price": 450
+          }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 435
+          },
+          {
+            "roomType": "Quad",
+            "price": 480
+          }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 440
+          },
+          {
+            "roomType": "Triple",
+            "price": 485
+          },
+          {
+            "roomType": "Quad",
+            "price": 530
+          }
+        ]
+      },
+      {
+        "range": "20/10/2026 TO 01/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 525
+          },
+          {
+            "roomType": "Triple",
+            "price": 570
+          },
+          {
+            "roomType": "Quad",
+            "price": 615
+          }
+        ]
+      },
+      {
+        "range": "01/12/2026 TO 10/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 650
+          },
+          {
+            "roomType": "Triple",
+            "price": 695
+          },
+          {
+            "roomType": "Quad",
+            "price": 740
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ruaa-grand-diar",
+    "name": "Ruaa Grand",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jawharat-al-rashid-diar",
+    "name": "Jawharat Al Rashid",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 31/07/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 350
+          },
+          {
+            "roomType": "Triple",
+            "price": 390
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
+          }
+        ]
+      },
+      {
+        "range": "31/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 390
+          },
+          {
+            "roomType": "Triple",
+            "price": 430
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grand-zowar-diar",
+    "name": "Grand Zowar",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "28/07/2026 TO 31/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 425
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      },
+      {
+        "range": "01/09/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 455
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 20/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 505
+          },
+          {
+            "roomType": "Quad",
+            "price": 550
+          }
+        ]
+      },
+      {
+        "range": "20/10/2026 TO 01/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 550
+          },
+          {
+            "roomType": "Triple",
+            "price": 595
+          },
+          {
+            "roomType": "Quad",
+            "price": 640
+          }
+        ]
+      },
+      {
+        "range": "01/12/2026 TO 10/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 675
+          },
+          {
+            "roomType": "Triple",
+            "price": 720
+          },
+          {
+            "roomType": "Quad",
+            "price": 765
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-mukhtara-golden-diar",
+    "name": "Al Mukhtara Golden",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "06/07/2026 TO 01/08/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 340
+          },
+          {
+            "roomType": "Triple",
+            "price": 380
+          },
+          {
+            "roomType": "Quad",
+            "price": 420
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "plaza-inn-ohud-diar",
+    "name": "Plaza Inn Ohud",
+    "city": "Madinah",
+    "vendor": "Diar Al Manasik",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/06/2026 TO 20/09/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 335
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 435
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -196,8 +196,8 @@ export const PaketMasterView: React.FC = () => {
       console.log("Solusi A Auto-Sync: Mendeteksi hotel referensi yang belum ada di Firestore:", missingIds);
       
       // Load data hotel secara lazy dan upload yang kurang
-      import('../../data/hotels').then(({ defaultHotels, newRowaHotels, newAlharmainHotels }) => {
-        const allHotels = [...defaultHotels, ...(newRowaHotels || []), ...(newAlharmainHotels || [])];
+      import('../../data/hotels').then(({ allLocalHotels }) => {
+        const allHotels = allLocalHotels || [];
         
         missingIds.forEach(async (id) => {
           const hotelData = allHotels.find(h => h.id === id);
