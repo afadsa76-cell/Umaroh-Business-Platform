@@ -5,7 +5,7 @@ import { HANDLING_TIERS, HANDLING_CONSTANTS } from '../../data/handlingSaudi';
 import { transportData } from '../../data/transport';
 import { equipmentData } from '../../data/equipment';
 import { visaData, VisaData } from '../../data/visa';
-import { maskapaiData } from '../../data/maskapai';
+import { maskapaiData, cleanMaskapaiDisplayName } from '../../data/maskapai';
 import { handlingDomestikData } from '../../data/handlingDomestik';
 import { manasikData } from '../../data/manasik';
 import { ziarahData } from '../../data/ziarah';
@@ -1223,7 +1223,7 @@ export const SalesOrderView: React.FC = () => {
                     <option value="">Pilih Maskapai...</option>
                     {availableMaskapai.map(m => (
                       <option key={m.id} value={m.id}>
-                        {m.name} - {m.programDays} Hari - {m.tanggalKeberangkatan} s/d {m.tanggalKepulangan} 
+                        {cleanMaskapaiDisplayName(m.name, m.namaVendor)} - {m.programDays} Hari - {m.tanggalKeberangkatan} s/d {m.tanggalKepulangan} 
                         ({m.availableSeats} / {m.totalSeats} Seats)
                       </option>
                     ))}

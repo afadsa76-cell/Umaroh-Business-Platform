@@ -60,7 +60,7 @@ import { sendNotification } from "../../services/notificationService";
 import { generateWALink, openWhatsApp } from "../../utils/whatsapp";
 import { hotels } from "../../data/hotels";
 import { equipmentData } from "../../data/equipment";
-import { maskapaiData } from "../../data/maskapai";
+import { maskapaiData, cleanMaskapaiDisplayName } from "../../data/maskapai";
 import { handlingDomestikData } from "../../data/handlingDomestik";
 import { visaData } from "../../data/visa";
 import { keretaCepatData } from "../../data/keretaCepat";
@@ -4513,9 +4513,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     >
                       <option value="">-- Pilih Maskapai --</option>
                       {filteredMaskapaiList.map((m) => {
-                        const cleanName = m.namaVendor
-                          ? m.name.replace(` (${m.namaVendor})`, '')
-                          : m.name.replace(/\s*\(Madani Tour\)/gi, '');
+                        const cleanName = cleanMaskapaiDisplayName(m.name, m.namaVendor);
                         
                         const formattedDate = m.tanggalKeberangkatan 
                           ? new Date(m.tanggalKeberangkatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -6906,9 +6904,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                               </div>
                               <div className="flex flex-col">
                                 <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                  {maskapaiList.find(
-                                    (m) => m.id === formData.maskapaiId,
-                                  )?.name || "MASKAPAI"}{" "}
+                                  {cleanMaskapaiDisplayName(
+                                    maskapaiList.find(
+                                      (m) => m.id === formData.maskapaiId,
+                                    )?.name,
+                                    maskapaiList.find(
+                                      (m) => m.id === formData.maskapaiId,
+                                    )?.namaVendor
+                                  ) || "MASKAPAI"}{" "}
                                   ({formData.kelasPenerbangan || "EKONOMI"})
                                 </span>
                                 {formData.flightItinerary && (
@@ -8280,7 +8283,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                 </div>
                 <div className="flex flex-col">
                   <span className="font-bold text-sm text-gray-800 uppercase">
-                     {maskapaiList.find(m => m.id === formData.maskapaiId)?.name || 'MASKAPAI'} ({formData.kelasPenerbangan || 'EKONOMI'})
+                     {cleanMaskapaiDisplayName(
+                       maskapaiList.find(m => m.id === formData.maskapaiId)?.name,
+                       maskapaiList.find(m => m.id === formData.maskapaiId)?.namaVendor
+                     ) || 'MASKAPAI'} ({formData.kelasPenerbangan || 'EKONOMI'})
                   </span>
                   {formData.flightItinerary && (
                     <pre style={{ whiteSpace: 'pre-wrap' }} className="text-[10px] text-gray-500 font-mono mt-1 border-l-2 border-emerald-500 pl-2 leading-relaxed bg-gray-50/70 p-1.5 rounded max-w-sm">
