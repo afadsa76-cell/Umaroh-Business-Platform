@@ -8,24 +8,7 @@
     "stars": 4,
     "seasons": [
       {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 580
-          },
-          {
-            "roomType": "Triple",
-            "price": 660
-          },
-          {
-            "roomType": "Quad",
-            "price": 740
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -46,37 +29,20 @@
         "prices": [
           {
             "roomType": "Double",
-            "price": 550
+            "price": 600
           },
           {
             "roomType": "Triple",
-            "price": 630
+            "price": 680
           },
           {
             "roomType": "Quad",
-            "price": 710
+            "price": 760
           }
         ]
       },
       {
-        "range": "25/09/2026 TO 08/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 580
-          },
-          {
-            "roomType": "Triple",
-            "price": 660
-          },
-          {
-            "roomType": "Quad",
-            "price": 740
-          }
-        ]
-      },
-      {
-        "range": "08/10/2026 TO 12/10/2026",
+        "range": "25/09/2026 TO 12/10/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -93,7 +59,7 @@
         ]
       },
       {
-        "range": "12/10/2026 TO 17/12/2026",
+        "range": "12/10/2026 TO 05/11/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -108,6 +74,91 @@
             "price": 870
           }
         ]
+      },
+      {
+        "range": "05/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 760
+          },
+          {
+            "roomType": "Triple",
+            "price": 840
+          },
+          {
+            "roomType": "Quad",
+            "price": 920
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 25/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 810
+          },
+          {
+            "roomType": "Triple",
+            "price": 890
+          },
+          {
+            "roomType": "Quad",
+            "price": 970
+          }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 04/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 910
+          },
+          {
+            "roomType": "Triple",
+            "price": 990
+          },
+          {
+            "roomType": "Quad",
+            "price": 1070
+          }
+        ]
+      },
+      {
+        "range": "04/01/2027 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 810
+          },
+          {
+            "roomType": "Triple",
+            "price": 890
+          },
+          {
+            "roomType": "Quad",
+            "price": 970
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 760
+          },
+          {
+            "roomType": "Triple",
+            "price": 840
+          },
+          {
+            "roomType": "Quad",
+            "price": 920
+          }
+        ]
       }
     ]
   },
@@ -120,24 +171,7 @@
     "stars": 4,
     "seasons": [
       {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 450
-          },
-          {
-            "roomType": "Triple",
-            "price": 500
-          },
-          {
-            "roomType": "Quad",
-            "price": 550
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -203,6 +237,74 @@
             "price": 640
           }
         ]
+      },
+      {
+        "range": "17/12/2026 TO 25/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 695
+          },
+          {
+            "roomType": "Triple",
+            "price": 745
+          },
+          {
+            "roomType": "Quad",
+            "price": 795
+          }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 04/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 770
+          },
+          {
+            "roomType": "Triple",
+            "price": 820
+          },
+          {
+            "roomType": "Quad",
+            "price": 870
+          }
+        ]
+      },
+      {
+        "range": "04/01/2027 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 695
+          },
+          {
+            "roomType": "Triple",
+            "price": 745
+          },
+          {
+            "roomType": "Quad",
+            "price": 795
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 640
+          },
+          {
+            "roomType": "Triple",
+            "price": 690
+          },
+          {
+            "roomType": "Quad",
+            "price": 740
+          }
+        ]
       }
     ]
   },
@@ -215,24 +317,7 @@
     "stars": 4,
     "seasons": [
       {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 510
-          },
-          {
-            "roomType": "Triple",
-            "price": 560
-          },
-          {
-            "roomType": "Quad",
-            "price": 610
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -249,7 +334,7 @@
         ]
       },
       {
-        "range": "12/09/2026 TO 06/10/2026",
+        "range": "12/09/2026 TO 08/10/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -266,24 +351,24 @@
         ]
       },
       {
-        "range": "06/10/2026 TO 03/11/2026",
+        "range": "08/10/2026 TO 05/11/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 520
+            "price": 490
           },
           {
             "roomType": "Triple",
-            "price": 570
+            "price": 540
           },
           {
             "roomType": "Quad",
-            "price": 620
+            "price": 590
           }
         ]
       },
       {
-        "range": "03/11/2026 TO 17/12/2026",
+        "range": "05/11/2026 TO 17/12/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -296,6 +381,74 @@
           {
             "roomType": "Quad",
             "price": 700
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 25/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 770
+          },
+          {
+            "roomType": "Triple",
+            "price": 820
+          },
+          {
+            "roomType": "Quad",
+            "price": 870
+          }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 04/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 830
+          },
+          {
+            "roomType": "Triple",
+            "price": 880
+          },
+          {
+            "roomType": "Quad",
+            "price": 930
+          }
+        ]
+      },
+      {
+        "range": "04/01/2027 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 760
+          },
+          {
+            "roomType": "Triple",
+            "price": 810
+          },
+          {
+            "roomType": "Quad",
+            "price": 860
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 700
+          },
+          {
+            "roomType": "Triple",
+            "price": 750
+          },
+          {
+            "roomType": "Quad",
+            "price": 800
           }
         ]
       }
@@ -317,12 +470,24 @@
             "price": 595
           },
           {
+            "roomType": "Double (Weekend)",
+            "price": 645
+          },
+          {
             "roomType": "Triple",
             "price": 715
           },
           {
+            "roomType": "Triple (Weekend)",
+            "price": 765
+          },
+          {
             "roomType": "Quad",
             "price": 835
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 885
           }
         ]
       },
@@ -334,12 +499,24 @@
             "price": 625
           },
           {
+            "roomType": "Double (Weekend)",
+            "price": 675
+          },
+          {
             "roomType": "Triple",
             "price": 745
           },
           {
+            "roomType": "Triple (Weekend)",
+            "price": 795
+          },
+          {
             "roomType": "Quad",
             "price": 865
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 915
           }
         ]
       },
@@ -351,12 +528,24 @@
             "price": 675
           },
           {
+            "roomType": "Double (Weekend)",
+            "price": 750
+          },
+          {
             "roomType": "Triple",
             "price": 795
           },
           {
+            "roomType": "Triple (Weekend)",
+            "price": 870
+          },
+          {
             "roomType": "Quad",
             "price": 915
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 990
           }
         ]
       },
@@ -368,12 +557,82 @@
             "price": 745
           },
           {
+            "roomType": "Double (Weekend)",
+            "price": 820
+          },
+          {
             "roomType": "Triple",
             "price": 865
           },
           {
+            "roomType": "Triple (Weekend)",
+            "price": 940
+          },
+          {
             "roomType": "Quad",
             "price": 985
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1060
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 06/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 1210
+          },
+          {
+            "roomType": "Double (Weekend)",
+            "price": 1285
+          },
+          {
+            "roomType": "Triple",
+            "price": 1330
+          },
+          {
+            "roomType": "Triple (Weekend)",
+            "price": 1405
+          },
+          {
+            "roomType": "Quad",
+            "price": 1450
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1525
+          }
+        ]
+      },
+      {
+        "range": "06/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 815
+          },
+          {
+            "roomType": "Double (Weekend)",
+            "price": 890
+          },
+          {
+            "roomType": "Triple",
+            "price": 935
+          },
+          {
+            "roomType": "Triple (Weekend)",
+            "price": 1010
+          },
+          {
+            "roomType": "Quad",
+            "price": 1055
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1130
           }
         ]
       }
@@ -388,24 +647,7 @@
     "stars": 4,
     "seasons": [
       {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 495
-          },
-          {
-            "roomType": "Triple",
-            "price": 545
-          },
-          {
-            "roomType": "Quad",
-            "price": 595
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -426,15 +668,15 @@
         "prices": [
           {
             "roomType": "Double",
-            "price": 495
+            "price": 470
           },
           {
             "roomType": "Triple",
-            "price": 545
+            "price": 520
           },
           {
             "roomType": "Quad",
-            "price": 595
+            "price": 570
           }
         ]
       },
@@ -443,15 +685,15 @@
         "prices": [
           {
             "roomType": "Double",
-            "price": 575
+            "price": 505
           },
           {
             "roomType": "Triple",
-            "price": 625
+            "price": 550
           },
           {
             "roomType": "Quad",
-            "price": 675
+            "price": 595
           }
         ]
       },
@@ -471,6 +713,74 @@
             "price": 695
           }
         ]
+      },
+      {
+        "range": "17/12/2026 TO 25/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 800
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 04/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 850
+          },
+          {
+            "roomType": "Triple",
+            "price": 900
+          },
+          {
+            "roomType": "Quad",
+            "price": 950
+          }
+        ]
+      },
+      {
+        "range": "04/01/2027 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 800
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 650
+          },
+          {
+            "roomType": "Triple",
+            "price": 700
+          },
+          {
+            "roomType": "Quad",
+            "price": 750
+          }
+        ]
       }
     ]
   },
@@ -480,27 +790,10 @@
     "city": "Makkah",
     "vendor": "Maysan Int. Group",
     "mealPlan": "FB",
-    "stars": 4,
+    "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 440
-          },
-          {
-            "roomType": "Triple",
-            "price": 485
-          },
-          {
-            "roomType": "Quad",
-            "price": 530
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -521,37 +814,37 @@
         "prices": [
           {
             "roomType": "Double",
-            "price": 465
+            "price": 440
           },
           {
             "roomType": "Triple",
-            "price": 510
+            "price": 485
           },
           {
             "roomType": "Quad",
-            "price": 555
+            "price": 530
           }
         ]
       },
       {
-        "range": "08/10/2026 TO 10/12/2026",
+        "range": "08/10/2026 TO 05/11/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 540
+            "price": 470
           },
           {
             "roomType": "Triple",
-            "price": 585
+            "price": 515
           },
           {
             "roomType": "Quad",
-            "price": 630
+            "price": 560
           }
         ]
       },
       {
-        "range": "10/12/2026 TO 17/12/2026",
+        "range": "05/11/2026 TO 17/12/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -566,6 +859,57 @@
             "price": 660
           }
         ]
+      },
+      {
+        "range": "17/12/2026 TO 25/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 640
+          },
+          {
+            "roomType": "Triple",
+            "price": 685
+          },
+          {
+            "roomType": "Quad",
+            "price": 730
+          }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 740
+          },
+          {
+            "roomType": "Triple",
+            "price": 785
+          },
+          {
+            "roomType": "Quad",
+            "price": 830
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 615
+          },
+          {
+            "roomType": "Triple",
+            "price": 660
+          },
+          {
+            "roomType": "Quad",
+            "price": 705
+          }
+        ]
       }
     ]
   },
@@ -578,24 +922,7 @@
     "stars": 4,
     "seasons": [
       {
-        "range": "30/07/2026 TO 05/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 420
-          },
-          {
-            "roomType": "Triple",
-            "price": 470
-          },
-          {
-            "roomType": "Quad",
-            "price": 520
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -616,15 +943,15 @@
         "prices": [
           {
             "roomType": "Double",
-            "price": 440
+            "price": 420
           },
           {
             "roomType": "Triple",
-            "price": 490
+            "price": 470
           },
           {
             "roomType": "Quad",
-            "price": 540
+            "price": 520
           }
         ]
       },
@@ -633,15 +960,15 @@
         "prices": [
           {
             "roomType": "Double",
-            "price": 500
+            "price": 450
           },
           {
             "roomType": "Triple",
-            "price": 550
+            "price": 500
           },
           {
             "roomType": "Quad",
-            "price": 600
+            "price": 550
           }
         ]
       },
@@ -661,6 +988,74 @@
             "price": 620
           }
         ]
+      },
+      {
+        "range": "17/12/2026 TO 25/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 675
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 775
+          }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 04/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 750
+          },
+          {
+            "roomType": "Triple",
+            "price": 800
+          },
+          {
+            "roomType": "Quad",
+            "price": 850
+          }
+        ]
+      },
+      {
+        "range": "04/01/2027 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 675
+          },
+          {
+            "roomType": "Triple",
+            "price": 725
+          },
+          {
+            "roomType": "Quad",
+            "price": 775
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 08/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 590
+          },
+          {
+            "roomType": "Triple",
+            "price": 640
+          },
+          {
+            "roomType": "Quad",
+            "price": 690
+          }
+        ]
       }
     ]
   },
@@ -673,24 +1068,7 @@
     "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 170
-          },
-          {
-            "roomType": "Triple",
-            "price": 215
-          },
-          {
-            "roomType": "Quad",
-            "price": 260
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -758,7 +1136,7 @@
         ]
       },
       {
-        "range": "10/12/2026 TO 17/12/2026",
+        "range": "10/12/2026 TO 02/02/2027",
         "prices": [
           {
             "roomType": "Double",
@@ -785,24 +1163,7 @@
     "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 155
-          },
-          {
-            "roomType": "Triple",
-            "price": 200
-          },
-          {
-            "roomType": "Quad",
-            "price": 245
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -870,7 +1231,7 @@
         ]
       },
       {
-        "range": "10/12/2026 TO 17/12/2026",
+        "range": "10/12/2026 TO 02/02/2027",
         "prices": [
           {
             "roomType": "Double",
@@ -897,24 +1258,7 @@
     "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 240
-          },
-          {
-            "roomType": "Triple",
-            "price": 275
-          },
-          {
-            "roomType": "Quad",
-            "price": 310
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
+        "range": "06/09/2026 TO 12/09/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -965,7 +1309,7 @@
         ]
       },
       {
-        "range": "10/12/2026 TO 17/12/2026",
+        "range": "10/12/2026 TO 22/01/2027",
         "prices": [
           {
             "roomType": "Double",
@@ -980,206 +1324,21 @@
             "price": 380
           }
         ]
-      }
-    ]
-  },
-  {
-    "id": "badr-al-massah-maysan",
-    "name": "Badr AL Massah",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
+      },
       {
-        "range": "30/07/2026 TO 05/09/2026",
+        "range": "22/01/2027 TO 02/02/2027",
         "prices": [
           {
             "roomType": "Double",
-            "price": 260
+            "price": 270
           },
           {
             "roomType": "Triple",
-            "price": 300
+            "price": 305
           },
           {
             "roomType": "Quad",
             "price": 340
-          }
-        ]
-      },
-      {
-        "range": "05/09/2026 TO 11/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 255
-          },
-          {
-            "roomType": "Triple",
-            "price": 295
-          },
-          {
-            "roomType": "Quad",
-            "price": 335
-          }
-        ]
-      },
-      {
-        "range": "11/09/2026 TO 09/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 330
-          },
-          {
-            "roomType": "Triple",
-            "price": 370
-          },
-          {
-            "roomType": "Quad",
-            "price": 410
-          }
-        ]
-      },
-      {
-        "range": "09/12/2026 TO 17/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 380
-          },
-          {
-            "roomType": "Triple",
-            "price": 420
-          },
-          {
-            "roomType": "Quad",
-            "price": 460
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "manarat-ghaza-maysan",
-    "name": "Manarat Ghaza",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/07/2026 TO 13/09/2026",
-        "prices": [
-          {
-            "roomType": "Triple",
-            "price": 190
-          }
-        ]
-      },
-      {
-        "range": "13/09/2026 TO 08/10/2026",
-        "prices": [
-          {
-            "roomType": "Triple",
-            "price": 220
-          }
-        ]
-      },
-      {
-        "range": "08/10/2026 TO 03/11/2026",
-        "prices": [
-          {
-            "roomType": "Triple",
-            "price": 230
-          }
-        ]
-      },
-      {
-        "range": "03/11/2026 TO 11/12/2026",
-        "prices": [
-          {
-            "roomType": "Triple",
-            "price": 250
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "snood-al-rayan-maysan",
-    "name": "Snood Al Rayan",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "16/06/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 200
-          },
-          {
-            "roomType": "Triple",
-            "price": 245
-          },
-          {
-            "roomType": "Quad",
-            "price": 290
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 08/10/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 210
-          },
-          {
-            "roomType": "Triple",
-            "price": 255
-          },
-          {
-            "roomType": "Quad",
-            "price": 300
-          }
-        ]
-      },
-      {
-        "range": "08/10/2026 TO 03/11/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 220
-          },
-          {
-            "roomType": "Triple",
-            "price": 265
-          },
-          {
-            "roomType": "Quad",
-            "price": 310
-          }
-        ]
-      },
-      {
-        "range": "03/11/2026 TO 17/12/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 230
-          },
-          {
-            "roomType": "Triple",
-            "price": 275
-          },
-          {
-            "roomType": "Quad",
-            "price": 320
           }
         ]
       }
@@ -1194,41 +1353,7 @@
     "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 13/08/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 130
-          },
-          {
-            "roomType": "Triple",
-            "price": 170
-          },
-          {
-            "roomType": "Quad",
-            "price": 210
-          }
-        ]
-      },
-      {
-        "range": "13/08/2026 TO 12/09/2026",
-        "prices": [
-          {
-            "roomType": "Double",
-            "price": 140
-          },
-          {
-            "roomType": "Triple",
-            "price": 180
-          },
-          {
-            "roomType": "Quad",
-            "price": 220
-          }
-        ]
-      },
-      {
-        "range": "12/09/2026 TO 11/11/2026",
+        "range": "06/09/2026 TO 11/11/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -1262,7 +1387,7 @@
         ]
       },
       {
-        "range": "10/12/2026 TO 17/12/2026",
+        "range": "10/12/2026 TO 02/02/2027",
         "prices": [
           {
             "roomType": "Double",
@@ -1289,7 +1414,7 @@
     "stars": 3,
     "seasons": [
       {
-        "range": "13/08/2026 TO 12/10/2026",
+        "range": "06/09/2026 TO 12/10/2026",
         "prices": [
           {
             "roomType": "Double",
@@ -1340,7 +1465,7 @@
         ]
       },
       {
-        "range": "10/12/2026 TO 17/12/2026",
+        "range": "10/12/2026 TO 09/01/2027",
         "prices": [
           {
             "roomType": "Double",
@@ -1355,6 +1480,40 @@
             "price": 310
           }
         ]
+      },
+      {
+        "range": "09/01/2027 TO 22/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 270
+          },
+          {
+            "roomType": "Triple",
+            "price": 315
+          },
+          {
+            "roomType": "Quad",
+            "price": 360
+          }
+        ]
+      },
+      {
+        "range": "22/01/2027 TO 02/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 240
+          },
+          {
+            "roomType": "Triple",
+            "price": 285
+          },
+          {
+            "roomType": "Quad",
+            "price": 330
+          }
+        ]
       }
     ]
   },
@@ -1367,10 +1526,22 @@
     "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 11/11/2026",
+        "range": "06/09/2026 TO 11/11/2026",
         "prices": [
           {
+            "roomType": "Single",
+            "price": 65
+          },
+          {
+            "roomType": "Double",
+            "price": 65
+          },
+          {
             "roomType": "Triple",
+            "price": 65
+          },
+          {
+            "roomType": "Quad",
             "price": 65
           }
         ]
@@ -1379,16 +1550,40 @@
         "range": "11/11/2026 TO 10/12/2026",
         "prices": [
           {
+            "roomType": "Single",
+            "price": 70
+          },
+          {
+            "roomType": "Double",
+            "price": 70
+          },
+          {
             "roomType": "Triple",
+            "price": 70
+          },
+          {
+            "roomType": "Quad",
             "price": 70
           }
         ]
       },
       {
-        "range": "10/12/2026 TO 17/12/2026",
+        "range": "10/12/2026 TO 02/02/2027",
         "prices": [
           {
+            "roomType": "Single",
+            "price": 80
+          },
+          {
+            "roomType": "Double",
+            "price": 80
+          },
+          {
             "roomType": "Triple",
+            "price": 80
+          },
+          {
+            "roomType": "Quad",
             "price": 80
           }
         ]
@@ -1396,15 +1591,32 @@
     ]
   },
   {
-    "id": "dhiafat-al-rajaa-maysan",
-    "name": "Dhiafat Al Rajaa",
+    "id": "badr-al-massah-maysan",
+    "name": "Badr AL Massah",
     "city": "Makkah",
     "vendor": "Maysan Int. Group",
     "mealPlan": "FB",
-    "stars": 3,
+    "stars": 4,
     "seasons": [
       {
-        "range": "30/07/2026 TO 15/12/2026",
+        "range": "06/09/2026 TO 09/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 330
+          },
+          {
+            "roomType": "Triple",
+            "price": 370
+          },
+          {
+            "roomType": "Quad",
+            "price": 410
+          }
+        ]
+      },
+      {
+        "range": "09/12/2026 TO 02/02/2027",
         "prices": [
           {
             "roomType": "Double",
@@ -1412,139 +1624,262 @@
           },
           {
             "roomType": "Triple",
-            "price": 425
+            "price": 420
           },
           {
             "roomType": "Quad",
-            "price": 470
+            "price": 460
           }
         ]
       }
     ]
   },
   {
-    "id": "palestine-hotel-maysan",
-    "name": "Palestine Hotel",
+    "id": "manarat-ghaza-maysan",
+    "name": "Manarat Ghaza",
     "city": "Makkah",
     "vendor": "Maysan Int. Group",
-    "mealPlan": "FB",
+    "mealPlan": "RO",
     "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 15/12/2026",
+        "range": "06/09/2026 TO 11/12/2026",
         "prices": [
           {
             "roomType": "Double",
-            "price": 410
+            "price": 230
           },
           {
             "roomType": "Triple",
-            "price": 455
+            "price": 230
           },
           {
             "roomType": "Quad",
-            "price": 500
+            "price": 230
+          }
+        ]
+      },
+      {
+        "range": "11/12/2026 TO 20/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 460
+          },
+          {
+            "roomType": "Triple",
+            "price": 460
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
+          }
+        ]
+      },
+      {
+        "range": "20/01/2027 TO 02/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 260
+          },
+          {
+            "roomType": "Triple",
+            "price": 260
+          },
+          {
+            "roomType": "Quad",
+            "price": 260
           }
         ]
       }
     ]
   },
   {
-    "id": "rehab-al-taqwa-maysan",
-    "name": "Rehab Al Taqwa",
+    "id": "snood-al-rayan-maysan",
+    "name": "Snood Al Rayan",
     "city": "Makkah",
     "vendor": "Maysan Int. Group",
     "mealPlan": "RO",
     "stars": 3,
     "seasons": [
       {
-        "range": "30/07/2026 TO 24/08/2026",
+        "range": "16/06/2026 TO 13/08/2026",
         "prices": [
           {
+            "roomType": "Double",
+            "price": 200
+          },
+          {
             "roomType": "Triple",
-            "price": 270
+            "price": 245
+          },
+          {
+            "roomType": "Quad",
+            "price": 290
           }
         ]
       },
       {
-        "range": "24/08/2026 TO 15/09/2026",
+        "range": "13/08/2026 TO 12/09/2026",
         "prices": [
           {
+            "roomType": "Double",
+            "price": 220
+          },
+          {
             "roomType": "Triple",
-            "price": 300
+            "price": 265
+          },
+          {
+            "roomType": "Quad",
+            "price": 310
           }
         ]
       },
       {
-        "range": "15/09/2026 TO 15/10/2026",
+        "range": "06/09/2026 TO 08/10/2026",
         "prices": [
           {
+            "roomType": "Double",
+            "price": 120
+          },
+          {
             "roomType": "Triple",
+            "price": 120
+          },
+          {
+            "roomType": "Quad",
+            "price": 120
+          }
+        ]
+      },
+      {
+        "range": "08/10/2026 TO 03/11/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 130
+          },
+          {
+            "roomType": "Triple",
+            "price": 130
+          },
+          {
+            "roomType": "Quad",
+            "price": 130
+          }
+        ]
+      },
+      {
+        "range": "03/11/2026 TO 17/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 140
+          },
+          {
+            "roomType": "Triple",
+            "price": 140
+          },
+          {
+            "roomType": "Quad",
+            "price": 140
+          }
+        ]
+      },
+      {
+        "range": "17/12/2026 TO 09/01/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 160
+          },
+          {
+            "roomType": "Triple",
+            "price": 160
+          },
+          {
+            "roomType": "Quad",
+            "price": 160
+          }
+        ]
+      },
+      {
+        "range": "09/01/2027 TO 02/02/2027",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 140
+          },
+          {
+            "roomType": "Triple",
+            "price": 140
+          },
+          {
+            "roomType": "Quad",
+            "price": 140
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "al-massah-al-ayam-maysan",
+    "name": "Al Massah Al Ayam",
+    "city": "Makkah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "06/09/2026 TO 01/10/2026",
+        "prices": [
+          {
+            "roomType": "Double",
             "price": 340
+          },
+          {
+            "roomType": "Triple",
+            "price": 385
+          },
+          {
+            "roomType": "Quad",
+            "price": 430
           }
         ]
       },
       {
-        "range": "15/10/2026 TO 15/11/2026",
+        "range": "01/10/2026 TO 15/12/2026",
         "prices": [
           {
-            "roomType": "Triple",
+            "roomType": "Double",
             "price": 370
+          },
+          {
+            "roomType": "Triple",
+            "price": 415
+          },
+          {
+            "roomType": "Quad",
+            "price": 460
           }
         ]
       },
       {
-        "range": "15/11/2026 TO 10/12/2026",
+        "range": "15/12/2026 TO 02/02/2027",
         "prices": [
           {
-            "roomType": "Triple",
-            "price": 350
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "hijra-al-massi-maysan",
-    "name": "Hijra AL Massi",
-    "city": "Makkah",
-    "vendor": "Maysan Int. Group",
-    "mealPlan": "RO",
-    "stars": 3,
-    "seasons": [
-      {
-        "range": "30/07/2026 TO 15/08/2026",
-        "prices": [
+            "roomType": "Double",
+            "price": 400
+          },
           {
             "roomType": "Triple",
-            "price": 250
-          }
-        ]
-      },
-      {
-        "range": "15/08/2026 TO 30/09/2026",
-        "prices": [
+            "price": 445
+          },
           {
-            "roomType": "Triple",
-            "price": 280
-          }
-        ]
-      },
-      {
-        "range": "30/09/2026 TO 15/11/2026",
-        "prices": [
-          {
-            "roomType": "Triple",
-            "price": 300
-          }
-        ]
-      },
-      {
-        "range": "15/10/2026 TO 15/12/2026",
-        "prices": [
-          {
-            "roomType": "Triple",
-            "price": 320
+            "roomType": "Quad",
+            "price": 490
           }
         ]
       }
@@ -1566,12 +1901,24 @@
             "price": 1060
           },
           {
+            "roomType": "Double (Weekend)",
+            "price": 1150
+          },
+          {
             "roomType": "Triple",
             "price": 1335
           },
           {
+            "roomType": "Triple (Weekend)",
+            "price": 1425
+          },
+          {
             "roomType": "Quad",
             "price": 1610
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1700
           }
         ]
       },
@@ -1583,12 +1930,24 @@
             "price": 1160
           },
           {
+            "roomType": "Double (Weekend)",
+            "price": 1290
+          },
+          {
             "roomType": "Triple",
             "price": 1435
           },
           {
+            "roomType": "Triple (Weekend)",
+            "price": 1565
+          },
+          {
             "roomType": "Quad",
             "price": 1710
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1840
           }
         ]
       },
@@ -1600,12 +1959,24 @@
             "price": 1190
           },
           {
+            "roomType": "Double (Weekend)",
+            "price": 1400
+          },
+          {
             "roomType": "Triple",
             "price": 1465
           },
           {
+            "roomType": "Triple (Weekend)",
+            "price": 1675
+          },
+          {
             "roomType": "Quad",
             "price": 1740
+          },
+          {
+            "roomType": "Quad (Weekend)",
+            "price": 1950
           }
         ]
       }
@@ -1635,15 +2006,19 @@
             "price": 1050
           },
           {
-            "roomType": "Jr Suite (2pax)",
+            "roomType": "Junior suite (2 Pax)",
             "price": 900
           },
           {
-            "roomType": "Family Suite (4pax)",
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1100
+          },
+          {
+            "roomType": "Executive Suite (4 Pax)",
             "price": 1550
           },
           {
-            "roomType": "3 Bed Suite (6pax)",
+            "roomType": "Royal Suite (4 Pax)",
             "price": 2150
           }
         ]
@@ -1664,15 +2039,19 @@
             "price": 1100
           },
           {
-            "roomType": "Jr Suite (2pax)",
+            "roomType": "Junior suite (2 Pax)",
             "price": 950
           },
           {
-            "roomType": "Family Suite (4pax)",
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1150
+          },
+          {
+            "roomType": "Executive Suite (4 Pax)",
             "price": 1600
           },
           {
-            "roomType": "3 Bed Suite (6pax)",
+            "roomType": "Royal Suite (4 Pax)",
             "price": 2200
           }
         ]
@@ -1693,15 +2072,19 @@
             "price": 1250
           },
           {
-            "roomType": "Jr Suite (2pax)",
+            "roomType": "Junior suite (2 Pax)",
             "price": 1125
           },
           {
-            "roomType": "Family Suite (4pax)",
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1325
+          },
+          {
+            "roomType": "Executive Suite (4 Pax)",
             "price": 2075
           },
           {
-            "roomType": "3 Bed Suite (6pax)",
+            "roomType": "Royal Suite (4 Pax)",
             "price": 3320
           }
         ]
@@ -1722,15 +2105,19 @@
             "price": 1480
           },
           {
-            "roomType": "Jr Suite (2pax)",
+            "roomType": "Junior suite (2 Pax)",
             "price": 1415
           },
           {
-            "roomType": "Family Suite (4pax)",
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1615
+          },
+          {
+            "roomType": "Executive Suite (4 Pax)",
             "price": 2600
           },
           {
-            "roomType": "3 Bed Suite (6pax)",
+            "roomType": "Royal Suite (4 Pax)",
             "price": 4240
           }
         ]
@@ -1751,15 +2138,19 @@
             "price": 1590
           },
           {
-            "roomType": "Jr Suite (2pax)",
+            "roomType": "Junior suite (2 Pax)",
             "price": 1550
           },
           {
-            "roomType": "Family Suite (4pax)",
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1750
+          },
+          {
+            "roomType": "Executive Suite (4 Pax)",
             "price": 2840
           },
           {
-            "roomType": "3 Bed Suite (6pax)",
+            "roomType": "Royal Suite (4 Pax)",
             "price": 4680
           }
         ]
@@ -1780,15 +2171,19 @@
             "price": 1935
           },
           {
-            "roomType": "Jr Suite (2pax)",
+            "roomType": "Junior suite (2 Pax)",
             "price": 1985
           },
           {
-            "roomType": "Family Suite (4pax)",
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 2185
+          },
+          {
+            "roomType": "Executive Suite (4 Pax)",
             "price": 3620
           },
           {
-            "roomType": "3 Bed Suite (6pax)",
+            "roomType": "Royal Suite (4 Pax)",
             "price": 6060
           }
         ]
@@ -1809,15 +2204,19 @@
             "price": 1480
           },
           {
-            "roomType": "Jr Suite (2pax)",
+            "roomType": "Junior suite (2 Pax)",
             "price": 1415
           },
           {
-            "roomType": "Family Suite (4pax)",
+            "roomType": "Dlx Junior suite (2 Pax)",
+            "price": 1615
+          },
+          {
+            "roomType": "Executive Suite (4 Pax)",
             "price": 2600
           },
           {
-            "roomType": "3 Bed Suite (6pax)",
+            "roomType": "Royal Suite (4 Pax)",
             "price": 4240
           }
         ]
@@ -2217,7 +2616,7 @@
     "city": "Madinah",
     "vendor": "Maysan Int. Group",
     "mealPlan": "FB",
-    "stars": 4,
+    "stars": 3,
     "seasons": [
       {
         "range": "30/06/2026 TO 20/09/2026",
@@ -2346,7 +2745,7 @@
     "city": "Madinah",
     "vendor": "Maysan Int. Group",
     "mealPlan": "FB",
-    "stars": 4,
+    "stars": 3,
     "seasons": [
       {
         "range": "30/06/2026 TO 20/09/2026",
@@ -2475,7 +2874,7 @@
     "city": "Madinah",
     "vendor": "Maysan Int. Group",
     "mealPlan": "FB",
-    "stars": 4,
+    "stars": 3,
     "seasons": [
       {
         "range": "23/06/2026 TO 20/09/2026",
@@ -2739,8 +3138,36 @@
         "range": "05/06/2026 TO 30/08/2026",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 945
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1010
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1075
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1135
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 1640
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 1765
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 1890
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 2015
           }
         ]
       },
@@ -2748,8 +3175,36 @@
         "range": "30/08/2026 TO 23/09/2026",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 1390
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1450
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1515
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1575
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 2080
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 2205
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 2330
           }
         ]
       },
@@ -2757,8 +3212,36 @@
         "range": "23/09/2026 TO 27/09/2026",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 1515
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1700
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1700
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1890
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 2520
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 2740
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 2835
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 3055
           }
         ]
       },
@@ -2766,8 +3249,36 @@
         "range": "27/09/2026 TO 22/10/2026",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 1390
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1450
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1515
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1575
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 2080
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 2205
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 2330
           }
         ]
       },
@@ -2775,8 +3286,36 @@
         "range": "22/10/2026 TO 20/11/2026",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 1395
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1460
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1520
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1585
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 1965
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 2095
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 2220
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 2345
           }
         ]
       },
@@ -2784,8 +3323,36 @@
         "range": "20/11/2026 TO 29/11/2026",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 1520
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 2535
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 2760
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 2855
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 3075
           }
         ]
       },
@@ -2793,8 +3360,36 @@
         "range": "29/11/2026 TO 16/12/2026",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 1395
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1460
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1520
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1585
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 1965
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 2095
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 2220
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 2345
           }
         ]
       },
@@ -2802,8 +3397,36 @@
         "range": "16/12/2026 TO 07/02/2027",
         "prices": [
           {
-            "roomType": "Double",
+            "roomType": "DBL (City View)",
             "price": 1520
+          },
+          {
+            "roomType": "DBL (City View) (Weekend)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard DBL (Haram View)",
+            "price": 1710
+          },
+          {
+            "roomType": "Standard DBL (Haram View) (Weekend)",
+            "price": 1955
+          },
+          {
+            "roomType": "Business Suite 1BR DBL",
+            "price": 2535
+          },
+          {
+            "roomType": "Business Suite 1BR DBL (Weekend)",
+            "price": 2760
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View)",
+            "price": 2855
+          },
+          {
+            "roomType": "Business Jr Suite 1BR (Haram View) (Weekend)",
+            "price": 3075
           }
         ]
       }
@@ -3123,6 +3746,205 @@
           {
             "roomType": "Quad",
             "price": 605
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hajj-package-maysan-harithia-swissotel",
+    "name": "Hajj Package: The Venue Al Harithia & Swissotel / Maqam",
+    "city": "Makkah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 5,
+    "seasons": [
+      {
+        "range": "20-25 ZULQAEDA (Madinah) & 25 ZULQAEDA-04 ZULHAJAH (Makkah)",
+        "prices": [
+          {
+            "roomType": "Double (USD)",
+            "price": 2815
+          },
+          {
+            "roomType": "Triple (USD)",
+            "price": 2300
+          },
+          {
+            "roomType": "Quad (USD)",
+            "price": 2050
+          }
+        ]
+      },
+      {
+        "range": "17-25 ZULQAEDA (Madinah) & 25 ZULQAEDA-04 ZULHAJAH (Makkah)",
+        "prices": [
+          {
+            "roomType": "Double (USD)",
+            "price": 3500
+          },
+          {
+            "roomType": "Triple (USD)",
+            "price": 2875
+          },
+          {
+            "roomType": "Quad (USD)",
+            "price": 2560
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dhiafat-al-rajaa-maysan",
+    "name": "Dhiafat Al Rajaa",
+    "city": "Makkah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 380
+          },
+          {
+            "roomType": "Triple",
+            "price": 425
+          },
+          {
+            "roomType": "Quad",
+            "price": 470
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "palestine-hotel-maysan",
+    "name": "Palestine Hotel",
+    "city": "Makkah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 410
+          },
+          {
+            "roomType": "Triple",
+            "price": 455
+          },
+          {
+            "roomType": "Quad",
+            "price": 500
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rehab-al-taqwa-maysan",
+    "name": "Rehab Al Taqwa",
+    "city": "Makkah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "RO",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 24/08/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 270
+          }
+        ]
+      },
+      {
+        "range": "24/08/2026 TO 15/09/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 300
+          }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/10/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 340
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 370
+          }
+        ]
+      },
+      {
+        "range": "15/11/2026 TO 10/12/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 350
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hijra-al-massi-maysan",
+    "name": "Hijra AL Massi",
+    "city": "Makkah",
+    "vendor": "Maysan Int. Group",
+    "mealPlan": "RO",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "30/07/2026 TO 15/08/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 250
+          }
+        ]
+      },
+      {
+        "range": "15/08/2026 TO 30/09/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 280
+          }
+        ]
+      },
+      {
+        "range": "30/09/2026 TO 15/11/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 300
+          }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          {
+            "roomType": "Triple",
+            "price": 320
           }
         ]
       }

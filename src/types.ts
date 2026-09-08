@@ -158,6 +158,9 @@ export interface WizardFormData {
   wisataAddon_merch_spanduk?: boolean;
   wisataMargin?: number;
   status?: string;
+  kesiapanJamaah?: 'ready_to_pay' | 'no_jamaah';
+  jumlahJamaahSiapBayar?: number;
+  catatanValidasi?: string;
   isPublished?: boolean;
   isDraft?: boolean;
   kursSar?: number;

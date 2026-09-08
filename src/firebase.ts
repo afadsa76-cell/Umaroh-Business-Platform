@@ -246,7 +246,14 @@ export async function getDoc(docRef: any): Promise<any> {
     FirestoreQueryCache.getInstance().set(key, docSnap);
     return docSnap;
   } catch (err) {
-    throw translateError(err);
+    const categorized = translateError(err);
+    if (categorized.message.includes('Quota Error') || categorized.message.includes('resource-exhausted') || categorized.message.includes('quota')) {
+      if (typeof window !== 'undefined') {
+        (window as any).firestoreQuotaExhausted = true;
+        window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
+      }
+    }
+    throw categorized;
   }
 }
 
@@ -263,7 +270,14 @@ export async function getDocs(ref: any): Promise<any> {
     FirestoreQueryCache.getInstance().set(key, querySnap);
     return querySnap;
   } catch (err) {
-    throw translateError(err);
+    const categorized = translateError(err);
+    if (categorized.message.includes('Quota Error') || categorized.message.includes('resource-exhausted') || categorized.message.includes('quota')) {
+      if (typeof window !== 'undefined') {
+        (window as any).firestoreQuotaExhausted = true;
+        window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
+      }
+    }
+    throw categorized;
   }
 }
 
@@ -427,8 +441,18 @@ export function onSnapshot(ref: any, ...args: any[]): any {
             // Ignore cancelled operations silently
             return;
           }
+          if (categorized.message.includes('Quota Error') || categorized.message.includes('resource-exhausted') || categorized.message.includes('quota')) {
+            if (typeof window !== 'undefined') {
+              (window as any).firestoreQuotaExhausted = true;
+              window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
+            }
+          }
           if (onError) {
-            onError(categorized);
+            try {
+              onError(categorized);
+            } catch (cbErr) {
+              console.warn(`[onSnapshot caught callback error for ${path}]:`, cbErr);
+            }
           } else {
             console.error('[onSnapshot error]', categorized);
           }
@@ -490,6 +514,12 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     }
   };
   console.error('[Firestore Error]:', JSON.stringify(errInfo));
+  if (categorized.message.includes('Quota Error') || categorized.message.includes('resource-exhausted') || categorized.message.includes('quota')) {
+    if (typeof window !== 'undefined') {
+      (window as any).firestoreQuotaExhausted = true;
+      window.dispatchEvent(new CustomEvent('firestore-quota-exceeded'));
+    }
+  }
   throw categorized;
 }
 

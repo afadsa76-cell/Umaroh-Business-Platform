@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit2, Trash2, X, Search, CheckCircle, XCircle, Clock, CheckCircle2, Layout, Activity, Archive, FileText, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { db, collection, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, getDocs, handleFirestoreError, OperationType, auth } from '../../firebase';
 import { sendNotification } from '../../services/notificationService';
-import { Maskapai } from '../../data/maskapai';
+import { Maskapai, maskapaiData } from '../../data/maskapai';
 import { Hotel, Layanan } from '../../types';
 
 import { PaketMasterWizard } from './PaketMasterWizard';
@@ -133,6 +133,7 @@ export const PaketMasterView: React.FC = () => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Maskapai));
       setMaskapaiList(data);
     }, (error) => {
+      setMaskapaiList(prev => prev.length === 0 ? maskapaiData : prev);
       handleFirestoreError(error, OperationType.GET, 'maskapai');
     });
 

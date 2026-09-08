@@ -16,24 +16,41 @@ export const useMaskapai = () => {
         id: doc.id
       })) as Maskapai[];
       
-      // Filter out expired flights (tanggalKepulangan < today or stale for > 3 days)
+      // Filter out expired flights (departure/return past, 0 seats, or stale for >= 3 days)
       const today = new Date().toISOString().split('T')[0];
+      const now = new Date().getTime();
+
       const activeFlights = data.filter(flight => {
-        const isPast = flight.tanggalKepulangan < today;
+        const isPast = Boolean(
+          (flight.tanggalKeberangkatan && flight.tanggalKeberangkatan < today) ||
+          (flight.tanggalKepulangan && flight.tanggalKepulangan < today)
+        );
         if (isPast) return false;
 
+        // Filter out empty seats
+        if (flight.availableSeats !== undefined && flight.availableSeats <= 0) {
+          return false;
+        }
+
+        // Filter out items without update or not updated for 3+ days
         if (flight.updatedAt) {
           try {
             const updatedDate = new Date(flight.updatedAt);
             if (!isNaN(updatedDate.getTime())) {
-              const diffTime = Math.abs(new Date().getTime() - updatedDate.getTime());
+              const diffTime = now - updatedDate.getTime();
               const diffDays = diffTime / (1000 * 60 * 60 * 24);
-              if (diffDays > 3) return false; // Filter out stale flights (>3 days)
+              if (diffDays >= 3) return false; // Expired: >= 3 days without vendor update
+            } else {
+              return false;
             }
           } catch (e) {
             console.error(e);
+            return false;
           }
+        } else {
+          return false; // Belum pernah diupdate / stale
         }
+
         return true;
       });
       
@@ -65,7 +82,8 @@ export const useMaskapai = () => {
       }
 
       await updateDoc(maskapaiRef, {
-        availableSeats: target.availableSeats - count
+        availableSeats: target.availableSeats - count,
+        updatedAt: new Date().toISOString()
       });
       return true;
     } catch (err) {

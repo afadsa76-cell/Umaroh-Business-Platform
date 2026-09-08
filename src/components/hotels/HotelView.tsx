@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { hotels, Hotel, newRowaHotels, newAlharmainHotels, newDiarAlManasikHotels, newMaysanIntGroupHotels, newEmaarAlDiyafaHotels, defaultHotels, allLocalHotels } from '../../data/hotels';
+import { hotels, Hotel, newRowaHotels, newAlharmainHotels, newDiarAlManasikHotels, newMaysanIntGroupHotels, newEmaarAlDiyafaHotels, newWahatInternationalHotels, defaultHotels, allLocalHotels } from '../../data/hotels';
 import { HotelCard } from './HotelCard';
 import { FilterBar } from '../common/FilterBar';
 import { HotelDetailModal } from './HotelDetailModal';
@@ -22,6 +22,7 @@ const MASTER_PERIODS = [
 
 const newMaysanHotels: Hotel[] = newMaysanIntGroupHotels;
 const newEmaarHotels: Hotel[] = newEmaarAlDiyafaHotels;
+const newWahatHotels: Hotel[] = newWahatInternationalHotels;
 const newKonozHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Konoz');
 const newAreejTabahHotels: Hotel[] = defaultHotels.filter(h => h.vendor === 'Areej Tabah');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
@@ -541,7 +542,8 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
             matchingLocal.vendor === 'Emaar Al Diyafa' ||
             matchingLocal.vendor === 'Konoz' ||
             matchingLocal.vendor === 'Areej Tabah' ||
-            matchingLocal.vendor === 'Diar Al Manasik'
+            matchingLocal.vendor === 'Diar Al Manasik' ||
+            matchingLocal.vendor === 'Wahat International'
           )) {
             return matchingLocal;
           }
@@ -876,6 +878,23 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
           await batch.commit();
           console.log('Automated silent sync for Diar Al Manasik completed!');
         }
+
+        const qWahat = query(collection(db, 'master_hotels'), where('vendor', '==', 'Wahat International'));
+        const wahatSnapshot = await getDocs(qWahat);
+        if (wahatSnapshot.size < newWahatHotels.length) {
+          console.log('Automated silent sync: Wahat International hotels missing in Firestore database. Populating...');
+          const batch = writeBatch(db);
+          newWahatHotels.forEach((hotel) => {
+            const itemRef = doc(db, 'master_hotels', hotel.id);
+            const payload = {
+              ...hotel,
+              updatedAt: new Date().toISOString()
+            };
+            batch.set(itemRef, payload, { merge: true });
+          });
+          await batch.commit();
+          console.log('Automated silent sync for Wahat International completed!');
+        }
       } catch (e) {
         console.warn('Silent sync checks failed. This is expected if the current user is signed out or non-operational user:', e);
       }
@@ -892,68 +911,75 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
 
     setSyncStatus('loading');
     try {
-      const batch = writeBatch(db);
-      newMaysanHotels.forEach((hotel) => {
-        const itemRef = doc(db, 'master_hotels', hotel.id);
-        const payload = {
-          ...hotel,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, payload, { merge: true });
+      const allToSync: Hotel[] = [
+        ...newMaysanHotels,
+        ...newRowaHotels,
+        ...newAlharmainHotels,
+        ...newEmaarHotels,
+        ...newKonozHotels,
+        ...newAreejTabahHotels,
+        ...newDiarAlManasikHotels,
+        ...newWahatHotels,
+      ];
+
+      // Commit in chunks of 350 to stay well under Firestore's 500-write limit
+      const CHUNK_SIZE = 350;
+      for (let i = 0; i < allToSync.length; i += CHUNK_SIZE) {
+        const chunk = allToSync.slice(i, i + CHUNK_SIZE);
+        const batch = writeBatch(db);
+        chunk.forEach((hotel) => {
+          const itemRef = doc(db, 'master_hotels', hotel.id);
+          const payload = {
+            ...hotel,
+            updatedAt: new Date().toISOString()
+          };
+          batch.set(itemRef, payload, { merge: true });
+        });
+        await batch.commit();
+      }
+
+      // Update local state and cache immediately
+      setLocalHotels(prev => {
+        const map = new Map<string, Hotel>();
+        prev.forEach(h => map.set(h.id, h));
+        allToSync.forEach(h => map.set(h.id, h));
+        const merged = Array.from(map.values());
+        try {
+          localStorage.setItem('umaroh_db_hotels', JSON.stringify(merged));
+        } catch {
+          // ignore storage quota error
+        }
+        return merged;
       });
-      newRowaHotels.forEach((hotel) => {
-        const itemRef = doc(db, 'master_hotels', hotel.id);
-        const payload = {
-          ...hotel,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, payload, { merge: true });
-      });
-      newAlharmainHotels.forEach((hotel) => {
-        const itemRef = doc(db, 'master_hotels', hotel.id);
-        const payload = {
-          ...hotel,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, payload, { merge: true });
-      });
-      newEmaarHotels.forEach((hotel) => {
-        const itemRef = doc(db, 'master_hotels', hotel.id);
-        const payload = {
-          ...hotel,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, payload, { merge: true });
-      });
-      newKonozHotels.forEach((hotel) => {
-        const itemRef = doc(db, 'master_hotels', hotel.id);
-        const payload = {
-          ...hotel,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, payload, { merge: true });
-      });
-      newAreejTabahHotels.forEach((hotel) => {
-        const itemRef = doc(db, 'master_hotels', hotel.id);
-        const payload = {
-          ...hotel,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, payload, { merge: true });
-      });
-      newDiarAlManasikHotels.forEach((hotel) => {
-        const itemRef = doc(db, 'master_hotels', hotel.id);
-        const payload = {
-          ...hotel,
-          updatedAt: new Date().toISOString()
-        };
-        batch.set(itemRef, payload, { merge: true });
-      });
-      await batch.commit();
+
       setSyncStatus('synced');
       setTimeout(() => setSyncStatus('idle'), 3000);
     } catch (err) {
       console.error('Error manual syncing hotels to Firestore:', err);
+      // Fallback: update local state even if Firestore quota exceeded
+      const allToSync: Hotel[] = [
+        ...newMaysanHotels,
+        ...newRowaHotels,
+        ...newAlharmainHotels,
+        ...newEmaarHotels,
+        ...newKonozHotels,
+        ...newAreejTabahHotels,
+        ...newDiarAlManasikHotels,
+        ...newWahatHotels,
+      ];
+      setLocalHotels(prev => {
+        const map = new Map<string, Hotel>();
+        prev.forEach(h => map.set(h.id, h));
+        allToSync.forEach(h => map.set(h.id, h));
+        const merged = Array.from(map.values());
+        try {
+          localStorage.setItem('umaroh_db_hotels', JSON.stringify(merged));
+        } catch {
+          // ignore
+        }
+        return merged;
+      });
+
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), 3000);
     }
@@ -1291,7 +1317,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
                     value={formVendor}
                     onChange={(e) => setFormVendor(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    placeholder="Contoh: TFA, ROWA, Maysan"
+                    placeholder="Contoh: TFA, ROWA, Maysan, Wahat"
                     required
                   />
                 </div>

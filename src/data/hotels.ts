@@ -5,6 +5,7 @@ import newAlharmainHotelsJson from './newAlharmainHotels.json';
 import newDiarAlManasikHotelsJson from './newDiarAlManasikHotels.json';
 import newMaysanIntGroupHotelsJson from './newMaysanIntGroupHotels.json';
 import newEmaarAlDiyafaHotelsJson from './newEmaarAlDiyafaHotels.json';
+import newWahatInternationalHotelsJson from './newWahatInternationalHotels.json';
 
 export type RoomType = 'Single' | 'Double' | 'Triple' | 'Quad' | 'Quint' | 'Jr Suite (4pax)' | 'Jr Suite (2pax)' | 'Family Suite (4pax)' | '3 Bed Suite (6pax)' | 'Two Bedroom (10 Pax)' | 'Four Bedroom (15 Pax)';
 
@@ -36,6 +37,7 @@ export const newAlharmainHotels: Hotel[] = newAlharmainHotelsJson as Hotel[];
 export const newDiarAlManasikHotels: Hotel[] = newDiarAlManasikHotelsJson as Hotel[];
 export const newMaysanIntGroupHotels: Hotel[] = newMaysanIntGroupHotelsJson as Hotel[];
 export const newEmaarAlDiyafaHotels: Hotel[] = newEmaarAlDiyafaHotelsJson as Hotel[];
+export const newWahatInternationalHotels: Hotel[] = newWahatInternationalHotelsJson as Hotel[];
 
 const mergedLocalHotelsMap = new Map<string, Hotel>();
 defaultHotels.forEach(h => mergedLocalHotelsMap.set(h.id, h));
@@ -45,6 +47,7 @@ newAlharmainHotels.forEach(h => mergedLocalHotelsMap.set(h.id, h));
 newDiarAlManasikHotels.forEach(h => mergedLocalHotelsMap.set(h.id, h));
 newMaysanIntGroupHotels.forEach(h => mergedLocalHotelsMap.set(h.id, h));
 newEmaarAlDiyafaHotels.forEach(h => mergedLocalHotelsMap.set(h.id, h));
+newWahatInternationalHotels.forEach(h => mergedLocalHotelsMap.set(h.id, h));
 
 export const allLocalHotels: Hotel[] = Array.from(mergedLocalHotelsMap.values());
 

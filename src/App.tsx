@@ -39,7 +39,7 @@ import { HotelView } from './components/hotels/HotelView';
 import { DashboardVendor } from './components/vendor/DashboardVendor';
 import { TaskManagementView } from './components/operations/TaskManagementView';
 import { logoBase64 } from './utils/logoBase64';
-import { LogOut, User, Settings, Users, Sliders } from 'lucide-react';
+import { LogOut, User, Settings, Users, Sliders, AlertTriangle, ExternalLink, X } from 'lucide-react';
 import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType, collection, where, query, getDocs } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { JamaahSession } from './types';
@@ -73,16 +73,23 @@ function App() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [isOffline, setIsOffline] = useState(!navigator.onLine || (typeof window !== 'undefined' && (!!(window as any).firestoreOfflineDetected || !!(window as any).firestoreQuotaExhausted)));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [isQuotaExhausted, setIsQuotaExhausted] = useState(typeof window !== 'undefined' && !!(window as any).firestoreQuotaExhausted);
+  const [showQuotaBanner, setShowQuotaBanner] = useState(true);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
     const handleFirestoreOffline = () => setIsOffline(true);
+    const handleFirestoreQuota = () => {
+      setIsQuotaExhausted(true);
+      setIsOffline(true);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     window.addEventListener('firestore-offline-detected', handleFirestoreOffline);
-    window.addEventListener('firestore-quota-exceeded', handleFirestoreOffline);
+    window.addEventListener('firestore-quota-exceeded', handleFirestoreQuota);
 
     const handleHotelsUpdated = () => {
       setHotelsUpdateTick(prev => prev + 1);
@@ -327,20 +334,31 @@ function App() {
               error.message.includes('offline') || 
               error.message.includes('Could not reach Cloud Firestore backend') ||
               error.message.includes('timeout') ||
-              error.message.includes('unavailable')
+              error.message.includes('unavailable') ||
+              error.message.includes('Quota') ||
+              error.message.includes('resource-exhausted') ||
+              error.message.includes('quota')
             );
             if (isErrorOffline) {
               setIsOffline(true);
+              if (error instanceof Error && (error.message.includes('Quota') || error.message.includes('resource-exhausted') || error.message.includes('quota'))) {
+                setIsQuotaExhausted(true);
+              }
               // Fallback default role for offline mode to prevent blank screen
               const cachedRole = localStorage.getItem(`umaroh_cached_role_${user.uid}`) as Role || 'jamaah';
               const cachedSubRole = localStorage.getItem(`umaroh_cached_subrole_${user.uid}`) || null;
               setUserRole(cachedRole);
               setSubRole(cachedSubRole);
+              setIsLoggedIn(true);
               setActiveTab('dashboard');
-              console.warn("Firestore client is offline. App is operating in offline mode with cached role:", cachedRole);
+              console.warn("Firestore client is offline / quota reached. App is operating in local cache fallback mode with role:", cachedRole);
             } else if (error instanceof Error && !error.message.includes('permission-denied')) {
                // We don't throw on permission-denied here because it might happen before user registers
-               handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+               try {
+                 handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+               } catch (err) {
+                 console.warn("Caught Firestore role load error:", err);
+               }
             }
           }
         }
@@ -703,6 +721,40 @@ function App() {
 
       {/* Main Content */}
       <main className={`flex-grow bg-gray-50 pb-24 lg:pb-0 ${isPortalView ? '' : 'lg:pl-72'}`}>
+        {isQuotaExhausted && showQuotaBanner && (
+          <div className="m-4 p-4 rounded-xl bg-amber-50 border border-amber-200 shadow-sm text-amber-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fadeIn">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg text-amber-700 mt-0.5 md:mt-0 flex-shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="text-xs md:text-sm">
+                <p className="font-bold text-amber-950 flex items-center gap-2">
+                  Firestore Free Tier Daily Quota Tercapai (Resource Exhausted)
+                </p>
+                <p className="text-amber-800 mt-0.5">
+                  Batas pembacaan harian database gratis telah terpenuhi untuk hari ini dan akan di-reset otomatis besok. Aplikasi tetap dapat digunakan dengan data lokal / fallback. Anda juga dapat melakukan upgrade paket di Firebase Console atau menghubungkan database kustom.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end md:self-auto flex-shrink-0">
+              <a
+                href="https://console.firebase.google.com/project/gen-lang-client-0546120404/firestore/databases/ai-studio-7b9baede-5431-4818-8e1a-6da0a21316f9/data?openUpgradeDialog=true"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+              >
+                Upgrade Plan <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <button
+                onClick={() => setShowQuotaBanner(false)}
+                className="p-1.5 hover:bg-amber-100 rounded-lg text-amber-600 hover:text-amber-900 transition-colors"
+                title="Tutup Notifikasi"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
         <ErrorBoundary>
           {renderContent()}
         </ErrorBoundary>

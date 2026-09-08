@@ -1,0 +1,364 @@
+[
+  {
+    "id": "wahat-ajyad-wahat-international",
+    "name": "Wahat Ajyad",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 15/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 400 },
+          { "roomType": "Triple", "price": 440 },
+          { "roomType": "Quad", "price": 480 }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 430 },
+          { "roomType": "Triple", "price": 470 },
+          { "roomType": "Quad", "price": 510 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 25/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 500 },
+          { "roomType": "Triple", "price": 540 },
+          { "roomType": "Quad", "price": 580 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 01/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 540 },
+          { "roomType": "Triple", "price": 580 },
+          { "roomType": "Quad", "price": 620 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nada-ajyad-wahat-international",
+    "name": "Nada Ajyad",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "15/08/2026 TO 15/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 400 },
+          { "roomType": "Triple", "price": 440 },
+          { "roomType": "Quad", "price": 480 }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 430 },
+          { "roomType": "Triple", "price": 470 },
+          { "roomType": "Quad", "price": 510 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 25/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 500 },
+          { "roomType": "Triple", "price": 540 },
+          { "roomType": "Quad", "price": 580 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 01/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 540 },
+          { "roomType": "Triple", "price": 580 },
+          { "roomType": "Quad", "price": 620 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alzayady-ajyad-wahat-international",
+    "name": "Alzayady Ajyad",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 15/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 350 },
+          { "roomType": "Triple", "price": 390 },
+          { "roomType": "Quad", "price": 430 }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 370 },
+          { "roomType": "Triple", "price": 410 },
+          { "roomType": "Quad", "price": 450 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 01/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 440 },
+          { "roomType": "Triple", "price": 480 },
+          { "roomType": "Quad", "price": 520 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "almassah-grand-wahat-international",
+    "name": "Almassah Grand",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 15/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 450 },
+          { "roomType": "Triple", "price": 500 },
+          { "roomType": "Quad", "price": 550 }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 530 },
+          { "roomType": "Triple", "price": 580 },
+          { "roomType": "Quad", "price": 630 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 25/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 650 },
+          { "roomType": "Triple", "price": 700 },
+          { "roomType": "Quad", "price": 750 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 10/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 700 },
+          { "roomType": "Triple", "price": 750 },
+          { "roomType": "Quad", "price": 800 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "prestige-ajyad-wahat-international",
+    "name": "Prestige Ajyad",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 15/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 600 },
+          { "roomType": "Triple", "price": 700 },
+          { "roomType": "Quad", "price": 800 }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 650 },
+          { "roomType": "Triple", "price": 750 },
+          { "roomType": "Quad", "price": 850 }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 700 },
+          { "roomType": "Triple", "price": 800 },
+          { "roomType": "Quad", "price": 900 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 05/01/2027",
+        "prices": [
+          { "roomType": "Double", "price": 1100 },
+          { "roomType": "Triple", "price": 1200 },
+          { "roomType": "Quad", "price": 1300 }
+        ]
+      },
+      {
+        "range": "05/01/2027 TO 05/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 750 },
+          { "roomType": "Triple", "price": 850 },
+          { "roomType": "Quad", "price": 950 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "maysan-almaqam-wahat-international",
+    "name": "Maysan Almaqam",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 4,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 15/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 420 },
+          { "roomType": "Triple", "price": 470 },
+          { "roomType": "Quad", "price": 520 }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 480 },
+          { "roomType": "Triple", "price": 530 },
+          { "roomType": "Quad", "price": 580 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 01/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 630 },
+          { "roomType": "Triple", "price": 680 },
+          { "roomType": "Quad", "price": 730 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sawaeed-alkhair-wahat-international",
+    "name": "Sawaeed Alkhair",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 15/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 400 },
+          { "roomType": "Triple", "price": 445 },
+          { "roomType": "Quad", "price": 490 }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 470 },
+          { "roomType": "Triple", "price": 515 },
+          { "roomType": "Quad", "price": 560 }
+        ]
+      },
+      {
+        "range": "15/10/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 490 },
+          { "roomType": "Triple", "price": 535 },
+          { "roomType": "Quad", "price": 580 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 06/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 570 },
+          { "roomType": "Triple", "price": 615 },
+          { "roomType": "Quad", "price": 660 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snood-ajyad-wahat-international",
+    "name": "Snood Ajyad",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 15/09/2026",
+        "prices": [
+          { "roomType": "Double", "price": 410 },
+          { "roomType": "Triple", "price": 455 },
+          { "roomType": "Quad", "price": 500 }
+        ]
+      },
+      {
+        "range": "15/09/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 470 },
+          { "roomType": "Triple", "price": 515 },
+          { "roomType": "Quad", "price": 560 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 25/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 600 },
+          { "roomType": "Triple", "price": 645 },
+          { "roomType": "Quad", "price": 690 }
+        ]
+      },
+      {
+        "range": "25/12/2026 TO 05/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 680 },
+          { "roomType": "Triple", "price": 725 },
+          { "roomType": "Quad", "price": 770 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "jada-ajyad-wahat-international",
+    "name": "Jada Ajyad",
+    "city": "Makkah",
+    "vendor": "Wahat International",
+    "mealPlan": "FB",
+    "stars": 3,
+    "seasons": [
+      {
+        "range": "01/09/2026 TO 01/10/2026",
+        "prices": [
+          { "roomType": "Double", "price": 310 },
+          { "roomType": "Triple", "price": 350 },
+          { "roomType": "Quad", "price": 390 }
+        ]
+      },
+      {
+        "range": "01/10/2026 TO 15/12/2026",
+        "prices": [
+          { "roomType": "Double", "price": 340 },
+          { "roomType": "Triple", "price": 380 },
+          { "roomType": "Quad", "price": 420 }
+        ]
+      },
+      {
+        "range": "15/12/2026 TO 01/02/2027",
+        "prices": [
+          { "roomType": "Double", "price": 420 },
+          { "roomType": "Triple", "price": 460 },
+          { "roomType": "Quad", "price": 500 }
+        ]
+      }
+    ]
+  }
+]

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download, PlusSquare, FileText, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download, PlusSquare, FileText, Check, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { Maskapai, maskapaiData as initialData } from '../../data/maskapai';
 import * as XLSX from 'xlsx';
-import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, query, where } from '../../firebase';
+import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, query, where, setDoc } from '../../firebase';
 
 const extractAirportCode = (city?: string) => {
   if (!city) return "";
@@ -283,6 +283,120 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const [itemToDelete, setItemToDelete] = useState<Maskapai | null>(null);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
+  // Auto-Hapus toggle & execution refs
+  const hasAttemptedInitialSeed = useRef(false);
+  const autoCleanupExecuted = useRef(false);
+  const [autoCleanupActive, setAutoCleanupActive] = useState<boolean>(() => {
+    try {
+      const val = localStorage.getItem('maskapai_auto_cleanup_active');
+      return val !== null ? val === 'true' : true; // Default aktif
+    } catch {
+      return true;
+    }
+  });
+
+  // Persistent registry of IDs that have been deleted (prevents resurrecting on Sync Data Baru)
+  const [deletedRegistry, setDeletedRegistry] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('maskapai_deleted_ids_registry');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return new Set<string>();
+  });
+  const deletedRegistryRef = useRef<Set<string>>(deletedRegistry);
+  useEffect(() => {
+    deletedRegistryRef.current = deletedRegistry;
+  }, [deletedRegistry]);
+
+  // Sync deletedRegistry with Firestore umaroh_master_data
+  useEffect(() => {
+    try {
+      const unsub = onSnapshot(doc(db, 'umaroh_master_data', 'maskapai_deleted_registry'), (snap) => {
+        if (snap.exists()) {
+          const remoteIds = snap.data()?.deletedIds || [];
+          if (Array.isArray(remoteIds) && remoteIds.length > 0) {
+            setDeletedRegistry(prev => {
+              const next = new Set([...prev, ...remoteIds]);
+              try {
+                localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(Array.from(next)));
+              } catch (e) {
+                console.error(e);
+              }
+              return next;
+            });
+          }
+        }
+      }, (err) => {
+        console.warn('Gagal membaca deleted registry dari Firestore:', err);
+      });
+      return () => unsub();
+    } catch (err) {
+      console.warn('Listener deleted registry error:', err);
+    }
+  }, []);
+
+  const recordDeletedIds = async (idsToAdd: string[]) => {
+    if (!idsToAdd || idsToAdd.length === 0) return;
+    const updated = new Set([...deletedRegistryRef.current, ...idsToAdd]);
+    setDeletedRegistry(updated);
+    deletedRegistryRef.current = updated;
+    const updatedArr = Array.from(updated);
+    try {
+      localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(updatedArr));
+    } catch (e) {
+      console.error(e);
+    }
+    try {
+      await setDoc(doc(db, 'umaroh_master_data', 'maskapai_deleted_registry'), {
+        deletedIds: updatedArr,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Gagal menyimpan deleted registry ke Firestore:", e);
+    }
+  };
+
+  const handleResetDeletedRegistry = async () => {
+    if (!window.confirm("Apakah Anda yakin ingin me-reset riwayat rute yang pernah dihapus? Setelah di-reset, rute tersebut dapat disinkronkan kembali jika Anda mengklik tombol Sync Data Baru.")) {
+      return;
+    }
+    const emptySet = new Set<string>();
+    setDeletedRegistry(emptySet);
+    deletedRegistryRef.current = emptySet;
+    try {
+      localStorage.removeItem('maskapai_deleted_ids_registry');
+      await setDoc(doc(db, 'umaroh_master_data', 'maskapai_deleted_registry'), {
+        deletedIds: [],
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      showToastMsg("Riwayat rute terhapus berhasil di-reset.", "success");
+    } catch (e) {
+      console.error(e);
+      showToastMsg("Gagal me-reset riwayat terhapus.", "error");
+    }
+  };
+
+  const toggleAutoCleanup = () => {
+    const next = !autoCleanupActive;
+    setAutoCleanupActive(next);
+    try {
+      localStorage.setItem('maskapai_auto_cleanup_active', String(next));
+    } catch (e) {
+      console.error(e);
+    }
+    showToastMsg(
+      next 
+        ? "Auto-Hapus Database DIAKTIFKAN: Jadwal kedaluwarsa & >3 hari no update otomatis dibersihkan." 
+        : "Auto-Hapus Database DINONAKTIFKAN: Mode manual aktif.",
+      next ? "success" : "info"
+    );
+  };
+
   // Batch selection states
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false);
@@ -325,28 +439,35 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       setData(maskapaiList);
       setLoading(false);
 
-      // Auto-sync missing initial data items in background (only in admin/full mode)
-      if (!isVendorMode) {
-        const existingIds = new Set(maskapaiList.map(item => item.id));
-        const missingItems = initialData.filter(item => !existingIds.has(item.id));
-        if (missingItems.length > 0) {
-          console.log(`Auto-syncing ${missingItems.length} new maskapai records...`);
-          // Chunk missingItems to respect Firestore limit of 500 writes per batch
+      // Inisialisasi awal HANYA jika koleksi database benar-benar kosong pertama kali.
+      // DILARANG re-sync item yang sudah dihapus oleh user/sistem (mencegah bug 'Auto-Resurrection').
+      if (!isVendorMode && maskapaiList.length === 0 && !hasAttemptedInitialSeed.current) {
+        hasAttemptedInitialSeed.current = true;
+        const today = new Date().toISOString().split('T')[0];
+        const validInitial = initialData.filter(item => {
+          if (deletedRegistryRef.current.has(item.id)) return false;
+          if (item.tanggalKeberangkatan && item.tanggalKeberangkatan < today) return false;
+          if (item.availableSeats !== undefined && item.availableSeats <= 0) return false;
+          return true;
+        });
+
+        if (validInitial.length > 0) {
+          console.log(`Database maskapai kosong, melakukan inisialisasi ${validInitial.length} rute aktif default...`);
           const chunkSize = 400;
-          for (let i = 0; i < missingItems.length; i += chunkSize) {
-            const chunk = missingItems.slice(i, i + chunkSize);
+          for (let i = 0; i < validInitial.length; i += chunkSize) {
+            const chunk = validInitial.slice(i, i + chunkSize);
             const batch = writeBatch(db);
             chunk.forEach((item) => {
               const itemRef = doc(db, 'maskapai', item.id);
               const seedPayload = {
                 ...item,
-                updatedAt: new Date().toISOString()
+                updatedAt: item.updatedAt || new Date().toISOString()
               };
               batch.set(itemRef, seedPayload, { merge: true });
             });
             batch.commit()
-              .then(() => console.log('Auto-sync batch completed.'))
-              .catch(err => console.error('Auto-sync batch failed:', err));
+              .then(() => console.log('Inisialisasi awal maskapai selesai.'))
+              .catch(err => console.error('Inisialisasi awal maskapai gagal:', err));
           }
         }
       }
@@ -458,10 +579,38 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
 
     setMigrationStatus('migrating');
     try {
-      // Chunk initialData to respect Firestore limit of 500 writes per batch
+      const existingIds = new Set(data.map(item => item.id));
+      const today = new Date().toISOString().split('T')[0];
+      const deletedSet = deletedRegistryRef.current;
+
+      // Saring hanya data yang BENAR-BENAR BARU:
+      // 1. Belum ada di database Firestore saat ini
+      // 2. Belum pernah dihapus oleh user / sistem (tidak ada di deletedRegistry)
+      // 3. Bukan jadwal yang sudah kedaluwarsa / lampau
+      // 4. Memiliki kuota kursi > 0
+      const genuineNewItems = initialData.filter(item => {
+        if (existingIds.has(item.id)) return false;
+        if (deletedSet.has(item.id)) return false;
+        if (item.tanggalKeberangkatan && item.tanggalKeberangkatan < today) return false;
+        if (item.tanggalKepulangan && item.tanggalKepulangan < today) return false;
+        if (item.availableSeats !== undefined && item.availableSeats <= 0) return false;
+        return true;
+      });
+
+      if (genuineNewItems.length === 0) {
+        setMigrationStatus('idle');
+        const countDeleted = initialData.filter(item => deletedSet.has(item.id)).length;
+        showToastMsg(
+          `Tidak ada rute baru untuk disinkronkan. ${countDeleted > 0 ? `(${countDeleted} rute yang sudah pernah dihapus dicegah muncul kembali).` : 'Semua rute sudah mutakhir.'}`,
+          'info'
+        );
+        return;
+      }
+
+      // Chunk genuineNewItems to respect Firestore limit of 500 writes per batch
       const chunkSize = 400;
-      for (let i = 0; i < initialData.length; i += chunkSize) {
-        const chunk = initialData.slice(i, i + chunkSize);
+      for (let i = 0; i < genuineNewItems.length; i += chunkSize) {
+        const chunk = genuineNewItems.slice(i, i + chunkSize);
         const batch = writeBatch(db);
         chunk.forEach((item) => {
           const itemRef = doc(db, 'maskapai', item.id);
@@ -473,7 +622,9 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         });
         await batch.commit();
       }
+
       setMigrationStatus('success');
+      showToastMsg(`Berhasil menambahkan ${genuineNewItems.length} rute baru! (Rute yang sudah dihapus tetap diabaikan)`, 'success');
       setTimeout(() => setMigrationStatus('idle'), 3000);
     } catch (error) {
       console.error('Error syncing data:', error);
@@ -530,7 +681,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
 
   const getUpdateStatusText = (item: Maskapai) => {
     if (!item.updatedAt) {
-      return { text: 'Belum pernah diupdate', days: 999, isStale: true };
+      return { text: 'Belum diupdate', days: 999, isStale: true };
     }
     try {
       const updatedDate = new Date(item.updatedAt);
@@ -551,7 +702,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       return { 
         text: `${roundedDays} hari yang lalu`, 
         days: diffDays, 
-        isStale: roundedDays > 3 
+        isStale: diffDays >= 3 // EXPIRED / MATI: jika >= 3 hari tanpa update dari vendor
       };
     } catch {
       return { text: 'Gagal parse', days: 999, isStale: true };
@@ -559,6 +710,35 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   };
 
   const todayStr = new Date().toISOString().split('T')[0];
+
+  // Helper terpusat untuk status operasional tiket
+  const checkFlightStatus = (item: Maskapai) => {
+    const isPast = Boolean(
+      (item.tanggalKeberangkatan && item.tanggalKeberangkatan < todayStr) ||
+      (item.tanggalKepulangan && item.tanggalKepulangan < todayStr)
+    );
+    const isSeatsEmpty = item.availableSeats !== undefined && item.availableSeats <= 0;
+    const staleInfo = getUpdateStatusText(item);
+    const isStale = staleInfo.isStale;
+    const isOutdated = isPast || isSeatsEmpty || isStale;
+    return { isPast, isSeatsEmpty, isStale, isOutdated, staleInfo };
+  };
+
+  // Eksekusi otomatis Database Optimization Engine saat terdeteksi data kedaluwarsa & mode aktif
+  useEffect(() => {
+    if (isVendorMode || loading || data.length === 0 || !autoCleanupActive) return;
+    if (autoCleanupExecuted.current) return;
+
+    const outdated = data.filter(item => checkFlightStatus(item).isOutdated);
+    if (outdated.length > 0) {
+      autoCleanupExecuted.current = true;
+      const timer = setTimeout(() => {
+        console.log(`[Auto-Hapus Engine] Menjalankan pembersihan otomatis untuk ${outdated.length} rute kedaluwarsa / mati...`);
+        executeCleanupDatabase(true);
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, data.length, autoCleanupActive, isVendorMode]);
 
   const filteredData = data.filter(item => {
     const matchesSearch =
@@ -571,15 +751,13 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     
     if (!matchesSearch) return false;
 
-    const staleInfo = getUpdateStatusText(item);
+    const status = checkFlightStatus(item);
 
     // Departure Date / Vendor Update Filter
     if (filterKeberangkatan === 'future') {
-      if (item.tanggalKeberangkatan < todayStr) return false;
-      if (staleInfo.isStale) return false;
+      if (status.isOutdated) return false;
     } else if (filterKeberangkatan === 'past') {
-      const isPast = item.tanggalKeberangkatan < todayStr;
-      if (!isPast && !staleInfo.isStale) return false;
+      if (!status.isOutdated) return false;
     }
 
     // Minimum Seats Filter
@@ -627,42 +805,35 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   };
 
   // Database maintenance counters
-  const expiredCount = data.filter(item => item.tanggalKeberangkatan < todayStr).length;
-  const zeroSeatCount = data.filter(item => item.availableSeats <= 0).length;
-  const staleCount = data.filter(item => getUpdateStatusText(item).isStale).length;
-  const outdatedCount = data.filter(item => {
-    const isPast = item.tanggalKeberangkatan < todayStr;
-    const isSeatsEmpty = item.availableSeats <= 0;
-    const isStaleItem = getUpdateStatusText(item).isStale;
-    return isPast || isSeatsEmpty || isStaleItem;
-  }).length;
+  const expiredCount = data.filter(item => checkFlightStatus(item).isPast).length;
+  const zeroSeatCount = data.filter(item => checkFlightStatus(item).isSeatsEmpty).length;
+  const staleCount = data.filter(item => checkFlightStatus(item).isStale).length;
+  const outdatedCount = data.filter(item => checkFlightStatus(item).isOutdated).length;
 
   const handleCleanupDatabase = async () => {
-    const outdated = data.filter(item => {
-      const isPast = item.tanggalKeberangkatan < todayStr;
-      const isSeatsEmpty = item.availableSeats <= 0;
-      const isStaleItem = getUpdateStatusText(item).isStale;
-      return isPast || isSeatsEmpty || isStaleItem;
-    });
+    const outdated = data.filter(item => checkFlightStatus(item).isOutdated);
     if (outdated.length === 0) {
-      showToastMsg("Tidak ada jadwal kedaluwarsa, habis bangku, atau vendor tidak aktif (>3 hari) yang perlu dibersihkan saat ini.", "info");
+      showToastMsg("Database sudah bersih & optimal. Tidak ada rute kedaluwarsa, kursi habis, atau tanpa update (>3 hari).", "info");
       return;
     }
     setShowCleanupModal(true);
   };
 
-  const executeCleanupDatabase = async () => {
-    const outdated = data.filter(item => {
-      const isPast = item.tanggalKeberangkatan < todayStr;
-      const isSeatsEmpty = item.availableSeats <= 0;
-      const isStaleItem = getUpdateStatusText(item).isStale;
-      return isPast || isSeatsEmpty || isStaleItem;
-    });
+  const executeCleanupDatabase = async (silent = false) => {
+    const outdated = data.filter(item => checkFlightStatus(item).isOutdated);
 
     setShowCleanupModal(false);
+    if (outdated.length === 0) {
+      if (!silent) {
+        showToastMsg("Tidak ada jadwal yang perlu dibersihkan saat ini.", "info");
+      }
+      return;
+    }
+
     setIsCleaning(true);
     try {
       const batchLength = 100;
+      const idsToDelete = outdated.map(item => item.id);
       for (let i = 0; i < outdated.length; i += batchLength) {
         const batch = writeBatch(db);
         const chunk = outdated.slice(i, i + batchLength);
@@ -671,10 +842,17 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         });
         await batch.commit();
       }
-      showToastMsg(`Berhasil! ${outdated.length} data maskapai tidak aktif telah dihapus dari database.`, "success");
+      await recordDeletedIds(idsToDelete);
+      if (!silent) {
+        showToastMsg(`Berhasil! ${outdated.length} data maskapai tidak aktif telah dihapus permanen dari database.`, "success");
+      } else {
+        showToastMsg(`Auto-Hapus Engine: ${outdated.length} jadwal kedaluwarsa & mati (>3 hari) otomatis dibersihkan.`, "info");
+      }
     } catch (err) {
       console.error("Gagal melakukan pembersihan:", err);
-      showToastMsg("Gagal melakukan pembersihan database.", "error");
+      if (!silent) {
+        showToastMsg("Gagal melakukan pembersihan database.", "error");
+      }
     } finally {
       setIsCleaning(false);
     }
@@ -757,16 +935,38 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       {/* SYSTEM MAINTENANCE CONSOLE */}
       <div className="bg-slate-900 text-white rounded-2xl p-5 mb-6 border border-slate-800 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-md text-[10px] tracking-wider uppercase animate-pulse">OPTIMALISASI DB</span>
             <h3 className="text-sm font-black tracking-widest uppercase text-amber-400">Database Optimization Engine (Auto-Hapus)</h3>
+            <button
+              onClick={toggleAutoCleanup}
+              type="button"
+              className={`ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase flex items-center gap-1.5 transition-all cursor-pointer border ${
+                autoCleanupActive 
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/30' 
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-white'
+              }`}
+              title="Klik untuk mengaktifkan / menonaktifkan pembersihan otomatis"
+            >
+              <Zap className={`w-3 h-3 ${autoCleanupActive ? 'text-emerald-400 fill-emerald-400' : 'text-slate-500'}`} />
+              Auto-Hapus: {autoCleanupActive ? 'AKTIF (Otomatis)' : 'MANUAL'}
+            </button>
           </div>
           <p className="text-slate-300 text-xs leading-relaxed max-w-xl">
-            Sistem otomatis menganalisis jadwal lampau dan kursi habis untuk memperkecil beban database.
+            Sistem otomatis menganalisis jadwal lampau, kursi habis (0 seat), dan tiket vendor tidak diupdate &gt; 3 hari.
             Terdeteksi <span className="font-extrabold text-amber-400 underline">{outdatedCount} rute kedaluwarsa / mati</span> dari total <span className="font-extrabold text-white">{data.length} item</span> yang tersimpan.
+            {autoCleanupActive ? (
+              <span className="text-emerald-400 font-bold block mt-0.5">
+                ● Engine Aktif: Rute mati/kedaluwarsa otomatis dibersihkan secara berkala dari Firestore.
+              </span>
+            ) : (
+              <span className="text-slate-400 font-medium block mt-0.5">
+                ○ Mode Manual: Gunakan tombol bersihkan di samping untuk membersihkan data.
+              </span>
+            )}
           </p>
           
-          <div className="flex gap-4 mt-1 font-mono text-[10px] text-slate-400">
+          <div className="flex flex-wrap gap-4 mt-1 font-mono text-[10px] text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-rose-500 rounded-full"></span> 
               Berangkat Lampau: <strong className="text-rose-400 font-bold">{expiredCount}</strong>
@@ -779,6 +979,20 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
               <span className="w-2 h-2 bg-yellow-400 rounded-full"></span> 
               Sisa 0 Seats: <strong className="text-yellow-400 font-bold">{zeroSeatCount}</strong>
             </span>
+            {deletedRegistry.size > 0 && (
+              <span className="flex items-center gap-1.5 text-amber-300">
+                <span className="w-2 h-2 bg-amber-400 rounded-full"></span> 
+                Riwayat Terhapus: <strong className="text-amber-300 font-bold">{deletedRegistry.size} rute diblokir</strong>
+                <button
+                  type="button"
+                  onClick={handleResetDeletedRegistry}
+                  className="underline hover:text-white ml-1 text-[9px] cursor-pointer text-amber-200"
+                  title="Klik jika ingin mengizinkan sinkronisasi ulang untuk rute yang pernah dihapus"
+                >
+                  [Reset Blacklist]
+                </button>
+              </span>
+            )}
           </div>
         </div>
 
@@ -802,7 +1016,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
             }`}
           >
             <Trash2 className="w-4 h-4" />
-            {isCleaning ? 'Sedang Menghapus...' : `Bersihkan ${outdatedCount} Jadwal Expired`}
+            {isCleaning ? 'Sedang Menghapus...' : outdatedCount === 0 ? 'Database Optimal (0 Expired)' : `Bersihkan ${outdatedCount} Jadwal Expired`}
           </button>
         </div>
       </div>
@@ -1587,6 +1801,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   setItemToDelete(null);
                   try {
                     await deleteDoc(doc(db, 'maskapai', targetItem.id));
+                    await recordDeletedIds([targetItem.id]);
                     showToastMsg("Berhasil menghapus data maskapai", "success");
                   } catch (err) {
                     handleFirestoreError(err, OperationType.DELETE, `maskapai/${targetItem.id}`);
@@ -1640,6 +1855,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                       await batch.commit();
                     }
 
+                    await recordDeletedIds(selectedIds);
                     showToastMsg(`Berhasil menghapus ${selectedIds.length} data maskapai`, "success");
                     setSelectedIds([]);
                     setShowBatchDeleteModal(false);
@@ -1695,7 +1911,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                 Batal
               </button>
               <button
-                onClick={executeCleanupDatabase}
+                onClick={() => executeCleanupDatabase(false)}
                 className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white rounded-xl shadow-lg shadow-rose-950/45 transition-colors uppercase tracking-wider"
               >
                 Mulai Pembersihan Permanen

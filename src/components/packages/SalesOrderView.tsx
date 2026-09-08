@@ -14,14 +14,13 @@ import { umrahAirports } from '../../data/airports';
 import { FileSpreadsheet, Image as ImageIcon, FileText, Save } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AIPromptInput } from '../ai/AIPromptInput';
-import { Type } from '../../types';
+import { Type, Maskapai, PaketMaster } from '../../types';
 import jsPDF from 'jspdf';
 import { formatCurrency, formatPercent } from '../../utils/format';
 import { saveTransaction } from '../../data/transactions';
 import { Transaction } from '../../types/transaction';
 import { OfferingTemplate } from '../templates/OfferingTemplate';
-import { db, collection, addDoc, handleFirestoreError, OperationType, onSnapshot } from '../../firebase';
-import { PaketMaster } from '../../types';
+import { db, collection, addDoc, handleFirestoreError, OperationType, onSnapshot, doc } from '../../firebase';
 import { generateTimelineEstimasi } from '../tracker/utils';
 import { Capacitor } from '@capacitor/core';
 import { captureToDataUrl } from '../../utils/exportUtils';
@@ -247,6 +246,16 @@ export const SalesOrderView: React.FC = () => {
 
   const [paketMasterList, setPaketMasterList] = useState<PaketMaster[]>([]);
   const [selectedPaketMasterId, setSelectedPaketMasterId] = useState<string>('');
+  const [dbMaskapai, setDbMaskapai] = useState<Maskapai[]>([]);
+  const [deletedMaskapaiIds, setDeletedMaskapaiIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('maskapai_deleted_ids_registry');
+      if (saved) return new Set(JSON.parse(saved));
+    } catch (e) {
+      console.warn('Could not parse local deleted registry', e);
+    }
+    return new Set<string>();
+  });
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'paket_master'), (snapshot) => {
@@ -254,7 +263,31 @@ export const SalesOrderView: React.FC = () => {
     }, (error) => {
       console.error("Error loading paket_master", error);
     });
-    return () => unsub();
+
+    const unsubMaskapai = onSnapshot(collection(db, 'maskapai'), (snapshot) => {
+      if (!snapshot.empty) {
+        setDbMaskapai(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    }, (error) => {
+      console.warn("Error loading maskapai in sales order", error);
+    });
+
+    const unsubDeleted = onSnapshot(doc(db, 'umaroh_master_data', 'maskapai_deleted_registry'), (snapshot) => {
+      if (snapshot.exists()) {
+        const remoteIds = snapshot.data()?.deletedIds || [];
+        if (Array.isArray(remoteIds)) {
+          setDeletedMaskapaiIds(new Set(remoteIds));
+        }
+      }
+    }, (error) => {
+      console.warn("Error loading deleted registry in sales order", error);
+    });
+
+    return () => {
+      unsub();
+      unsubMaskapai();
+      unsubDeleted();
+    };
   }, []);
 
   const handleSelectPaketMaster = (paketId: string) => {
@@ -550,14 +583,19 @@ export const SalesOrderView: React.FC = () => {
   const availableMadinahHotels = hotels.filter(h => h.city === 'Madinah' && getQuadPrice(h, tglKeberangkatan) !== null);
   const availableMakkahHotels = hotels.filter(h => h.city === 'Makkah' && getQuadPrice(h, tglKeberangkatan) !== null);
 
-  const availableMaskapai = [...maskapaiData]
+  const liveMaskapaiSource = dbMaskapai.length > 0 ? dbMaskapai : maskapaiData;
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const availableMaskapai = [...liveMaskapaiSource]
     .filter(m => {
+      if (deletedMaskapaiIds.has(m.id)) return false;
+      if (m.tanggalKeberangkatan && m.tanggalKeberangkatan < todayStr) return false;
       const matchDays = programHari ? m.programDays.toString() === programHari : true;
       
       // Filter by Emberkasi
       const selectedAirport = umrahAirports.find(a => a.name === emberkasi);
       const airportCode = selectedAirport?.id;
-      const matchEmberkasi = airportCode ? m.originCityName.includes(`(${airportCode})`) : true;
+      const matchEmberkasi = airportCode ? (m.originCityName || '').includes(`(${airportCode})`) : true;
       
       return matchDays && matchEmberkasi;
     })
@@ -582,15 +620,15 @@ export const SalesOrderView: React.FC = () => {
     if (selectedMaskapai && !availableMaskapai.find(m => m.id === selectedMaskapai)) {
       setSelectedMaskapai('');
     }
-  }, [tglKeberangkatan, programHari]);
+  }, [tglKeberangkatan, programHari, availableMaskapai]);
 
   useEffect(() => {
-    const maskapai = maskapaiData.find(m => m.id === selectedMaskapai);
+    const maskapai = liveMaskapaiSource.find(m => m.id === selectedMaskapai);
     if (maskapai) {
       setMaskapaiHargaApk(maskapai.hargaJual);
       setMaskapaiHargaVendor(maskapai.hargaBeli);
     }
-  }, [selectedMaskapai]);
+  }, [selectedMaskapai, liveMaskapaiSource]);
 
   useEffect(() => {
     const tier = HANDLING_TIERS.find(h => jumlahPax >= h.minPax && jumlahPax <= h.maxPax) || HANDLING_TIERS[HANDLING_TIERS.length - 1];
@@ -688,7 +726,7 @@ export const SalesOrderView: React.FC = () => {
 
   const effectiveMaskapaiHargaApk = jenisPaket === 'Paket L.A.' ? 0 : maskapaiHargaApk;
   const effectiveMaskapaiHargaVendor = jenisPaket === 'Paket L.A.' ? 0 : maskapaiHargaVendor;
-  const maskapaiObj = maskapaiData.find(m => m.id === selectedMaskapai);
+  const maskapaiObj = liveMaskapaiSource.find(m => m.id === selectedMaskapai);
   const maskapai = calculateRow(effectiveMaskapaiHargaApk, effectiveMaskapaiHargaVendor, jamaahBayar, jamaahBeli);
   
   const wisataRow = calculateRow(hargaWisataApk, hargaWisataVendor, jamaahBayar, jamaahBeli);

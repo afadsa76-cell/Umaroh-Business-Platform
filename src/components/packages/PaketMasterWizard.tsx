@@ -42,6 +42,7 @@ import {
   Shirt,
   AlertCircle,
   Edit3,
+  CheckCircle2,
 } from "lucide-react";
 import {
   addDoc,
@@ -54,13 +55,12 @@ import {
   handleFirestoreError,
   OperationType,
   auth,
-  writeBatch,
 } from "../../firebase";
 import { sendNotification } from "../../services/notificationService";
 import { generateWALink, openWhatsApp } from "../../utils/whatsapp";
 import { hotels } from "../../data/hotels";
 import { equipmentData } from "../../data/equipment";
-import { maskapaiData, cleanMaskapaiDisplayName } from "../../data/maskapai";
+import { cleanMaskapaiDisplayName } from "../../data/maskapai";
 import { handlingDomestikData } from "../../data/handlingDomestik";
 import { visaData } from "../../data/visa";
 import { keretaCepatData } from "../../data/keretaCepat";
@@ -482,6 +482,18 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   });
   const [hotelStep, setHotelStep] = useState<"madinah" | "makkah">("madinah");
   const [maskapaiList, setMaskapaiList] = useState<Maskapai[]>([]);
+  const [deletedMaskapaiIds, setDeletedMaskapaiIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('maskapai_deleted_ids_registry');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch {
+      // ignore
+    }
+    return new Set<string>();
+  });
   const [hotelsList, setHotelsList] = useState<WizardHotel[]>([]);
   const [hotelMetas, setHotelMetas] = useState<HotelMetaItem[]>([]);
   const [dbLayananList, setDbLayananList] = useState<Layanan[]>([]);
@@ -494,6 +506,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [aiResult, setAiResult] = useState<{ title: string; content: string } | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationOption, setValidationOption] = useState<'ready_to_pay' | 'no_jamaah'>('ready_to_pay');
+  const [validationPax, setValidationPax] = useState<number | string>("");
+  const [validationNotes, setValidationNotes] = useState<string>("");
   const [showHandlingDescModal, setShowHandlingDescModal] = useState(false);
   const [showEquipmentDescModal, setShowEquipmentDescModal] = useState(false);
   const [zoomFlyerUrl, setZoomFlyerUrl] = useState<string | null>(null);
@@ -956,7 +972,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       HAINAN: "Hainan Airlines (HU)",
     };
 
+    const todayStr = new Date().toISOString().split('T')[0];
     const filteredMaskapais = maskapaiList.filter((m) => {
+      if (deletedMaskapaiIds.has(m.id)) return false;
+      if (m.tanggalKeberangkatan && m.tanggalKeberangkatan < todayStr) return false;
       if (m.tipePenerbangan) return m.tipePenerbangan === formData.tipePenerbangan;
       
       const name = (m.name || "").toUpperCase();
@@ -980,7 +999,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       }
     });
 
-    const allAirlinesUpper = maskapaiList.map(m => (m.name || "").toUpperCase());
+    const activeAirlines = maskapaiList.filter(m => !deletedMaskapaiIds.has(m.id) && (!m.tanggalKeberangkatan || m.tanggalKeberangkatan >= todayStr));
+    const allAirlinesUpper = activeAirlines.map(m => (m.name || "").toUpperCase());
     const hasIndigo = allAirlinesUpper.some(name => name.includes("INDIGO") || name.includes("6E"));
     const hasHainan = allAirlinesUpper.some(name => name.includes("HAINAN") || name.includes("HU"));
 
@@ -992,7 +1012,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }
 
     return brandsList.sort((a, b) => a.label.localeCompare(b.label));
-  }, [maskapaiList, formData.tipePenerbangan]);
+  }, [maskapaiList, formData.tipePenerbangan, deletedMaskapaiIds]);
 
   // Dynamic destination display formatting (e.g. JEDDAH (JED))
   const destinationDisplay = useMemo(() => {
@@ -1018,7 +1038,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
   // Filter maskapai
   const filteredMaskapaiList = useMemo(() => {
-    let list = maskapaiList;
+    const todayStr = new Date().toISOString().split('T')[0];
+    let list = maskapaiList.filter((m) => {
+      if (deletedMaskapaiIds.has(m.id)) return false;
+      if (m.tanggalKeberangkatan && m.tanggalKeberangkatan < todayStr) return false;
+      return true;
+    });
     
     // Auto-filter by Tipe Penerbangan (DIRECT/TRANSIT)
     if (formData.tipePenerbangan) {
@@ -1247,14 +1272,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     formData.tipePenerbangan, 
     formData.kotaKeberangkatan, 
     formData.kotaTujuan,
-    selectedAirlineBrand
+    selectedAirlineBrand,
+    deletedMaskapaiIds
   ]);
 
-  // Reset selected maskapai if it's not present in the master database list (deleted)
+  // Reset selected maskapai if it's not present in the master database list (deleted or blacklisted)
   useEffect(() => {
     if (maskapaiList.length === 0) return; // Wait for master list to load first to avoid race conditions
     if (formData.maskapaiId) {
-      const existsInDb = maskapaiList.some(m => m.id === formData.maskapaiId);
+      const existsInDb = maskapaiList.some(m => m.id === formData.maskapaiId && !deletedMaskapaiIds.has(m.id));
       if (!existsInDb) {
         setFormData(prev => ({
           ...prev,
@@ -1264,7 +1290,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         }));
       }
     }
-  }, [maskapaiList, formData.maskapaiId]);
+  }, [maskapaiList, formData.maskapaiId, deletedMaskapaiIds]);
 
   // Synchronize Hotel Dates based on tglBerangkat, durations, urutanKunjungan, and alurPerjalanan
   useEffect(() => {
@@ -1925,6 +1951,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   }, [hotelSearchTerm, hotelFilterBintang, hotelStep, hotelSort, hotelFilterJarak]);
 
   useEffect(() => {
+    // Listen to maskapai collection from Firestore
     const unsubMaskapai = onSnapshot(
       collection(db, "maskapai"),
       (snapshot) => {
@@ -1933,42 +1960,27 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           ...doc.data(),
         } as Maskapai));
         setMaskapaiList(data);
+      },
+      (error) => handleFirestoreError(error, OperationType.GET, "maskapai"),
+    );
 
-        // Auto-sync missing or modified initial data items in background (only for users with write permission)
-        const existingMap: Record<string, Maskapai> = {};
-        data.forEach(item => {
-          existingMap[item.id] = item;
-        });
-        const itemsToSync = maskapaiData.filter(item => {
-          const existing = existingMap[item.id];
-          if (!existing) return true;
-          return existing.hargaBeli !== item.hargaBeli || existing.hargaJual !== item.hargaJual;
-        });
-        if (itemsToSync.length > 0) {
-          console.log(`Auto-syncing ${itemsToSync.length} missing or updated maskapai records from Wizard...`);
-          const chunkSize = 400;
-          for (let i = 0; i < itemsToSync.length; i += chunkSize) {
-            const chunk = itemsToSync.slice(i, i + chunkSize);
+    // Listen to maskapai deleted registry to prevent deleted flights from showing up
+    const unsubDeletedRegistry = onSnapshot(
+      doc(db, "umaroh_master_data", "maskapai_deleted_registry"),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const remoteIds = snapshot.data()?.deletedIds || [];
+          if (Array.isArray(remoteIds)) {
+            setDeletedMaskapaiIds(new Set(remoteIds));
             try {
-              const batch = writeBatch(db);
-              chunk.forEach((item) => {
-                const itemRef = doc(db, 'maskapai', item.id);
-                batch.set(itemRef, {
-                  ...item,
-                  updatedAt: new Date().toISOString()
-                }, { merge: true });
-              });
-              batch.commit()
-                .then(() => console.log('Wizard auto-sync batch completed.'))
-                .catch(err => console.warn('Wizard auto-sync batch write error (likely non-admin role):', err.message || err));
-            } catch (err) {
-              const errMsg = err instanceof Error ? err.message : String(err);
-              console.warn('Failed to build wizard auto-sync batch:', errMsg);
+              localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(remoteIds));
+            } catch {
+              // ignore
             }
           }
         }
       },
-      (error) => handleFirestoreError(error, OperationType.GET, "maskapai"),
+      (error) => console.warn('Could not read deleted registry in wizard:', error)
     );
 
     const cachedHotelsStr = localStorage.getItem('umaroh_db_hotels');
@@ -2093,6 +2105,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
     return () => {
       unsubMaskapai();
+      unsubDeletedRegistry();
       unsubHotels();
       unsubLayanan();
       unsubBandara();
@@ -2336,13 +2349,25 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }
   };
 
-  const saveToDatabase = async (): Promise<string | null> => {
+  const saveToDatabase = async (extraParams?: {
+    kesiapanJamaah?: 'ready_to_pay' | 'no_jamaah';
+    jumlahJamaahSiapBayar?: number;
+    catatanValidasi?: string;
+  }): Promise<string | null> => {
     const isNew = !createdDocId;
     const generateRequestId = () => {
       const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const code = Array.from({ length: 4 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join("");
       return `REQ-${code}`;
     };
+
+    const kesiapan = extraParams?.kesiapanJamaah || formData.kesiapanJamaah || 'ready_to_pay';
+    const jmlPax = extraParams?.jumlahJamaahSiapBayar !== undefined 
+      ? extraParams.jumlahJamaahSiapBayar 
+      : (formData.jumlahJamaahSiapBayar || (kesiapan === 'ready_to_pay' ? Number(formData.targetJamaah || 0) : 0));
+    const catatan = extraParams?.catatanValidasi !== undefined 
+      ? extraParams.catatanValidasi 
+      : (formData.catatanValidasi || '');
 
     const dataToSave: Partial<WizardFormData> = {
       photoUtama: formData.photoUtama || null,
@@ -2364,6 +2389,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       sisaKuota: Number(formData.targetJamaah || 0),
       status: isMitraContext ? 'pending_validation' : (formData.status || "draft"),
       validationStatus: isMitraContext ? 'pending' : 'approved',
+      kesiapanJamaah: kesiapan,
+      jumlahJamaahSiapBayar: jmlPax,
+      catatanValidasi: catatan,
       // Additional meta
       kategori: formData.kategori,
       periode: formData.periode,
@@ -2520,24 +2548,56 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     return savedId;
   };
 
-  const handleSave = async () => {
+  const handleSave = async (options?: {
+    kesiapan?: 'ready_to_pay' | 'no_jamaah';
+    paxSiapBayar?: number;
+    catatan?: string;
+  }) => {
     setIsSaving(true);
     try {
-      const savedId = await saveToDatabase();
+      const kesiapan = options?.kesiapan || validationOption;
+      const customPax = options?.paxSiapBayar !== undefined 
+        ? options.paxSiapBayar 
+        : (Number(validationPax) || Number(formData.targetJamaah) || 0);
+      const customNotes = options?.catatan !== undefined 
+        ? options.catatan 
+        : validationNotes;
+
+      const savedId = await saveToDatabase({
+        kesiapanJamaah: kesiapan,
+        jumlahJamaahSiapBayar: kesiapan === 'ready_to_pay' ? customPax : 0,
+        catatanValidasi: customNotes,
+      });
       if (!savedId) {
         throw new Error("Gagal menyimpan ke database");
       }
 
+      setShowValidationModal(false);
       onSuccess();
       
       // Trigger WhatsApp if finishing from VALIDASI AKHIR step
       if (currentStepName === "VALIDASI AKHIR") {
         const adminPhone = "6283844974952";
         const isUpdate = !(!initialData?.id);
-        const msgHeader = isUpdate 
-          ? "Ada UPDATE paket yang membutuhkan validasi ulang:" 
-          : "Ada paket baru yang membutuhkan validasi:";
-        const waMessage = `Assalamu'alaikum Admin Operasional,\n\n${msgHeader}\n\n*Nama Paket:* ${formData.nama || "Paket Umroh Tanpa Nama"}\n*Kategori:* ${formData.kategori}\n\nMohon segera ditinjau.\n\nTerima kasih.`;
+        
+        let waMessage = "";
+        if (kesiapan === 'ready_to_pay') {
+          const msgHeader = isUpdate 
+            ? "🚨 *[PRIORITAS TINGGI - JAMAAH SUDAH ADA & SIAP BAYAR]*\nAda UPDATE paket yang membutuhkan validasi ulang segera:" 
+            : "🚨 *[PRIORITAS TINGGI - JAMAAH SUDAH ADA & SIAP BAYAR]*\nAda pengajuan paket baru dengan jamaah siap bayar:";
+          const paxText = customPax > 0 ? `\n*Jamaah Siap Bayar:* ${customPax} Pax` : (formData.targetJamaah ? `\n*Target/Estimasi Jamaah:* ${formData.targetJamaah} Pax` : "");
+          const notesText = customNotes.trim() ? `\n*Catatan Tambahan:* ${customNotes.trim()}` : "";
+          
+          waMessage = `Assalamu'alaikum Admin Operasional,\n\n${msgHeader}\n\n*Nama Paket:* ${formData.nama || "Paket Umroh Tanpa Nama"}\n*Kategori:* ${formData.kategori}${paxText}${notesText}\n\n*Status:* Jamaah sudah siap & siap melakukan pembayaran/DP. Mohon diprioritaskan untuk pengecekan dan penguncian seat/kamar.\n\nTerima kasih.`;
+        } else {
+          const msgHeader = isUpdate 
+            ? "📋 *[VALIDASI REGULER - BELUM ADA JAMAAH]*\nAda UPDATE paket untuk ditinjau:" 
+            : "📋 *[VALIDASI REGULER - BELUM ADA JAMAAH]*\nAda pengajuan paket baru (tahap promosi/estimasi):";
+          const notesText = customNotes.trim() ? `\n*Catatan Tambahan:* ${customNotes.trim()}` : "";
+          
+          waMessage = `Assalamu'alaikum Admin Operasional,\n\n${msgHeader}\n\n*Nama Paket:* ${formData.nama || "Paket Umroh Tanpa Nama"}\n*Kategori:* ${formData.kategori}\n*Status:* Belum ada jamaah langsung (tahap pembuatan brosur/promosi).${notesText}\n\nMohon ditinjau ketersediaan dan kesesuaian harga saat jam operasional.\n\nTerima kasih.`;
+        }
+        
         openWhatsApp(generateWALink(adminPhone, waMessage));
       }
     } catch (e) {
@@ -7693,7 +7753,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
             <div className="flex flex-col items-center gap-6 w-full max-w-sm">
               <button
-                onClick={handleSave}
+                onClick={() => {
+                  setValidationPax(formData.targetJamaah || '');
+                  setShowValidationModal(true);
+                }}
                 disabled={isSaving}
                 className="w-full flex items-center justify-center gap-4 py-6 bg-[#26D971] hover:bg-[#1EBE5F] text-white font-black rounded-[2.5rem] shadow-[0_20px_40px_-10px_rgba(38,217,113,0.3)] text-sm uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
               >
@@ -7824,7 +7887,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               onClick={
                 currentStep < currentStepsList.length
                   ? handleNext
-                  : handleSave
+                  : () => handleSave()
               }
               disabled={isSaving}
               className={`flex items-center gap-2 px-8 py-3 font-bold rounded-xl transition-colors shadow-lg disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20`}
@@ -7846,6 +7909,161 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
           onClose={() => setAiResult(null)}
           onSave={aiResult.title === "Marketing Content AI" ? (content) => setFormData({ ...formData, deskripsi: content }) : undefined}
         />
+      )}
+
+      {/* Validation Options Modal (2 Opsi: Siap Bayar vs Belum Ada Jamaah) */}
+      {showValidationModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[32px] p-6 sm:p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col relative max-h-[92vh] overflow-y-auto">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowValidationModal(false)}
+              className="absolute top-6 right-6 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#009B66] flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div className="pr-8">
+                <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">
+                  PILIH OPSI VALIDASI
+                </h3>
+                <p className="text-xs text-gray-500 font-medium">
+                  Tentukan kondisi kesiapan jamaah sebelum diajukan ke Operasional
+                </p>
+              </div>
+            </div>
+
+            {/* Dua Pilihan Opsi */}
+            <div className="space-y-3 mb-6">
+              {/* Opsi 1: Sudah Ada Jamaah & Siap Bayar */}
+              <div
+                onClick={() => setValidationOption('ready_to_pay')}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                  validationOption === 'ready_to_pay'
+                    ? 'border-[#009B66] bg-emerald-50/40 shadow-sm ring-2 ring-[#009B66]/20'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      validationOption === 'ready_to_pay'
+                        ? 'bg-[#009B66] text-white'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    <UserCheck className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                      <h4 className="text-sm font-black text-gray-900">
+                        1. Sudah Ada Jamaah & Siap Bayar
+                      </h4>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 tracking-wider">
+                        Prioritas Tinggi
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Jamaah sudah deal & siap transfer DP atau pelunasan. Operasional akan memprioritaskan locking seat maskapai & kamar hotel segera.
+                    </p>
+
+                    {/* Input Jumlah Jamaah Siap Bayar */}
+                    {validationOption === 'ready_to_pay' && (
+                      <div className="mt-3 pt-3 border-t border-emerald-200/60 space-y-1.5 animate-in fade-in duration-200">
+                        <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                          Jumlah Jamaah Siap Bayar (Pax):
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={validationPax}
+                          onChange={(e) => setValidationPax(e.target.value)}
+                          placeholder={formData.targetJamaah ? `${formData.targetJamaah} Pax` : "Contoh: 10"}
+                          className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs sm:text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#009B66]"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Opsi 2: Belum Ada Jamaah */}
+              <div
+                onClick={() => setValidationOption('no_jamaah')}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                  validationOption === 'no_jamaah'
+                    ? 'border-blue-600 bg-blue-50/40 shadow-sm ring-2 ring-blue-500/20'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      validationOption === 'no_jamaah'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                      <h4 className="text-sm font-black text-gray-900">
+                        2. Belum Ada Jamaah
+                      </h4>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 tracking-wider">
+                        Validasi Standar
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Paket dibuat untuk persiapan penawaran, promosi, atau pembuatan brosur. Tidak ada urgensi penguncian langsung saat ini.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Catatan Tambahan */}
+              <div className="pt-1">
+                <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1">
+                  Catatan Tambahan untuk Operasional (Opsional):
+                </label>
+                <textarea
+                  value={validationNotes}
+                  onChange={(e) => setValidationNotes(e.target.value)}
+                  placeholder="Tuliskan catatan khusus atau permintaan bila ada..."
+                  rows={2}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#009B66] resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Tombol Aksi */}
+            <div className="space-y-2">
+              <button
+                onClick={() => handleSave()}
+                disabled={isSaving}
+                className="w-full flex items-center justify-center gap-3 py-4 bg-[#26D971] hover:bg-[#1EBE5F] text-white font-black rounded-2xl shadow-lg shadow-[#26D971]/25 text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+              >
+                <MessageCircle className="w-5 h-5 fill-white" />
+                {isSaving ? "MEMPROSES..." : "KIRIM VALIDASI KE WA SEKARANG"}
+              </button>
+
+              <button
+                onClick={() => setShowValidationModal(false)}
+                disabled={isSaving}
+                className="w-full py-3 bg-white border border-gray-200 text-gray-600 font-bold text-xs uppercase tracking-wider rounded-2xl hover:bg-gray-50 transition-all"
+              >
+                BATAL
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Exit Confirmation Modal */}
