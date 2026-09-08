@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { isDateInRange } from "../../utils/dateUtils";
 import { useKurs } from "../../hooks/useKurs";
+import { Season } from "../../data/hotels";
 import {
   ChevronRight,
   ChevronLeft,
@@ -71,7 +72,7 @@ import { transportData } from "../../data/transport";
 
 import { AIResultModal } from "../ai/AIResultModal";
 import { HijriGregorianDatePicker } from "../common/HijriGregorianDatePicker";
-import { getUmrahSeasonAndPeriod } from "../../utils/dateUtils";
+import { getUmrahSeasonAndPeriod, detectRamadhanProgram } from "../../utils/dateUtils";
 import { generateItinerary, generateMarketingCopy } from "../../services/aiService";
 import { sanitizeForHtml2Canvas, captureToDataUrl } from "../../utils/exportUtils";
 import { Capacitor } from '@capacitor/core';
@@ -813,6 +814,11 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     marginBersih: 1000000,
     ujrohPartner: 0,
     markup: 1000000,
+    subProgramRamadhan: "",
+    isRamadhanPackage: false,
+    hotelMakkahPricingMode: "AUTO",
+    hotelMadinahPricingMode: "AUTO",
+    ramadhanHijriLabel: "",
   };
 
   const [formData, setFormData] = useState<WizardFormData>(() => {
@@ -1439,6 +1445,129 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
   const [hotelSort, setHotelSort] = useState<"default" | "lowest" | "highest">("default");
   const [hotelPage, setHotelPage] = useState(1);
 
+  const getHotelPricingMode = (
+    hotel: WizardHotel | undefined,
+    dateStr: string,
+    city: 'makkah' | 'madinah',
+    subProgram?: string
+  ): { isFlat: boolean; season?: Season; label: string; packageNights?: number } => {
+    if (!hotel) return { isFlat: false, label: 'Per Malam' };
+
+    const manualSetting = city === 'makkah' ? formData.hotelMakkahPricingMode : formData.hotelMadinahPricingMode;
+    if (manualSetting === 'PACKAGE_BLOCK') {
+      return { isFlat: true, label: 'Paket Flat Blok (Manual)' };
+    }
+    if (manualSetting === 'DAILY') {
+      return { isFlat: false, label: 'Tarif Per Malam' };
+    }
+
+    // Auto-detect based on season or Ramadhan program
+    let matchedSeason: Season | undefined;
+    if (hotel.seasons && hotel.seasons.length > 0) {
+      if (subProgram && subProgram !== 'REGULER') {
+        matchedSeason = hotel.seasons.find((s) => s.programType === subProgram);
+      }
+      if (!matchedSeason && dateStr) {
+        const dateObj = new Date(dateStr);
+        if (!isNaN(dateObj.getTime())) {
+          matchedSeason = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
+        }
+      }
+      if (!matchedSeason && hotel.seasons.length > 0) {
+        matchedSeason = hotel.seasons[0];
+      }
+    }
+
+    if (matchedSeason) {
+      if (matchedSeason.pricingType === 'FLAT_PACKAGE' || matchedSeason.isPackageBlock) {
+        return {
+          isFlat: true,
+          season: matchedSeason,
+          label: matchedSeason.hijriInfo || `Paket Blok (${matchedSeason.packageNights || 10} Malam)`,
+          packageNights: matchedSeason.packageNights || 10
+        };
+      }
+      const rangeUpper = (matchedSeason.range || '').toUpperCase();
+      const hijriUpper = (matchedSeason.hijriInfo || '').toUpperCase();
+      if (
+        rangeUpper.includes('RAMADAN') ||
+        rangeUpper.includes('RAMADHAN') ||
+        rangeUpper.includes('ITIKAF') ||
+        hijriUpper.includes('RAMADAN') ||
+        hijriUpper.includes('RAMADHAN') ||
+        hijriUpper.includes('ITIKAF') ||
+        rangeUpper.includes('PACKAGE')
+      ) {
+        return {
+          isFlat: true,
+          season: matchedSeason,
+          label: matchedSeason.hijriInfo || 'Paket Flat Ramadhan',
+          packageNights: matchedSeason.packageNights || 10
+        };
+      }
+    }
+
+    // Fallback: if entire package is marked Ramadhan and city is Makkah
+    if (formData.isRamadhanPackage && formData.subProgramRamadhan && formData.subProgramRamadhan !== 'REGULER' && city === 'makkah') {
+      return { isFlat: true, label: 'Paket Flat Ramadhan', packageNights: Number(formData.durasiMakkah) || 10 };
+    }
+
+    return { isFlat: false, label: 'Tarif Per Malam' };
+  };
+
+  const getHotelPriceDynamic = (
+    hotel: WizardHotel | undefined,
+    dateStr: string,
+    roomType: 'Quad' | 'Triple' | 'Double',
+    subProgram?: string
+  ) => {
+    if (!hotel) return 0;
+    
+    // If hotel has season ranges defined (usually static list or highly structured db entries)
+    if (hotel.seasons && hotel.seasons.length > 0) {
+      let season: Season | undefined;
+      
+      // 1. Try matching subProgram if Ramadhan
+      if (subProgram && subProgram !== 'REGULER') {
+        season = hotel.seasons.find((s) => s.programType === subProgram);
+      }
+      
+      // 2. Match by date
+      if (!season && dateStr) {
+        const dateObj = new Date(dateStr);
+        if (!isNaN(dateObj.getTime())) {
+          season = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
+        }
+      }
+      
+      // Fallback: If no season matched but we have seasons, use the first season
+      if (!season && hotel.seasons.length > 0) {
+        season = hotel.seasons[0];
+      }
+      
+      if (season) {
+        const priceEntry = season.prices.find((p) => p.roomType === roomType);
+        if (priceEntry) {
+          const kurs = effectiveKursSar; // Use standard conversion rate
+          const margin = 1.1;
+          let divisor = 1;
+          if (roomType === 'Quad') divisor = 4;
+          else if (roomType === 'Triple') divisor = 3;
+          else if (roomType === 'Double') divisor = 2;
+          
+          const price = ((priceEntry.price * kurs) / divisor) * margin;
+          return price > 0 ? Math.ceil(price / 1000) * 1000 : 0;
+        }
+      }
+    }
+    
+    // Graceful Fallback: For database hotels without seasons, return their directly specified base price
+    if (roomType === 'Quad') return hotel.priceQuad || 0;
+    if (roomType === 'Triple') return hotel.priceTriple || 0;
+    if (roomType === 'Double') return hotel.priceDouble || 0;
+    return 0;
+  };
+
   const targetJamaah = Number(formData.targetJamaah) || 35;
   const maskapaiPrice = Number(formData.estimasiHargaMaskapai) || 0;
 
@@ -1446,11 +1575,19 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     hQuadMadinah = 0;
   if (formData.hotelMakkahId) {
     const m = hotelsList.find((h) => h.id === formData.hotelMakkahId);
-    if (m) hQuadMakkah = (m.priceQuad || 0) * (formData.durasiMakkah || 4);
+    if (m) {
+      const mode = getHotelPricingMode(m, formData.chkInMakkah || formData.tglBerangkat, 'makkah', formData.subProgramRamadhan);
+      const dyn = getHotelPriceDynamic(m, formData.chkInMakkah || formData.tglBerangkat, 'Quad', formData.subProgramRamadhan);
+      hQuadMakkah = mode.isFlat ? dyn : dyn * (formData.durasiMakkah || 4);
+    }
   }
   if (formData.hotelMadinahId) {
     const m = hotelsList.find((h) => h.id === formData.hotelMadinahId);
-    if (m) hQuadMadinah = (m.priceQuad || 0) * (formData.durasiMadinah || 3);
+    if (m) {
+      const mode = getHotelPricingMode(m, formData.chkInMadinah || formData.tglBerangkat, 'madinah', formData.subProgramRamadhan);
+      const dyn = getHotelPriceDynamic(m, formData.chkInMadinah || formData.tglBerangkat, 'Quad', formData.subProgramRamadhan);
+      hQuadMadinah = mode.isFlat ? dyn : dyn * (formData.durasiMadinah || 3);
+    }
   }
   const baseBelanja = maskapaiPrice + hQuadMakkah + hQuadMadinah;
   const tourLeaderPrice =
@@ -1701,44 +1838,6 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     },
   ];
 
-  const getHotelPriceDynamic = (hotel: WizardHotel | undefined, dateStr: string, roomType: 'Quad' | 'Triple' | 'Double') => {
-    if (!hotel) return 0;
-    
-    // If hotel has season ranges defined (usually static list or highly structured db entries)
-    if (hotel.seasons && hotel.seasons.length > 0 && dateStr) {
-      const dateObj = new Date(dateStr);
-      if (!isNaN(dateObj.getTime())) {
-        let season = hotel.seasons.find((s) => isDateInRange(dateObj, s.range));
-        
-        // Fallback: If no season matched but we have seasons, use the first season
-        if (!season && hotel.seasons.length > 0) {
-          season = hotel.seasons[0];
-        }
-        
-        if (season) {
-          const priceEntry = season.prices.find((p) => p.roomType === roomType);
-          if (priceEntry) {
-            const kurs = effectiveKursSar; // Use standard conversion rate
-            const margin = 1.1;
-            let divisor = 1;
-            if (roomType === 'Quad') divisor = 4;
-            else if (roomType === 'Triple') divisor = 3;
-            else if (roomType === 'Double') divisor = 2;
-            
-            const price = ((priceEntry.price * kurs) / divisor) * margin;
-            return price > 0 ? Math.ceil(price / 1000) * 1000 : 0;
-          }
-        }
-      }
-    }
-    
-    // Graceful Fallback: For database hotels without seasons, return their directly specified base price
-    if (roomType === 'Quad') return hotel.priceQuad || 0;
-    if (roomType === 'Triple') return hotel.priceTriple || 0;
-    if (roomType === 'Double') return hotel.priceDouble || 0;
-    return 0;
-  };
-
   const pricingSummary = useMemo(() => {
     const maskapaiPrice = Number(formData.estimasiHargaMaskapai) || 0;
 
@@ -1788,19 +1887,26 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     const tglCheckInMadinah = formData.chkInMadinah || formData.tglBerangkat;
     const tglCheckInMakkah = formData.chkInMakkah || formData.tglBerangkat;
 
-    const priceQuadMadinah = getHotelPriceDynamic(hMadinah, tglCheckInMadinah, 'Quad');
-    const priceQuadMakkah = getHotelPriceDynamic(hMakkah, tglCheckInMakkah, 'Quad');
-    const priceTripleMadinah = getHotelPriceDynamic(hMadinah, tglCheckInMadinah, 'Triple');
-    const priceTripleMakkah = getHotelPriceDynamic(hMakkah, tglCheckInMakkah, 'Triple');
-    const priceDoubleMadinah = getHotelPriceDynamic(hMadinah, tglCheckInMadinah, 'Double');
-    const priceDoubleMakkah = getHotelPriceDynamic(hMakkah, tglCheckInMakkah, 'Double');
+    const madinahPricing = getHotelPricingMode(hMadinah, tglCheckInMadinah, 'madinah', formData.subProgramRamadhan);
+    const makkahPricing = getHotelPricingMode(hMakkah, tglCheckInMakkah, 'makkah', formData.subProgramRamadhan);
 
-    const hQuadMadinah = priceQuadMadinah * parseNum(formData.durasiMadinah, 3);
-    const hQuadMakkah = priceQuadMakkah * parseNum(formData.durasiMakkah, 4);
-    const hTripleMadinah = priceTripleMadinah * parseNum(formData.durasiMadinah, 3);
-    const hTripleMakkah = priceTripleMakkah * parseNum(formData.durasiMakkah, 4);
-    const hDoubleMadinah = priceDoubleMadinah * parseNum(formData.durasiMadinah, 3);
-    const hDoubleMakkah = priceDoubleMakkah * parseNum(formData.durasiMakkah, 4);
+    const priceQuadMadinah = getHotelPriceDynamic(hMadinah, tglCheckInMadinah, 'Quad', formData.subProgramRamadhan);
+    const priceQuadMakkah = getHotelPriceDynamic(hMakkah, tglCheckInMakkah, 'Quad', formData.subProgramRamadhan);
+    const priceTripleMadinah = getHotelPriceDynamic(hMadinah, tglCheckInMadinah, 'Triple', formData.subProgramRamadhan);
+    const priceTripleMakkah = getHotelPriceDynamic(hMakkah, tglCheckInMakkah, 'Triple', formData.subProgramRamadhan);
+    const priceDoubleMadinah = getHotelPriceDynamic(hMadinah, tglCheckInMadinah, 'Double', formData.subProgramRamadhan);
+    const priceDoubleMakkah = getHotelPriceDynamic(hMakkah, tglCheckInMakkah, 'Double', formData.subProgramRamadhan);
+
+    const durasiMadinahVal = parseNum(formData.durasiMadinah, 3);
+    const durasiMakkahVal = parseNum(formData.durasiMakkah, 4);
+
+    // If Flat Package (Ramadhan Block), rate is ALREADY per-package-block divided by capacity. DO NOT multiply by nights!
+    const hQuadMadinah = madinahPricing.isFlat ? priceQuadMadinah : priceQuadMadinah * durasiMadinahVal;
+    const hQuadMakkah = makkahPricing.isFlat ? priceQuadMakkah : priceQuadMakkah * durasiMakkahVal;
+    const hTripleMadinah = madinahPricing.isFlat ? priceTripleMadinah : priceTripleMadinah * durasiMadinahVal;
+    const hTripleMakkah = makkahPricing.isFlat ? priceTripleMakkah : priceTripleMakkah * durasiMakkahVal;
+    const hDoubleMadinah = madinahPricing.isFlat ? priceDoubleMadinah : priceDoubleMadinah * durasiMadinahVal;
+    const hDoubleMakkah = makkahPricing.isFlat ? priceDoubleMakkah : priceDoubleMakkah * durasiMakkahVal;
 
     const hWisataTotalQuad = formData.kategori === "UMRAH PLUS"
       ? (getHotelPriceDynamic(hWisata, formData.tglBerangkat, 'Quad') || 0) * parseNum(formData.durasiWisata, 0)
@@ -1942,7 +2048,13 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
       finalWisataPrice,
       baseIDR,
       wisataAddonsTotal,
-      wisataAdminFee: Math.round(wisataAdminFee)
+      wisataAdminFee: Math.round(wisataAdminFee),
+      isMakkahFlat: makkahPricing.isFlat,
+      isMadinahFlat: madinahPricing.isFlat,
+      makkahPricingLabel: makkahPricing.label,
+      madinahPricingLabel: madinahPricing.label,
+      makkahPackageNights: makkahPricing.packageNights,
+      madinahPackageNights: madinahPricing.packageNights,
     };
   }, [formData, hotelsList, maskapaiList, dbLayananList, visaData, transportData, ziarahData, isMitraContext]);
 
@@ -2339,7 +2451,12 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
     }
 
     if (currentStep < currentStepsList.length) {
-      setCurrentStep((prev) => prev + 1);
+      const nextStepIndex = currentStep + 1;
+      setCurrentStep(nextStepIndex);
+      if (currentStepsList[nextStepIndex - 1] === "VALIDASI AKHIR") {
+        setValidationPax(formData.targetJamaah || '');
+        setShowValidationModal(true);
+      }
     }
   };
 
@@ -2994,6 +3111,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       onChange={(newTglBerangkat) => {
                         let newTglPulang = formData.tglKepulangan;
                         let autoPeriode = formData.periode;
+                        let isRamadhan = formData.isRamadhanPackage || false;
+                        let detectedSub = formData.subProgramRamadhan || "";
+                        let hijriLabel = formData.ramadhanHijriLabel || "";
+
                         if (newTglBerangkat) {
                           const dt = new Date(newTglBerangkat);
                           if (!isNaN(dt.getTime())) {
@@ -3006,6 +3127,19 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
                             const seasonInfo = getUmrahSeasonAndPeriod(departureDateObj, offset);
                             autoPeriode = seasonInfo.periodText;
+
+                            // Automatic Ramadhan Program Detection
+                            const ramadhanInfo = detectRamadhanProgram(departureDateObj, formData.durasiHari || 9, offset);
+                            if (ramadhanInfo.isRamadhan) {
+                              isRamadhan = true;
+                              detectedSub = ramadhanInfo.programType;
+                              hijriLabel = ramadhanInfo.label;
+                              autoPeriode = "Peak Season";
+                            } else if (!formData.subProgramRamadhan || formData.subProgramRamadhan === "REGULER") {
+                              isRamadhan = false;
+                              detectedSub = "";
+                              hijriLabel = "";
+                            }
                           }
                         }
                         setFormData({
@@ -3014,6 +3148,9 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           preferredDepartureDate: newTglBerangkat,
                           tglKepulangan: newTglPulang,
                           periode: autoPeriode,
+                          isRamadhanPackage: isRamadhan,
+                          subProgramRamadhan: detectedSub,
+                          ramadhanHijriLabel: hijriLabel,
                         });
                       }}
                     />
@@ -3041,9 +3178,15 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                     </label>
                     <select
                       value={formData.periode || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, periode: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const newPer = e.target.value;
+                        const isPeak = newPer === "Peak Season";
+                        setFormData({
+                          ...formData,
+                          periode: newPer,
+                          isRamadhanPackage: isPeak || formData.isRamadhanPackage,
+                        });
+                      }}
                       className="w-full p-4 bg-gray-50/50 border border-transparent rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 font-bold transition-all"
                     >
                       {formData.periode && 
@@ -3061,6 +3204,50 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                       <option value="Awal Musim (Low Season)">Awal Musim / Low Season (Muharram-Safar)</option>
                       <option value="Akhir Musim (Syawal-Dzulhijjah)">Akhir Musim (Syawal-Dzulhijjah)</option>
                     </select>
+                  </div>
+
+                  {/* PROGRAM RAMADHAN (DETEKSI / MANUAL OVERRIDE) */}
+                  <div className={`p-4 rounded-2xl border transition-all ${
+                    formData.isRamadhanPackage || (formData.subProgramRamadhan && formData.subProgramRamadhan !== "REGULER")
+                      ? "bg-amber-50/50 border-amber-200"
+                      : "bg-gray-50/50 border-transparent"
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[10px] sm:text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="text-base">🌙</span>
+                        PROGRAM RAMADHAN (TARIF KHUSUS)
+                      </label>
+                      {formData.subProgramRamadhan && formData.subProgramRamadhan !== "REGULER" && (
+                        <span className="bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300 animate-pulse">
+                          PAKET BLOK AKTIF
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      value={formData.subProgramRamadhan || "REGULER"}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const isRam = val !== "REGULER";
+                        setFormData({
+                          ...formData,
+                          subProgramRamadhan: val === "REGULER" ? "" : val,
+                          isRamadhanPackage: isRam,
+                          periode: isRam ? "Peak Season" : formData.periode,
+                        });
+                      }}
+                      className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-gray-800 font-bold text-xs"
+                    >
+                      <option value="REGULER">Bukan Ramadhan / Tarif Harian Normal</option>
+                      <option value="AWAL_RAMADHAN">🌙 Awal Ramadhan (1 - 10 Ramadhan)</option>
+                      <option value="TENGAH_RAMADHAN">🌙 Pertengahan Ramadhan (11 - 20 Ramadhan)</option>
+                      <option value="ITIKAF_RAMADHAN">🌙 Itikaf / Lailatul Qadr (21 - 30 Ramadhan)</option>
+                      <option value="FULL_RAMADHAN">🌙 Full Ramadhan (1 Bulan Penuh)</option>
+                    </select>
+                    <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                      {formData.subProgramRamadhan && formData.subProgramRamadhan !== "REGULER"
+                        ? "✨ Hotel di Makkah otomatis memakai skema Paket Flat Blok per kapasitas tanpa pengali malam harian."
+                        : "ℹ️ Jika tanggal keberangkatan bertepatan dengan bulan Ramadhan, sistem akan otomatis memilih program di atas."}
+                    </p>
                   </div>
 
                   {/* Durasi Program (Umrah Plus Wisata atau Biasa) */}
@@ -5572,6 +5759,90 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
               </div>
             </div>
 
+            {/* RAMADHAN PRICING CONTROLS & STATUS BANNER */}
+            {(formData.isRamadhanPackage || formData.subProgramRamadhan || (hotelStep === 'makkah' ? formData.hotelMakkahPricingMode : formData.hotelMadinahPricingMode) !== 'AUTO') && (
+              <div className="mb-4 bg-gradient-to-r from-amber-950/50 via-emerald-950/40 to-amber-950/50 border border-amber-500/40 rounded-2xl p-4 text-white shadow-lg backdrop-blur-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl mt-0.5 animate-pulse">🌙</span>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                          Tarif Hotel Ramadhan: {hotelStep === 'makkah' ? 'Hotel Makkah' : 'Hotel Madinah'}
+                        </span>
+                        {formData.subProgramRamadhan && (
+                          <span className="bg-amber-500/25 text-amber-200 border border-amber-500/40 text-[9px] font-bold px-2 py-0.5 rounded-full">
+                            {formData.subProgramRamadhan.replace(/_/g, ' ')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-300 mt-1 leading-relaxed">
+                        {(hotelStep === 'makkah' ? formData.hotelMakkahPricingMode : formData.hotelMadinahPricingMode) === 'PACKAGE_BLOCK'
+                          ? 'Mode Aktif: Tarif Paket Flat Blok Ramadhan (Harga per kapasitas kamar, tanpa pengali malam).'
+                          : (hotelStep === 'makkah' ? formData.hotelMakkahPricingMode : formData.hotelMadinahPricingMode) === 'DAILY'
+                          ? 'Mode Aktif: Tarif Harian Reguler (Rate per Malam x Jumlah Malam).'
+                          : 'Mode Otomatis: Sistem mendeteksi apakah hotel menyediakan tarif Paket Flat Blok Ramadhan atau Harian.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 self-end sm:self-center bg-[#0d1527] p-1 rounded-xl border border-gray-700/80 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hotelStep === 'makkah') {
+                          setFormData({ ...formData, hotelMakkahPricingMode: 'AUTO' });
+                        } else {
+                          setFormData({ ...formData, hotelMadinahPricingMode: 'AUTO' });
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                        (hotelStep === 'makkah' ? formData.hotelMakkahPricingMode : formData.hotelMadinahPricingMode) === 'AUTO'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      Otomatis
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hotelStep === 'makkah') {
+                          setFormData({ ...formData, hotelMakkahPricingMode: 'PACKAGE_BLOCK' });
+                        } else {
+                          setFormData({ ...formData, hotelMadinahPricingMode: 'PACKAGE_BLOCK' });
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                        (hotelStep === 'makkah' ? formData.hotelMakkahPricingMode : formData.hotelMadinahPricingMode) === 'PACKAGE_BLOCK'
+                          ? 'bg-amber-600 text-white shadow-sm'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      Flat Blok
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hotelStep === 'makkah') {
+                          setFormData({ ...formData, hotelMakkahPricingMode: 'DAILY' });
+                        } else {
+                          setFormData({ ...formData, hotelMadinahPricingMode: 'DAILY' });
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                        (hotelStep === 'makkah' ? formData.hotelMakkahPricingMode : formData.hotelMadinahPricingMode) === 'DAILY'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      Per Malam
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Search and Filters */}
             <div className="mb-4">
               <div className="relative mb-3">
@@ -5703,9 +5974,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           ? formData.hotelMadinahId === hotel.id
                           : formData.hotelMakkahId === hotel.id;
 
-                      const currentPriceQuad = getHotelPriceDynamic(hotel, checkDate, 'Quad');
-                      const currentPriceTriple = getHotelPriceDynamic(hotel, checkDate, 'Triple');
-                      const currentPriceDouble = getHotelPriceDynamic(hotel, checkDate, 'Double');
+                      const cardPricingMode = getHotelPricingMode(hotel, checkDate, hotelStep as 'makkah' | 'madinah', formData.subProgramRamadhan);
+                      const currentPriceQuad = getHotelPriceDynamic(hotel, checkDate, 'Quad', formData.subProgramRamadhan);
+                      const currentPriceTriple = getHotelPriceDynamic(hotel, checkDate, 'Triple', formData.subProgramRamadhan);
+                      const currentPriceDouble = getHotelPriceDynamic(hotel, checkDate, 'Double', formData.subProgramRamadhan);
 
                       const displayPriceQuad = currentPriceQuad > 0 ? Math.ceil(currentPriceQuad / 1000) * 1000 : 0;
                       const displayPriceTriple = currentPriceTriple > 0 ? Math.ceil(currentPriceTriple / 1000) * 1000 : 0;
@@ -5805,12 +6077,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 </div>
                               </div>
 
-                              {seasonText && (
+                              {cardPricingMode.isFlat ? (
+                                <span className="inline-flex bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded text-[8px] font-black items-center gap-1 shadow-sm max-w-full">
+                                  <span>🌙</span>
+                                  <span className="truncate">{cardPricingMode.label}</span>
+                                </span>
+                              ) : seasonText ? (
                                 <span className="inline-flex bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded text-[8px] font-bold items-center gap-1 shadow-sm max-w-full">
                                   <Calendar className="w-3 h-3 shrink-0" />
                                   <span className="truncate">{seasonText}</span>
                                 </span>
-                              )}
+                              ) : null}
                             </div>
 
                             {/* PRICING GRID */}
@@ -5827,8 +6104,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <span className="text-[6px] sm:text-[7px] font-bold text-emerald-400/70 shrink-0">Rp</span>
                                   <span className="truncate">{Math.round(displayPriceQuad || 0).toLocaleString("id-ID")}</span>
                                 </div>
-                                <div className="text-[6px] text-gray-500 mt-0.5 uppercase font-semibold">
-                                  PAX/MLM
+                                <div className={`text-[6px] mt-0.5 uppercase font-bold ${cardPricingMode.isFlat ? 'text-amber-400' : 'text-gray-500 font-semibold'}`}>
+                                  {cardPricingMode.isFlat ? 'PAX/PAKET' : 'PAX/MLM'}
                                 </div>
                               </div>
 
@@ -5844,8 +6121,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <span className="text-[6px] sm:text-[7px] font-bold text-emerald-400/70 shrink-0">Rp</span>
                                   <span className="truncate">{Math.round(displayPriceTriple || 0).toLocaleString("id-ID")}</span>
                                 </div>
-                                <div className="text-[6px] text-gray-500 mt-0.5 uppercase font-semibold">
-                                  PAX/MLM
+                                <div className={`text-[6px] mt-0.5 uppercase font-bold ${cardPricingMode.isFlat ? 'text-amber-400' : 'text-gray-500 font-semibold'}`}>
+                                  {cardPricingMode.isFlat ? 'PAX/PAKET' : 'PAX/MLM'}
                                 </div>
                               </div>
 
@@ -5861,8 +6138,8 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                   <span className="text-[6px] sm:text-[7px] font-bold text-emerald-400/70 shrink-0">Rp</span>
                                   <span className="truncate">{Math.round(displayPriceDouble || 0).toLocaleString("id-ID")}</span>
                                 </div>
-                                <div className="text-[6px] text-gray-500 mt-0.5 uppercase font-semibold">
-                                  PAX/MLM
+                                <div className={`text-[6px] mt-0.5 uppercase font-bold ${cardPricingMode.isFlat ? 'text-amber-400' : 'text-gray-500 font-semibold'}`}>
+                                  {cardPricingMode.isFlat ? 'PAX/PAKET' : 'PAX/MLM'}
                                 </div>
                               </div>
                             </div>
@@ -5927,9 +6204,14 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   if (!hObj) return null;
 
                   const checkIn = citySpan === "madinah" ? (formData.chkInMadinah || formData.tglBerangkat) : (formData.chkInMakkah || formData.tglBerangkat);
-                  const pQuad = getHotelPriceDynamic(hObj, checkIn, 'Quad');
-                  const pTriple = getHotelPriceDynamic(hObj, checkIn, 'Triple');
-                  const pDouble = getHotelPriceDynamic(hObj, checkIn, 'Double');
+                  const pricingMode = getHotelPricingMode(hObj, checkIn, citySpan as 'makkah' | 'madinah', formData.subProgramRamadhan);
+                  const pQuad = getHotelPriceDynamic(hObj, checkIn, 'Quad', formData.subProgramRamadhan);
+                  const pTriple = getHotelPriceDynamic(hObj, checkIn, 'Triple', formData.subProgramRamadhan);
+                  const pDouble = getHotelPriceDynamic(hObj, checkIn, 'Double', formData.subProgramRamadhan);
+
+                  const totalQuad = pricingMode.isFlat ? pQuad : pQuad * durasi;
+                  const totalTriple = pricingMode.isFlat ? pTriple : pTriple * durasi;
+                  const totalDouble = pricingMode.isFlat ? pDouble : pDouble * durasi;
 
                   return (
                     <div
@@ -5942,7 +6224,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                           {hObj.bintang || 5}
                         </span>
                         <span className="text-emerald-100 text-[10px] font-bold bg-[#116e4d] px-2 py-1 rounded-md">
-                          {(durasi || 0) + 1} HARI {durasi} MALAM
+                          {pricingMode.isFlat ? `🌙 ${pricingMode.label}` : `${(durasi || 0) + 1} HARI ${durasi} MALAM`}
                         </span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -5951,10 +6233,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             QUAD
                           </div>
                           <div className="text-white font-black text-sm">
-                            Rp{" "}
-                            {Math.round(pQuad * durasi).toLocaleString(
-                              "id-ID",
-                            )}
+                            Rp {Math.round(totalQuad).toLocaleString("id-ID")}
+                          </div>
+                          <div className="text-[8px] text-emerald-200/80 mt-0.5">
+                            {pricingMode.isFlat ? 'Paket Flat / Pax' : `${durasi} Mlm x Rp ${Math.round(pQuad).toLocaleString("id-ID")}`}
                           </div>
                         </div>
                         <div className="bg-[#167855] rounded-lg p-2.5 text-center border border-[#1e8c65]">
@@ -5962,10 +6244,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             TRIPLE
                           </div>
                           <div className="text-white font-black text-sm">
-                            Rp{" "}
-                            {Math.round(pTriple * durasi).toLocaleString(
-                              "id-ID",
-                            )}
+                            Rp {Math.round(totalTriple).toLocaleString("id-ID")}
+                          </div>
+                          <div className="text-[8px] text-emerald-200/80 mt-0.5">
+                            {pricingMode.isFlat ? 'Paket Flat / Pax' : `${durasi} Mlm x Rp ${Math.round(pTriple).toLocaleString("id-ID")}`}
                           </div>
                         </div>
                         <div className="bg-[#167855] rounded-lg p-2.5 text-center border border-[#1e8c65]">
@@ -5973,10 +6255,10 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                             DOUBLE
                           </div>
                           <div className="text-white font-black text-sm">
-                            Rp{" "}
-                            {Math.round(pDouble * durasi).toLocaleString(
-                              "id-ID",
-                            )}
+                            Rp {Math.round(totalDouble).toLocaleString("id-ID")}
+                          </div>
+                          <div className="text-[8px] text-emerald-200/80 mt-0.5">
+                            {pricingMode.isFlat ? 'Paket Flat / Pax' : `${durasi} Mlm x Rp ${Math.round(pDouble).toLocaleString("id-ID")}`}
                           </div>
                         </div>
                       </div>
@@ -6003,10 +6285,17 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
 
                       const chkMadinah = formData.chkInMadinah || formData.tglBerangkat;
                       const chkMakkah = formData.chkInMakkah || formData.tglBerangkat;
-                      
-                      const sum =
-                        getHotelPriceDynamic(hMadinah, chkMadinah, 'Quad') * dMadinah +
-                        getHotelPriceDynamic(hMakkah, chkMakkah, 'Quad') * dMakkah;
+
+                      const modeMadinah = getHotelPricingMode(hMadinah, chkMadinah, 'madinah', formData.subProgramRamadhan);
+                      const modeMakkah = getHotelPricingMode(hMakkah, chkMakkah, 'makkah', formData.subProgramRamadhan);
+
+                      const pMadinah = getHotelPriceDynamic(hMadinah, chkMadinah, 'Quad', formData.subProgramRamadhan);
+                      const pMakkah = getHotelPriceDynamic(hMakkah, chkMakkah, 'Quad', formData.subProgramRamadhan);
+
+                      const totMadinah = modeMadinah.isFlat ? pMadinah : pMadinah * dMadinah;
+                      const totMakkah = modeMakkah.isFlat ? pMakkah : pMakkah * dMakkah;
+                      const sum = totMadinah + totMakkah;
+
                       return `Rp ${Math.round(sum).toLocaleString("id-ID")}`;
                     })()}
                     <span className="text-[10px] sm:text-xs font-bold text-emerald-200">
@@ -6015,7 +6304,7 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                   </div>
                 </div>
                 <div className="text-[7px] sm:text-[9px] font-bold text-emerald-300 italic opacity-80 sm:text-right w-full sm:w-auto">
-                  *Harga sudah termasuk durasi menginap di kedua kota
+                  *Harga mencakup akomodasi kedua kota (otomatis menyesuaikan paket flat Ramadhan atau harian reguler)
                 </div>
               </div>
             </div>
@@ -7015,11 +7304,16 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
                                   <Building2 className="w-4 h-4" />
                                 </div>
-                                <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                  {hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, hMadinah.bintang)} - {hMadinah.mealPlan || "FB"} (
-                                  {parseNum(formData.durasiMadinah, 3) + 1} HARI{" "}
-                                  {parseNum(formData.durasiMadinah, 3)} MALAM)
-                                </span>
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
+                                    {hMadinah.nama} ★{getHelperStars(formData.hotelMadinahId, hMadinah.bintang)} - {hMadinah.mealPlan || "FB"}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 font-semibold">
+                                    {pricingSummary.isMadinahFlat
+                                      ? `🌙 Paket Flat Blok Ramadhan (${pricingSummary.madinahPricingLabel})`
+                                      : `${parseNum(formData.durasiMadinah, 3) + 1} HARI ${parseNum(formData.durasiMadinah, 3)} MALAM (Tarif Harian)`}
+                                  </span>
+                                </div>
                               </div>
                               <span className="font-black text-xs sm:text-sm text-blue-600 italic">
                                 Rp{" "}
@@ -7033,11 +7327,16 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
                                 <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
                                   <Building2 className="w-4 h-4" />
                                 </div>
-                                <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
-                                  {hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, hMakkah.bintang)} - {hMakkah.mealPlan || "FB"} (
-                                  {parseNum(formData.durasiMakkah, 4) + 1} HARI{" "}
-                                  {parseNum(formData.durasiMakkah, 4)} MALAM)
-                                </span>
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-xs sm:text-sm text-gray-700 uppercase">
+                                    {hMakkah.nama} ★{getHelperStars(formData.hotelMakkahId, hMakkah.bintang)} - {hMakkah.mealPlan || "FB"}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 font-semibold">
+                                    {pricingSummary.isMakkahFlat
+                                      ? `🌙 Paket Flat Blok Ramadhan (${pricingSummary.makkahPricingLabel})`
+                                      : `${parseNum(formData.durasiMakkah, 4) + 1} HARI ${parseNum(formData.durasiMakkah, 4)} MALAM (Tarif Harian)`}
+                                  </span>
+                                </div>
                               </div>
                               <span className="font-black text-xs sm:text-sm text-blue-600 italic">
                                 Rp {Math.round(hQuadMakkah || 0).toLocaleString("id-ID")}
@@ -7734,41 +8033,163 @@ export const PaketMasterWizard: React.FC<PaketMasterWizardProps> = ({
         )}
 
         {currentStepName === "VALIDASI AKHIR" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-95 duration-500">
-            {/* Design Icon Matched to Mockup */}
-            <div className="relative mb-12">
-              <div className="w-32 h-32 bg-[#F2FBF8] rounded-[2.5rem] flex items-center justify-center shadow-sm">
-                 <div className="w-16 h-16 bg-[#009B66] rounded-full flex items-center justify-center ring-8 ring-[#D9F2E9]">
-                    <Check className="w-10 h-10 text-white" strokeWidth={4} />
+          <div className="flex flex-col items-center justify-center py-10 text-center animate-in zoom-in-95 duration-500 max-w-2xl mx-auto">
+            {/* Header Icon */}
+            <div className="relative mb-6">
+              <div className="w-20 h-20 bg-[#F2FBF8] rounded-[2rem] flex items-center justify-center shadow-sm">
+                 <div className="w-12 h-12 bg-[#009B66] rounded-full flex items-center justify-center ring-6 ring-[#D9F2E9]">
+                    <Check className="w-6 h-6 text-white" strokeWidth={3.5} />
                  </div>
               </div>
             </div>
 
-            <h3 className="text-4xl font-black text-[#1A1C29] mb-4 italic uppercase tracking-tighter">
-              LUAR BIASA!
+            <h3 className="text-2xl sm:text-3xl font-black text-[#1A1C29] mb-2 uppercase tracking-tight">
+              PILIH OPSI VALIDASI PAKET
             </h3>
-            <p className="text-xs font-black text-[#94A3B8] max-w-md mx-auto leading-relaxed mb-16 uppercase tracking-[0.2em]">
-              PAKET {formData.kategori?.toUpperCase()} SIAP DIAJUKAN UNTUK VALIDASI OPERASIONAL.
+            <p className="text-xs text-gray-500 max-w-lg mx-auto leading-relaxed mb-8 font-medium">
+              Tentukan kesiapan jamaah sebelum pengajuan divalidasi oleh Tim Operasional dan dikirimkan via WhatsApp.
             </p>
 
-            <div className="flex flex-col items-center gap-6 w-full max-w-sm">
-              <button
-                onClick={() => {
-                  setValidationPax(formData.targetJamaah || '');
-                  setShowValidationModal(true);
-                }}
-                disabled={isSaving}
-                className="w-full flex items-center justify-center gap-4 py-6 bg-[#26D971] hover:bg-[#1EBE5F] text-white font-black rounded-[2.5rem] shadow-[0_20px_40px_-10px_rgba(38,217,113,0.3)] text-sm uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            {/* 2 Pilihan Opsi Validasi */}
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-left">
+              {/* Opsi 1: Sudah Ada Jamaah & Siap Bayar */}
+              <div
+                onClick={() => setValidationOption('ready_to_pay')}
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                  validationOption === 'ready_to_pay'
+                    ? 'border-[#009B66] bg-emerald-50/50 shadow-md ring-2 ring-[#009B66]/20'
+                    : 'border-gray-200 hover:border-gray-300 bg-white shadow-sm'
+                }`}
               >
-                <div className="bg-white/20 p-2 rounded-lg">
-                  <MessageCircle className="w-6 h-6 fill-white" />
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 tracking-wider">
+                      ⚡ Prioritas Tinggi
+                    </span>
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        validationOption === 'ready_to_pay'
+                          ? 'bg-[#009B66] text-white'
+                          : 'border-2 border-gray-300'
+                      }`}
+                    >
+                      {validationOption === 'ready_to_pay' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </div>
+                  </div>
+                  <h4 className="text-sm font-black text-gray-900 mb-1.5 flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-[#009B66]" />
+                    1. Sudah Ada Jamaah & Siap Bayar
+                  </h4>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Jamaah sudah fix & siap bayar DP/pelunasan. Operasional langsung memprioritaskan locking seat & hotel.
+                  </p>
                 </div>
-                {isSaving ? "MEMPROSES..." : "AJUKAN VALIDASI VIA WA"}
+
+                {/* Input Pax if Opsi 1 selected */}
+                {validationOption === 'ready_to_pay' && (
+                  <div className="mt-4 pt-3 border-t border-emerald-200/80 space-y-1.5 animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
+                    <label className="block text-[10px] font-black text-emerald-900 uppercase tracking-wider">
+                      Jumlah Jamaah Siap Bayar:
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="1"
+                        value={validationPax}
+                        onChange={(e) => setValidationPax(e.target.value)}
+                        placeholder={formData.targetJamaah ? `${formData.targetJamaah} Pax` : "Contoh: 10"}
+                        className="w-full px-3 py-2 pr-12 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#009B66]"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">
+                        PAX
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Opsi 2: Belum Ada Jamaah */}
+              <div
+                onClick={() => setValidationOption('no_jamaah')}
+                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                  validationOption === 'no_jamaah'
+                    ? 'border-blue-600 bg-blue-50/50 shadow-md ring-2 ring-blue-500/20'
+                    : 'border-gray-200 hover:border-gray-300 bg-white shadow-sm'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 tracking-wider">
+                      📋 Validasi Standar
+                    </span>
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        validationOption === 'no_jamaah'
+                          ? 'bg-blue-600 text-white'
+                          : 'border-2 border-gray-300'
+                      }`}
+                    >
+                      {validationOption === 'no_jamaah' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </div>
+                  </div>
+                  <h4 className="text-sm font-black text-gray-900 mb-1.5 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    2. Belum Ada Jamaah
+                  </h4>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Paket dibuat untuk kebutuhan penawaran, promosi, atau pembuatan brosur. Tidak ada urgensi penguncian langsung saat ini.
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-blue-200/60">
+                  <span className="text-[10px] text-blue-700 font-bold uppercase tracking-wider">
+                    Cocok untuk tahap estimasi & pemasaran
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Catatan Tambahan (Opsional) */}
+            <div className="w-full text-left mb-8 bg-gray-50 border border-gray-200 p-4 rounded-2xl">
+              <label className="block text-[11px] font-black text-gray-700 uppercase tracking-wider mb-1.5">
+                Catatan Tambahan untuk Operasional (Opsional):
+              </label>
+              <textarea
+                value={validationNotes}
+                onChange={(e) => setValidationNotes(e.target.value)}
+                placeholder="Tuliskan catatan khusus atau pesan untuk tim operasional..."
+                rows={2}
+                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009B66] resize-none"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col items-center gap-3.5 w-full max-w-md">
+              <button
+                onClick={() => handleSave()}
+                disabled={isSaving}
+                className="w-full flex items-center justify-center gap-3 py-4.5 px-6 bg-[#26D971] hover:bg-[#1EBE5F] text-white font-black rounded-2xl shadow-lg shadow-[#26D971]/25 text-xs sm:text-sm uppercase tracking-wider transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              >
+                <div className="bg-white/20 p-1.5 rounded-lg">
+                  <MessageCircle className="w-5 h-5 fill-white" />
+                </div>
+                {isSaving 
+                  ? "MEMPROSES..." 
+                  : validationOption === 'ready_to_pay'
+                    ? "KIRIM VALIDASI PRIORITAS TINGGI KE WA"
+                    : "KIRIM VALIDASI STANDAR KE WA"}
+              </button>
+
+              <button
+                onClick={() => setShowValidationModal(true)}
+                className="text-xs font-bold text-gray-600 hover:text-gray-900 underline uppercase tracking-wider py-1"
+              >
+                Buka Pop-up Dialog Opsi
               </button>
               
               <button
                 onClick={onCancel}
-                className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[0.3em] hover:text-emerald-600 transition-colors py-2"
+                className="text-[10px] font-black text-[#94A3B8] uppercase tracking-[0.25em] hover:text-emerald-600 transition-colors py-2"
               >
                 KEMBALI KE DASHBOARD
               </button>

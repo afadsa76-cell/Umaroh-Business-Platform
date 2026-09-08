@@ -1156,8 +1156,8 @@ Tuliskan pertanyaan Sahabat di sini, dan mari kita rencanakan perjalanan ibadah 
   });
 
   // Task 10: Adjust TCP keep-alive and headers timeout for Cloud Run Load Balancer compatibility (connection reuse)
-  server.keepAliveTimeout = 65000;
-  server.headersTimeout = 66000;
+  (server as any).keepAliveTimeout = 65000;
+  (server as any).headersTimeout = 66000;
 
   // Register graceful shutdown manager with the node server instance
   GracefulShutdownManager.register(server);

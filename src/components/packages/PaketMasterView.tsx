@@ -32,6 +32,9 @@ interface PaketMaster {
   kuota: number;
   sisaKuota: number;
   status: 'draft' | 'published' | 'closed' | 'pending_validation' | 'expired' | 'archived';
+  kesiapanJamaah?: 'ready_to_pay' | 'no_jamaah';
+  jumlahJamaahSiapBayar?: number;
+  catatanValidasi?: string;
   createdAt?: { toDate: () => Date };
   tglBerangkat?: string;
   mitraId?: string;
@@ -977,6 +980,19 @@ export const PaketMasterView: React.FC = () => {
                         <div className="font-black italic text-gray-900 uppercase tracking-tighter text-sm group-hover:text-emerald-600 transition-colors">{paket.nama}</div>
                         <div className="text-[10px] text-gray-400 font-bold uppercase mt-1 line-clamp-1">{paket.deskripsi}</div>
                       </button>
+                      {paket.kesiapanJamaah && (
+                        <div className="mt-1 flex items-center gap-1.5">
+                          {paket.kesiapanJamaah === 'ready_to_pay' ? (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 tracking-wider">
+                              ⚡ Siap Bayar ({paket.jumlahJamaahSiapBayar || paket.kuota || 0} Pax)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 tracking-wider">
+                              📋 Belum Ada Jamaah
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {allTrackers.some(t => t.namaPaket === paket.nama) && (
                         <div className="mt-2 flex gap-1">
                           {(() => {

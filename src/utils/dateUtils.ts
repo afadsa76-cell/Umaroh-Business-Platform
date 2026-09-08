@@ -37,13 +37,33 @@ export const parseDate = (dateStr: string): Date | null => {
 };
 
 export const parseDateRange = (rangeStr: string): { start: Date | null, end: Date | null } => {
-  const parts = rangeStr.split(' TO ');
-  if (parts.length !== 2) return { start: null, end: null };
+  if (!rangeStr) return { start: null, end: null };
 
-  const start = parseDate(parts[0].trim());
-  const end = parseDate(parts[1].trim());
+  // First, look for two DD/MM/YYYY dates in the string (e.g. "27/02/2027 TO 09/03/2027 (20 RAMADAN TO 01 SHAWAL)")
+  const slashMatches = rangeStr.match(/(\d{1,2}\/\d{1,2}\/\d{4})[^\d]+(\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (slashMatches) {
+    const start = parseDate(slashMatches[1]);
+    const end = parseDate(slashMatches[2]);
+    if (start && end) return { start, end };
+  }
 
-  return { start, end };
+  // Next, split by ' TO ' taking the first two parts
+  const toParts = rangeStr.split(/\s+TO\s+/i);
+  if (toParts.length >= 2) {
+    const start = parseDate(toParts[0].trim());
+    const end = parseDate(toParts[1].trim());
+    if (start && end) return { start, end };
+  }
+
+  // Fallback: split by dash '-'
+  const dashParts = rangeStr.split(/\s+-\s+/);
+  if (dashParts.length >= 2) {
+    const start = parseDate(dashParts[0].trim());
+    const end = parseDate(dashParts[1].trim());
+    if (start && end) return { start, end };
+  }
+
+  return { start: null, end: null };
 };
 
 export const isDateInRange = (checkDate: Date, rangeStr: string): boolean => {
@@ -208,6 +228,118 @@ export const getUmrahSeasonAndPeriod = (date: Date, offset = 0): UmrahSeasonInfo
     year: h.year,
     season,
     periodText: `${h.monthName} ${h.year}H (${season})`
+  };
+};
+
+export type RamadhanProgramType = 'AWAL_RAMADHAN' | 'TENGAH_RAMADHAN' | 'ITIKAF_RAMADHAN' | 'FULL_RAMADHAN';
+
+export interface RamadhanProgramInfo {
+  isRamadhan: boolean;
+  programType?: RamadhanProgramType;
+  label: string;
+  shortLabel: string;
+  hijriDay: number;
+  hijriYear: number;
+  description: string;
+}
+
+export const detectRamadhanProgram = (
+  dateInput: Date | string | null | undefined,
+  durationDays = 9,
+  offset = 0
+): RamadhanProgramInfo => {
+  if (!dateInput) {
+    return {
+      isRamadhan: false,
+      label: "Bukan Periode Ramadhan",
+      shortLabel: "Non-Ramadhan",
+      hijriDay: 0,
+      hijriYear: 0,
+      description: "Tanggal belum ditentukan"
+    };
+  }
+
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (isNaN(date.getTime())) {
+    return {
+      isRamadhan: false,
+      label: "Bukan Periode Ramadhan",
+      shortLabel: "Non-Ramadhan",
+      hijriDay: 0,
+      hijriYear: 0,
+      description: "Format tanggal tidak valid"
+    };
+  }
+
+  const h = gregorianToHijri(date, offset);
+
+  // Check if departure or package period touches Ramadhan (month 9)
+  // Also check if departure in late Sya'ban (month 8, day >= 27) leads into Ramadhan
+  let isRamadhan = h.month === 9;
+  let effectiveDay = h.day;
+
+  if (h.month === 8 && h.day >= 27) {
+    // Starts right before Ramadhan, so it is Awal Ramadhan
+    isRamadhan = true;
+    effectiveDay = 1;
+  }
+
+  if (!isRamadhan) {
+    return {
+      isRamadhan: false,
+      label: "Bukan Periode Ramadhan",
+      shortLabel: "Non-Ramadhan",
+      hijriDay: h.day,
+      hijriYear: h.year,
+      description: `${h.day} ${h.monthName} ${h.year}H`
+    };
+  }
+
+  // Determine subprogram by duration or day
+  if (durationDays >= 25) {
+    return {
+      isRamadhan: true,
+      programType: 'FULL_RAMADHAN',
+      label: 'Full Ramadhan (1 Bulan Penuh / 30 Hari)',
+      shortLabel: 'Full Ramadhan',
+      hijriDay: effectiveDay,
+      hijriYear: h.year,
+      description: `Program 1 Bulan Penuh Ramadhan ${h.year}H`
+    };
+  }
+
+  if (effectiveDay <= 10) {
+    return {
+      isRamadhan: true,
+      programType: 'AWAL_RAMADHAN',
+      label: 'Awal Ramadhan (1 - 10 Ramadhan)',
+      shortLabel: 'Awal Ramadhan',
+      hijriDay: effectiveDay,
+      hijriYear: h.year,
+      description: `1 - 10 Ramadhan ${h.year}H`
+    };
+  }
+
+  if (effectiveDay <= 20) {
+    return {
+      isRamadhan: true,
+      programType: 'TENGAH_RAMADHAN',
+      label: 'Pertengahan Ramadhan (11 - 20 Ramadhan)',
+      shortLabel: 'Pertengahan Ramadhan',
+      hijriDay: effectiveDay,
+      hijriYear: h.year,
+      description: `11 - 20 Ramadhan ${h.year}H`
+    };
+  }
+
+  return {
+    isRamadhan: true,
+    programType: 'ITIKAF_RAMADHAN',
+    label: 'Itikaf / Akhir Ramadhan (21 - 30 Ramadhan / 10 Malam Terakhir)',
+    shortLabel: 'Itikaf Ramadhan (10 Malam Terakhir)',
+    hijriDay: effectiveDay,
+    hijriYear: h.year,
+    description: `20 Ramadhan - 01 Syawal ${h.year}H (Lailatul Qadr)`
   };
 };
 

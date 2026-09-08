@@ -30,6 +30,12 @@ export interface PriceEntry {
 export interface Season {
   range: string;
   prices: PriceEntry[];
+  pricingType?: 'PER_NIGHT' | 'FLAT_PACKAGE';
+  packageNights?: number;
+  isPackageBlock?: boolean;
+  programType?: 'AWAL_RAMADHAN' | 'TENGAH_RAMADHAN' | 'ITIKAF_RAMADHAN' | 'FULL_RAMADHAN' | 'REGULER' | string;
+  hijriInfo?: string;
+  notes?: string;
 }
 
 export interface Hotel {
@@ -42,6 +48,7 @@ export interface Hotel {
   bintang?: number;
   photo?: string;
   seasons: Season[];
+  isRamadhanPackage?: boolean;
 }
 
 export interface WizardHotel extends Partial<Hotel> {
@@ -144,6 +151,12 @@ export interface WizardFormData {
   marginBersih: number;
   ujrohPartner: number;
   markup: number;
+  // Ramadhan Specific Fields
+  subProgramRamadhan?: '' | 'REGULER' | 'AWAL_RAMADHAN' | 'TENGAH_RAMADHAN' | 'ITIKAF_RAMADHAN' | 'FULL_RAMADHAN' | string;
+  isRamadhanPackage?: boolean;
+  hotelMakkahPricingMode?: 'AUTO' | 'DAILY' | 'PACKAGE_BLOCK';
+  hotelMadinahPricingMode?: 'AUTO' | 'DAILY' | 'PACKAGE_BLOCK';
+  ramadhanHijriLabel?: string;
   // Additional fields used in calculations or UI
   wisataAddon_tourLeader?: boolean;
   wisataAddon_tourLeaderCount?: number;

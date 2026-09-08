@@ -8,6 +8,72 @@
     "stars": 5,
     "seasons": [
       {
+        "range": "27/02/2027 TO 09/03/2027",
+        "pricingType": "FLAT_PACKAGE",
+        "isPackageBlock": true,
+        "packageNights": 10,
+        "programType": "ITIKAF_RAMADHAN",
+        "hijriInfo": "20 RAMADAN TO 01 SHAWAL (10 MALAM / ITIKAF)",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 16000
+          },
+          {
+            "roomType": "Triple",
+            "price": 14000
+          },
+          {
+            "roomType": "Quad",
+            "price": 12000
+          }
+        ]
+      },
+      {
+        "range": "17/02/2027 TO 27/02/2027",
+        "pricingType": "FLAT_PACKAGE",
+        "isPackageBlock": true,
+        "packageNights": 10,
+        "programType": "TENGAH_RAMADHAN",
+        "hijriInfo": "10 RAMADAN TO 20 RAMADAN (10 MALAM / PERTENGAHAN)",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 11000
+          },
+          {
+            "roomType": "Triple",
+            "price": 9800
+          },
+          {
+            "roomType": "Quad",
+            "price": 8500
+          }
+        ]
+      },
+      {
+        "range": "08/02/2027 TO 17/02/2027",
+        "pricingType": "FLAT_PACKAGE",
+        "isPackageBlock": true,
+        "packageNights": 10,
+        "programType": "AWAL_RAMADHAN",
+        "hijriInfo": "01 RAMADAN TO 10 RAMADAN (10 MALAM / AWAL)",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 9500
+          },
+          {
+            "roomType": "Triple",
+            "price": 8500
+          },
+          {
+            "roomType": "Quad",
+            "price": 7500
+          }
+        ]
+      },
+      {
         "range": "28/07/2026 TO 31/08/2026",
         "prices": [
           {
@@ -119,6 +185,72 @@
     "mealPlan": "FB",
     "stars": 5,
     "seasons": [
+      {
+        "range": "27/02/2027 TO 09/03/2027",
+        "pricingType": "FLAT_PACKAGE",
+        "isPackageBlock": true,
+        "packageNights": 10,
+        "programType": "ITIKAF_RAMADHAN",
+        "hijriInfo": "20 RAMADAN TO 01 SHAWAL (10 MALAM / ITIKAF)",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 6500
+          },
+          {
+            "roomType": "Triple",
+            "price": 5500
+          },
+          {
+            "roomType": "Quad",
+            "price": 4800
+          }
+        ]
+      },
+      {
+        "range": "17/02/2027 TO 27/02/2027",
+        "pricingType": "FLAT_PACKAGE",
+        "isPackageBlock": true,
+        "packageNights": 10,
+        "programType": "TENGAH_RAMADHAN",
+        "hijriInfo": "10 RAMADAN TO 20 RAMADAN (10 MALAM / PERTENGAHAN)",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 4800
+          },
+          {
+            "roomType": "Triple",
+            "price": 4200
+          },
+          {
+            "roomType": "Quad",
+            "price": 3600
+          }
+        ]
+      },
+      {
+        "range": "08/02/2027 TO 17/02/2027",
+        "pricingType": "FLAT_PACKAGE",
+        "isPackageBlock": true,
+        "packageNights": 10,
+        "programType": "AWAL_RAMADHAN",
+        "hijriInfo": "01 RAMADAN TO 10 RAMADAN (10 MALAM / AWAL)",
+        "prices": [
+          {
+            "roomType": "Double",
+            "price": 4000
+          },
+          {
+            "roomType": "Triple",
+            "price": 3500
+          },
+          {
+            "roomType": "Quad",
+            "price": 3000
+          }
+        ]
+      },
       {
         "range": "28/07/2026 TO 31/08/2026",
         "prices": [

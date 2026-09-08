@@ -334,28 +334,40 @@ export const HotelCard: React.FC<HotelCardProps> = ({
       
       <div className="p-4 flex-grow overflow-auto">
         <div className="space-y-6">
-          {hotel.seasons && hotel.seasons.map((season, idx) => (
-            <div key={idx} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
-              <div className="flex items-start gap-2 mb-3 text-gray-700">
-                <Calendar className="w-4 h-4 mt-1 text-amber-600 flex-shrink-0" />
-                <span className="text-sm font-semibold uppercase tracking-wide">{season.range}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2">
-                {season.prices && season.prices.map((price, pIdx) => (
-                  <div key={pIdx} className="bg-gray-50 rounded-lg p-2 text-center border border-gray-100 hover:border-amber-200 transition-colors">
-                    <div className="text-xs text-gray-500 uppercase mb-1 truncate" title={price.roomType}>
-                      {price.roomType}
-                    </div>
-                    <div className="text-amber-700 font-bold text-lg">
-                      {Math.round(price.price)}
-                    </div>
-                    <div className="text-[10px] text-gray-400">SAR</div>
+          {hotel.seasons && hotel.seasons.map((season, idx) => {
+            const isFlat = season.pricingType === 'FLAT_PACKAGE' || season.isPackageBlock || (season.hijriInfo && season.hijriInfo.includes('RAMADAN'));
+            return (
+              <div key={idx} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                <div className="flex items-start justify-between gap-2 mb-2 text-gray-700 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span className="text-sm font-semibold uppercase tracking-wide">{season.range}</span>
                   </div>
-                ))}
+                  {isFlat && (
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-300 flex items-center gap-1">
+                      🌙 {season.hijriInfo || `Paket Blok (${season.packageNights || 10} Malam)`}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  {season.prices && season.prices.map((price, pIdx) => (
+                    <div key={pIdx} className="bg-gray-50 rounded-lg p-2 text-center border border-gray-100 hover:border-amber-200 transition-colors">
+                      <div className="text-xs text-gray-500 uppercase mb-1 truncate" title={price.roomType}>
+                        {price.roomType}
+                      </div>
+                      <div className="text-amber-700 font-bold text-lg">
+                        {Math.round(price.price)}
+                      </div>
+                      <div className={`text-[10px] font-semibold ${isFlat ? 'text-amber-600' : 'text-gray-400'}`}>
+                        SAR {isFlat ? '/ PAKET BLOK' : '/ MLM'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       

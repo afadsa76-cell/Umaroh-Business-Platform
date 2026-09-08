@@ -630,7 +630,7 @@ export const HotelView: React.FC<HotelViewProps> = ({ isVendorMode = false, vend
     setFormName(hotel.name);
     setFormCity(hotel.city as 'Madinah' | 'Makkah');
     setFormVendor(hotel.vendor);
-    setFormMealPlan(hotel.mealPlan);
+    setFormMealPlan((hotel.mealPlan as 'FB' | 'HB' | 'RO' | 'BB') || 'FB');
     setFormStars(hotel.stars || 4);
     
     const mappedSeasons = hotel.seasons.map(s => {

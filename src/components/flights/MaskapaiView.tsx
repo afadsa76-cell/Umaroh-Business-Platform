@@ -283,9 +283,8 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const [itemToDelete, setItemToDelete] = useState<Maskapai | null>(null);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-  // Auto-Hapus toggle & execution refs
-  const hasAttemptedInitialSeed = useRef(false);
-  const autoCleanupExecuted = useRef(false);
+  // Auto-Hapus toggle & execution tracker
+  const lastCleanupTimestamp = useRef<number>(0);
   const [autoCleanupActive, setAutoCleanupActive] = useState<boolean>(() => {
     try {
       const val = localStorage.getItem('maskapai_auto_cleanup_active');
@@ -319,16 +318,14 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       const unsub = onSnapshot(doc(db, 'umaroh_master_data', 'maskapai_deleted_registry'), (snap) => {
         if (snap.exists()) {
           const remoteIds = snap.data()?.deletedIds || [];
-          if (Array.isArray(remoteIds) && remoteIds.length > 0) {
-            setDeletedRegistry(prev => {
-              const next = new Set([...prev, ...remoteIds]);
-              try {
-                localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(Array.from(next)));
-              } catch (e) {
-                console.error(e);
-              }
-              return next;
-            });
+          if (Array.isArray(remoteIds)) {
+            const next = new Set(remoteIds);
+            setDeletedRegistry(next);
+            try {
+              localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(remoteIds));
+            } catch (e) {
+              console.error(e);
+            }
           }
         }
       }, (err) => {
@@ -384,6 +381,9 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const toggleAutoCleanup = () => {
     const next = !autoCleanupActive;
     setAutoCleanupActive(next);
+    if (next) {
+      lastCleanupTimestamp.current = 0; // Segera aktifkan pembersihan jika ada rute kedaluwarsa
+    }
     try {
       localStorage.setItem('maskapai_auto_cleanup_active', String(next));
     } catch (e) {
@@ -391,7 +391,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     }
     showToastMsg(
       next 
-        ? "Auto-Hapus Database DIAKTIFKAN: Jadwal kedaluwarsa & >3 hari no update otomatis dibersihkan." 
+        ? "Auto-Hapus Database DIAKTIFKAN: Jadwal kedaluwarsa, kursi habis & rute mati otomatis dibersihkan." 
         : "Auto-Hapus Database DINONAKTIFKAN: Mode manual aktif.",
       next ? "success" : "info"
     );
@@ -432,45 +432,16 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       const maskapaiList: Maskapai[] = [];
       
       snapshot.forEach((doc) => {
+        // Strict guard: Jangan masukkan data yang ada di deletedRegistry
+        if (deletedRegistryRef.current.has(doc.id)) {
+          return;
+        }
         const item = { id: doc.id, ...doc.data() } as Maskapai;
         maskapaiList.push(item);
       });
       
       setData(maskapaiList);
       setLoading(false);
-
-      // Inisialisasi awal HANYA jika koleksi database benar-benar kosong pertama kali.
-      // DILARANG re-sync item yang sudah dihapus oleh user/sistem (mencegah bug 'Auto-Resurrection').
-      if (!isVendorMode && maskapaiList.length === 0 && !hasAttemptedInitialSeed.current) {
-        hasAttemptedInitialSeed.current = true;
-        const today = new Date().toISOString().split('T')[0];
-        const validInitial = initialData.filter(item => {
-          if (deletedRegistryRef.current.has(item.id)) return false;
-          if (item.tanggalKeberangkatan && item.tanggalKeberangkatan < today) return false;
-          if (item.availableSeats !== undefined && item.availableSeats <= 0) return false;
-          return true;
-        });
-
-        if (validInitial.length > 0) {
-          console.log(`Database maskapai kosong, melakukan inisialisasi ${validInitial.length} rute aktif default...`);
-          const chunkSize = 400;
-          for (let i = 0; i < validInitial.length; i += chunkSize) {
-            const chunk = validInitial.slice(i, i + chunkSize);
-            const batch = writeBatch(db);
-            chunk.forEach((item) => {
-              const itemRef = doc(db, 'maskapai', item.id);
-              const seedPayload = {
-                ...item,
-                updatedAt: item.updatedAt || new Date().toISOString()
-              };
-              batch.set(itemRef, seedPayload, { merge: true });
-            });
-            batch.commit()
-              .then(() => console.log('Inisialisasi awal maskapai selesai.'))
-              .catch(err => console.error('Inisialisasi awal maskapai gagal:', err));
-          }
-        }
-      }
     }, (error) => {
       console.error("Error fetching maskapai:", error);
       setLoading(false);
@@ -681,7 +652,13 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
 
   const getUpdateStatusText = (item: Maskapai) => {
     if (!item.updatedAt) {
-      return { text: 'Belum diupdate', days: 999, isStale: true };
+      // Jika tidak ada updatedAt, cek apakah jadwal masih di masa depan & kuota masih ada
+      const isFuture = Boolean(item.tanggalKeberangkatan && item.tanggalKeberangkatan >= todayStr);
+      return { 
+        text: isFuture ? 'Tersedia' : 'Belum diupdate', 
+        days: isFuture ? 0 : 999, 
+        isStale: !isFuture 
+      };
     }
     try {
       const updatedDate = new Date(item.updatedAt);
@@ -726,21 +703,26 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
 
   // Eksekusi otomatis Database Optimization Engine saat terdeteksi data kedaluwarsa & mode aktif
   useEffect(() => {
-    if (isVendorMode || loading || data.length === 0 || !autoCleanupActive) return;
-    if (autoCleanupExecuted.current) return;
+    if (isVendorMode || loading || data.length === 0 || !autoCleanupActive || isCleaning) return;
+
+    // Cooldown 10 detik agar tidak membebani Firestore secara agresif
+    if (Date.now() - lastCleanupTimestamp.current < 10000) return;
 
     const outdated = data.filter(item => checkFlightStatus(item).isOutdated);
     if (outdated.length > 0) {
-      autoCleanupExecuted.current = true;
       const timer = setTimeout(() => {
+        lastCleanupTimestamp.current = Date.now();
         console.log(`[Auto-Hapus Engine] Menjalankan pembersihan otomatis untuk ${outdated.length} rute kedaluwarsa / mati...`);
         executeCleanupDatabase(true);
-      }, 1200);
+      }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [loading, data.length, autoCleanupActive, isVendorMode]);
+  }, [loading, data, autoCleanupActive, isVendorMode, isCleaning]);
 
   const filteredData = data.filter(item => {
+    // Saring data yang sudah terdaftar dalam deletedRegistry
+    if (deletedRegistry.has(item.id)) return false;
+
     const matchesSearch =
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.tanggalKeberangkatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -831,9 +813,13 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     }
 
     setIsCleaning(true);
+    const idsToDelete = outdated.map(item => item.id);
+    // Optimistic UI removal: langsung buang dari data & catat di deletedRegistry
+    setData(prev => prev.filter(x => !idsToDelete.includes(x.id)));
+    await recordDeletedIds(idsToDelete);
+
     try {
       const batchLength = 100;
-      const idsToDelete = outdated.map(item => item.id);
       for (let i = 0; i < outdated.length; i += batchLength) {
         const batch = writeBatch(db);
         const chunk = outdated.slice(i, i + batchLength);
@@ -842,7 +828,6 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         });
         await batch.commit();
       }
-      await recordDeletedIds(idsToDelete);
       if (!silent) {
         showToastMsg(`Berhasil! ${outdated.length} data maskapai tidak aktif telah dihapus permanen dari database.`, "success");
       } else {
@@ -1799,9 +1784,11 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                 onClick={async () => {
                   const targetItem = itemToDelete;
                   setItemToDelete(null);
+                  // Optimistic UI removal: langsung buang dari data & catat di deletedRegistry
+                  setData(prev => prev.filter(x => x.id !== targetItem.id));
+                  await recordDeletedIds([targetItem.id]);
                   try {
                     await deleteDoc(doc(db, 'maskapai', targetItem.id));
-                    await recordDeletedIds([targetItem.id]);
                     showToastMsg("Berhasil menghapus data maskapai", "success");
                   } catch (err) {
                     handleFirestoreError(err, OperationType.DELETE, `maskapai/${targetItem.id}`);
@@ -1840,11 +1827,18 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                 disabled={isDeletingSelected}
                 onClick={async () => {
                   setIsDeletingSelected(true);
+                  const idsToDelete = [...selectedIds];
+                  // Optimistic UI removal: langsung buang dari data & catat di deletedRegistry
+                  setData(prev => prev.filter(x => !idsToDelete.includes(x.id)));
+                  setSelectedIds([]);
+                  setShowBatchDeleteModal(false);
+                  await recordDeletedIds(idsToDelete);
+
                   try {
                     const chunks: string[][] = [];
                     const chunkSize = 400;
-                    for (let i = 0; i < selectedIds.length; i += chunkSize) {
-                      chunks.push(selectedIds.slice(i, i + chunkSize));
+                    for (let i = 0; i < idsToDelete.length; i += chunkSize) {
+                      chunks.push(idsToDelete.slice(i, i + chunkSize));
                     }
 
                     for (const chunk of chunks) {
@@ -1855,10 +1849,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                       await batch.commit();
                     }
 
-                    await recordDeletedIds(selectedIds);
-                    showToastMsg(`Berhasil menghapus ${selectedIds.length} data maskapai`, "success");
-                    setSelectedIds([]);
-                    setShowBatchDeleteModal(false);
+                    showToastMsg(`Berhasil menghapus ${idsToDelete.length} data maskapai`, "success");
                   } catch (err) {
                     console.error(err);
                     showToastMsg("Gagal menghapus data maskapai", "error");
