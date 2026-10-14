@@ -11,10 +11,14 @@ export const useMaskapai = () => {
     const q = collection(db, 'maskapai');
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as Maskapai[];
+      const remoteIds = new Set(snapshot.docs.map(doc => doc.id));
+      const data = [
+        ...snapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        })) as Maskapai[],
+        ...initialData.filter(item => !remoteIds.has(item.id))
+      ];
       
       // Filter out expired flights (departure/return past, 0 seats, or stale for >= 3 days)
       const today = new Date().toISOString().split('T')[0];

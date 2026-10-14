@@ -46,6 +46,18 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
   if (!text) return [];
   const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   
+  // Auto-detect vendor if customVendor is not explicitly specified or default
+  let detectedVendor = customVendor;
+  if (!detectedVendor || detectedVendor === 'PT. Darmawisata Indonesia') {
+    if (text.toUpperCase().includes('BURGUNDY')) {
+      detectedVendor = 'PT. BURGUNDY WISATA INTERNATIONAL';
+    } else if (text.toUpperCase().includes('DAHLIA')) {
+      detectedVendor = 'IBU DAHLIA';
+    } else if (text.toUpperCase().includes('NQH')) {
+      detectedVendor = 'NQH WISATA';
+    }
+  }
+
   // Extract global price if present
   let defaultPrice = manualPrice || 0;
   if (!defaultPrice) {
@@ -88,7 +100,7 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         let programHeader = "";
         if (i > 0) {
           const prevLine = lines[i - 1].replace(/\*/g, '').replace(/_/g, '').trim();
-          if (prevLine.toUpperCase().includes('PROG') || prevLine.toUpperCase().includes(' JED') || prevLine.toUpperCase().includes(' D')) {
+          if (prevLine.toUpperCase().includes('PROG') || prevLine.toUpperCase().includes(' JED') || prevLine.toUpperCase().includes(' D') || prevLine.toUpperCase().includes('MED')) {
             programHeader = prevLine;
           }
         }
@@ -98,6 +110,12 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         
         let seatLine = "";
         let availableSeats = 45;
+        
+        // Check program header first for seat specification (e.g., "JEDMED - 9D - 19 PAX")
+        const headerSeatMatch = programHeader.match(/(?:pax|hk)\s*(\d+)/i) || programHeader.match(/(\d+)\s*(?:pax|hk)/i);
+        if (headerSeatMatch) {
+          availableSeats = parseInt(headerSeatMatch[1]) || 45;
+        }
         
         for (let j = nextFlightIdx + 1; j <= nextFlightIdx + 3 && j < lines.length; j++) {
           const nextLineClean = lines[j].replace(/\*/g, '').replace(/_/g, '').trim();
@@ -109,7 +127,7 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
             seatLine = nextLineClean;
             const seatMatch = nextLineClean.match(/(?:pax|hk)\s*(\d+)/i) || nextLineClean.match(/(\d+)\s*(?:pax|hk)/i);
             if (seatMatch) {
-              availableSeats = parseInt(seatMatch[1]) || 45;
+              availableSeats = parseInt(seatMatch[1]) || availableSeats;
             }
             break;
           }
@@ -151,22 +169,31 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         else if (flightNo.startsWith('EK')) name = "EMIRATES";
         else if (flightNo.startsWith('EY')) name = "ETIHAD AIRWAYS";
         
-        const route = match1[3].toUpperCase();
-        const originCity = route.substring(0, 3);
-        const destCity = route.substring(3, 6);
+        const outRoute = match1[3].toUpperCase();
+        const retRoute = match2[3].toUpperCase();
+        const originCity = outRoute.substring(0, 3);
+        const outDest = outRoute.substring(3, 6);
+        const retOrigin = retRoute.substring(0, 3);
+        const retDest = retRoute.substring(3, 6);
+        
+        let destinationCityName = outDest === 'JED' ? 'JEDDAH (JED)' : (outDest === 'MED' ? 'MADINAH (MED)' : outDest);
+        if (outDest !== retOrigin && (retOrigin === 'MED' || retOrigin === 'JED')) {
+          destinationCityName = `JEDDAH (JED) / MEDINAH (MED)`;
+        }
+        const ruteLabel = `${originCity} - ${outDest} / ${retOrigin} - ${retDest}`;
         
         const progMatch = programHeader.match(/(\d+)\s*D/i);
         const programDays = progMatch ? parseInt(progMatch[1]) : 9;
         
         flights.push({
           name,
-          namaVendor: customVendor || "PT. Darmawisata Indonesia",
-          ruteLabel: `${originCity} - ${destCity} / ${destCity} - ${originCity}`,
+          namaVendor: detectedVendor || customVendor || "PT. Darmawisata Indonesia",
+          ruteLabel,
           originCityName: originCity === 'CGK' ? 'JAKARTA (CGK)' : originCity,
-          destinationCityName: destCity === 'JED' ? 'JEDDAH (JED)' : (destCity === 'MED' ? 'MADINAH (MED)' : destCity),
+          destinationCityName,
           tanggalKeberangkatan: tglBerangkat,
           tanggalKepulangan: tglKepulangan,
-          totalSeats: 45,
+          totalSeats: availableSeats,
           availableSeats: availableSeats,
           hargaSetoran: defaultPrice,
           hargaBeli: defaultPrice,
@@ -430,6 +457,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const maskapaiList: Maskapai[] = [];
+      const remoteIds = new Set<string>();
       
       snapshot.forEach((doc) => {
         // Strict guard: Jangan masukkan data yang ada di deletedRegistry
@@ -438,13 +466,31 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         }
         const item = { id: doc.id, ...doc.data() } as Maskapai;
         maskapaiList.push(item);
+        remoteIds.add(doc.id);
       });
       
-      setData(maskapaiList);
+      // Merge initialData items that are not in remote Firestore yet
+      const mergedList = [...maskapaiList];
+      initialData.forEach((staticItem) => {
+        if (!remoteIds.has(staticItem.id) && !deletedRegistryRef.current.has(staticItem.id)) {
+          if (isVendorMode && vendorName && staticItem.namaVendor !== vendorName) {
+            return;
+          }
+          mergedList.push(staticItem);
+        }
+      });
+
+      setData(mergedList);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching maskapai:", error);
       setLoading(false);
+      const fallbackList = initialData.filter(item => {
+        if (deletedRegistryRef.current.has(item.id)) return false;
+        if (isVendorMode && vendorName && item.namaVendor !== vendorName) return false;
+        return true;
+      });
+      setData(fallbackList);
       handleFirestoreError(error, OperationType.GET, 'maskapai');
     });
 

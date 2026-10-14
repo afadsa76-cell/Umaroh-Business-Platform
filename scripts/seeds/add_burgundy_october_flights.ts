@@ -1,0 +1,235 @@
+import { AdminDatabaseResolver } from '../../src/core/firestore/AdminDatabaseResolver';
+import firebaseConfig from '../../firebase-applet-config.json';
+
+export const burgundyOctoberFlights = [
+  {
+    id: "ptburgundy-sv-20oct-9d-19pax-jedmed",
+    name: "SAUDIA AIRLINES CGK-JED/MED (09D) (19 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 9,
+    tanggalKeberangkatan: "2026-10-20",
+    tanggalKepulangan: "2026-10-27",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED) / MEDINAH (MED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 19,
+    availableSeats: 19,
+    ruteLabel: "CGK - JED / MED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDMED - 9D - 19 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n20OCT SV827 CGKJED 0040 0635\n27OCT SV820 MEDCGK 2045 1025+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-22oct-9d-20pax-jedmed-sv817",
+    name: "SAUDIA AIRLINES CGK-JED/MED (09D) (20 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 9,
+    tanggalKeberangkatan: "2026-10-22",
+    tanggalKepulangan: "2026-10-29",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED) / MEDINAH (MED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 20,
+    availableSeats: 20,
+    ruteLabel: "CGK - JED / MED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDMED - 9D - 20 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n22OCT SV817 CGKJED 0910 1440\n29OCT SV820 MEDCGK 2045 1025+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-22oct-9d-16pax-jedmed-sv827",
+    name: "SAUDIA AIRLINES CGK-JED/MED (09D) (16 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 9,
+    tanggalKeberangkatan: "2026-10-22",
+    tanggalKepulangan: "2026-10-29",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED) / MEDINAH (MED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 16,
+    availableSeats: 16,
+    ruteLabel: "CGK - JED / MED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDMED - 9D - 16 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n22OCT SV827 CGKJED 0040 0610\n29OCT SV820 MEDCGK 2045 1025+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-20oct-14d-19pax-jedjed",
+    name: "SAUDIA AIRLINES CGK-JED (14D) (19 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 14,
+    tanggalKeberangkatan: "2026-10-20",
+    tanggalKepulangan: "2026-11-01",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 19,
+    availableSeats: 19,
+    ruteLabel: "CGK - JED / JED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDJED - 14D - 19 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n20OCT SV827 CGKJED 0040 0640\n01NOV SV822 JEDCGK 1255 0240+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-22oct-14d-20pax-jedmed-sv817",
+    name: "SAUDIA AIRLINES CGK-JED/MED (14D) (20 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 14,
+    tanggalKeberangkatan: "2026-10-22",
+    tanggalKepulangan: "2026-11-03",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED) / MEDINAH (MED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 20,
+    availableSeats: 20,
+    ruteLabel: "CGK - JED / MED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDMED - 14D - 20 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n22OCT SV817 CGKJED 1000 1555\n03NOV SV820 MEDCGK 1630 0620+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-22oct-14d-16pax-jedmed-sv827",
+    name: "SAUDIA AIRLINES CGK-JED/MED (14D) (16 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 14,
+    tanggalKeberangkatan: "2026-10-22",
+    tanggalKepulangan: "2026-11-03",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED) / MEDINAH (MED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 16,
+    availableSeats: 16,
+    ruteLabel: "CGK - JED / MED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDMED- 14D - 16 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n22OCT SV827 CGKJED 0040 0635\n03NOV SV820 MEDCGK 1630 0620+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-23oct-9d-13pax-jedjed",
+    name: "SAUDIA AIRLINES CGK-JED (09D) (13 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 9,
+    tanggalKeberangkatan: "2026-10-23",
+    tanggalKepulangan: "2026-10-30",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 13,
+    availableSeats: 13,
+    ruteLabel: "CGK - JED / JED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDJED - 9D - 13 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n23OCT SV817 CGKJED 0910 1440\n30OCT SV822 JEDCGK 1255 0240+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-24oct-10d-23pax-jedjed-sv817",
+    name: "SAUDIA AIRLINES CGK-JED (10D) (23 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 10,
+    tanggalKeberangkatan: "2026-10-24",
+    tanggalKepulangan: "2026-11-01",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 23,
+    availableSeats: 23,
+    ruteLabel: "CGK - JED / JED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDJED - 10D - 23 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n24OCT SV817 CGKJED 0910 1440\n01NOV SV822 JEDCGK 1255 0240+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-24oct-10d-14pax-jedjed-sv827",
+    name: "SAUDIA AIRLINES CGK-JED (10D) (14 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 10,
+    tanggalKeberangkatan: "2026-10-24",
+    tanggalKepulangan: "2026-11-01",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 14,
+    availableSeats: 14,
+    ruteLabel: "CGK - JED / JED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDJED - 10D - 14 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n24OCT SV827 CGKJED 0040 0610\n01NOV SV822 JEDCGK 1255 0240+1",
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "ptburgundy-sv-30oct-12d-20pax-jedjed",
+    name: "SAUDIA AIRLINES CGK-JED (12D) (20 PAX)",
+    hargaBeli: 16000000,
+    hargaJual: 16300000,
+    margin: 300000,
+    persen: 1.88,
+    programDays: 12,
+    tanggalKeberangkatan: "2026-10-30",
+    tanggalKepulangan: "2026-11-09",
+    originCityName: "JAKARTA (CGK)",
+    destinationCityName: "JEDDAH (JED)",
+    namaVendor: "PT. BURGUNDY WISATA INTERNATIONAL",
+    totalSeats: 20,
+    availableSeats: 20,
+    ruteLabel: "CGK - JED / JED - CGK",
+    hargaSetoran: 16000000,
+    tipePenerbangan: "DIRECT",
+    flightItinerary: "*PT. BURGUNDY WISATA INTERNATIONAL*\n*JEDJED - 12D - 20 PAX*\n*HARGA : 16.xxx.xxx (BY REQUEST)*\n30OCT SV819 CGKJED 1730 2325\n09NOV SV822 JEDCGK 1255 0240+1",
+    updatedAt: new Date().toISOString()
+  }
+];
+
+async function seedBurgundyFlights() {
+  const dbId = firebaseConfig.firestoreDatabaseId;
+  console.log(`Connecting via AdminDatabaseResolver to database: ${dbId}`);
+  const db = AdminDatabaseResolver.getDatabase(dbId);
+
+  console.log(`Seeding ${burgundyOctoberFlights.length} Burgundy October flights into Firestore maskapai collection...`);
+  for (const item of burgundyOctoberFlights) {
+    const docRef = db.collection('maskapai').doc(item.id);
+    await docRef.set(item, { merge: true });
+    console.log(`Synchronized: ${item.id} - ${item.name}`);
+  }
+  console.log('All 10 Burgundy flights seeded successfully into Firestore!');
+  process.exit(0);
+}
+
+seedBurgundyFlights().catch(err => {
+  console.error('Failed to seed:', err);
+  process.exit(1);
+});
