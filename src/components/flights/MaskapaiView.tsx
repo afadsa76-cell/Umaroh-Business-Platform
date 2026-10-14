@@ -54,6 +54,7 @@ const getAirlineFromCode = (code: string): string => {
     case 'SV': return 'SAUDIA AIRLINES';
     case 'GA': return 'GARUDA INDONESIA';
     case 'QR': return 'QATAR AIRWAYS';
+    case 'ET': return 'ETHIOPIAN AIRLINES';
     case 'EK': return 'EMIRATES';
     case 'EY': return 'ETIHAD AIRWAYS';
     case 'MH': return 'MALAYSIA AIRLINES';
@@ -69,10 +70,13 @@ const getAirlineFromCode = (code: string): string => {
     case 'CZ': return 'CHINA SOUTHERN';
     case 'JT': return 'LION AIR';
     case 'ID': return 'BATIK AIR';
+    case 'QG': return 'CITILINK';
     case 'XY': return 'FLYNAS';
     case 'KU': return 'KUWAIT AIRWAYS';
     case 'GF': return 'GULF AIR';
     case 'FZ': return 'FLYDUBAI';
+    case 'J9': return 'JAZEERA AIRWAYS';
+    case 'MS': return 'EGYPTAIR';
     default: return `${c} AIRLINES`;
   }
 };
@@ -175,32 +179,34 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
     return `${year}-${mm}-${dd}`;
   };
 
-  // Extract global price if present
+  // Extract global price if present (support "HARGA : 14.200.000", "HARGA = 14.200.000", "Rp 14.200.000", "NETT: 14.200.000")
   let defaultPrice = manualPrice || 0;
   if (!defaultPrice) {
-    const priceRegex = /harga\s*(?:rp\.?\s*)?([\d.]+)/i;
+    const priceRegex = /(?:harga|nett?|tarif|setoran|biaya)\s*[:=]?\s*(?:rp\.?\s*|idr\s*)?([\d.]+)/i;
+    const fallbackPriceRegex = /(?:rp\.?|idr)\s*([\d.]+)/i;
     for (const line of lines) {
-      const match = line.match(priceRegex);
+      const clean = line.replace(/[*_]/g, '').trim();
+      const match = clean.match(priceRegex) || clean.match(fallbackPriceRegex);
       if (match) {
-        defaultPrice = parseInt(match[1].replace(/\./g, '')) || 0;
-        break;
+        const p = parseInt(match[1].replace(/\./g, ''));
+        if (p >= 1000000) {
+          defaultPrice = p;
+          break;
+        }
       }
     }
   }
 
   const flights: ParsedFlightItem[] = [];
 
-  // Pattern A: GDS Line (Amadeus, Sabre, Galileo, Travelport, Promo WA/Telegram)
+  // Pattern A: GDS Line (Amadeus, Sabre, Galileo, Travelport, Ethiopian, Qatar, Saudia, Oman)
   // Handles:
   // "1  QR 959 G 06DEC 7 CGKDOH HK45 0845 1325 1A/E"
-  // "2  QR1188 G 06DEC 7 DOHJED HK45 1755 2035 1A/E"
-  // "3  QR1187 G 16DEC 3 JEDDOH HK45 1930 2150 E"
-  // "4  QR 956 G 17DEC 4 DOHCGK HK45 0240 1510 E"
+  // "1 ET 629U 31OCT J CGKADD*HK30 2050  0605   01NOV"
+  // "4 ET 443U 18NOV W MEDADD*KK45 0350  0650  /E"
   // "1 WY 850G 01FEB M CGKMCT*HK45 1355 1830 /E"
-  // "1 QR 955 23FEB CGKDOH HK40 0020 0500"
-  // "4 QR 958 G 27JAN 3 DOHCGK HK45 1845 0715+1 1A/E"
-  // "3 QR1189 G 19FEB 5 JEDDOH HK45 1 2205 0025+1 1A/E"
-  const gdsSegmentRegex = /^\s*(\d{1,2})\s+([A-Z0-9]{2})\s*(\d+[A-Z]?)(?:\s+([A-Z]))?\s+(\d{1,2}[A-Za-z]{3})(?:\s+([1-7]|[A-Za-z]{1,3}))?\s+([A-Za-z]{3})\s*([A-Za-z]{3})(?:[\s*]*(?:HK|DK|RR|TK|KL|HL|SS|NN|NO)\s*(\d+))?(?:\s+[0-9A-Za-z])?\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
+  const gdsSegmentRegex = /^\s*(\d{1,2})\s+([A-Z0-9]{2})\s*(\d+[A-Z]?)(?:\s+([A-Z]))?\s+(\d{1,2}[A-Za-z]{3})(?:\s+([1-7]|[A-Za-z]{1,3}))?\s+([A-Za-z]{3})\s*([A-Za-z]{3})(?:[\s*]*(?:HK|KK|DK|RR|TK|KL|HL|SS|NN|NO)\s*(\d+))?(?:\s+[0-9A-Za-z])?\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
+  const arnkRegex = /^\s*(\d{1,2})?\s*ARNK\b/i;
   
   // Pattern B: Standard Direct Line like "01NOV SV827 CGKJED 0040 0610"
   const directFlightRegex = /(\d{2}[A-Za-z]{3})\s+([A-Za-z]{2}\d+[A-Za-z]?)\s+([A-Za-z]{6})\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
@@ -227,18 +233,28 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
     const gdsMatch = cleanLine.match(gdsSegmentRegex);
     if (gdsMatch && gdsMatch[1] === '1') {
       let headerLine = "";
-      for (let back = 1; back <= 4 && i - back >= 0; back++) {
+      let blockPnr = "";
+
+      for (let back = 1; back <= 5 && i - back >= 0; back++) {
         const candidate = lines[i - back].replace(/[*_]/g, '').trim();
-        if (candidate.includes('/') || candidate.match(/\b\d+\s*D\b/i) || candidate.match(/[\d.]+000/)) {
+        if (!headerLine && (candidate.includes('/') || candidate.match(/\b\d+\s*D\b/i) || candidate.match(/[\d.]+000/))) {
           headerLine = candidate;
-          break;
+        }
+        if (!blockPnr) {
+          const pnrMatch = candidate.match(/^([A-Z0-9]{6})$/i) || candidate.match(/\b([A-Z0-9]{6})\b/i);
+          if (pnrMatch) {
+            const token = pnrMatch[1].toUpperCase();
+            if (!token.includes('PROGRA') && !token.includes('UPDATE') && !token.includes('AIRLIN') && !token.includes('HARGA')) {
+              blockPnr = token;
+            }
+          }
         }
       }
       if (!headerLine && i > 0) {
         headerLine = lines[i - 1].replace(/[*_]/g, '').trim();
       }
 
-      // Collect all segments
+      // Collect all segments (including surface ARNK sectors)
       const segments: Array<{ seq: number; carrier: string; flightNo: string; cls?: string; dateStr: string; dow?: string; from: string; to: string; seats?: number; depTime: string; arrTime: string; raw: string }> = [];
       const segmentRawLines: string[] = [];
       let currentIdx = i;
@@ -263,6 +279,9 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
           });
           segmentRawLines.push(lines[currentIdx]);
           currentIdx++;
+        } else if (arnkRegex.test(segLineClean)) {
+          segmentRawLines.push(lines[currentIdx]);
+          currentIdx++;
         } else {
           break;
         }
@@ -271,7 +290,6 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
       if (segments.length >= 2) {
         let blockPrice = defaultPrice;
         let blockDays = 9;
-        let blockPnr = "";
 
         const headerPnrMatch = headerLine.match(/(?:[A-Z0-9]+)\/([A-Z0-9\s]+)\/(\d+)\s*D\s*\/([\d.]+)/i);
         if (headerPnrMatch) {
@@ -283,6 +301,16 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
           if (daysMatch) blockDays = parseInt(daysMatch[1]);
           const priceMatch = headerLine.match(/([\d.]+000)/);
           if (priceMatch) blockPrice = parseInt(priceMatch[1].replace(/\./g, '')) || blockPrice;
+        }
+
+        if (!blockPrice) {
+          blockPrice = defaultPrice;
+        }
+
+        let headerSeats: number | undefined;
+        if (headerLine) {
+          const hsMatch = headerLine.match(/(?:hk|kk|pax)\s*(\d+)/i) || headerLine.match(/(\d+)\s*(?:hk|kk|pax)/i);
+          if (hsMatch) headerSeats = parseInt(hsMatch[1]);
         }
 
         const leg1 = segments[0];
@@ -319,7 +347,7 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         }
 
         const seatSegment = segments.find(s => s.seats !== undefined);
-        const availableSeats = seatSegment?.seats || leg1.seats || 45;
+        const availableSeats = seatSegment?.seats || headerSeats || leg1.seats || 45;
         const isTransit = segments.length > 2;
 
         let ruteLabel = `${originCode} - ${outDestCode} / ${retOriginCode} - ${retDestCode}`;
@@ -2807,6 +2835,51 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                     className="text-[11px] bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold px-2.5 py-1 rounded-lg transition-colors border border-purple-200/50"
                   >
                     Qatar Airways (14 Rute 2026/2027)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkActiveTab('text');
+                      setBulkVendorInput('PT AZZA BAROKAH MADINAH');
+                      setBulkYearInput('auto');
+                      setBulkText(`*AVAILABLE ETIOPHIAN AIRLINES*
+
+UPDATE : 14 OCT
+
+*HARGA : 14.200.000*
+
+SFKDXX                                           
+PROGRAM 13D - HK 30             
+1 ET 629U 31OCT J CGKADD*HK30 2050  0605   01NOV 
+2 ET 462U 01NOV S ADDJED*HK30 1100  1330  /E     
+3 ET 463U 11NOV W JEDADD*HK30 1520  1750  /E     
+4 ET 628U 11NOV W ADDCGK*HK30 2355  1730   12NOV
+
+EHLDXX                                            
+PROGRAM 10D - HK 45
+1 ET 629U 01NOV S CGKADD*HK45 2050  0605   02NOV 
+2 ET 462U 02NOV M ADDJED*HK45 1100  1330  /E     
+3 ET 463U 09NOV M JEDADD*HK45 1520  1750  /E     
+4 ET 628U 09NOV M ADDCGK*HK45 2355  1730   10NOV
+
+OEEDXX                                           
+PROGRAM 10D - HK45 (FREE STPC + CITY TOUR)
+1 ET 629U 10NOV T CGKADD*HK45 2050  0605   11NOV
+2 ET 462U 11NOV W ADDJED*HK45 1100  1330  /E    
+3   ARNK                                        
+4 ET 443U 18NOV W MEDADD*KK45 0350  0650  /E    
+5 ET 628U 18NOV W ADDCGK*KK45 2355  1730   19NOV
+
+AZOQXX                                           
+PROGRAM 10D - HK 40
+1 ET 629U 01DEC T CGKADD*HK40 2050  0605   02DEC
+2 ET 462U 02DEC W ADDJED*HK40 1100  1330  /E    
+3 ET 463U 09DEC W JEDADD*KK40 1520  1750  /E    
+4 ET 628U 09DEC W ADDCGK*HK40 2355  1730   10DEC`);
+                    }}
+                    className="text-[11px] bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold px-2.5 py-1 rounded-lg transition-colors border border-amber-200/50"
+                  >
+                    Ethiopian Airlines (4 Rute)
                   </button>
                   <button
                     type="button"
