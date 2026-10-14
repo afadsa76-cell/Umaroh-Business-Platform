@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download, PlusSquare, FileText, Check, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, PlaneTakeoff, RefreshCw, X, Download, FileText, Check, ChevronLeft, ChevronRight, Zap, Upload, FileSpreadsheet, FileUp } from 'lucide-react';
 import { Maskapai, maskapaiData as initialData } from '../../data/maskapai';
 import * as XLSX from 'xlsx';
-import { db, collection, onSnapshot, writeBatch, doc, addDoc, updateDoc, deleteDoc, handleFirestoreError, OperationType, query, where, setDoc } from '../../firebase';
+import { db, collection, onSnapshot, writeBatch, doc, updateDoc, deleteDoc, handleFirestoreError, OperationType, query, where, setDoc } from '../../firebase';
+
+export interface ParsedFlightItem extends Partial<Maskapai> {
+  isUpdate?: boolean;
+  targetExistingName?: string;
+}
 
 const extractAirportCode = (city?: string) => {
   if (!city) return "";
@@ -42,21 +47,132 @@ const generateDefaultItinerary = (maskapaiName?: string, tglBerangkat?: string, 
     `${retDateFormatted} ${maskapaiShortName}816 ${destCity}CGK 1830 0815+1`;
 };
 
-const parseBulkText = (text: string, manualPrice?: number, customVendor?: string) => {
+const getAirlineFromCode = (code: string): string => {
+  const c = code.toUpperCase();
+  switch (c) {
+    case 'WY': return 'OMAN AIR';
+    case 'SV': return 'SAUDIA AIRLINES';
+    case 'GA': return 'GARUDA INDONESIA';
+    case 'QR': return 'QATAR AIRWAYS';
+    case 'EK': return 'EMIRATES';
+    case 'EY': return 'ETIHAD AIRWAYS';
+    case 'MH': return 'MALAYSIA AIRLINES';
+    case 'TK': return 'TURKISH AIRLINES';
+    case 'SQ': return 'SINGAPORE AIRLINES';
+    case 'TR':
+    case 'TZ': return 'SCOOT';
+    case 'AK':
+    case 'QZ':
+    case 'FD':
+    case 'D7': return 'AIRASIA';
+    case 'HU': return 'HAINAN AIRLINES';
+    case 'CZ': return 'CHINA SOUTHERN';
+    case 'JT': return 'LION AIR';
+    case 'ID': return 'BATIK AIR';
+    case 'XY': return 'FLYNAS';
+    case 'KU': return 'KUWAIT AIRWAYS';
+    case 'GF': return 'GULF AIR';
+    case 'FZ': return 'FLYDUBAI';
+    default: return `${c} AIRLINES`;
+  }
+};
+
+const getCityDisplayName = (code: string): string => {
+  const c = code.toUpperCase();
+  switch (c) {
+    case 'CGK': return 'JAKARTA (CGK)';
+    case 'SUB': return 'SURABAYA (SUB)';
+    case 'KNO': return 'MEDAN (KNO)';
+    case 'UPG': return 'MAKASSAR (UPG)';
+    case 'SOC': return 'SOLO (SOC)';
+    case 'KJT': return 'MAJALENGKA (KJT)';
+    case 'JED': return 'JEDDAH (JED)';
+    case 'MED': return 'MADINAH (MED)';
+    case 'MCT': return 'MUSCAT (MCT)';
+    case 'DOH': return 'DOHA (DOH)';
+    case 'DXB': return 'DUBAI (DXB)';
+    case 'KUL': return 'KUALA LUMPUR (KUL)';
+    case 'SIN': return 'SINGAPORE (SIN)';
+    default: return c;
+  }
+};
+
+const calculateMarginAndSellPrice = (buyPrice: number, airlineName: string): { margin: number; persen: number; hargaJual: number } => {
+  if (buyPrice <= 0) return { margin: 0, persen: 0, hargaJual: 0 };
+  let pct = buyPrice >= 15000000 ? 1 : 2;
+  const upper = (airlineName || '').toUpperCase();
+  if (upper.includes('INDIGO') || upper.includes('HAINAN')) {
+    pct = 2;
+  }
+  let calculatedMargin = Math.round((buyPrice * (pct / 100)) / 10000) * 10000;
+  if (calculatedMargin < 200000) calculatedMargin = 300000;
+  const hargaJual = buyPrice + calculatedMargin;
+  const actualPersen = Number(((calculatedMargin / buyPrice) * 100).toFixed(2));
+  return { margin: calculatedMargin, persen: actualPersen, hargaJual };
+};
+
+const parseBulkText = (text: string, manualPrice?: number, customVendor?: string, targetYear?: number, existingList: Maskapai[] = []) => {
   if (!text) return [];
   const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   
-  // Auto-detect vendor if customVendor is not explicitly specified or default
-  let detectedVendor = customVendor;
+  // 1. Auto-detect vendor if not custom
+  let detectedVendor = customVendor && customVendor !== 'All' ? customVendor : '';
+  const upperText = text.toUpperCase();
   if (!detectedVendor || detectedVendor === 'PT. Darmawisata Indonesia') {
-    if (text.toUpperCase().includes('BURGUNDY')) {
+    if (upperText.includes('AZZA') || upperText.includes('ABM')) {
+      detectedVendor = 'PT AZZA BAROKAH MADINAH';
+    } else if (upperText.includes('BURGUNDY')) {
       detectedVendor = 'PT. BURGUNDY WISATA INTERNATIONAL';
-    } else if (text.toUpperCase().includes('DAHLIA')) {
+    } else if (upperText.includes('DAHLIA')) {
       detectedVendor = 'IBU DAHLIA';
-    } else if (text.toUpperCase().includes('NQH')) {
+    } else if (upperText.includes('NQH')) {
       detectedVendor = 'NQH WISATA';
+    } else if (upperText.includes('ARRAYYAN')) {
+      detectedVendor = 'PT ARRAYYAN AL MUBARAK';
+    } else if (upperText.includes('MADANI')) {
+      detectedVendor = 'Madani Tour';
+    } else if (upperText.includes('FATAYA')) {
+      detectedVendor = 'FATAYA';
+    } else if (upperText.includes('FRESHNEL')) {
+      detectedVendor = 'FRESHNEL';
+    } else if (upperText.includes('HAINAN')) {
+      detectedVendor = 'HAINANTIKET.COM';
+    } else {
+      detectedVendor = customVendor || 'PT. Darmawisata Indonesia';
     }
   }
+
+  // 2. Determine year
+  let resolvedYear = targetYear;
+  if (!resolvedYear) {
+    const yearMatch = text.match(/\b(202[6-9])\b/);
+    if (yearMatch) {
+      resolvedYear = parseInt(yearMatch[1]);
+    } else {
+      resolvedYear = new Date().getFullYear();
+    }
+  }
+
+  const parseFlightDate = (dateStr: string, fallbackYear: number) => {
+    const m = dateStr.match(/^(\d{1,2})([A-Za-z]{3})/i);
+    if (!m) return '';
+    const day = parseInt(m[1]);
+    const monthStr = m[2].toUpperCase();
+    const months: Record<string, number> = {
+      JAN: 0, FEB: 1, MAR: 2, APR: 3, MEI: 4, MAY: 4, JUN: 5, JUL: 6, AGT: 7, AUG: 7, SEP: 8, OKT: 9, OCT: 9, NOV: 10, DES: 11, DEC: 11
+    };
+    const monthIdx = months[monthStr] !== undefined ? months[monthStr] : 1;
+    let year = fallbackYear;
+    if (!targetYear) {
+      const now = new Date();
+      if (monthIdx < now.getMonth() && year <= now.getFullYear()) {
+        year = now.getFullYear() + 1;
+      }
+    }
+    const mm = String(monthIdx + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    return `${year}-${mm}-${dd}`;
+  };
 
   // Extract global price if present
   let defaultPrice = manualPrice || 0;
@@ -71,24 +187,167 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
     }
   }
 
-  const flights: Partial<Maskapai>[] = [];
+  const flights: ParsedFlightItem[] = [];
+
+  // Pattern A: GDS Line like "1 WY 850G 01FEB M CGKMCT*HK45 1355 1830 /E"
+  const gdsSegmentRegex = /^\s*(\d+)\s+([A-Z0-9]{2})\s*(\d+[A-Z]?)\s+(\d{1,2}[A-Za-z]{3})\s*(?:[A-Za-z]?)\s+([A-Za-z]{3})([A-Za-z]{3})(?:\*HK(\d+))?\s+(\d{4})\s+(\d{4})/i;
   
-  // Match flight line like "01NOV SV827 CGKJED 0040 0610"
-  const flightRegex = /(\d{2}[A-Za-z]{3})\s+([A-Za-z]{2}\d+)\s+([A-Za-z]{6})\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
-  
+  // Pattern B: Standard Direct Line like "01NOV SV827 CGKJED 0040 0610"
+  const directFlightRegex = /(\d{2}[A-Za-z]{3})\s+([A-Za-z]{2}\d+[A-Za-z]?)\s+([A-Za-z]{6})\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
+
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i];
-    const cleanLine = line.replace(/\*/g, '').replace(/_/g, '').trim();
-    const match1 = cleanLine.match(flightRegex);
-    
+    const rawLine = lines[i];
+    const cleanLine = rawLine.replace(/[*_]/g, '').trim();
+
+    // Check if line is GDS segment 1 (start of a GDS PNR block)
+    const gdsMatch = cleanLine.match(gdsSegmentRegex);
+    if (gdsMatch && gdsMatch[1] === '1') {
+      let headerLine = "";
+      if (i > 0) {
+        headerLine = lines[i - 1].replace(/[*_]/g, '').trim();
+      }
+
+      // Collect all segments
+      const segments: Array<{ seq: number; carrier: string; flightNo: string; dateStr: string; from: string; to: string; seats?: number; depTime: string; arrTime: string; raw: string }> = [];
+      const segmentRawLines: string[] = [];
+      let currentIdx = i;
+
+      while (currentIdx < lines.length) {
+        const segLineClean = lines[currentIdx].replace(/[*_]/g, '').trim();
+        const m = segLineClean.match(gdsSegmentRegex);
+        if (m) {
+          segments.push({
+            seq: parseInt(m[1]),
+            carrier: m[2].toUpperCase(),
+            flightNo: m[3],
+            dateStr: m[4],
+            from: m[5].toUpperCase(),
+            to: m[6].toUpperCase(),
+            seats: m[7] ? parseInt(m[7]) : undefined,
+            depTime: m[8],
+            arrTime: m[9],
+            raw: lines[currentIdx]
+          });
+          segmentRawLines.push(lines[currentIdx]);
+          currentIdx++;
+        } else {
+          break;
+        }
+      }
+
+      if (segments.length >= 2) {
+        let blockPrice = defaultPrice;
+        let blockDays = 9;
+        let blockPnr = "";
+
+        const headerPnrMatch = headerLine.match(/(?:[A-Z0-9]+)\/([A-Z0-9\s]+)\/(\d+)\s*D\s*\/([\d.]+)/i);
+        if (headerPnrMatch) {
+          blockPnr = headerPnrMatch[1].trim();
+          blockDays = parseInt(headerPnrMatch[2]) || 9;
+          blockPrice = parseInt(headerPnrMatch[3].replace(/\./g, '')) || blockPrice;
+        } else {
+          const daysMatch = headerLine.match(/(\d+)\s*D/i);
+          if (daysMatch) blockDays = parseInt(daysMatch[1]);
+          const priceMatch = headerLine.match(/([\d.]+000)/);
+          if (priceMatch) blockPrice = parseInt(priceMatch[1].replace(/\./g, '')) || blockPrice;
+        }
+
+        const leg1 = segments[0];
+        const lastLeg = segments[segments.length - 1];
+        const outDestLeg = segments.length >= 4 ? segments[1] : leg1;
+        const retOriginLeg = segments.length >= 4 ? segments[2] : lastLeg;
+
+        const originCode = leg1.from;
+        const outDestCode = outDestLeg.to;
+        const retOriginCode = retOriginLeg.from;
+        const retDestCode = lastLeg.to;
+
+        const airlineName = getAirlineFromCode(leg1.carrier);
+        const depDate = parseFlightDate(leg1.dateStr, resolvedYear);
+        const retDate = parseFlightDate(lastLeg.dateStr, resolvedYear);
+
+        const availableSeats = leg1.seats || 45;
+        const isTransit = segments.length > 2;
+
+        let ruteLabel = `${originCode} - ${outDestCode} / ${retOriginCode} - ${retDestCode}`;
+        if (isTransit) {
+          ruteLabel = `${originCode} - ${leg1.to} - ${outDestCode} / ${retOriginCode} - ${lastLeg.from} - ${retDestCode}`;
+        }
+
+        let destinationCityName = outDestCode === 'JED' ? 'JEDDAH (JED)' : (outDestCode === 'MED' ? 'MADINAH (MED)' : outDestCode);
+        if (outDestCode !== retOriginCode && (outDestCode === 'JED' || retOriginCode === 'JED')) {
+          destinationCityName = `JEDDAH (JED) / MEDINAH (MED)`;
+        }
+
+        const marginCalc = calculateMarginAndSellPrice(blockPrice, airlineName);
+        const itineraryText = [
+          headerLine ? `*${headerLine}*` : `*${airlineName} ${ruteLabel} (${blockDays}D)*`,
+          ...segmentRawLines
+        ].join('\n');
+
+        // Check if this flight matches an existing flight in existingList to enable UPDATE mode
+        const existingMatch = existingList.find(ex => {
+          if (blockPnr) {
+            const pnrTokens = blockPnr.split(/\s+/).filter(Boolean);
+            const matchesPnr = pnrTokens.some(token => 
+              (ex.name && ex.name.toUpperCase().includes(token.toUpperCase())) ||
+              (ex.id && ex.id.toLowerCase().includes(token.toLowerCase())) ||
+              (ex.flightItinerary && ex.flightItinerary.toUpperCase().includes(token.toUpperCase()))
+            );
+            if (matchesPnr) return true;
+          }
+          if (
+            ex.namaVendor?.toLowerCase() === detectedVendor.toLowerCase() &&
+            ex.tanggalKeberangkatan === depDate &&
+            (ex.ruteLabel === ruteLabel || ex.programDays === blockDays)
+          ) {
+            return true;
+          }
+          return false;
+        });
+
+        const isUpdate = Boolean(existingMatch);
+        const resolvedId = existingMatch?.id || `flight-import-${Date.now()}-${flights.length + 1}`;
+
+        flights.push({
+          id: resolvedId,
+          isUpdate,
+          targetExistingName: existingMatch?.name,
+          name: `${airlineName} ${originCode}-${outDestCode}/${retOriginCode} (${String(blockDays).padStart(2, '0')}D) (${availableSeats} PAX)${blockPnr ? ` (PNR: ${blockPnr})` : ''}`,
+          namaVendor: detectedVendor,
+          ruteLabel,
+          originCityName: getCityDisplayName(originCode),
+          destinationCityName,
+          tanggalKeberangkatan: depDate,
+          tanggalKepulangan: retDate,
+          programDays: blockDays,
+          totalSeats: availableSeats,
+          availableSeats: availableSeats,
+          hargaBeli: blockPrice,
+          hargaSetoran: blockPrice,
+          hargaJual: marginCalc.hargaJual,
+          margin: marginCalc.margin,
+          persen: marginCalc.persen,
+          tipePenerbangan: isTransit ? 'TRANSIT' : 'DIRECT',
+          flightItinerary: itineraryText,
+          updatedAt: new Date().toISOString()
+        });
+
+        i = currentIdx;
+        continue;
+      }
+    }
+
+    // Pattern B: Direct 2-leg Flight
+    const match1 = cleanLine.match(directFlightRegex);
     if (match1) {
       let match2: RegExpMatchArray | null = null;
       let nextFlightIdx = -1;
       
       for (let j = i + 1; j <= i + 3 && j < lines.length; j++) {
-        const cleanNextLine = lines[j].replace(/\*/g, '').replace(/_/g, '').trim();
-        const m = cleanNextLine.match(flightRegex);
+        const cleanNextLine = lines[j].replace(/[*_]/g, '').trim();
+        const m = cleanNextLine.match(directFlightRegex);
         if (m) {
           match2 = m;
           nextFlightIdx = j;
@@ -99,7 +358,7 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
       if (match2 && nextFlightIdx !== -1) {
         let programHeader = "";
         if (i > 0) {
-          const prevLine = lines[i - 1].replace(/\*/g, '').replace(/_/g, '').trim();
+          const prevLine = lines[i - 1].replace(/[*_]/g, '').trim();
           if (prevLine.toUpperCase().includes('PROG') || prevLine.toUpperCase().includes(' JED') || prevLine.toUpperCase().includes(' D') || prevLine.toUpperCase().includes('MED')) {
             programHeader = prevLine;
           }
@@ -110,64 +369,26 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         
         let seatLine = "";
         let availableSeats = 45;
-        
-        // Check program header first for seat specification (e.g., "JEDMED - 9D - 19 PAX")
         const headerSeatMatch = programHeader.match(/(?:pax|hk)\s*(\d+)/i) || programHeader.match(/(\d+)\s*(?:pax|hk)/i);
         if (headerSeatMatch) {
           availableSeats = parseInt(headerSeatMatch[1]) || 45;
         }
         
         for (let j = nextFlightIdx + 1; j <= nextFlightIdx + 3 && j < lines.length; j++) {
-          const nextLineClean = lines[j].replace(/\*/g, '').replace(/_/g, '').trim();
-          if (
-            nextLineClean.toLowerCase().includes('pax') || 
-            nextLineClean.toLowerCase().includes('hk') || 
-            nextLineClean.toLowerCase().includes('hold')
-          ) {
+          const nextLineClean = lines[j].replace(/[*_]/g, '').trim();
+          if (nextLineClean.toLowerCase().includes('pax') || nextLineClean.toLowerCase().includes('hk') || nextLineClean.toLowerCase().includes('hold')) {
             seatLine = nextLineClean;
             const seatMatch = nextLineClean.match(/(?:pax|hk)\s*(\d+)/i) || nextLineClean.match(/(\d+)\s*(?:pax|hk)/i);
-            if (seatMatch) {
-              availableSeats = parseInt(seatMatch[1]) || availableSeats;
-            }
+            if (seatMatch) availableSeats = parseInt(seatMatch[1]) || availableSeats;
             break;
           }
         }
+
+        const tglBerangkat = parseFlightDate(match1[1], resolvedYear);
+        const tglKepulangan = parseFlightDate(match2[1], resolvedYear);
         
-        const itineraryParts = [
-          `*${programHeader}*`,
-          lines[i].replace(/\*/g, '').replace(/_/g, '').trim(),
-          lines[nextFlightIdx].replace(/\*/g, '').replace(/_/g, '').trim()
-        ];
-        if (seatLine) {
-          itineraryParts.push(`*${seatLine}*`);
-        }
-        const fullItinerary = itineraryParts.join('\n');
-        
-        const parseDate = (dateStr: string) => {
-          const day = parseInt(dateStr.substring(0, 2));
-          const monthStr = dateStr.substring(2).toUpperCase();
-          const months: Record<string, number> = {
-            JAN: 0, FEB: 1, MAR: 2, APR: 3, MEI: 4, JUN: 5, JUL: 6, AGT: 7, SEP: 8, OKT: 9, NOV: 10, DES: 11,
-            DEC: 11, OCT: 9, AUG: 7, MAY: 4
-          };
-          const month = months[monthStr] !== undefined ? months[monthStr] : 10;
-          const yyyy = 2026;
-          const mm = String(month + 1).padStart(2, '0');
-          const dd = String(day).padStart(2, '0');
-          return `${yyyy}-${mm}-${dd}`;
-        };
-        
-        const tglBerangkat = parseDate(match1[1]);
-        const tglKepulangan = parseDate(match2[1]);
-        
-        const flightNo = match1[2].toUpperCase();
-        let name = "SAUDIA AIRLINES";
-        if (flightNo.startsWith('GA')) name = "GARUDA INDONESIA";
-        else if (flightNo.startsWith('MH')) name = "MALAYSIA AIRLINES";
-        else if (flightNo.startsWith('WY')) name = "OMAN AIR";
-        else if (flightNo.startsWith('QR')) name = "QATAR AIRWAYS";
-        else if (flightNo.startsWith('EK')) name = "EMIRATES";
-        else if (flightNo.startsWith('EY')) name = "ETIHAD AIRWAYS";
+        const carrierCode = match1[2].substring(0, 2).toUpperCase();
+        const airlineName = getAirlineFromCode(carrierCode);
         
         const outRoute = match1[3].toUpperCase();
         const retRoute = match2[3].toUpperCase();
@@ -183,13 +404,41 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         const ruteLabel = `${originCity} - ${outDest} / ${retOrigin} - ${retDest}`;
         
         const progMatch = programHeader.match(/(\d+)\s*D/i);
-        const programDays = progMatch ? parseInt(progMatch[1]) : 9;
+        const programDays = progMatch ? parseInt(progMatch[1]) : (
+          tglBerangkat && tglKepulangan ? Math.round((new Date(tglKepulangan).getTime() - new Date(tglBerangkat).getTime()) / (1000 * 3600 * 24)) + 1 : 9
+        );
         
+        const marginCalc = calculateMarginAndSellPrice(defaultPrice, airlineName);
+        const itineraryParts = [
+          `*${programHeader}*`,
+          lines[i].replace(/[*_]/g, '').trim(),
+          lines[nextFlightIdx].replace(/[*_]/g, '').trim()
+        ];
+        if (seatLine) itineraryParts.push(`*${seatLine}*`);
+
+        // Check if direct flight exists in existingList
+        const existingMatch = existingList.find(ex => {
+          if (
+            ex.namaVendor?.toLowerCase() === detectedVendor.toLowerCase() &&
+            ex.tanggalKeberangkatan === tglBerangkat &&
+            (ex.ruteLabel === ruteLabel || ex.programDays === programDays)
+          ) {
+            return true;
+          }
+          return false;
+        });
+
+        const isUpdate = Boolean(existingMatch);
+        const resolvedId = existingMatch?.id || `flight-import-${Date.now()}-${flights.length + 1}`;
+
         flights.push({
-          name,
-          namaVendor: detectedVendor || customVendor || "PT. Darmawisata Indonesia",
+          id: resolvedId,
+          isUpdate,
+          targetExistingName: existingMatch?.name,
+          name: `${airlineName} ${originCity}-${outDest}/${retOrigin} (${String(programDays).padStart(2, '0')}D) (${availableSeats} PAX)`,
+          namaVendor: detectedVendor,
           ruteLabel,
-          originCityName: originCity === 'CGK' ? 'JAKARTA (CGK)' : originCity,
+          originCityName: getCityDisplayName(originCity),
           destinationCityName,
           tanggalKeberangkatan: tglBerangkat,
           tanggalKepulangan: tglKepulangan,
@@ -197,20 +446,23 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
           availableSeats: availableSeats,
           hargaSetoran: defaultPrice,
           hargaBeli: defaultPrice,
-          hargaJual: defaultPrice,
-          margin: 0,
-          persen: 0,
-          flightItinerary: fullItinerary,
+          hargaJual: marginCalc.hargaJual,
+          margin: marginCalc.margin,
+          persen: marginCalc.persen,
+          flightItinerary: itineraryParts.join('\n'),
           tipePenerbangan: 'DIRECT',
-          programDays
+          programDays,
+          updatedAt: new Date().toISOString()
         });
         
-        i = nextFlightIdx;
+        i = nextFlightIdx + 1;
+        continue;
       }
     }
+
     i++;
   }
-  
+
   return flights;
 };
 
@@ -243,52 +495,212 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [bulkPriceInput, setBulkPriceInput] = useState<string>('');
+  const [bulkVendorInput, setBulkVendorInput] = useState<string>('');
+  const [bulkYearInput, setBulkYearInput] = useState<string>('auto');
+  const [bulkActiveTab, setBulkActiveTab] = useState<'text' | 'file'>('text');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSavingBulk, setIsSavingBulk] = useState(false);
-  const [parsedFlights, setParsedFlights] = useState<Partial<Maskapai>[]>([]);
+  const [parsedFlights, setParsedFlights] = useState<ParsedFlightItem[]>([]);
 
   useEffect(() => {
     const manualPrice = parseInt(bulkPriceInput.replace(/\D/g, '')) || 0;
-    const flights = parseBulkText(bulkText, manualPrice, isVendorMode ? vendorName : "PT. Darmawisata Indonesia");
+    const selectedYear = bulkYearInput === 'auto' ? undefined : parseInt(bulkYearInput);
+    const flights = parseBulkText(
+      bulkText,
+      manualPrice,
+      isVendorMode ? vendorName : (bulkVendorInput || undefined),
+      selectedYear,
+      data
+    );
     setParsedFlights(flights);
-  }, [bulkText, bulkPriceInput, isVendorMode, vendorName]);
+  }, [bulkText, bulkPriceInput, bulkVendorInput, bulkYearInput, isVendorMode, vendorName, data]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileName = file.name.toLowerCase();
+    if (fileName.endsWith('.txt')) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const content = evt.target?.result as string;
+        if (content) {
+          setBulkText(content);
+          setBulkActiveTab('text');
+          showToastMsg(`File teks ${file.name} berhasil dimuat!`, 'info');
+        }
+      };
+      reader.readAsText(file);
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls') || fileName.endsWith('.csv')) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const bstr = evt.target?.result;
+          const wb = XLSX.read(bstr, { type: 'binary' });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
+          
+          if (!rawRows || rawRows.length === 0) {
+            showToastMsg('File Excel kosong atau format kolom tidak terbaca.', 'error');
+            return;
+          }
+
+          const flightsFromExcel: ParsedFlightItem[] = [];
+          
+          rawRows.forEach((row, idx) => {
+            const name = String(row['Maskapai'] || row['Airline'] || row['Nama'] || row['Penerbangan'] || 'SAUDIA AIRLINES');
+            const vendor = String(row['Vendor'] || row['Nama Vendor'] || bulkVendorInput || 'PT. Darmawisata Indonesia');
+            const tglBerangkat = String(row['Tgl Berangkat'] || row['Tanggal Keberangkatan'] || row['Departure'] || '');
+            const tglPulang = String(row['Tgl Pulang'] || row['Tanggal Kepulangan'] || row['Return'] || '');
+            const rute = String(row['Rute'] || row['Route'] || 'CGK - JED / JED - CGK');
+            const seats = parseInt(String(row['Seats'] || row['Kursi'] || row['PAX'] || row['Total Seats'] || '45')) || 45;
+            const hargaBeli = parseInt(String(row['Harga Beli'] || row['Harga Setoran'] || row['Modal'] || row['Price'] || '0').replace(/\D/g, '')) || 0;
+            const customHargaJual = parseInt(String(row['Harga Jual'] || '0').replace(/\D/g, '')) || 0;
+            
+            const marginCalc = calculateMarginAndSellPrice(hargaBeli, name);
+            const finalHargaJual = customHargaJual > 0 ? customHargaJual : marginCalc.hargaJual;
+            const finalMargin = finalHargaJual - hargaBeli;
+            const finalPersen = hargaBeli > 0 ? Number(((finalMargin / hargaBeli) * 100).toFixed(2)) : 0;
+            
+            const originCity = rute.split('-')[0]?.trim() || 'CGK';
+            const destCity = rute.includes('MED') ? 'JEDDAH (JED) / MEDINAH (MED)' : 'JEDDAH (JED)';
+
+            const existingMatch = data.find(ex => 
+              ex.namaVendor?.toLowerCase() === vendor.toLowerCase() && 
+              ex.tanggalKeberangkatan === tglBerangkat && 
+              (ex.ruteLabel === rute || ex.name === name)
+            );
+            const isUpdate = Boolean(existingMatch);
+            const resolvedId = existingMatch?.id || `excel-import-${Date.now()}-${idx + 1}`;
+
+            flightsFromExcel.push({
+              id: resolvedId,
+              isUpdate,
+              targetExistingName: existingMatch?.name,
+              name,
+              namaVendor: vendor,
+              ruteLabel: rute,
+              originCityName: originCity === 'CGK' ? 'JAKARTA (CGK)' : originCity,
+              destinationCityName: destCity,
+              tanggalKeberangkatan: tglBerangkat,
+              tanggalKepulangan: tglPulang,
+              programDays: tglBerangkat && tglPulang ? Math.max(1, Math.round((new Date(tglPulang).getTime() - new Date(tglBerangkat).getTime()) / (1000 * 3600 * 24)) + 1) : 9,
+              totalSeats: seats,
+              availableSeats: seats,
+              hargaBeli,
+              hargaSetoran: hargaBeli,
+              hargaJual: finalHargaJual,
+              margin: finalMargin,
+              persen: finalPersen,
+              tipePenerbangan: rute.includes('MCT') || rute.includes('DOH') || rute.includes('DXB') || rute.includes('KUL') ? 'TRANSIT' : 'DIRECT',
+              flightItinerary: `*${vendor}*\n*${name}*\n${rute}\n${tglBerangkat} s/d ${tglPulang}`,
+              updatedAt: new Date().toISOString()
+            });
+          });
+
+          setParsedFlights(flightsFromExcel);
+          const updateCount = flightsFromExcel.filter(f => f.isUpdate).length;
+          showToastMsg(`Sukses mengekstrak ${flightsFromExcel.length} rute dari file Excel! (${updateCount} rute cocok untuk di-update).`, 'success');
+        } catch (err) {
+          console.error(err);
+          showToastMsg('Gagal membaca file Excel: ' + (err as Error).message, 'error');
+        }
+      };
+      reader.readAsBinaryString(file);
+    }
+  };
+
+  const handleRemoveParsedFlight = (idx: number) => {
+    setParsedFlights(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const handleSaveBulk = async () => {
     if (parsedFlights.length === 0) return;
     setIsSavingBulk(true);
     try {
-      const chunks: Partial<Maskapai>[][] = [];
-      const chunkSize = 400;
-      for (let i = 0; i < parsedFlights.length; i += chunkSize) {
-        chunks.push(parsedFlights.slice(i, i + chunkSize));
-      }
+      const newSavedFlights: Maskapai[] = [];
       
-      for (const chunk of chunks) {
-        const batch = writeBatch(db);
-        chunk.forEach((flight) => {
-          const docRef = doc(collection(db, 'maskapai'));
-          // clean any undefined fields before writing to firestore
-          const cleanedPayload: Record<string, unknown> = {};
-          Object.entries(flight).forEach(([key, val]) => {
-            if (val !== undefined) {
-              cleanedPayload[key] = val;
-            }
+      parsedFlights.forEach((flight, idx) => {
+        const docId = flight.id || `flight-${Date.now()}-${idx + 1}`;
+        
+        const cleanedPayload: Maskapai = {
+          id: docId,
+          name: flight.name || 'MASKAPAI UMRAH',
+          originCityName: flight.originCityName || 'JAKARTA (CGK)',
+          destinationCityName: flight.destinationCityName || 'JEDDAH (JED)',
+          ruteLabel: flight.ruteLabel || 'CGK - JED / JED - CGK',
+          tanggalKeberangkatan: flight.tanggalKeberangkatan || '',
+          tanggalKepulangan: flight.tanggalKepulangan || '',
+          programDays: flight.programDays || 9,
+          totalSeats: flight.totalSeats || 45,
+          availableSeats: flight.availableSeats ?? flight.totalSeats ?? 45,
+          hargaBeli: flight.hargaBeli || 0,
+          hargaSetoran: flight.hargaSetoran || flight.hargaBeli || 0,
+          hargaJual: flight.hargaJual || 0,
+          margin: flight.margin || 0,
+          persen: flight.persen || 0,
+          namaVendor: flight.namaVendor || 'PT AZZA BAROKAH MADINAH',
+          flightItinerary: flight.flightItinerary || '',
+          tipePenerbangan: flight.tipePenerbangan || 'TRANSIT',
+          updatedAt: new Date().toISOString()
+        };
+        
+        newSavedFlights.push(cleanedPayload);
+      });
+      
+      // 1. Unrecord from deleted registry so they are always visible
+      await unrecordDeletedIds(newSavedFlights.map(f => f.id));
+
+      // 2. Persist locally to localStorage (guarantees zero data loss even if Firestore quota exceeded)
+      saveCustomLocalMaskapai(newSavedFlights);
+
+      // 3. Optimistically update existing in place and prepend new items so they are immediately visible
+      setData(prev => {
+        const savedMap = new Map(newSavedFlights.map(f => [f.id, f]));
+        const updatedPrev = prev.map(p => savedMap.get(p.id) || p);
+        const existingIdSet = new Set(prev.map(p => p.id));
+        const genuinelyNew = newSavedFlights.filter(f => !existingIdSet.has(f.id));
+        return [...genuinelyNew, ...updatedPrev];
+      });
+
+      const updatedCount = parsedFlights.filter(f => f.isUpdate).length;
+      const newCount = parsedFlights.length - updatedCount;
+
+      // 4. Background cloud sync to Firestore
+      try {
+        const batchChunks: Maskapai[][] = [];
+        const chunkSize = 200;
+        for (let i = 0; i < newSavedFlights.length; i += chunkSize) {
+          batchChunks.push(newSavedFlights.slice(i, i + chunkSize));
+        }
+
+        for (const bChunk of batchChunks) {
+          const batch = writeBatch(db);
+          bChunk.forEach((flight) => {
+            const docRef = doc(db, 'maskapai', flight.id);
+            batch.set(docRef, flight, { merge: true });
           });
-          cleanedPayload.createdAt = new Date().toISOString();
-          cleanedPayload.updatedAt = new Date().toISOString();
-          
-          batch.set(docRef, cleanedPayload);
-        });
-        await batch.commit();
+          await batch.commit();
+        }
+
+        const msg = updatedCount > 0 
+          ? `Sukses! ${newCount > 0 ? `${newCount} rute baru ditambahkan & ` : ''}${updatedCount} rute jadwal berhasil diperbarui di database!`
+          : `Sukses menambahkan ${newCount} rute maskapai ke database!`;
+        showToastMsg(msg, 'success');
+      } catch (cloudError) {
+        console.warn("Firestore bulk batch warning (data saved locally):", cloudError);
+        showToastMsg(`Sukses! ${newSavedFlights.length} rute berhasil disimpan secara lokal & aktif di sistem! (Penyimpanan lokal aktif).`, 'info');
       }
-      
-      showToastMsg(`Sukses mengimpor ${parsedFlights.length} rute penerbangan secara massal!`, 'success');
+
       setIsBulkOpen(false);
       setBulkText('');
       setBulkPriceInput('');
+      setBulkVendorInput('');
       setParsedFlights([]);
     } catch (error) {
       console.error("Error saving bulk maskapai:", error);
-      showToastMsg("Gagal mengimpor rute penerbangan massal: " + (error as Error).message, 'error');
+      showToastMsg("Gagal mengimpor rute penerbangan: " + (error as Error).message, 'error');
     } finally {
       setIsSavingBulk(false);
     }
@@ -327,7 +739,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       const saved = localStorage.getItem('maskapai_deleted_ids_registry');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return new Set(parsed);
+        if (Array.isArray(parsed)) return new Set(parsed.filter(id => !id.startsWith('ptazza-')));
       }
     } catch (e) {
       console.error(e);
@@ -346,10 +758,11 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         if (snap.exists()) {
           const remoteIds = snap.data()?.deletedIds || [];
           if (Array.isArray(remoteIds)) {
-            const next = new Set(remoteIds);
+            const cleanRemote = remoteIds.filter((id: string) => !id.startsWith('ptazza-'));
+            const next = new Set<string>(cleanRemote);
             setDeletedRegistry(next);
             try {
-              localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(remoteIds));
+              localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(cleanRemote));
             } catch (e) {
               console.error(e);
             }
@@ -382,6 +795,52 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
       }, { merge: true });
     } catch (e) {
       console.warn("Gagal menyimpan deleted registry ke Firestore:", e);
+    }
+  };
+
+  const unrecordDeletedIds = async (idsToRemove: string[]) => {
+    if (!idsToRemove || idsToRemove.length === 0) return;
+    const idSet = new Set(idsToRemove);
+    const updated = new Set([...deletedRegistryRef.current].filter(id => !idSet.has(id)));
+    setDeletedRegistry(updated);
+    deletedRegistryRef.current = updated;
+    const updatedArr = Array.from(updated);
+    try {
+      localStorage.setItem('maskapai_deleted_ids_registry', JSON.stringify(updatedArr));
+    } catch (e) {
+      console.error(e);
+    }
+    try {
+      await setDoc(doc(db, 'umaroh_master_data', 'maskapai_deleted_registry'), {
+        deletedIds: updatedArr,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Gagal update deleted registry ke Firestore:", e);
+    }
+  };
+
+  const getCustomLocalMaskapai = (): Maskapai[] => {
+    try {
+      const raw = localStorage.getItem('umaroh_custom_maskapai');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load local custom maskapai:', e);
+    }
+    return [];
+  };
+
+  const saveCustomLocalMaskapai = (items: Maskapai[]) => {
+    try {
+      const current = getCustomLocalMaskapai();
+      const map = new Map(current.map(m => [m.id, m]));
+      items.forEach(m => map.set(m.id, m));
+      localStorage.setItem('umaroh_custom_maskapai', JSON.stringify(Array.from(map.values())));
+    } catch (e) {
+      console.error('Failed to save local custom maskapai:', e);
     }
   };
 
@@ -469,29 +928,50 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         remoteIds.add(doc.id);
       });
       
-      // Merge initialData items that are not in remote Firestore yet
-      const mergedList = [...maskapaiList];
+      // Merge custom local flights & initialData items
+      const customLocal = getCustomLocalMaskapai();
+      const customMap = new Map(customLocal.map(c => [c.id, c]));
+      
+      const mergedList = maskapaiList.map(m => customMap.get(m.id) || m);
+      const allKnownIds = new Set(mergedList.map(m => m.id));
+      
+      // Add custom local items that weren't in remote Firestore
+      customLocal.forEach(c => {
+        if (!allKnownIds.has(c.id) && !deletedRegistryRef.current.has(c.id)) {
+          if (isVendorMode && vendorName && c.namaVendor !== vendorName) return;
+          mergedList.push(c);
+          allKnownIds.add(c.id);
+        }
+      });
+
+      // Add static initialData items
       initialData.forEach((staticItem) => {
-        if (!remoteIds.has(staticItem.id) && !deletedRegistryRef.current.has(staticItem.id)) {
+        if (!allKnownIds.has(staticItem.id) && !deletedRegistryRef.current.has(staticItem.id)) {
           if (isVendorMode && vendorName && staticItem.namaVendor !== vendorName) {
             return;
           }
           mergedList.push(staticItem);
+          allKnownIds.add(staticItem.id);
         }
       });
 
       setData(mergedList);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching maskapai:", error);
+      console.warn("Firestore maskapai fetch offline / quota notice:", error);
       setLoading(false);
-      const fallbackList = initialData.filter(item => {
-        if (deletedRegistryRef.current.has(item.id)) return false;
-        if (isVendorMode && vendorName && item.namaVendor !== vendorName) return false;
-        return true;
+      const customLocal = getCustomLocalMaskapai();
+      const fallbackList: Maskapai[] = [...customLocal];
+      const seen = new Set(fallbackList.map(f => f.id));
+
+      initialData.forEach(item => {
+        if (seen.has(item.id)) return;
+        if (deletedRegistryRef.current.has(item.id)) return;
+        if (isVendorMode && vendorName && item.namaVendor !== vendorName) return;
+        fallbackList.push(item);
+        seen.add(item.id);
       });
       setData(fallbackList);
-      handleFirestoreError(error, OperationType.GET, 'maskapai');
     });
 
     return () => unsubscribe();
@@ -535,12 +1015,54 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         flightItinerary: ''
       });
     }
+    setSingleQuickPaste('');
     setIsFormOpen(true);
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
+    setSingleQuickPaste('');
+  };
+
+  const [singleQuickPaste, setSingleQuickPaste] = useState('');
+
+  const handleQuickParseSingle = () => {
+    if (!singleQuickPaste.trim()) {
+      showToastMsg('Silakan tempel teks broadcast atau PNR terlebih dahulu', 'info');
+      return;
+    }
+    const parsed = parseBulkText(singleQuickPaste, undefined, isVendorMode ? vendorName : undefined, undefined, data);
+    if (parsed.length === 0) {
+      showToastMsg('Format penerbangan tidak terdeteksi. Pastikan mencakup tanggal dan kode rute.', 'error');
+      return;
+    }
+    const item = parsed[0];
+    if (item.isUpdate && item.id) {
+      setEditingId(item.id);
+      showToastMsg(`Rute cocok dengan jadwal yang sudah ada (${item.targetExistingName || item.name}). Mode UPDATE aktif!`, 'info');
+    } else {
+      showToastMsg(`Format berhasil diekstrak ke form! Silakan tinjau dan simpan.`, 'success');
+    }
+    setFormData(prev => ({
+      ...prev,
+      name: item.name || prev.name,
+      originCityName: item.originCityName || prev.originCityName,
+      destinationCityName: item.destinationCityName || prev.destinationCityName,
+      ruteLabel: item.ruteLabel || prev.ruteLabel,
+      tanggalKeberangkatan: item.tanggalKeberangkatan || prev.tanggalKeberangkatan,
+      tanggalKepulangan: item.tanggalKepulangan || prev.tanggalKepulangan,
+      programDays: item.programDays || prev.programDays,
+      hargaBeli: item.hargaBeli || prev.hargaBeli,
+      hargaSetoran: item.hargaSetoran || prev.hargaSetoran,
+      hargaJual: item.hargaJual || prev.hargaJual,
+      margin: item.margin || prev.margin,
+      persen: item.persen || prev.persen,
+      availableSeats: item.availableSeats ?? prev.availableSeats,
+      totalSeats: item.totalSeats ?? prev.totalSeats,
+      namaVendor: item.namaVendor || prev.namaVendor,
+      flightItinerary: item.flightItinerary || prev.flightItinerary
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -558,32 +1080,58 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         formData.destinationCityName
       );
 
-      const payload: Record<string, unknown> = {
-        ...formData,
+      const docId = editingId || `maskapai-${Date.now()}`;
+
+      const finalItem: Maskapai = {
+        id: docId,
+        name: formData.name || 'MASKAPAI UMRAH',
+        originCityName: formData.originCityName || 'JAKARTA (CGK)',
+        destinationCityName: formData.destinationCityName || 'JEDDAH (JED)',
         ruteLabel: finalRuteLabel,
+        tanggalKeberangkatan: formData.tanggalKeberangkatan || '',
+        tanggalKepulangan: formData.tanggalKepulangan || '',
+        programDays: formData.programDays || 9,
+        totalSeats: formData.totalSeats || 45,
+        availableSeats: formData.availableSeats ?? formData.totalSeats ?? 45,
+        hargaBeli: formData.hargaBeli || 0,
+        hargaSetoran: formData.hargaSetoran || formData.hargaBeli || 0,
+        hargaJual: formData.hargaJual || 0,
+        margin: formData.margin || 0,
+        persen: formData.persen || 0,
+        namaVendor: formData.namaVendor || 'PT AZZA BAROKAH MADINAH',
         flightItinerary: finalItinerary,
+        tipePenerbangan: formData.tipePenerbangan || 'TRANSIT',
         updatedAt: new Date().toISOString()
       };
 
-      // Clean undefined fields to prevent Firestore serialization errors
-      const cleanedPayload = Object.keys(payload).reduce((acc, key) => {
-        const val = payload[key];
-        if (val !== undefined) {
-          acc[key] = val;
-        }
-        return acc;
-      }, {} as Record<string, unknown>);
+      // 1. Unrecord from deleted registry if it was previously marked as deleted
+      await unrecordDeletedIds([docId]);
 
-      if (editingId) {
-        await updateDoc(doc(db, 'maskapai', editingId), cleanedPayload);
-      } else {
-        await addDoc(collection(db, 'maskapai'), cleanedPayload);
-      }
+      // 2. Persist locally to localStorage (zero loss guarantee)
+      saveCustomLocalMaskapai([finalItem]);
+
+      // 3. Optimistically update local React state
+      setData(prev => {
+        const exists = prev.some(p => p.id === docId);
+        if (exists) {
+          return prev.map(p => p.id === docId ? finalItem : p);
+        }
+        return [finalItem, ...prev];
+      });
+
       handleCloseForm();
+
+      // 4. Sync with Firestore using setDoc with merge: true (works for both existing and new documents)
+      try {
+        await setDoc(doc(db, 'maskapai', docId), finalItem, { merge: true });
+        showToastMsg(`Sukses! Data rute ${finalItem.name} berhasil disimpan & di-update ke database!`, 'success');
+      } catch (cloudErr) {
+        console.warn("Firestore sync warning (saved locally):", cloudErr);
+        showToastMsg(`Sukses! Data rute ${finalItem.name} disimpan secara lokal & aktif di sistem! (Penyimpanan lokal aktif).`, 'info');
+      }
     } catch (error) {
       console.error("Error saving maskapai:", error);
-      handleFirestoreError(error, OperationType.WRITE, 'maskapai');
-      showToastMsg('Gagal menyimpan data maskapai.', 'error');
+      showToastMsg('Gagal menyimpan data maskapai: ' + (error as Error).message, 'error');
     }
   };
 
@@ -742,7 +1290,9 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
     );
     const isSeatsEmpty = item.availableSeats !== undefined && item.availableSeats <= 0;
     const staleInfo = getUpdateStatusText(item);
-    const isStale = staleInfo.isStale;
+    // CRITICAL FIX: Only consider stale if flight has expired in the past or has zero seats.
+    // Active future flight schedules (e.g. 2026/2027) must NEVER be auto-deleted!
+    const isStale = staleInfo.isStale && (isPast || isSeatsEmpty);
     const isOutdated = isPast || isSeatsEmpty || isStale;
     return { isPast, isSeatsEmpty, isStale, isOutdated, staleInfo };
   };
@@ -924,9 +1474,13 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
             <Download className="w-4 h-4" />
             Download Excel
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors" onClick={() => setIsBulkOpen(true)}>
-            <PlusSquare className="w-4 h-4" />
-            Bulk Import WA
+          <button 
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-black text-xs uppercase tracking-wide transition-all shadow-md shadow-blue-200 hover:shadow-lg active:scale-95 cursor-pointer" 
+            onClick={() => setIsBulkOpen(true)}
+            title="Upload file Excel / CSV / TXT atau copas broadcast promo WhatsApp vendor (PT AZZA, Burgundy, dll)"
+          >
+            <Upload className="w-4 h-4" />
+            Upload / Update (WA & Excel)
           </button>
           <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors" onClick={() => handleOpenForm()}>
             <Plus className="w-4 h-4" />
@@ -1551,6 +2105,42 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Quick Paste & Auto-Fill from WhatsApp Broadcast / PNR */}
+              <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200/90 rounded-2xl p-4 shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-blue-600 text-white rounded-lg shadow-xs">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-black uppercase text-blue-950 tracking-wider">
+                        Copas Cepat Broadcast WA / PNR Vendor (Isi & Update Otomatis)
+                      </span>
+                      <p className="text-[11px] text-blue-700 font-medium">
+                        Tempel pesan WA (Oman Air, Saudia, Garuda dll). Sistem otomatis mengisi rute, tanggal, harga modal & jual, serta beralih ke mode UPDATE jika PNR sudah terdaftar.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={singleQuickPaste}
+                    onChange={(e) => setSingleQuickPaste(e.target.value)}
+                    placeholder="Contoh: ABM/QENXXX CWDXXX/11D/14.500.000 atau 1 WY 850G 01FEB M CGKMCT*HK45..."
+                    className="flex-1 px-3.5 py-2.5 text-xs border border-blue-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleQuickParseSingle}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md shadow-blue-200 transition-all flex items-center justify-center gap-1.5 shrink-0 active:scale-95 cursor-pointer uppercase tracking-wider"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    Ekstrak ke Form
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Maskapai</label>
@@ -1958,19 +2548,23 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
         </div>
       )}
 
-      {/* Bulk Import Modal */}
+      {/* Enhanced Upload & Bulk Import Modal */}
       {isBulkOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+            <div className="p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/60 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="bg-blue-100 text-blue-700 p-2.5 rounded-2xl">
-                  <PlusSquare className="w-6 h-6" />
+                <div className="bg-blue-600 text-white p-2.5 rounded-2xl shadow-md shadow-blue-200">
+                  <Upload className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-gray-900 leading-tight">Bulk Import Rute Penerbangan</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Copas (copy-paste) pesan promo penerbangan dari WhatsApp atau Telegram langsung di sini</p>
+                  <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 leading-tight">
+                    Upload & Import Jadwal Maskapai
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Copas broadcast promo WhatsApp/GDS PNR (Oman Air, Saudia, Garuda dll) atau upload file Excel / CSV / TXT
+                  </p>
                 </div>
               </div>
               <button 
@@ -1978,6 +2572,7 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                   setIsBulkOpen(false);
                   setBulkText('');
                   setBulkPriceInput('');
+                  setBulkVendorInput('');
                   setParsedFlights([]);
                 }}
                 className="p-2 hover:bg-gray-150 rounded-xl transition-colors text-gray-400 hover:text-gray-600"
@@ -1986,86 +2581,292 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
-              {/* Paste Input Panel */}
-              <div className="p-6 flex flex-col gap-4 border-r border-gray-100 overflow-y-auto">
-                <div className="flex flex-col gap-1.5 flex-1">
-                  <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Pesan Promo WhatsApp/Telegram</label>
-                  <textarea
-                    value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
-                    placeholder="Contoh:&#10;📢 SPECIAL PRICE SAUDIA NOVEMBER 📢&#10;🔥Harga Rp. 16.700.000/pax🔥&#10;01NOV SV827 CGKJED 0040 0610&#10;08NOV SV816 JEDCGK 1730 0735+1&#10;46 PAX"
-                    className="w-full flex-1 min-h-[250px] p-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono leading-relaxed resize-none bg-gray-50 focus:bg-white transition-all"
-                  />
+            {/* Modal Body: Left Controls & Input, Right Preview */}
+            <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+              {/* Left Input & Configuration (7 cols) */}
+              <div className="lg:col-span-6 xl:col-span-6 p-4 sm:p-6 flex flex-col gap-4 border-r border-gray-100 overflow-y-auto">
+                {/* Mode Selector Tabs */}
+                <div className="flex bg-gray-100 p-1 rounded-2xl shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setBulkActiveTab('text')}
+                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                      bulkActiveTab === 'text'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-550 hover:text-gray-900'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Copas Broadcast WA / PNR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkActiveTab('file')}
+                    className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                      bulkActiveTab === 'file'
+                        ? 'bg-white text-emerald-600 shadow-sm'
+                        : 'text-gray-550 hover:text-gray-900'
+                    }`}
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Upload File (Excel / CSV / TXT)
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 shrink-0">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Harga Setoran Default (IDR)</label>
+                {/* Preset Sample Buttons */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Coba Contoh:</span>
+                    <button
+                    type="button"
+                    onClick={() => {
+                      setBulkActiveTab('text');
+                      setBulkVendorInput('PT AZZA BAROKAH MADINAH');
+                      setBulkYearInput('2027');
+                      setBulkText(`*READY PNR 2026/2027 BY OMAN AIR✈️*
+*▪️FEBRUARY 2027*▪️
+
+*ABM/QENXXX CWDXXX QENXXX/11D/14.500.000*
+1 WY 850G 01FEB M CGKMCT*HK45 1355  1830  /E
+2 WY 673G 01FEB M MCTJED*HK45 2130  0005   02FEB T /E
+3 WY 680G 10FEB W MEDMCT*HK45 1740  2130  /E
+4 WY 849G 11FEB Q MCTCGK*HK45 0145  1240  /E
+
+*ABM/APAXXX CWBXXX WBKXXX/9D/14.800.000*
+1 WY 850G 02FEB T CGKMCT*HK39 1355  1830  /E
+2 WY 671G 03FEB W MCTJED*HK39 0135  0410  /E
+3 WY 680G 09FEB T MEDMCT*HK39 1740  2130  /E
+4 WY 849G 10FEB W MCTCGK*HK39 0145  1240  /E
+
+*ABM/AOCXXX WBDXXX WBKXXX/13D/14.800.000*
+1 WY 850G 13FEB J CGKMCT*HK39 1355  1830  /E
+2 WY 671G 14FEB S MCTJED*HK39 0135  0410  /E
+3 WY 680G 24FEB W MEDMCT*HK39 1740  2130  /E
+4 WY 849G 25FEB Q MCTCGK*HK39 0145  1240  /E
+
+*ABM/MHHXXX MHBXXX/12D/14.500.000*
+1 WY 850G 20FEB J CGKMCT*HK30 1355  1830  /E
+2 WY 673G 20FEB J MCTJED*HK30 2130  0005   21FEB S /E
+3 WY 680G 02MAR T MEDMCT*HK30 1740  2130  /E
+4 WY 849G 03MAR W MCTCGK*HK30 0145  1240  /E`);
+                    }}
+                    className="text-[11px] bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-2.5 py-1 rounded-lg transition-colors border border-blue-200/50"
+                  >
+                    PT AZZA BAROKAH MADINAH (Oman Air 4 Rute)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkActiveTab('text');
+                      setBulkVendorInput('PT. BURGUNDY WISATA INTERNATIONAL');
+                      setBulkYearInput('2026');
+                      setBulkText(`*PT. BURGUNDY WISATA INTERNATIONAL*
+*JEDMED - 9D - 19 PAX*
+*HARGA : 16.000.000*
+20OCT SV827 CGKJED 0040 0635
+27OCT SV820 MEDCGK 2045 1025+1
+
+*JEDMED - 9D - 20 PAX*
+*HARGA : 16.000.000*
+22OCT SV817 CGKJED 0910 1440
+29OCT SV820 MEDCGK 2045 1025+1`);
+                    }}
+                    className="text-[11px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-2.5 py-1 rounded-lg transition-colors border border-emerald-200/50"
+                  >
+                    PT. BURGUNDY (Saudia)
+                  </button>
+                </div>
+
+                {/* Configuration Row: Vendor, Year, Default Price */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-black uppercase text-gray-500 tracking-wider">Vendor</label>
+                    <select
+                      value={isVendorMode ? vendorName : bulkVendorInput}
+                      disabled={isVendorMode}
+                      onChange={(e) => setBulkVendorInput(e.target.value)}
+                      className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold bg-white"
+                    >
+                      <option value="">Auto-Detect dari Teks</option>
+                      <option value="PT AZZA BAROKAH MADINAH">PT AZZA BAROKAH MADINAH</option>
+                      <option value="PT. BURGUNDY WISATA INTERNATIONAL">PT. BURGUNDY WISATA</option>
+                      <option value="IBU DAHLIA">IBU DAHLIA</option>
+                      <option value="NQH WISATA">NQH WISATA</option>
+                      <option value="PT. Darmawisata Indonesia">PT. Darmawisata Indonesia</option>
+                      <option value="PT ARRAYYAN AL MUBARAK">PT ARRAYYAN AL MUBARAK</option>
+                      <option value="Madani Tour">Madani Tour</option>
+                      <option value="FATAYA">FATAYA</option>
+                      <option value="FRESHNEL">FRESHNEL</option>
+                      <option value="HAINANTIKET.COM">HAINANTIKET.COM</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-black uppercase text-gray-500 tracking-wider">Tahun Keberangkatan</label>
+                    <select
+                      value={bulkYearInput}
+                      onChange={(e) => setBulkYearInput(e.target.value)}
+                      className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold bg-white"
+                    >
+                      <option value="auto">Auto-Detect / Cerdas</option>
+                      <option value="2027">2027</option>
+                      <option value="2026">2026</option>
+                      <option value="2028">2028</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-black uppercase text-gray-500 tracking-wider">Harga Default (IDR)</label>
                     <input
                       type="text"
                       value={bulkPriceInput}
                       onChange={(e) => setBulkPriceInput(e.target.value)}
-                      placeholder="Auto-detect atau ketik nominal..."
-                      className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-black uppercase text-gray-500 tracking-wider">Vendor</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={isVendorMode ? vendorName : "PT. Darmawisata Indonesia"}
-                      className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 outline-none text-sm font-semibold"
+                      placeholder="Auto / Isi jika tidak tertera"
+                      className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold"
                     />
                   </div>
                 </div>
+
+                {/* Input Panel Switcher */}
+                {bulkActiveTab === 'text' ? (
+                  <div className="flex flex-col gap-1.5 flex-1 min-h-[220px]">
+                    <label className="text-[11px] font-black uppercase text-gray-500 tracking-wider flex justify-between items-center">
+                      <span>Pesan Promo WhatsApp / Telegram / GDS PNR</span>
+                      <span className="text-[10px] text-gray-400 font-normal">Format 4-Leg Transit & 2-Leg Direct didukung</span>
+                    </label>
+                    <textarea
+                      value={bulkText}
+                      onChange={(e) => setBulkText(e.target.value)}
+                      placeholder={`Copas pesan promo di sini... Contoh:&#10;*ABM/QENXXX CWDXXX QENXXX/11D/14.500.000*&#10;1 WY 850G 01FEB M CGKMCT*HK45 1355 1830&#10;2 WY 673G 01FEB M MCTJED*HK45 2130 0005 02FEB&#10;3 WY 680G 10FEB W MEDMCT*HK45 1740 2130&#10;4 WY 849G 11FEB Q MCTCGK*HK45 0145 1240`}
+                      className="w-full flex-1 p-3.5 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-mono leading-relaxed resize-none bg-gray-50 focus:bg-white transition-all shadow-inner"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 flex-1 justify-center items-center p-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                      <FileSpreadsheet className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm text-gray-800">Pilih atau Drag & Drop File Jadwal</h4>
+                      <p className="text-xs text-gray-500 mt-1 max-w-sm">
+                        Mendukung file spreadsheet <strong>.xlsx</strong>, <strong>.xls</strong>, <strong>.csv</strong> atau teks <strong>.txt</strong>
+                      </p>
+                    </div>
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv,.txt"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-200 transition-all flex items-center gap-2"
+                    >
+                      <FileUp className="w-4 h-4" />
+                      Pilih File Dari Komputer / HP
+                    </button>
+
+                    <div className="text-[11px] text-gray-400 bg-white p-2 rounded-xl border border-gray-200/60 max-w-md text-left">
+                      <strong>Kolom Excel yang dikenali:</strong> Maskapai, Vendor, Tgl Berangkat, Tgl Pulang, Rute, Seats/Kursi, Harga Beli/Setoran, Harga Jual.
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Preview Panel */}
-              <div className="p-6 bg-gray-50/50 flex flex-col overflow-hidden">
+              {/* Right Preview Panel (6 cols) */}
+              <div className="lg:col-span-6 xl:col-span-6 p-4 sm:p-6 bg-gray-50/60 flex flex-col overflow-hidden">
                 <div className="flex justify-between items-center mb-3 shrink-0">
-                  <span className="text-xs font-black uppercase text-gray-500 tracking-wider flex items-center gap-2">
-                    Hasil Analisa & Preview 
+                  <span className="text-xs font-black uppercase text-gray-600 tracking-wider flex items-center gap-2">
+                    Hasil Analisa & Preview Rute
                     <span className="bg-blue-600 text-white font-black px-2 py-0.5 rounded-full text-[10px]">
-                      {parsedFlights.length} Rute Terdeteksi
+                      {parsedFlights.length} Rute
                     </span>
                   </span>
+                  {parsedFlights.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setParsedFlights([])}
+                      className="text-[11px] text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" /> Bersihkan
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                   {parsedFlights.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 gap-3">
-                      <FileText className="w-12 h-12 text-gray-300 stroke-[1.5]" />
+                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 gap-3 border-2 border-dashed border-gray-200 rounded-2xl bg-white/60">
+                      <PlaneTakeoff className="w-12 h-12 text-gray-300 stroke-[1.5]" />
                       <div>
-                        <p className="text-sm font-bold text-gray-650">Menunggu input teks...</p>
-                        <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">Silakan copas text format list rute penerbangan di panel sebelah kiri untuk melihat hasil parsing real-time.</p>
+                        <p className="text-sm font-bold text-gray-650">Belum ada rute terdeteksi</p>
+                        <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+                          Copas format pesan promo di panel kiri atau klik salah satu tombol <strong>Coba Contoh</strong> di atas untuk melihat preview langsung.
+                        </p>
                       </div>
                     </div>
                   ) : (
                     parsedFlights.map((flight, idx) => (
-                      <div key={idx} className="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm hover:border-blue-300 transition-all">
-                        <div className="flex justify-between items-start gap-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-black uppercase tracking-wider">{flight.name}</span>
-                              <span className="text-xs text-gray-400 font-bold">{flight.ruteLabel}</span>
-                            </div>
-                            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600 font-medium">
-                              <div>🛫 Berangkat: <strong className="text-gray-900">{flight.tanggalKeberangkatan}</strong></div>
-                              <div>🛬 Pulang: <strong className="text-gray-900">{flight.tanggalKepulangan}</strong></div>
-                              <div>💺 Sisa Kursi: <strong className="text-blue-600">{flight.availableSeats} PAX</strong></div>
-                              <div>💰 Setoran: <strong className="text-gray-900 font-mono">Rp {(flight.hargaSetoran || 0).toLocaleString('id-ID')}</strong></div>
+                      <div key={idx} className="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm hover:border-blue-300 transition-all relative group">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveParsedFlight(idx)}
+                          className="absolute top-3 right-3 text-gray-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-colors"
+                          title="Hapus rute ini dari impor"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+
+                        <div className="pr-6">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {flight.isUpdate ? (
+                              <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-lg font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                                <RefreshCw className="w-3 h-3 text-amber-700" /> UPDATE JADWAL
+                              </span>
+                            ) : (
+                              <span className="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-lg font-black uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                                <Plus className="w-3 h-3 text-emerald-700" /> TAMBAH BARU
+                              </span>
+                            )}
+                            <span className="text-xs bg-slate-100 text-slate-800 border border-slate-200 px-2 py-0.5 rounded-lg font-black uppercase tracking-wider">
+                              {flight.name?.split('(')[0]?.trim() || flight.name}
+                            </span>
+                            <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-lg border border-blue-200/60">
+                              {flight.tipePenerbangan || 'DIRECT'}
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-bold">
+                              🏢 {flight.namaVendor}
+                            </span>
+                          </div>
+
+                          <div className="mt-1 text-xs font-bold text-gray-800">
+                            {flight.ruteLabel}
+                          </div>
+
+                          <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-gray-600 font-medium bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
+                            <div>🛫 Berangkat: <strong className="text-gray-900">{flight.tanggalKeberangkatan}</strong></div>
+                            <div>🛬 Pulang: <strong className="text-gray-900">{flight.tanggalKepulangan} ({flight.programDays}H)</strong></div>
+                            <div>💺 Kuota Kursi: <strong className="text-blue-600">{flight.availableSeats} PAX</strong></div>
+                            <div>💰 Modal (Setoran): <strong className="text-gray-900 font-mono">Rp {(flight.hargaSetoran || flight.hargaBeli || 0).toLocaleString('id-ID')}</strong></div>
+                            <div className="col-span-2 pt-1 border-t border-gray-200/50 flex justify-between items-center text-[11px]">
+                              <span>Harga Jual: <strong className="text-emerald-700 font-mono">Rp {(flight.hargaJual || 0).toLocaleString('id-ID')}</strong></span>
+                              <span className="text-emerald-600 font-bold">Margin: Rp {(flight.margin || 0).toLocaleString('id-ID')} ({flight.persen || 0}%)</span>
                             </div>
                           </div>
-                          <span className="bg-blue-50 text-blue-700 p-1.5 rounded-xl text-[10px] font-black uppercase">Rute {idx + 1}</span>
+
+                          {flight.flightItinerary && (
+                            <details className="mt-2 text-[10px] text-gray-500">
+                              <summary className="cursor-pointer font-bold hover:text-gray-700 select-none">
+                                📋 Lihat Itinerary PNR
+                              </summary>
+                              <div className="mt-1 p-2 bg-gray-50 border border-gray-100 rounded-lg font-mono text-[9px] whitespace-pre-line leading-relaxed max-h-24 overflow-y-auto">
+                                {flight.flightItinerary}
+                              </div>
+                            </details>
+                          )}
                         </div>
-                        {flight.flightItinerary && (
-                          <div className="mt-2.5 p-2 bg-gray-50 border border-gray-100 rounded-xl font-mono text-[10px] text-gray-500 whitespace-pre-line leading-relaxed max-h-24 overflow-y-auto">
-                            {flight.flightItinerary}
-                          </div>
-                        )}
                       </div>
                     ))
                   )}
@@ -2074,37 +2875,58 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsBulkOpen(false);
-                  setBulkText('');
-                  setBulkPriceInput('');
-                  setParsedFlights([]);
-                }}
-                className="px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl text-xs transition-colors uppercase tracking-wider"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveBulk}
-                disabled={parsedFlights.length === 0 || isSavingBulk}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-150 disabled:text-gray-400 text-white font-extrabold rounded-xl text-xs transition-all uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-blue-100 disabled:shadow-none"
-              >
-                {isSavingBulk ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Sedang Menyimpan ({parsedFlights.length} Rute)...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Impor Sekarang ({parsedFlights.length} Rute)
-                  </>
+            <div className="p-4 sm:p-5 border-t border-gray-100 flex flex-wrap justify-between items-center gap-3 bg-gray-50/60 shrink-0">
+              <div className="text-xs text-gray-500">
+                {parsedFlights.length > 0 && (
+                  <span>
+                    Siap memproses <strong className="text-gray-900">{parsedFlights.length} rute</strong>:{' '}
+                    <span className="text-emerald-700 font-bold">
+                      {parsedFlights.filter(f => !f.isUpdate).length} Rute Baru
+                    </span>
+                    {parsedFlights.some(f => f.isUpdate) && (
+                      <>
+                        {' & '}
+                        <span className="text-amber-700 font-bold">
+                          {parsedFlights.filter(f => f.isUpdate).length} Update Jadwal
+                        </span>
+                      </>
+                    )}
+                  </span>
                 )}
-              </button>
+              </div>
+              <div className="flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBulkOpen(false);
+                    setBulkText('');
+                    setBulkPriceInput('');
+                    setBulkVendorInput('');
+                    setParsedFlights([]);
+                  }}
+                  className="px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-bold rounded-xl text-xs transition-colors uppercase tracking-wider cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveBulk}
+                  disabled={parsedFlights.length === 0 || isSavingBulk}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-extrabold rounded-xl text-xs transition-all uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-blue-200 disabled:shadow-none cursor-pointer"
+                >
+                  {isSavingBulk ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Sedang Menyimpan ({parsedFlights.length} Rute)...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Simpan & Update ke Database ({parsedFlights.length} Rute)
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

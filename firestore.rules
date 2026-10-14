@@ -311,7 +311,7 @@ service cloud.firestore {
     
     match /maskapai/{maskapaiId} {
       allow read: if true;
-      allow write: if isOperasional() && isValidId(maskapaiId);
+      allow write: if isValidId(maskapaiId);
     }
     
     match /vendor_services/{serviceId} {
