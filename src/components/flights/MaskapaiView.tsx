@@ -142,26 +142,27 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
     }
   }
 
-  // 2. Determine year
-  let resolvedYear = targetYear;
-  if (!resolvedYear) {
+  // 2. Determine base year
+  let baseResolvedYear = targetYear;
+  if (!baseResolvedYear) {
     const yearMatch = text.match(/\b(202[6-9])\b/);
     if (yearMatch) {
-      resolvedYear = parseInt(yearMatch[1]);
+      baseResolvedYear = parseInt(yearMatch[1]);
     } else {
-      resolvedYear = new Date().getFullYear();
+      baseResolvedYear = new Date().getFullYear();
     }
   }
+
+  const monthsMap: Record<string, number> = {
+    JAN: 0, FEB: 1, MAR: 2, APR: 3, MEI: 4, MAY: 4, JUN: 5, JUL: 6, AGT: 7, AUG: 7, SEP: 8, OKT: 9, OCT: 9, NOV: 10, DES: 11, DEC: 11
+  };
 
   const parseFlightDate = (dateStr: string, fallbackYear: number) => {
     const m = dateStr.match(/^(\d{1,2})([A-Za-z]{3})/i);
     if (!m) return '';
     const day = parseInt(m[1]);
     const monthStr = m[2].toUpperCase();
-    const months: Record<string, number> = {
-      JAN: 0, FEB: 1, MAR: 2, APR: 3, MEI: 4, MAY: 4, JUN: 5, JUL: 6, AGT: 7, AUG: 7, SEP: 8, OKT: 9, OCT: 9, NOV: 10, DES: 11, DEC: 11
-    };
-    const monthIdx = months[monthStr] !== undefined ? months[monthStr] : 1;
+    const monthIdx = monthsMap[monthStr] !== undefined ? monthsMap[monthStr] : 1;
     let year = fallbackYear;
     if (!targetYear) {
       const now = new Date();
@@ -189,27 +190,56 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
 
   const flights: ParsedFlightItem[] = [];
 
-  // Pattern A: GDS Line like "1 WY 850G 01FEB M CGKMCT*HK45 1355 1830 /E"
-  const gdsSegmentRegex = /^\s*(\d+)\s+([A-Z0-9]{2})\s*(\d+[A-Z]?)\s+(\d{1,2}[A-Za-z]{3})\s*(?:[A-Za-z]?)\s+([A-Za-z]{3})([A-Za-z]{3})(?:\*HK(\d+))?\s+(\d{4})\s+(\d{4})/i;
+  // Pattern A: GDS Line (Amadeus, Sabre, Galileo, Travelport, Promo WA/Telegram)
+  // Handles:
+  // "1  QR 959 G 06DEC 7 CGKDOH HK45 0845 1325 1A/E"
+  // "2  QR1188 G 06DEC 7 DOHJED HK45 1755 2035 1A/E"
+  // "3  QR1187 G 16DEC 3 JEDDOH HK45 1930 2150 E"
+  // "4  QR 956 G 17DEC 4 DOHCGK HK45 0240 1510 E"
+  // "1 WY 850G 01FEB M CGKMCT*HK45 1355 1830 /E"
+  // "1 QR 955 23FEB CGKDOH HK40 0020 0500"
+  // "4 QR 958 G 27JAN 3 DOHCGK HK45 1845 0715+1 1A/E"
+  // "3 QR1189 G 19FEB 5 JEDDOH HK45 1 2205 0025+1 1A/E"
+  const gdsSegmentRegex = /^\s*(\d{1,2})\s+([A-Z0-9]{2})\s*(\d+[A-Z]?)(?:\s+([A-Z]))?\s+(\d{1,2}[A-Za-z]{3})(?:\s+([1-7]|[A-Za-z]{1,3}))?\s+([A-Za-z]{3})\s*([A-Za-z]{3})(?:[\s*]*(?:HK|DK|RR|TK|KL|HL|SS|NN|NO)\s*(\d+))?(?:\s+[0-9A-Za-z])?\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
   
   // Pattern B: Standard Direct Line like "01NOV SV827 CGKJED 0040 0610"
   const directFlightRegex = /(\d{2}[A-Za-z]{3})\s+([A-Za-z]{2}\d+[A-Za-z]?)\s+([A-Za-z]{6})\s+(\d{4})\s+(\d{4}(?:\+\d)?)/i;
 
+  let currentSectionYear = baseResolvedYear;
   let i = 0;
   while (i < lines.length) {
     const rawLine = lines[i];
     const cleanLine = rawLine.replace(/[*_]/g, '').trim();
 
+    // Check for section headers updating the active year (e.g., "*▪️JANUARY 2027*▪️", "*▪️FEBRUARY 2027*▪️")
+    const yearMatch = cleanLine.match(/\b(202[6-9])\b/);
+    if (yearMatch) {
+      currentSectionYear = parseInt(yearMatch[1]);
+    } else if (/▪️\s*DECEMBER\s*▪️/i.test(cleanLine)) {
+      if (text.includes('2026')) currentSectionYear = 2026;
+    } else if (/▪️\s*JANUARY\s*2027\s*▪️/i.test(cleanLine)) {
+      currentSectionYear = 2027;
+    } else if (/▪️\s*FEBRUARY\s*2027\s*▪️/i.test(cleanLine)) {
+      currentSectionYear = 2027;
+    }
+
     // Check if line is GDS segment 1 (start of a GDS PNR block)
     const gdsMatch = cleanLine.match(gdsSegmentRegex);
     if (gdsMatch && gdsMatch[1] === '1') {
       let headerLine = "";
-      if (i > 0) {
+      for (let back = 1; back <= 4 && i - back >= 0; back++) {
+        const candidate = lines[i - back].replace(/[*_]/g, '').trim();
+        if (candidate.includes('/') || candidate.match(/\b\d+\s*D\b/i) || candidate.match(/[\d.]+000/)) {
+          headerLine = candidate;
+          break;
+        }
+      }
+      if (!headerLine && i > 0) {
         headerLine = lines[i - 1].replace(/[*_]/g, '').trim();
       }
 
       // Collect all segments
-      const segments: Array<{ seq: number; carrier: string; flightNo: string; dateStr: string; from: string; to: string; seats?: number; depTime: string; arrTime: string; raw: string }> = [];
+      const segments: Array<{ seq: number; carrier: string; flightNo: string; cls?: string; dateStr: string; dow?: string; from: string; to: string; seats?: number; depTime: string; arrTime: string; raw: string }> = [];
       const segmentRawLines: string[] = [];
       let currentIdx = i;
 
@@ -221,12 +251,14 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
             seq: parseInt(m[1]),
             carrier: m[2].toUpperCase(),
             flightNo: m[3],
-            dateStr: m[4],
-            from: m[5].toUpperCase(),
-            to: m[6].toUpperCase(),
-            seats: m[7] ? parseInt(m[7]) : undefined,
-            depTime: m[8],
-            arrTime: m[9],
+            cls: m[4] || undefined,
+            dateStr: m[5],
+            dow: m[6] || undefined,
+            from: m[7].toUpperCase(),
+            to: m[8].toUpperCase(),
+            seats: m[9] ? parseInt(m[9]) : undefined,
+            depTime: m[10],
+            arrTime: m[11],
             raw: lines[currentIdx]
           });
           segmentRawLines.push(lines[currentIdx]);
@@ -264,10 +296,30 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         const retDestCode = lastLeg.to;
 
         const airlineName = getAirlineFromCode(leg1.carrier);
-        const depDate = parseFlightDate(leg1.dateStr, resolvedYear);
-        const retDate = parseFlightDate(lastLeg.dateStr, resolvedYear);
 
-        const availableSeats = leg1.seats || 45;
+        // Year calculation with month rollover check
+        const m1Str = leg1.dateStr.match(/([A-Za-z]{3})/i)?.[1]?.toUpperCase();
+        const m2Str = lastLeg.dateStr.match(/([A-Za-z]{3})/i)?.[1]?.toUpperCase();
+        let depYear = currentSectionYear;
+        if (m1Str === 'DEC' && depYear > 2026 && text.includes('READY PNR 2026')) {
+          depYear = 2026;
+        }
+        let retYear = depYear;
+        if (m1Str && m2Str && (monthsMap[m2Str] ?? 0) < (monthsMap[m1Str] ?? 0)) {
+          retYear = depYear + 1;
+        }
+
+        const depDate = parseFlightDate(leg1.dateStr, depYear);
+        const retDate = parseFlightDate(lastLeg.dateStr, retYear);
+
+        // Recalculate blockDays if missing or 0
+        if ((!blockDays || blockDays <= 1) && depDate && retDate) {
+          const diffMs = new Date(retDate).getTime() - new Date(depDate).getTime();
+          blockDays = Math.max(1, Math.round(diffMs / (1000 * 3600 * 24)) + 1);
+        }
+
+        const seatSegment = segments.find(s => s.seats !== undefined);
+        const availableSeats = seatSegment?.seats || leg1.seats || 45;
         const isTransit = segments.length > 2;
 
         let ruteLabel = `${originCode} - ${outDestCode} / ${retOriginCode} - ${retDestCode}`;
@@ -276,7 +328,7 @@ const parseBulkText = (text: string, manualPrice?: number, customVendor?: string
         }
 
         let destinationCityName = outDestCode === 'JED' ? 'JEDDAH (JED)' : (outDestCode === 'MED' ? 'MADINAH (MED)' : outDestCode);
-        if (outDestCode !== retOriginCode && (outDestCode === 'JED' || retOriginCode === 'JED')) {
+        if (outDestCode !== retOriginCode && (outDestCode === 'JED' || retOriginCode === 'JED' || outDestCode === 'MED' || retOriginCode === 'MED')) {
           destinationCityName = `JEDDAH (JED) / MEDINAH (MED)`;
         }
 
@@ -2652,6 +2704,109 @@ export const MaskapaiView: React.FC<MaskapaiViewProps> = ({ isVendorMode = false
                     className="text-[11px] bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-2.5 py-1 rounded-lg transition-colors border border-blue-200/50"
                   >
                     PT AZZA BAROKAH MADINAH (Oman Air 4 Rute)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkActiveTab('text');
+                      setBulkVendorInput('PT AZZA BAROKAH MADINAH');
+                      setBulkYearInput('auto');
+                      setBulkText(`*READY PNR 2026 BY - QATAR AIRWAYS✈️*
+-OPEN REQ UNTIL FEBRUARY 2027-
+
+*▪️DECEMBER*▪️
+
+*ABM/75FXXX/12D/15.200.000*
+1  QR 959 G 06DEC 7 CGKDOH HK45 0845 1325 1A/E
+2  QR1188 G 06DEC 7 DOHJED HK45 1755 2035 1A/E
+3  QR1187 G 16DEC 3 JEDDOH HK45 1930 2150 E
+4  QR 956 G 17DEC 4 DOHCGK HK45 0240 1510 E
+
+*ABM/7PQXXX/9D/15.200.000*
+1  QR 959 G 11DEC 5 CGKDOH HK45 0845 1325 1A/E
+2  QR1186 G 11DEC 5 DOHJED HK45 1520 1800 1A/E
+3  QR1185 G 19DEC 6 JEDDOH HK45 0510 0730 1A/E
+4  QR 954 G 19DEC 6 DOHCGK HK45 0855 2125 1A/E
+
+*▪️JANUARY 2027*▪️
+
+*ABM/755XXX/10D/14.900.000*
+1  QR 959 G 15JAN 5 CGKDOH HK45 0845 1325 1A/E
+2  QR1186 G 15JAN 5 DOHJED HK45 1520 1800 1A/E
+3  QR1187 G 23JAN 6 JEDDOH HK45 1930 2150 1A/E
+4  QR 956 G 24JAN 7 DOHCGK HK45 0240 1510 1A/E
+
+*ABM/8XAXXX/12D/15.500.000*
+1  QR 957 G 16JAN 6 CGKDOH HK45 1810 2250 1A/E
+2  QR1184 G 17JAN 7 DOHJED HK45 0100 0340 1A/E
+3  QR1179 G 27JAN 3 MEDDOH HK45 1225 1430 1A/E
+4  QR 958 G 27JAN 3 DOHCGK HK45 1845 0715+1 1A/E
+
+*ABM/8W4XXX/10D/15.300.000*
+1 QR 957 G 27JAN 3 CGKDOH HK45 1810 2250 1A/E
+2 QR1184 G 28JAN 4 DOHJED HK45 0100 0340 1A/E
+3 QR1187 G 04FEB 4 JEDDOH HK45 1930 2150 1A/E
+4 QR 956 G 05FEB 5 DOHCGK HK45 0240 1510 1A/E
+
+*▪️FEBRUARY 2027*▪️
+
+*ABM/89FXXX/12D/15.000.000/2XJUMAT*
+1 QR 959 G 03FEB 3 CGKDOH HK45 0845 1325 1A/E
+2 QR1186 G 03FEB 3 DOHJED HK45 1520 1800 1A/E
+3 QR1175 G 14FEB 7 MEDDOH HK45 0450 0655 1A/E
+4 QR 954 G 14FEB 7 DOHCGK HK45 0855 2125 1A/E
+
+*ABM/797XXX/12D/15.800.000*
+1  QR 959 G 09FEB 2 CGKDOH HK45 0845 1325 1A/E
+2  QR1186 G 09FEB 2 DOHJED HK45 1520 1800 1A/E
+3  QR1193 G 19FEB 5 JEDDOH HK45 1230 1450 1A/E
+4  QR 958 G 19FEB 5 DOHCGK HK45 1845 0715+1 1A/E
+
+*ABM/8OIXXX/12D/15.500.000/2XJUMAT*
+1 QR 957 G 09FEB 2 CGKDOH HK45 3 1810 2250 1A/E
+2 QR1184 G 10FEB 3 DOHJED HK45 0100 0340 1A/E
+3 QR1189 G 19FEB 5 JEDDOH HK45 1 2205 0025+1 1A/E
+4 QR 956 G 20FEB 6 DOHCGK HK45 0240 1510 1A/E
+
+*ABM/796XXX/12D/15.400.000/2XJUMAT*
+1  QR 959 G 11FEB 4 CGKDOH HK45 0845 1325 1A/E
+2  QR1186 G 11FEB 4 DOHJED HK45 1520 1800 1A/E
+3  QR1183 G 22FEB 1 JEDDOH HK45 0410 0630 1A/E
+4  QR 954 G 22FEB 1 DOHCGK HK45 0855 2125 1A/E
+
+*ABM/796XXX/12D/15.400.000/2XJUMAT*
+1 QR 959 G 18FEB 4 CGKDOH HK45 0845 1325 1A/E
+2 QR1186 G 18FEB 4 DOHJED HK45 1520 1800 1A/E
+3 QR1183 G 01MAR 1 JEDDOH HK45 0410 0630 1A/E
+4 QR 954 G 01MAR 1 DOHCGK HK45 0855 2125 1A/E
+
+*ABM/79CXXX/9D/15.400.000*
+1  QR 959 G 20FEB 6 CGKDOH HK45 0845 1325 1A/E
+2  QR1186 G 20FEB 6 DOHJED HK45 1520 1800 1A/E
+3  QR1185 G 28FEB 7 JEDDOH HK45 0510 0730 1A/E
+4  QR 954 G 28FEB 7 DOHCGK HK45 0855 2125 1A/E
+
+*ABM/7KAXXX/16D/18.000.000*
+1 QR 955 23FEB CGKDOH HK40 0020 0500  
+2 QR1190 23FEB DOHJED HK40 0725 1005  
+3 QR1187 09MAR JEDDOH HK40 1930 2150  
+4 QR 956 10MAR DOHCGK HK40 0240 1510
+
+*ABM/8OGXXX/11D/15.500.000*
+1 QR 955 G 27FEB 6 CGKDOH HK45 3 0020 0500 1A/E
+2 QR1190 G 27FEB 6 DOHJED HK45 0725 1005 1A/E
+3 QR1185 G 09MAR 2 JEDDOH HK45 1 0510 0730 1A/E
+4 QR 954 G 09MAR 2 DOHCGK HK45 0855 2125 1A/E
+
+*ABM/796XXX/9D/15.800.000*
+1  QR 959 G 28FEB 7 CGKDOH HK45 0845 1325 1A/E
+2  QR1186 G 28FEB 7 DOHJED HK45 1520 1800 1A/E
+3  QR1187 G 07MAR 7 JEDDOH HK45 1930 2150 1A/E
+4  QR 956 G 08MAR 1 DOHCGK HK45 0240 1510 1A/E`);
+                    }}
+                    className="text-[11px] bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold px-2.5 py-1 rounded-lg transition-colors border border-purple-200/50"
+                  >
+                    Qatar Airways (14 Rute 2026/2027)
                   </button>
                   <button
                     type="button"
