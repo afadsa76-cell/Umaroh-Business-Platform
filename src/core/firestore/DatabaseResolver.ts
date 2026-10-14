@@ -58,15 +58,15 @@ export class DatabaseResolver {
     switch (mode) {
       case 'production':
         // The target production enterprise database
-        return 'ai-studio-umarohbusinesspl-69cde675-c52d-43da-bfaa-45caeabd2393';
+        return 'ai-studio-7b9baede-5431-4818-8e1a-6da0a21316f9';
       
       case 'staging':
-        return 'ai-studio-staging-69cde675-c52d-43da-bfaa-45caeabd2393';
+        return 'ai-studio-7b9baede-5431-4818-8e1a-6da0a21316f9';
 
       case 'development':
       default:
         // Fallback to the config database ID, or the active source development database
-        return configDbId || 'ai-studio-umarohbusinesspl-69cde675-c52d-43da-bfaa-45caeabd2393';
+        return configDbId || 'ai-studio-7b9baede-5431-4818-8e1a-6da0a21316f9';
     }
   }
 

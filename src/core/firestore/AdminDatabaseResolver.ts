@@ -34,14 +34,14 @@ export class AdminDatabaseResolver {
    * Resolves the source database ID from environment or fallback
    */
   public static getSourceDatabaseId(): string {
-    return process.env.SOURCE_DATABASE || firebaseConfig.firestoreDatabaseId || 'ai-studio-umarohbusinesspl-69cde675-c52d-43da-bfaa-45caeabd2393';
+    return process.env.SOURCE_DATABASE || firebaseConfig.firestoreDatabaseId || 'ai-studio-7b9baede-5431-4818-8e1a-6da0a21316f9';
   }
 
   /**
    * Resolves the target database ID from environment or fallback
    */
   public static getTargetDatabaseId(): string {
-    return process.env.TARGET_DATABASE || firebaseConfig.firestoreDatabaseId || 'ai-studio-umarohbusinesspl-69cde675-c52d-43da-bfaa-45caeabd2393';
+    return process.env.TARGET_DATABASE || firebaseConfig.firestoreDatabaseId || 'ai-studio-7b9baede-5431-4818-8e1a-6da0a21316f9';
   }
 
   /**
